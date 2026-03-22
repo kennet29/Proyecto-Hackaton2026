@@ -33,8 +33,15 @@ export class AuthService {
     }
     await this.usersService.registerLogin(user.id);
     const payload = { sub: user.id, username: user.username, role: user.role };
+    const accessToken = await this.jwtService.signAsync(payload);
     return {
-      accessToken: await this.jwtService.signAsync(payload),
+      accessToken,
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        pacienteId: user.pacienteId ?? null,
+      },
     };
   }
 
