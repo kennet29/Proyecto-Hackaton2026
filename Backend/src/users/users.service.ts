@@ -1,59 +1,108 @@
-﻿import { Injectable, NotFoundException } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
+import { Usuario } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  private readonly users: User[] = [];
+  constructor(
+    @InjectRepository(Usuario)
+    private readonly usuarioRepository: Repository<Usuario>,
+  ) {}
 
-  create(payload: CreateUserDto): User {
-    const now = new Date();
-    const user: User = {
-      id: randomUUID(),
-      email: payload.email,
-      name: payload.name,
-      active: payload.active ?? true,
-      createdAt: now,
-      updatedAt: now,
-    };
-    this.users.push(user);
-    return user;
+  async create(payload: CreateUserDto): Promise<Usuario> {
+    try {
+      const hashed = await bcrypt.hash(payload.password, 10);
+      const entity = this.usuarioRepository.create({
+        username: payload.username,
+        pacienteId: payload.pacienteId,
+        role: payload.role ?? 'paciente',
+        activo: payload.activo ?? true,
+        hashPassword: Buffer.from(hashed, 'utf8'),
+      });
+      return await this.usuarioRepository.save(entity);
+    } catch (error) {
+      return this.handleDbError(error, 'crear');
+    }
   }
 
-  findAll(): User[] {
-    return this.users;
+  findAll(): Promise<Usuario[]> {
+    return this.usuarioRepository.find();
   }
 
-  findOne(id: string): User {
-    const user = this.users.find((item) => item.id === id);
+  async findOne(id: number): Promise<Usuario> {
+    const user = await this.usuarioRepository.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException(`usuario ${id} no encontrado`);
     }
     return user;
   }
 
-  update(id: string, payload: UpdateUserDto): User {
-    const user = this.findOne(id);
-    if (payload.email !== undefined) {
-      user.email = payload.email;
+  async update(id: number, payload: UpdateUserDto): Promise<Usuario> {
+    const user = await this.findOne(id);
+    if (payload.username !== undefined) {
+      user.username = payload.username;
     }
-    if (payload.name !== undefined) {
-      user.name = payload.name;
+    if (payload.pacienteId !== undefined) {
+      user.pacienteId = payload.pacienteId;
     }
-    if (payload.active !== undefined) {
-      user.active = payload.active;
+    if (payload.role !== undefined) {
+      user.role = payload.role;
     }
-    user.updatedAt = new Date();
-    return user;
+    if (payload.activo !== undefined) {
+      user.activo = payload.activo;
+    }
+    if (payload.password) {
+      const hashed = await bcrypt.hash(payload.password, 10);
+      user.hashPassword = Buffer.from(hashed, 'utf8');
+    }
+    if (payload.lastLogin !== undefined) {
+      user.lastLogin = payload.lastLogin;
+    }
+    try {
+      return await this.usuarioRepository.save(user);
+    } catch (error) {
+      return this.handleDbError(error, 'actualizar');
+    }
   }
 
-  remove(id: string): void {
-    const index = this.users.findIndex((item) => item.id === id);
-    if (index === -1) {
-      throw new NotFoundException(`usuario ${id} no encontrado`);
+  async findByUsername(username: string): Promise<Usuario | null> {
+    return this.usuarioRepository.findOne({ where: { username } });
+  }
+
+  async registerLogin(id: number): Promise<void> {
+    await this.usuarioRepository.update(id, { lastLogin: new Date() });
+  }
+
+  async remove(id: number): Promise<void> {
+    try {
+      const result = await this.usuarioRepository.delete(id);
+      if (!result.affected) {
+        throw new NotFoundException(`usuario ${id} no encontrado`);
+      }
+    } catch (error) {
+      this.handleDbError(error, 'eliminar');
     }
-    this.users.splice(index, 1);
+  }
+
+  private handleDbError(error: unknown, action: string): never {
+    if (error instanceof QueryFailedError) {
+      const driverError = error.driverError as { number?: number; message?: string } | undefined;
+      if (driverError?.number === 2627 || driverError?.number === 2601) {
+        throw new BadRequestException('ya existe un registro con los mismos datos clave');
+      }
+      throw new InternalServerErrorException(
+        `no se pudo ${action} el usuario por un error en la base de datos (${driverError?.message ?? 'sin detalle'})`,
+      );
+    }
+    throw new InternalServerErrorException(`no se pudo ${action} el usuario`);
   }
 }

@@ -48,6 +48,25 @@ create table usuario (
     foreign key (pacienteid) references paciente(pacienteid)
 );
 
+create table passwordresettoken (
+    tokenid int identity primary key,
+    usuarioid int not null,
+    token nvarchar(100) not null unique,
+    expiracion datetime2 not null,
+    usado bit not null default 0,
+    usadooen datetime2 null,
+    creadopor nvarchar(60) null,
+    creadoen datetime2 not null default sysdatetime(),
+    modificadopor nvarchar(60) null,
+    modificadoen datetime2 null,
+    campoprueba01 nvarchar(200) null,
+    campoprueba02 nvarchar(200) null,
+    campoprueba03 nvarchar(200) null,
+    campoprueba04 nvarchar(200) null,
+    campoprueba05 nvarchar(200) null,
+    foreign key (usuarioid) references usuario(usuarioid)
+);
+
 
 -- ========================
 -- seguridad y permisos
@@ -435,13 +454,7 @@ create table registromensual (
     campoprueba03 nvarchar(200) null,
     campoprueba04 nvarchar(200) null,
     campoprueba05 nvarchar(200) null,
-    foreign key (pacienteid) references paciente(pacienteid),
-    constraint ck_regmensual_sexo check (
-        exists (
-            select 1 from paciente p
-            where p.pacienteid = registromensual.pacienteid and p.sexo = 'f'
-        )
-    )
+    foreign key (pacienteid) references paciente(pacienteid)
 );
 
 create table embarazo (
@@ -463,12 +476,6 @@ create table embarazo (
     campoprueba04 nvarchar(200) null,
     campoprueba05 nvarchar(200) null,
     foreign key (pacienteid) references paciente(pacienteid),
-    constraint ck_embarazo_sexo check (
-        exists (
-            select 1 from paciente p
-            where p.pacienteid = embarazo.pacienteid and p.sexo = 'f'
-        )
-    ),
     constraint ck_embarazo_estado check (estado in ('activo','cerrado','abortado'))
 );
 
@@ -709,6 +716,57 @@ create table controlcronico (
     foreign key (condicioncronicaid) references condicioncronica(condicioncronicaid)
 );
 
+-- medicacion prescrita para gestionar horarios
+create table medicacion (
+    medicacionid int identity primary key,
+    pacienteid int not null,
+    consultaid int null,
+    nombremedicamento nvarchar(150) not null,
+    presentacion nvarchar(100) null,
+    dosis nvarchar(80) null,
+    viaadministracion nvarchar(60) null,
+    indicaciones nvarchar(max) null,
+    fechainicio date not null,
+    fechafin date null,
+    medicacionactiva bit not null default 1,
+    creadopor nvarchar(60) null,
+    creadoen datetime2 not null default sysdatetime(),
+    modificadopor nvarchar(60) null,
+    modificadoen datetime2 null,
+    campoprueba01 nvarchar(200) null,
+    campoprueba02 nvarchar(200) null,
+    campoprueba03 nvarchar(200) null,
+    campoprueba04 nvarchar(200) null,
+    campoprueba05 nvarchar(200) null,
+    foreign key (pacienteid) references paciente(pacienteid),
+    foreign key (consultaid) references consultamedica(consultaid),
+    constraint ck_medicacion_fechas check (fechafin is null or fechafin >= fechainicio)
+);
+
+create table horariomedicamento (
+    horariomedicamentoid int identity primary key,
+    medicacionid int not null,
+    horaprogramada time not null,
+    frecuencia nvarchar(80) null,
+    diasemana tinyint null check (diasemana between 1 and 7),
+    generarecordatorio bit not null default 1,
+    proximaalarma datetime2 null,
+    estadorecordatorio nvarchar(30) not null default 'pendiente',
+    ultimoenvio datetime2 null,
+    observaciones nvarchar(300) null,
+    creadopor nvarchar(60) null,
+    creadoen datetime2 not null default sysdatetime(),
+    modificadopor nvarchar(60) null,
+    modificadoen datetime2 null,
+    campoprueba01 nvarchar(200) null,
+    campoprueba02 nvarchar(200) null,
+    campoprueba03 nvarchar(200) null,
+    campoprueba04 nvarchar(200) null,
+    campoprueba05 nvarchar(200) null,
+    foreign key (medicacionid) references medicacion(medicacionid),
+    constraint ck_horariomedicamento_estado check (estadorecordatorio in ('pendiente','programado','enviado','snoozed','cancelado'))
+);
+
 create table adherenciacronica (
     adherenciacronicaid int identity primary key,
     condicioncronicaid int not null,
@@ -761,19 +819,41 @@ create table recordatoriocita (
     constraint ck_recordatoriocita_estado check (estado in ('pendiente','programado','enviado','cancelado'))
 );
 
--- medicacion prescrita para gestionar horarios
-create table medicacion (
-    medicacionid int identity primary key,
+-- ============
+-- usuarios root iniciales
+-- ============
+if not exists (select 1 from usuario where nombreusuario = 'kenneth')
+begin
+    insert into usuario (nombreusuario, hashpassword, rolprincipal, activo, creadopor)
+    values (
+        'kenneth',
+        convert(varbinary(256), '$2b$10$3tFBTcFsiKmLenrXydUkPeCzsNKQsIRIOaWr3SG0oXOi2/IjZGy.y'),
+        'admin',
+        1,
+        'seed'
+    );
+end;
+
+if not exists (select 1 from usuario where nombreusuario = 'connie')
+begin
+    insert into usuario (nombreusuario, hashpassword, rolprincipal, activo, creadopor)
+    values (
+        'connie',
+        convert(varbinary(256), '$2b$10$Jm2kIdOJlWNNxlgPHJn.FOPrs2ETzU6tGDhEV1WpETBFONfMgeFqa'),
+        'admin',
+        1,
+        'seed'
+    );
+end;
+
+create table evaluacionsaludhabito (
+    evaluacionid int identity primary key,
     pacienteid int not null,
-    consultaid int null,
-    nombremedicamento nvarchar(150) not null,
-    presentacion nvarchar(100) null,
-    dosis nvarchar(80) null,
-    viaadministracion nvarchar(60) null,
-    indicaciones nvarchar(max) null,
-    fechainicio date not null,
-    fechafin date null,
-    medicacionactiva bit not null default 1,
+    fecha datetime2 not null default sysdatetime(),
+    puntaje decimal(5,2) not null,
+    categoria nvarchar(80) null,
+    resumen nvarchar(200) null,
+    detalle nvarchar(max) null,
     creadopor nvarchar(60) null,
     creadoen datetime2 not null default sysdatetime(),
     modificadopor nvarchar(60) null,
@@ -783,22 +863,16 @@ create table medicacion (
     campoprueba03 nvarchar(200) null,
     campoprueba04 nvarchar(200) null,
     campoprueba05 nvarchar(200) null,
-    foreign key (pacienteid) references paciente(pacienteid),
-    foreign key (consultaid) references consultamedica(consultaid),
-    constraint ck_medicacion_fechas check (fechafin is null or fechafin >= fechainicio)
+    foreign key (pacienteid) references paciente(pacienteid)
 );
 
-create table horariomedicamento (
-    horariomedicamentoid int identity primary key,
-    medicacionid int not null,
-    horaprogramada time not null,
-    frecuencia nvarchar(80) null,
-    diasemana tinyint null check (diasemana between 1 and 7),
-    generarecordatorio bit not null default 1,
-    proximaalarma datetime2 null,
-    estadorecordatorio nvarchar(30) not null default 'pendiente',
-    ultimoenvio datetime2 null,
-    observaciones nvarchar(300) null,
+create table detalleevaluacionsalud (
+    detalleid int identity primary key,
+    evaluacionid int not null,
+    habitoid int null,
+    componente nvarchar(80) null,
+    peso decimal(5,2) null,
+    comentario nvarchar(200) null,
     creadopor nvarchar(60) null,
     creadoen datetime2 not null default sysdatetime(),
     modificadopor nvarchar(60) null,
@@ -808,6 +882,46 @@ create table horariomedicamento (
     campoprueba03 nvarchar(200) null,
     campoprueba04 nvarchar(200) null,
     campoprueba05 nvarchar(200) null,
-    foreign key (medicacionid) references medicacion(medicacionid),
-    constraint ck_horariomedicamento_estado check (estadorecordatorio in ('pendiente','programado','enviado','snoozed','cancelado'))
+    foreign key (evaluacionid) references evaluacionsaludhabito(evaluacionid),
+    foreign key (habitoid) references habitoespecifico(habitoid)
 );
+c r e a t e   t a b l e   i n d i c e h a b i t o   ( 
+         i n d i c e i d   i n t   i d e n t i t y   p r i m a r y   k e y , 
+         p a c i e n t e i d   i n t   n o t   n u l l , 
+         f e c h a   d a t e t i m e 2   n o t   n u l l   d e f a u l t   s y s d a t e t i m e ( ) , 
+         p u n t a j e   d e c i m a l ( 5 , 2 )   n o t   n u l l , 
+         c a t e g o r i a   n v a r c h a r ( 8 0 )   n u l l , 
+         d e s c r i p c i o n   n v a r c h a r ( 2 0 0 )   n u l l , 
+         d e t a l l e   n v a r c h a r ( m a x )   n u l l , 
+         c r e a d o p o r   n v a r c h a r ( 6 0 )   n u l l , 
+         c r e a d o e n   d a t e t i m e 2   n o t   n u l l   d e f a u l t   s y s d a t e t i m e ( ) , 
+         m o d i f i c a d o p o r   n v a r c h a r ( 6 0 )   n u l l , 
+         m o d i f i c a d o e n   d a t e t i m e 2   n u l l , 
+         c a m p o p r u e b a 0 1   n v a r c h a r ( 2 0 0 )   n u l l , 
+         c a m p o p r u e b a 0 2   n v a r c h a r ( 2 0 0 )   n u l l , 
+         c a m p o p r u e b a 0 3   n v a r c h a r ( 2 0 0 )   n u l l , 
+         c a m p o p r u e b a 0 4   n v a r c h a r ( 2 0 0 )   n u l l , 
+         c a m p o p r u e b a 0 5   n v a r c h a r ( 2 0 0 )   n u l l , 
+         f o r e i g n   k e y   ( p a c i e n t e i d )   r e f e r e n c e s   p a c i e n t e ( p a c i e n t e i d ) 
+ ) ; 
+ 
+ c r e a t e   t a b l e   d e t a l l e i n d i c e h a b i t o   ( 
+         d e t a l l e i d   i n t   i d e n t i t y   p r i m a r y   k e y , 
+         i n d i c e i d   i n t   n o t   n u l l , 
+         h a b i t o i d   i n t   n u l l , 
+         t i p o   n v a r c h a r ( 8 0 )   n u l l , 
+         f a c t o r   d e c i m a l ( 5 , 2 )   n u l l , 
+         c o m e n t a r i o   n v a r c h a r ( 2 0 0 )   n u l l , 
+         c r e a d o p o r   n v a r c h a r ( 6 0 )   n u l l , 
+         c r e a d o e n   d a t e t i m e 2   n o t   n u l l   d e f a u l t   s y s d a t e t i m e ( ) , 
+         m o d i f i c a d o p o r   n v a r c h a r ( 6 0 )   n u l l , 
+         m o d i f i c a d o e n   d a t e t i m e 2   n u l l , 
+         c a m p o p r u e b a 0 1   n v a r c h a r ( 2 0 0 )   n u l l , 
+         c a m p o p r u e b a 0 2   n v a r c h a r ( 2 0 0 )   n u l l , 
+         c a m p o p r u e b a 0 3   n v a r c h a r ( 2 0 0 )   n u l l , 
+         c a m p o p r u e b a 0 4   n v a r c h a r ( 2 0 0 )   n u l l , 
+         c a m p o p r u e b a 0 5   n v a r c h a r ( 2 0 0 )   n u l l , 
+         f o r e i g n   k e y   ( i n d i c e i d )   r e f e r e n c e s   i n d i c e h a b i t o ( i n d i c e i d ) , 
+         f o r e i g n   k e y   ( h a b i t o i d )   r e f e r e n c e s   h a b i t o e s p e c i f i c o ( h a b i t o i d ) 
+ ) ;  
+ 
