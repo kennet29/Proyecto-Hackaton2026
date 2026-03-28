@@ -48,6 +48,22 @@ create table usuario (
     foreign key (pacienteid) references paciente(pacienteid)
 );
 
+create table usuariopaciente (
+    usuariopacienteid int identity primary key,
+    usuarioid int not null,
+    pacienteid int not null,
+    parentesco nvarchar(80) null,
+    esprincipal bit not null default 0,
+    notas nvarchar(200) null,
+    creadopor nvarchar(60) null,
+    creadoen datetime2 not null default sysdatetime(),
+    modificadopor nvarchar(60) null,
+    modificadoen datetime2 null,
+    foreign key (usuarioid) references usuario(usuarioid),
+    foreign key (pacienteid) references paciente(pacienteid),
+    constraint ux_usuario_paciente unique (usuarioid, pacienteid)
+);
+
 create table passwordresettoken (
     tokenid int identity primary key,
     usuarioid int not null,
@@ -66,6 +82,39 @@ create table passwordresettoken (
     campoprueba05 nvarchar(200) null,
     foreign key (usuarioid) references usuario(usuarioid)
 );
+
+create table tokenrevocado (
+    tokenrevocadoid int identity primary key,
+    jti nvarchar(128) not null unique,
+    usuarioid int not null,
+    expira datetime2 not null,
+    motivo nvarchar(120) null,
+    creadopor nvarchar(60) null,
+    creadoen datetime2 not null default sysdatetime(),
+    modificadopor nvarchar(60) null,
+    modificadoen datetime2 null,
+    foreign key (usuarioid) references usuario(usuarioid)
+);
+
+create table permisoacceso (
+    permisoid int identity primary key,
+    pacienteid int not null,
+    medicoid int not null,
+    tipo nvarchar(20) not null check (tipo in ('temporal','permanente')),
+    duracion nvarchar(5) null,
+    fechainicio datetime2 not null default sysdatetime(),
+    fechafin datetime2 null,
+    estado nvarchar(20) not null default 'activo' check (estado in ('activo','revocado','expirado')),
+    notas nvarchar(200) null,
+    creadopor nvarchar(60) null,
+    creadoen datetime2 not null default sysdatetime(),
+    modificadopor nvarchar(60) null,
+    modificadoen datetime2 null,
+    foreign key (pacienteid) references paciente(pacienteid),
+    foreign key (medicoid) references usuario(usuarioid)
+);
+
+create unique index ux_permisoacceso_activo on permisoacceso(pacienteid, medicoid, estado) where estado = 'activo';
 
 
 -- ========================
@@ -818,6 +867,65 @@ create table recordatoriocita (
     foreign key (pacienteid) references paciente(pacienteid),
     constraint ck_recordatoriocita_estado check (estado in ('pendiente','programado','enviado','cancelado'))
 );
+
+go
+
+create or alter view vw_resumen_paciente as
+select
+    p.pacienteid,
+    p.nombres,
+    p.apellidos,
+    isnull(cm.total_consultas, 0) as total_consultas,
+    cm.ultima_consulta,
+    isnull(ci.citas_pendientes, 0) as citas_pendientes,
+    isnull(vac.vacunas_aplicadas, 0) as vacunas_aplicadas,
+    isnull(med.medicaciones_activas, 0) as medicaciones_activas,
+    isnull(rc.recordatorios_pendientes, 0) as recordatorios_pendientes,
+    isnull(al.alergias_activas, 0) as alergias_activas,
+    isnull(cc.condiciones_activas, 0) as condiciones_activas
+from paciente p
+left join (
+    select pacienteid, count(*) as total_consultas, max(fechaconsulta) as ultima_consulta
+    from consultamedica
+    group by pacienteid
+) cm on cm.pacienteid = p.pacienteid
+left join (
+    select pacienteid, count(*) as citas_pendientes
+    from citamedica
+    where estado in ('programada', 'no asistio')
+    group by pacienteid
+) ci on ci.pacienteid = p.pacienteid
+left join (
+    select pacienteid, count(*) as vacunas_aplicadas
+    from vacuna
+    group by pacienteid
+) vac on vac.pacienteid = p.pacienteid
+left join (
+    select pacienteid, count(*) as medicaciones_activas
+    from medicacion
+    where medicacionactiva = 1
+    group by pacienteid
+) med on med.pacienteid = p.pacienteid
+left join (
+    select pacienteid, count(*) as recordatorios_pendientes
+    from recordatoriocita
+    where estado in ('pendiente', 'programado')
+    group by pacienteid
+) rc on rc.pacienteid = p.pacienteid
+left join (
+    select pacienteid, count(*) as alergias_activas
+    from alergia
+    where estado = 'activa'
+    group by pacienteid
+) al on al.pacienteid = p.pacienteid
+left join (
+    select pacienteid, count(*) as condiciones_activas
+    from condicioncronica
+    where estado = 'activa'
+    group by pacienteid
+) cc on cc.pacienteid = p.pacienteid;
+
+go
 
 -- ============
 -- usuarios root iniciales

@@ -1,13 +1,19 @@
 import 'reflect-metadata';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { createZodValidationPipe } from 'nestjs-zod';
 import { ZodError } from 'zod';
 import { AppModule } from './app.module';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter';
+import { DataSource } from 'typeorm';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix('api');
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: '1',
+  });
   app.enableCors();
   const GlobalZodValidationPipe = createZodValidationPipe({
     createValidationException: (error: unknown) => {
@@ -26,7 +32,20 @@ async function bootstrap() {
   app.useGlobalFilters(new ApiExceptionFilter());
   const port = process.env.PORT ?? '3000';
   await app.listen(port);
-  console.log(`api usuarios escuchando en puerto ${port}`);
+  let dbStatus = 'conexion a base de datos no disponible';
+  try {
+    const dataSource = app.get(DataSource);
+    if (dataSource?.isInitialized) {
+      const dbName =
+        (typeof dataSource.options.database === 'string' && dataSource.options.database) || '';
+      dbStatus = `conexion a base de datos exitosa${dbName ? ` (${dbName})` : ''}`;
+    } else {
+      dbStatus = 'conexion a base de datos no inicializada';
+    }
+  } catch (error) {
+    dbStatus = `conexion a base de datos fallo: ${(error as Error).message}`;
+  }
+  console.log(`api usuarios v1 escuchando en puerto ${port} con prefijo /api - ${dbStatus}`);
 }
 
 bootstrap();

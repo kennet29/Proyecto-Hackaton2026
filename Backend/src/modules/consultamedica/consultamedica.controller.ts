@@ -1,11 +1,28 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
+import { Request } from 'express';
 import { ConsultamedicaService } from './consultamedica.service';
 import { CreateConsultamedicaDto } from './dto/create-consultamedica.dto';
 import { UpdateConsultamedicaDto } from './dto/update-consultamedica.dto';
+import { PacienteAccessService } from '../../auth/paciente-access.service';
+import { AuthenticatedUser } from '../../auth/auth.service';
 
 @Controller('consultamedica')
 export class ConsultamedicaController {
-  constructor(private readonly consultamedicaservice: ConsultamedicaService) {}
+  constructor(
+    private readonly consultamedicaservice: ConsultamedicaService,
+    private readonly pacienteAccessService: PacienteAccessService,
+  ) {}
 
   @Post()
   create(@Body() payload: CreateConsultamedicaDto) {
@@ -13,13 +30,33 @@ export class ConsultamedicaController {
   }
 
   @Get()
-  findAll() {
+  async findAll(
+    @Query('pacienteId') pacienteIdParam: string | undefined,
+    @Req() req: Request,
+  ) {
+    const user = req.user as AuthenticatedUser;
+    if (user?.role?.toLowerCase() === 'medico' && !pacienteIdParam) {
+      throw new BadRequestException('los medicos deben indicar un pacienteId para consultar');
+    }
+    if (pacienteIdParam) {
+      const pacienteId = Number(pacienteIdParam);
+      if (Number.isNaN(pacienteId)) {
+        throw new BadRequestException('pacienteId debe ser numerico');
+      }
+      await this.pacienteAccessService.assertAccess(user, pacienteId);
+      return this.consultamedicaservice.findAllByPaciente(pacienteId);
+    }
     return this.consultamedicaservice.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.consultamedicaservice.findOne(id);
+  async findOne(@Param('id') id: string, @Req() req: Request) {
+    const entity = await this.consultamedicaservice.findOne(id);
+    await this.pacienteAccessService.assertAccess(
+      req.user as AuthenticatedUser,
+      entity.pacienteId,
+    );
+    return entity;
   }
 
   @Patch(':id')
@@ -32,4 +69,3 @@ export class ConsultamedicaController {
     return this.consultamedicaservice.remove(id);
   }
 }
-

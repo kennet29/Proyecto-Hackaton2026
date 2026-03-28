@@ -26,6 +26,13 @@ export class ConsultamedicaService {
     return this.consultamedicaRepository.find();
   }
 
+  findAllByPaciente(pacienteId: number): Promise<Consultamedica[]> {
+    return this.consultamedicaRepository.find({
+      where: { pacienteId },
+      order: { fechaconsulta: 'DESC' },
+    });
+  }
+
   async findOne(id: string): Promise<Consultamedica> {
     const where = this.parseId(id);
     const entity = await this.consultamedicaRepository.findOne({ where });

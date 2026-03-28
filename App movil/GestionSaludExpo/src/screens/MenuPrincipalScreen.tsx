@@ -6,6 +6,8 @@ import { RootStackParamList } from '../navigation/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'MenuPrincipal'>;
 
 const options: { key: string; label: string; navigateTo?: keyof RootStackParamList }[] = [
+  { key: 'expediente', label: 'gestionar expediente', navigateTo: 'ExpedienteGestion' },
+  { key: 'resumen', label: 'resumen del paciente', navigateTo: 'PacienteResumen' },
   { key: 'paciente', label: 'pacientes', navigateTo: 'PacienteForm' },
   { key: 'consulta', label: 'consultas medicas', navigateTo: 'ConsultaForm' },
   { key: 'citas', label: 'citas programadas', navigateTo: 'CitaForm' },

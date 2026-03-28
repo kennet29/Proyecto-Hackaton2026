@@ -5,6 +5,7 @@ type AuthUser = {
   username: string;
   role?: string;
   pacienteId?: number | null;
+  pacienteIds?: number[];
 };
 
 type LoginPayload = {

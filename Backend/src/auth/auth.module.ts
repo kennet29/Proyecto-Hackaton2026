@@ -11,14 +11,19 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
+import { RevokedToken } from './entities/revoked-token.entity';
+import { TokenRevocationService } from './token-revocation.service';
 import { MailModule } from '../mail/mail.module';
+import { PermisoAcceso } from '../modules/permisoacceso/permisoacceso.entity';
+import { PacienteAccessService } from './paciente-access.service';
+import { UsuarioPaciente } from '../modules/usuariopaciente/usuariopaciente.entity';
 
 @Module({
   imports: [
     ConfigModule,
     UsersModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    TypeOrmModule.forFeature([PasswordResetToken]),
+    TypeOrmModule.forFeature([PasswordResetToken, RevokedToken, PermisoAcceso, UsuarioPaciente]),
     MailModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -39,10 +44,13 @@ import { MailModule } from '../mail/mail.module';
   providers: [
     AuthService,
     JwtStrategy,
+    TokenRevocationService,
+    PacienteAccessService,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
   ],
+  exports: [PacienteAccessService],
 })
 export class AuthModule {}

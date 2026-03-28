@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, NotFoundException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,15 +10,32 @@ import { RequestResetDto } from './dto/request-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { MailService } from '../mail/mail.service';
+import { TokenRevocationService } from './token-revocation.service';
+import { UsuarioPaciente } from '../modules/usuariopaciente/usuariopaciente.entity';
+
+export interface AuthenticatedUser {
+  userId: number;
+  username: string;
+  role?: string;
+  pacienteId?: number | null;
+  pacienteIds?: number[];
+  tokenId?: string;
+  exp?: number;
+}
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     @InjectRepository(PasswordResetToken)
     private readonly resetRepository: Repository<PasswordResetToken>,
+    @InjectRepository(UsuarioPaciente)
+    private readonly usuarioPacienteRepository: Repository<UsuarioPaciente>,
     private readonly mailService: MailService,
+    private readonly tokenRevocationService: TokenRevocationService,
   ) {}
 
   async login(credentials: LoginDto) {
@@ -32,17 +49,50 @@ export class AuthService {
       throw new UnauthorizedException('credenciales invalidas');
     }
     await this.usersService.registerLogin(user.id);
-    const payload = { sub: user.id, username: user.username, role: user.role };
-    const accessToken = await this.jwtService.signAsync(payload);
+    const linkedRelations = await this.usuarioPacienteRepository.find({
+      where: { usuarioId: user.id },
+      order: { esPrincipal: 'DESC', creadoEn: 'ASC' },
+    });
+    const linkedPacienteIds = Array.from(
+      new Set(linkedRelations.map((relation) => relation.pacienteId)),
+    );
+    const preferredRelation = linkedRelations.find((relation) => relation.esPrincipal);
+    const preferredPacienteId =
+      user.pacienteId ??
+      preferredRelation?.pacienteId ??
+      linkedPacienteIds[0] ??
+      null;
+    const tokenId = randomBytes(16).toString('hex');
+    const payload = {
+      sub: user.id,
+      username: user.username,
+      role: user.role,
+      pacienteId: preferredPacienteId,
+      pacienteIds: linkedPacienteIds,
+    };
+    const accessToken = await this.jwtService.signAsync(payload, { jwtid: tokenId });
+    this.logger.log(`login exitoso para ${user.username} (id ${user.id})`);
+    console.log(`login exitoso: usuario ${user.username} autenticado`);
     return {
       accessToken,
       user: {
         id: user.id,
         username: user.username,
         role: user.role,
-        pacienteId: user.pacienteId ?? null,
+        pacienteId: preferredPacienteId,
+        pacienteIds: linkedPacienteIds,
       },
     };
+  }
+
+  async logout(user: AuthenticatedUser) {
+    if (!user.tokenId) {
+      throw new UnauthorizedException('token sin identificador, vuelve a iniciar sesion');
+    }
+    const expiresAt =
+      user.exp && user.exp > 0 ? new Date(user.exp * 1000) : new Date(Date.now() + 60 * 60 * 1000);
+    await this.tokenRevocationService.revoke(user.tokenId, user.userId, expiresAt);
+    return { message: 'sesion cerrada' };
   }
 
   async requestPasswordReset(payload: RequestResetDto) {

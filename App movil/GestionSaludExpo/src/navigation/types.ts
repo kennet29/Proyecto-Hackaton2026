@@ -5,6 +5,8 @@ export type RootStackParamList = {
   SobreNosotros: undefined;
   Contacto: undefined;
   MenuPrincipal: undefined;
+  PacienteResumen: undefined;
+  ExpedienteGestion: undefined;
   PacienteForm: undefined;
   ConsultaForm: undefined;
   CitaForm: undefined;

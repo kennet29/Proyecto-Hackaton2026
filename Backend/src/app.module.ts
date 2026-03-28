@@ -7,6 +7,7 @@ import { Usuario } from './users/entities/user.entity';
 import { GestionSaludModule } from './modules/gestionsalud.module';
 import { AuthModule } from './auth/auth.module';
 import { PasswordResetToken } from './auth/entities/password-reset-token.entity';
+import { RevokedToken } from './auth/entities/revoked-token.entity';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { PasswordResetToken } from './auth/entities/password-reset-token.entity'
           host: config.get<string>('DB_HOST', 'localhost'),
           port: Number(config.get<string>('DB_PORT', '1433')),
           database: config.get<string>('DB_NAME'),
-          entities: [Usuario, PasswordResetToken],
+          entities: [Usuario, PasswordResetToken, RevokedToken],
+          autoLoadEntities: true,
           synchronize: false,
           options: {
             encrypt: false,

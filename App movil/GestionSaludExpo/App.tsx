@@ -19,6 +19,8 @@ import { DocumentoFormScreen } from './src/screens/DocumentoFormScreen';
 import { RecordatorioFormScreen } from './src/screens/RecordatorioFormScreen';
 import { RegistroDentalFormScreen } from './src/screens/RegistroDentalFormScreen';
 import { RecordatorioListScreen } from './src/screens/RecordatorioListScreen';
+import { PacienteResumenScreen } from './src/screens/PacienteResumenScreen';
+import { ExpedienteGestionScreen } from './src/screens/ExpedienteGestionScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -49,6 +51,16 @@ export default function App() {
             name="MenuPrincipal"
             component={MenuPrincipalScreen}
             options={{ title: 'menu principal' }}
+          />
+          <Stack.Screen
+            name="PacienteResumen"
+            component={PacienteResumenScreen}
+            options={{ title: 'resumen del paciente' }}
+          />
+          <Stack.Screen
+            name="ExpedienteGestion"
+            component={ExpedienteGestionScreen}
+            options={{ title: 'gestionar expediente' }}
           />
           <Stack.Screen
             name="PacienteForm"
