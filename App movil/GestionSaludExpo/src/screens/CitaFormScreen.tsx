@@ -259,6 +259,14 @@ export function CitaFormScreen() {
     fetchPatients();
   }, [fetchPatients]);
 
+  const patientNameById = useMemo(() => {
+    const map: Record<number, string> = {};
+    patientOptions.forEach((patient) => {
+      map[patient.pacienteId] = patient.displayName;
+    });
+    return map;
+  }, [patientOptions]);
+
   const markedDates: CalendarMarks = useMemo(() => {
     const marks: CalendarMarks = {};
     appointments.forEach((appointment) => {
@@ -436,23 +444,27 @@ export function CitaFormScreen() {
         {appointmentsForSelectedDay.length === 0 ? (
           <Text style={styles.emptyText}>No hay citas para este día.</Text>
         ) : (
-          appointmentsForSelectedDay.map((appointment) => (
-            <View key={appointment.citaId} style={styles.appointmentCard}>
-              <View style={styles.appointmentHeader}>
-                <Text style={styles.appointmentHour}>{appointment.timeLabel}</Text>
-                <View style={styles.statusBadge}>
-                  <Text style={styles.statusBadgeText}>{appointment.estado ?? "Programada"}</Text>
+          appointmentsForSelectedDay.map((appointment) => {
+            const patientName =
+              patientNameById[appointment.pacienteId] ?? `Paciente #${appointment.pacienteId}`;
+            return (
+              <View key={appointment.citaId} style={styles.appointmentCard}>
+                <View style={styles.appointmentHeader}>
+                  <Text style={styles.appointmentHour}>{appointment.timeLabel}</Text>
+                  <View style={styles.statusBadge}>
+                    <Text style={styles.statusBadgeText}>{appointment.estado ?? "Programada"}</Text>
+                  </View>
                 </View>
+                <Text style={styles.appointmentTitle}>{patientName}</Text>
+                {appointment.especialidad ? (
+                  <Text style={styles.appointmentDetail}>Especialidad: {appointment.especialidad}</Text>
+                ) : null}
+                {appointment.motivo ? (
+                  <Text style={styles.appointmentDetail}>Motivo: {appointment.motivo}</Text>
+                ) : null}
               </View>
-              <Text style={styles.appointmentTitle}>Paciente #{appointment.pacienteId}</Text>
-              {appointment.especialidad ? (
-                <Text style={styles.appointmentDetail}>Especialidad: {appointment.especialidad}</Text>
-              ) : null}
-              {appointment.motivo ? (
-                <Text style={styles.appointmentDetail}>Motivo: {appointment.motivo}</Text>
-              ) : null}
-            </View>
-          ))
+            );
+          })
         )}
       </View>
 
@@ -799,4 +811,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
 
