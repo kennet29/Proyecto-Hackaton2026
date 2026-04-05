@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -10,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 
@@ -110,6 +112,7 @@ export function AlergiaScreen() {
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(buildInitialForm);
+  const [showIOSDatePicker, setShowIOSDatePicker] = useState(false);
 
   useEffect(() => {
     if (!editingId) {
@@ -213,6 +216,58 @@ export function AlergiaScreen() {
 
   const handleChange = (key: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const getCurrentDateValue = () => {
+    if (!form.fechadiagnostico) {
+      return new Date();
+    }
+    const parsed = new Date(form.fechadiagnostico);
+    if (Number.isNaN(parsed.getTime())) {
+      return new Date();
+    }
+    return parsed;
+  };
+
+  const handleDateConfirm = (date: Date) => {
+    const iso = date.toISOString().split('T')[0];
+    handleChange('fechadiagnostico', iso);
+    if (Platform.OS === 'ios') {
+      setShowIOSDatePicker(false);
+    }
+  };
+
+  const openDatePicker = () => {
+    const baseDate = getCurrentDateValue();
+    if (Platform.OS === 'android') {
+      DateTimePickerAndroid.open({
+        value: baseDate,
+        mode: 'date',
+        is24Hour: true,
+        onChange: (event, selectedDate) => {
+          if (event.type === 'set' && selectedDate) {
+            handleDateConfirm(selectedDate);
+          }
+        },
+      });
+      return;
+    }
+    setShowIOSDatePicker(true);
+  };
+
+  const formatInputDate = (value?: string) => {
+    if (!value) {
+      return 'Selecciona una fecha';
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return value;
+    }
+    return parsed.toLocaleDateString('es-NI', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   };
 
   const ensurePatientOption = (record: AlergiaRecord) => {
@@ -465,12 +520,39 @@ export function AlergiaScreen() {
             onChangeText={(text) => handleChange('tratamiento', text)}
           />
           <Text style={styles.inputLabel}>Fecha diagnóstico</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Fecha diagnóstico (YYYY-MM-DD)"
-            value={form.fechadiagnostico}
-            onChangeText={(text) => handleChange('fechadiagnostico', text)}
-          />
+          <View style={styles.dateRow}>
+            <TouchableOpacity style={styles.dateButton} onPress={openDatePicker}>
+              <Text style={styles.dateButtonText}>{formatInputDate(form.fechadiagnostico)}</Text>
+            </TouchableOpacity>
+            {form.fechadiagnostico ? (
+              <TouchableOpacity
+                style={styles.clearDateBtn}
+                onPress={() => handleChange('fechadiagnostico', '')}
+              >
+                <Text style={styles.clearDateText}>Limpiar</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+          {Platform.OS === 'ios' && showIOSDatePicker && (
+            <View style={styles.iosPickerWrapper}>
+              <DateTimePicker
+                mode="date"
+                display="spinner"
+                value={getCurrentDateValue()}
+                onChange={(_, selectedDate) => {
+                  if (selectedDate) {
+                    handleDateConfirm(selectedDate);
+                  }
+                }}
+              />
+              <TouchableOpacity
+                onPress={() => setShowIOSDatePicker(false)}
+                style={styles.iosPickerDoneBtn}
+              >
+                <Text style={styles.iosPickerDoneText}>Listo</Text>
+              </TouchableOpacity>
+            </View>
+          )}
           <Text style={styles.inputLabel}>Estado</Text>
           <TextInput
             style={styles.input}
@@ -725,6 +807,53 @@ const styles = StyleSheet.create({
   multiline: {
     minHeight: 80,
     textAlignVertical: 'top',
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  dateButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#cbd5f5',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: '#f1f5f9',
+  },
+  dateButtonText: {
+    color: '#0f172a',
+    fontSize: 15,
+  },
+  clearDateBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#fee2e2',
+  },
+  clearDateText: {
+    color: '#b91c1c',
+    fontWeight: '700',
+  },
+  iosPickerWrapper: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#cbd5f5',
+    borderRadius: 16,
+    backgroundColor: '#f8fafc',
+    overflow: 'hidden',
+  },
+  iosPickerDoneBtn: {
+    borderTopWidth: 1,
+    borderTopColor: '#cbd5f5',
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: '#e0f2fe',
+  },
+  iosPickerDoneText: {
+    color: '#0f172a',
+    fontWeight: '700',
   },
   saveBtn: {
     backgroundColor: '#0f172a',
