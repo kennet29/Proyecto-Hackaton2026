@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
+import { useBackendVersion } from '../hooks/useBackendVersion';
+
+const resolveAppVersion = () => {
+  const expoConfigVersion = Constants.expoConfig?.version;
+  const legacyManifestVersion = (Constants as any)?.manifest?.version;
+  const manifest2Version = (Constants as any)?.manifest2?.extra?.expoClient?.version;
+  return expoConfigVersion ?? manifest2Version ?? legacyManifestVersion ?? '0.0.0';
+};
 
 type OptionItem = {
   key: string;
@@ -147,6 +156,8 @@ const bottomTabs = [
 
 export function MenuPrincipalScreen({ navigation }: Props) {
   const [activeTab, setActiveTab] = useState('home');
+  const { backendVersion, isLoading, error, refresh } = useBackendVersion();
+  const appVersion = resolveAppVersion();
 
   const handleNavigate = (route?: keyof RootStackParamList) => {
     if (!route) return;
@@ -200,6 +211,29 @@ export function MenuPrincipalScreen({ navigation }: Props) {
             </TouchableOpacity>
           );
         })}
+      </View>
+      <View style={styles.versionPanel}>
+        <View style={styles.versionColumn}>
+          <Text style={styles.versionLabel}>App</Text>
+          <Text style={styles.versionValue}>v{appVersion}</Text>
+        </View>
+        <View style={styles.versionColumn}>
+          <Text style={styles.versionLabel}>Backend</Text>
+          <Text style={styles.versionValue}>
+            {backendVersion ? `v${backendVersion.version}` : isLoading ? 'Cargando...' : 'No disponible'}
+          </Text>
+          {!!backendVersion && (
+            <Text style={styles.versionMeta}>
+              API {backendVersion.apiVersion} - SemVer{' '}
+              {backendVersion.semver.major}.{backendVersion.semver.minor}.{backendVersion.semver.patch}
+              {backendVersion.semver.prerelease ? `-${backendVersion.semver.prerelease}` : ''}
+            </Text>
+          )}
+          {error && <Text style={styles.versionError}>{error}</Text>}
+        </View>
+        <TouchableOpacity style={styles.versionRefresh} onPress={refresh}>
+          <Ionicons name="refresh" size={18} color="#0f172a" />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -288,4 +322,45 @@ const styles = StyleSheet.create({
   iconCircleActive: {
     backgroundColor: '#bfdbfe',
   },
+  versionPanel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1e293b',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 12,
+    marginTop: 8,
+  },
+  versionColumn: {
+    flex: 1,
+  },
+  versionLabel: {
+    color: '#94a3b8',
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  versionValue: {
+    color: '#f8fafc',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  versionMeta: {
+    color: '#cbd5f5',
+    fontSize: 12,
+  },
+  versionError: {
+    color: '#fecdd3',
+    fontSize: 12,
+  },
+  versionRefresh: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#fafdff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
+

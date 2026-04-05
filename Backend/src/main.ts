@@ -7,6 +7,7 @@ import { ZodError } from 'zod';
 import { AppModule } from './app.module';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter';
 import { DataSource } from 'typeorm';
+import { VersionService } from './version/version.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -41,6 +42,8 @@ async function bootstrap() {
   app.useGlobalFilters(new ApiExceptionFilter());
   const port = process.env.PORT ?? '3000';
   await app.listen(port);
+  const versionService = app.get(VersionService);
+  const backendVersion = versionService.getBackendVersion();
   let dbStatus = 'conexion a base de datos no disponible';
   try {
     const dataSource = app.get(DataSource);
@@ -54,7 +57,9 @@ async function bootstrap() {
   } catch (error) {
     dbStatus = `conexion a base de datos fallo: ${(error as Error).message}`;
   }
-  console.log(`api usuarios v1 escuchando en puerto ${port} con prefijo /api - ${dbStatus}`);
+  console.log(
+    `api usuarios ${backendVersion.version} escuchando en puerto ${port} con prefijo /api - ${dbStatus}`,
+  );
 }
 
 bootstrap();
