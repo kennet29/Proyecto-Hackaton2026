@@ -218,19 +218,32 @@ export function AlergiaScreen() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const getCurrentDateValue = () => {
-    if (!form.fechadiagnostico) {
-      return new Date();
+  const parseLocalDateString = (value?: string) => {
+    if (!value) {
+      return null;
     }
-    const parsed = new Date(form.fechadiagnostico);
-    if (Number.isNaN(parsed.getTime())) {
-      return new Date();
+    const parts = value.split('-');
+    if (parts.length !== 3) {
+      return null;
     }
-    return parsed;
+    const [yearStr, monthStr, dayStr] = parts;
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const day = Number(dayStr);
+    if ([year, month, day].some((part) => Number.isNaN(part))) {
+      return null;
+    }
+    return new Date(year, month - 1, day);
   };
 
+  const getCurrentDateValue = () => parseLocalDateString(form.fechadiagnostico) ?? new Date();
+
   const handleDateConfirm = (date: Date) => {
-    const iso = date.toISOString().split('T')[0];
+    const iso = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0'),
+    ].join('-');
     handleChange('fechadiagnostico', iso);
     if (Platform.OS === 'ios') {
       setShowIOSDatePicker(false);
@@ -259,8 +272,8 @@ export function AlergiaScreen() {
     if (!value) {
       return 'Selecciona una fecha';
     }
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) {
+    const parsed = parseLocalDateString(value);
+    if (!parsed) {
       return value;
     }
     return parsed.toLocaleDateString('es-NI', {
