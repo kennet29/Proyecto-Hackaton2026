@@ -68,11 +68,58 @@ const formatErrorMessage = (error: unknown) => {
   return 'No se pudo completar la acción, intenta nuevamente.';
 };
 
+const toDateOnlyString = (date: Date) => {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+};
+
+const extractDatePortion = (value?: string | Date | null): string => {
+  if (!value) {
+    return '';
+  }
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) {
+      return '';
+    }
+    return toDateOnlyString(value);
+  }
+  const trimmed = String(value).trim();
+  if (!trimmed) {
+    return '';
+  }
+  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${year}-${month}-${day}`;
+  }
+  const fallback = new Date(trimmed);
+  if (!Number.isNaN(fallback.getTime())) {
+    return toDateOnlyString(fallback);
+  }
+  return '';
+};
+
+const parseLocalDateString = (value?: string | Date | null) => {
+  const portion = extractDatePortion(value);
+  if (!portion) {
+    return null;
+  }
+  const segments = portion.split('-').map((segment) => Number(segment));
+  if (segments.length !== 3 || segments.some((segment) => Number.isNaN(segment))) {
+    return null;
+  }
+  const [year, month, day] = segments;
+  return new Date(year, month - 1, day);
+};
+
 const formatDate = (value?: string | null) => {
-  if (!value) return 'Sin fecha';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
+  const parsed = parseLocalDateString(value);
+  if (!parsed) {
+    const raw = typeof value === 'string' ? value.trim() : '';
+    return raw || 'Sin fecha';
   }
   return parsed.toLocaleDateString('es-NI', {
     year: 'numeric',
@@ -188,7 +235,16 @@ export function AlergiaScreen() {
       if (!response.ok) {
         throw new Error(body?.message ?? 'No se pudieron obtener las alergias');
       }
-      setRecords(Array.isArray(body) ? body : []);
+      const normalized = Array.isArray(body)
+        ? body.map((item) => {
+            const cleanDate = extractDatePortion(item?.fechadiagnostico);
+            return {
+              ...item,
+              fechadiagnostico: cleanDate || null,
+            };
+          })
+        : [];
+      setRecords(normalized as AlergiaRecord[]);
     } catch (error) {
       setFeedback({ type: 'error', message: formatErrorMessage(error) });
     } finally {
@@ -236,7 +292,8 @@ export function AlergiaScreen() {
     return new Date(year, month - 1, day);
   };
 
-  const getCurrentDateValue = () => parseLocalDateString(form.fechadiagnostico) ?? new Date();
+  const getCurrentDateValue = () =>
+    parseLocalDateString(form.fechadiagnostico) ?? new Date();
 
   const handleDateConfirm = (date: Date) => {
     const iso = [
@@ -268,7 +325,7 @@ export function AlergiaScreen() {
     setShowIOSDatePicker(true);
   };
 
-  const formatInputDate = (value?: string) => {
+  const formatInputDate = (value?: string | null) => {
     if (!value) {
       return 'Selecciona una fecha';
     }
@@ -312,7 +369,7 @@ export function AlergiaScreen() {
       severidad: record.severidad ?? '',
       reaccion: record.reaccion ?? '',
       tratamiento: record.tratamiento ?? '',
-      fechadiagnostico: record.fechadiagnostico ?? '',
+      fechadiagnostico: extractDatePortion(record.fechadiagnostico) || '',
       estado: record.estado ?? 'Activa',
       observaciones: record.observaciones ?? '',
     });
@@ -332,6 +389,7 @@ export function AlergiaScreen() {
     }
     setIsSubmitting(true);
     try {
+      const sanitizedDate = extractDatePortion(form.fechadiagnostico);
       const payload = {
         pacienteId: Number(form.pacienteId),
         tipo: form.tipo.trim(),
@@ -341,7 +399,7 @@ export function AlergiaScreen() {
         tratamiento: form.tratamiento.trim() || undefined,
         estado: form.estado.trim() || undefined,
         observaciones: form.observaciones.trim() || undefined,
-        fechadiagnostico: form.fechadiagnostico ? form.fechadiagnostico : undefined,
+        fechadiagnostico: sanitizedDate || undefined,
         creadopor: user?.username ?? undefined,
       };
       if (!payload.pacienteId || Number.isNaN(payload.pacienteId)) {
