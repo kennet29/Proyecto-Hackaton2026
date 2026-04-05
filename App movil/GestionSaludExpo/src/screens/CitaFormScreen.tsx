@@ -1,4 +1,4 @@
-ï»¿import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -170,7 +170,7 @@ export function CitaFormScreen() {
         }
         return {
           citaId: item?.citaId ?? item?.citaid ?? item?.id ?? Math.random(),
-          pacienteId: item?.pacienteId ?? item?.pacienteid ?? 0,
+          pacienteId: item?.pacienteId ?? item?.pacienteId ?? 0,
           estado: item?.estado ?? null,
           especialidad: item?.especialidad ?? null,
           motivo: item?.motivo ?? null,
@@ -343,7 +343,7 @@ export function CitaFormScreen() {
         method: "POST",
         headers,
         body: JSON.stringify({
-          pacienteid: Number(form.pacienteId),
+          pacienteId: Number(form.pacienteId),
           fechacita: form.fecha,
           especialidad: form.especialidad || undefined,
           motivo: form.motivo || undefined,
@@ -354,14 +354,14 @@ export function CitaFormScreen() {
       if (!response.ok) {
         throw new Error(body?.message ?? "No se pudo agendar la cita");
       }
-      Alert.alert("Cita creada", "La cita quedÃ³ registrada");
+      Alert.alert("Cita creada", "La cita quedó registrada");
       setForm({ pacienteId: "", fecha: "", especialidad: "", motivo: "" });
       setFormDate(selectedDate);
       setFormTime("09:00");
       fetchAppointments();
       setShowForm(false);
     } catch (error) {
-      Alert.alert("Error", error instanceof Error ? error.message : "FallÃ³ la peticiÃ³n");
+      Alert.alert("Error", error instanceof Error ? error.message : "Falló la petición");
     } finally {
       setIsSubmitting(false);
     }
@@ -410,7 +410,7 @@ export function CitaFormScreen() {
         ) : patientOptions.length === 0 ? (
           <View style={styles.emptyPatients}>
             <Text style={styles.emptyText}>
-              No hay personas vinculadas. RegÃ­stralas desde Gestionar Expediente.
+              No hay personas vinculadas. Regístralas desde Gestionar Expediente.
             </Text>
             <TouchableOpacity style={styles.refreshBtn} onPress={fetchPatients}>
               <Text style={styles.refreshBtnText}>Actualizar</Text>
@@ -434,7 +434,7 @@ export function CitaFormScreen() {
       <View style={styles.dailySection}>
         <Text style={styles.sectionTitle}>{formatHumanDate(selectedDate)}</Text>
         {appointmentsForSelectedDay.length === 0 ? (
-          <Text style={styles.emptyText}>No hay citas para este dÃ­a.</Text>
+          <Text style={styles.emptyText}>No hay citas para este día.</Text>
         ) : (
           appointmentsForSelectedDay.map((appointment) => (
             <View key={appointment.citaId} style={styles.appointmentCard}>
@@ -485,7 +485,7 @@ export function CitaFormScreen() {
                     key={person.pacienteId}
                     label={
                       person.parentesco
-                        ? `${person.displayName} Â· ${person.parentesco}`
+                        ? `${person.displayName} · ${person.parentesco}`
                         : person.displayName
                     }
                     value={String(person.pacienteId)}
@@ -799,3 +799,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
