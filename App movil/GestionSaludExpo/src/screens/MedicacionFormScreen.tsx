@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../config/api';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 export function MedicacionFormScreen() {
   const [form, setForm] = useState({
@@ -21,7 +21,7 @@ export function MedicacionFormScreen() {
 
   const handleSubmit = async () => {
     if (!form.pacienteId || !form.nombre || !form.fechaInicio) {
-      Alert.alert('faltan datos', 'paciente, nombre y fecha de inicio son obligatorios');
+      Alert.alert('Faltan Datos', 'Paciente, nombre y fecha de inicio son obligatorios');
       return;
     }
     try {
@@ -44,57 +44,57 @@ export function MedicacionFormScreen() {
       });
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body?.message ?? 'no se pudo registrar la medicacion');
+        throw new Error(body?.message ?? 'No se pudo registrar la medicacion');
       }
-      Alert.alert('medicacion guardada', 'se agrego a los horarios');
+      Alert.alert('Medicacion Guardada', 'Se agrego a los horarios');
       setForm({ pacienteId: '', nombre: '', dosis: '', via: '', fechaInicio: '', fechaFin: '' });
     } catch (error) {
-      Alert.alert('error', error instanceof Error ? error.message : 'fallo la solicitud');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Fallo la solicitud');
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>prescripcion</Text>
+      <Text style={styles.title}>Prescripcion</Text>
       <TextInput
         style={styles.input}
-        placeholder="paciente id"
+        placeholder="Paciente ID"
         keyboardType="numeric"
         value={form.pacienteId}
         onChangeText={(value) => handleChange('pacienteId', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="nombre medicamento"
+        placeholder="Nombre Medicamento"
         value={form.nombre}
         onChangeText={(value) => handleChange('nombre', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="dosis (ej. 500mg)"
+        placeholder="Dosis (Ej. 500mg)"
         value={form.dosis}
         onChangeText={(value) => handleChange('dosis', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="via administracion"
+        placeholder="Via Administracion"
         value={form.via}
         onChangeText={(value) => handleChange('via', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="fecha inicio (YYYY-MM-DD)"
+        placeholder="Fecha Inicio (YYYY-MM-DD)"
         value={form.fechaInicio}
         onChangeText={(value) => handleChange('fechaInicio', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="fecha fin (opcional)"
+        placeholder="Fecha Fin (Opcional)"
         value={form.fechaFin}
         onChangeText={(value) => handleChange('fechaFin', value)}
       />
       <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
-        <Text style={styles.btnText}>guardar medicacion</Text>
+        <Text style={styles.btnText}>Guardar Medicacion</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -109,7 +109,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 16,
-    textTransform: 'uppercase',
   },
   input: {
     borderWidth: 1,

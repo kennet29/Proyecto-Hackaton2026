@@ -4,8 +4,8 @@ import { View, Text, StyleSheet, Linking, TouchableOpacity } from 'react-native'
 export function ContactoScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>contactanos</Text>
-      <Text style={styles.text}>soporte 24/7 para tus consultas medicas digitales.</Text>
+      <Text style={styles.title}>Contactanos</Text>
+      <Text style={styles.text}>Soporte 24/7 para tus consultas medicas digitales.</Text>
       <TouchableOpacity onPress={() => Linking.openURL('mailto:soporte@gestionsalud.com')}>
         <Text style={styles.link}>soporte@gestionsalud.com</Text>
       </TouchableOpacity>
@@ -13,12 +13,12 @@ export function ContactoScreen() {
         <Text style={styles.link}>+505 800 1234</Text>
       </TouchableOpacity>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>horario</Text>
-        <Text style={styles.cardText}>lunes a viernes 8:00 am a 8:00 pm (gmt-6)</Text>
+        <Text style={styles.cardTitle}>Horario</Text>
+        <Text style={styles.cardText}>Lunes a viernes 8:00 am a 8:00 pm (GMT-6)</Text>
       </View>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>direccion</Text>
-        <Text style={styles.cardText}>centro clinico digital, managua, nicaragua</Text>
+        <Text style={styles.cardTitle}>Direccion</Text>
+        <Text style={styles.cardText}>Centro clinico digital, Managua, Nicaragua</Text>
       </View>
     </View>
   );
@@ -34,7 +34,6 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: '700',
     marginBottom: 12,
-    textTransform: 'uppercase',
   },
   text: {
     fontSize: 16,
@@ -56,7 +55,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 6,
-    textTransform: 'uppercase',
   },
   cardText: {
     fontSize: 16,

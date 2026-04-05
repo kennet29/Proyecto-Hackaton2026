@@ -14,6 +14,9 @@ export class Usuario {
   @Column({ name: 'hashpassword', type: 'varbinary', length: 256 })
   hashPassword!: Buffer;
 
+  @Column({ name: 'huelladigitalhash', type: 'varbinary', length: 64, nullable: true })
+  fingerprintHash?: Buffer | null;
+
   @Column({ name: 'rolprincipal', default: 'paciente' })
   role!: string;
 

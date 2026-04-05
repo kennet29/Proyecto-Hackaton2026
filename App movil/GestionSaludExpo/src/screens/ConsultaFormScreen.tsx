@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../config/api';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 export function ConsultaFormScreen() {
   const [form, setForm] = useState({
@@ -20,7 +20,7 @@ export function ConsultaFormScreen() {
 
   const handleSubmit = async () => {
     if (!form.pacienteId || !form.fecha || !form.motivo) {
-      Alert.alert('faltan datos', 'paciente, fecha y motivo son obligatorios');
+      Alert.alert('Faltan Datos', 'Paciente, fecha y motivo son obligatorios');
       return;
     }
     try {
@@ -42,53 +42,53 @@ export function ConsultaFormScreen() {
       });
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body?.message ?? 'no se pudo guardar la consulta');
+        throw new Error(body?.message ?? 'No se pudo guardar la consulta');
       }
-      Alert.alert('consulta guardada', 'se registro la atencion');
+      Alert.alert('Consulta Guardada', 'Se registró la atención');
       setForm({ pacienteId: '', fecha: '', motivo: '', diagnostico: '', tratamiento: '' });
     } catch (error) {
-      Alert.alert('error', error instanceof Error ? error.message : 'fallo la peticion');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Falló la petición');
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>registrar consulta</Text>
+      <Text style={styles.title}>Registrar Consulta</Text>
       <TextInput
         style={styles.input}
-        placeholder="paciente id"
+        placeholder="Paciente ID"
         keyboardType="numeric"
         value={form.pacienteId}
         onChangeText={(value) => handleChange('pacienteId', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="fecha (YYYY-MM-DD)"
+        placeholder="Fecha (YYYY-MM-DD)"
         value={form.fecha}
         onChangeText={(value) => handleChange('fecha', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="motivo"
+        placeholder="Motivo"
         value={form.motivo}
         onChangeText={(value) => handleChange('motivo', value)}
       />
       <TextInput
         style={[styles.input, styles.multiline]}
-        placeholder="diagnostico"
+        placeholder="Diagnostico"
         value={form.diagnostico}
         multiline
         onChangeText={(value) => handleChange('diagnostico', value)}
       />
       <TextInput
         style={[styles.input, styles.multiline]}
-        placeholder="tratamiento"
+        placeholder="Tratamiento"
         value={form.tratamiento}
         multiline
         onChangeText={(value) => handleChange('tratamiento', value)}
       />
       <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
-        <Text style={styles.btnText}>guardar consulta</Text>
+        <Text style={styles.btnText}>Guardar Consulta</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -103,7 +103,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 16,
-    textTransform: 'uppercase',
   },
   input: {
     borderWidth: 1,

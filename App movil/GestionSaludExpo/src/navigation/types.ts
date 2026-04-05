@@ -1,3 +1,5 @@
+import { NivelEducativoId } from '../data/educacion';
+
 export type RootStackParamList = {
   IniciarSesion: undefined;
   Login: undefined;
@@ -16,4 +18,9 @@ export type RootStackParamList = {
   RecordatorioForm: undefined;
   RegistroDentalForm: undefined;
   RecordatorioList: undefined;
+  Alergia: undefined;
+  Educacion: undefined;
+  EducacionNivel: { nivelId: NivelEducativoId };
+  EducacionTema: { nivelId: NivelEducativoId; temaId: string };
+  Registro: undefined;
 };

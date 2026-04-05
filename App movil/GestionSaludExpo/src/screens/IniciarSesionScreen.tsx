@@ -8,18 +8,18 @@ type Props = NativeStackScreenProps<RootStackParamList, 'IniciarSesion'>;
 export function IniciarSesionScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>bienvenido a gestion salud</Text>
+      <Text style={styles.title}>Bienvenido A Gestion Salud</Text>
       <Text style={styles.subtitle}>
-        organiza tus citas, tratamientos y recordatorios desde un solo lugar.
+        Organiza tus citas, tratamientos y recordatorios desde un solo lugar.
       </Text>
       <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.btnText}>ir a login</Text>
+        <Text style={styles.btnText}>Ir A Login</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.secondaryBtn}
         onPress={() => navigation.navigate('MenuPrincipal')}
       >
-        <Text style={styles.secondaryText}>ver menu principal</Text>
+        <Text style={styles.secondaryText}>Ver Menu Principal</Text>
       </TouchableOpacity>
     </View>
   );
@@ -37,7 +37,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 12,
     color: '#fefefe',
-    textTransform: 'uppercase',
   },
   subtitle: {
     fontSize: 16,

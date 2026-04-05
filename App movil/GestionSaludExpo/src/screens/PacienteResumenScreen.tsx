@@ -14,26 +14,26 @@ import { useAuth } from '../context/AuthContext';
 type Props = NativeStackScreenProps<RootStackParamList, 'PacienteResumen'>;
 
 const baseHighlightCards = [
-  { label: 'consultas', value: '12', trend: '+2 este mes' },
+  { label: 'Consultas', value: '12', trend: '+2 este mes' },
   { label: 'citas próximas', value: '3', trend: '2 confirmadas' },
-  { label: 'vacunas', value: '8', trend: '1 pendiente' },
+  { label: 'Vacunas', value: '8', trend: '1 pendiente' },
   { label: 'notas de hábitos', value: '5', trend: 'actualizado ayer' },
 ];
 
 const clinicalData = [
-  { label: 'imc', value: '23.1', detail: 'saludable' },
+  { label: 'IMC', value: '23.1', detail: 'Saludable' },
   { label: 'presión arterial', value: '118 / 76', detail: 'último control 20 mar' },
-  { label: 'alergias activas', value: '2', detail: 'polen, penicilina' },
+  { label: 'Alergias Activas', value: '2', detail: 'Polen, penicilina' },
   { label: 'condiciones crónicas', value: '1', detail: 'hipotiroidismo' },
 ];
 
 const upcomingReminders = [
-  { label: 'control nutricional', date: '28 mar 2026 - 09:00' },
-  { label: 'dosis vacuna influenza', date: '05 abr 2026 - 15:30' },
+  { label: 'Control Nutricional', date: '28 mar 2026 - 09:00' },
+  { label: 'Dosis Vacuna Influenza', date: '05 abr 2026 - 15:30' },
 ];
 
 const medicationPlan = [
-  { name: 'metformina', dosage: '850 mg', schedule: 'desayuno y cena' },
+  { name: 'Metformina', dosage: '850 mg', schedule: 'Desayuno y cena' },
   { name: 'vitamina d', dosage: '1000 ui', schedule: 'cada mañana' },
 ];
 
@@ -43,15 +43,15 @@ export function PacienteResumenScreen({ navigation }: Props) {
     if (user?.username) {
       return user.username.split('@')[0];
     }
-    return 'paciente';
+    return 'Paciente';
   }, [user?.username]);
   const pacientesVinculados = user?.pacienteIds?.length ?? (user?.pacienteId ? 1 : 0);
   const highlights = useMemo(() => {
     const cards = [...baseHighlightCards];
     cards.unshift({
-      label: 'pacientes vinculados',
+      label: 'Pacientes Vinculados',
       value: `${pacientesVinculados}`,
-      trend: pacientesVinculados > 1 ? 'gestion familiar activa' : 'perfil individual',
+      trend: pacientesVinculados > 1 ? 'Gestion familiar activa' : 'Perfil individual',
     });
     return cards;
   }, [pacientesVinculados]);
@@ -60,7 +60,7 @@ export function PacienteResumenScreen({ navigation }: Props) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.heroCard}>
         <View>
-          <Text style={styles.heroLabel}>resumen integral</Text>
+          <Text style={styles.heroLabel}>Resumen Integral</Text>
           <Text style={styles.heroTitle}>{pacienteNombre}</Text>
           <Text style={styles.heroSubtitle}>última sincronización hace 5 min</Text>
         </View>
@@ -68,7 +68,7 @@ export function PacienteResumenScreen({ navigation }: Props) {
           style={styles.heroButton}
           onPress={() => navigation.navigate('PacienteForm')}
         >
-          <Text style={styles.heroButtonText}>gestionar pacientes</Text>
+          <Text style={styles.heroButtonText}>Gestionar Pacientes</Text>
         </TouchableOpacity>
       </View>
 
@@ -107,7 +107,7 @@ export function PacienteResumenScreen({ navigation }: Props) {
           style={styles.linkButton}
           onPress={() => navigation.navigate('RecordatorioList')}
         >
-          <Text style={styles.linkText}>ver todos los recordatorios</Text>
+          <Text style={styles.linkText}>Ver Todos Los Recordatorios</Text>
         </TouchableOpacity>
       </View>
 
@@ -156,7 +156,6 @@ const styles = StyleSheet.create({
   },
   heroLabel: {
     color: '#bfdbfe',
-    textTransform: 'uppercase',
     letterSpacing: 1,
     fontSize: 12,
     marginBottom: 4,
@@ -165,7 +164,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 26,
     fontWeight: '800',
-    textTransform: 'capitalize',
   },
   heroSubtitle: {
     color: '#dbeafe',
@@ -182,7 +180,6 @@ const styles = StyleSheet.create({
   heroButtonText: {
     color: '#1d4ed8',
     fontWeight: '700',
-    textTransform: 'uppercase',
     fontSize: 12,
   },
   highlightGrid: {
@@ -200,7 +197,6 @@ const styles = StyleSheet.create({
   },
   highlightLabel: {
     color: '#cbd5f5',
-    textTransform: 'uppercase',
     fontSize: 12,
   },
   highlightValue: {
@@ -224,7 +220,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 12,
-    textTransform: 'uppercase',
   },
   row: {
     flexDirection: 'row',
@@ -237,7 +232,6 @@ const styles = StyleSheet.create({
   rowLabel: {
     color: '#e2e8f0',
     fontSize: 14,
-    textTransform: 'capitalize',
   },
   rowDetail: {
     color: '#94a3b8',
@@ -257,7 +251,6 @@ const styles = StyleSheet.create({
   reminderLabel: {
     color: '#e2e8f0',
     fontWeight: '600',
-    textTransform: 'capitalize',
   },
   reminderDate: {
     color: '#cbd5f5',
@@ -283,7 +276,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
-    textTransform: 'capitalize',
   },
   medSchedule: {
     color: '#94a3b8',
@@ -308,6 +300,5 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     color: '#60a5fa',
     fontWeight: '700',
-    textTransform: 'uppercase',
   },
 });

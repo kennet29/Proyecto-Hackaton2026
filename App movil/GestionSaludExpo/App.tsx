@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { RootStackParamList } from './src/navigation/types';
-import { AuthProvider } from './src/context/AuthContext';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { IniciarSesionScreen } from './src/screens/IniciarSesionScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { CambiarContrasenaScreen } from './src/screens/CambiarContrasenaScreen';
@@ -21,92 +21,132 @@ import { RegistroDentalFormScreen } from './src/screens/RegistroDentalFormScreen
 import { RecordatorioListScreen } from './src/screens/RecordatorioListScreen';
 import { PacienteResumenScreen } from './src/screens/PacienteResumenScreen';
 import { ExpedienteGestionScreen } from './src/screens/ExpedienteGestionScreen';
+import { EducacionScreen } from './src/screens/EducacionScreen';
+import { EducacionNivelScreen } from './src/screens/EducacionNivelScreen';
+import { EducacionTemaScreen } from './src/screens/EducacionTemaScreen';
+import { RegistroScreen } from './src/screens/RegistroScreen';
+import { AlergiaScreen } from './src/screens/AlergiaScreen';
+import { usePushNotifications } from './src/hooks/usePushNotifications';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+const AppNavigator = () => {
+  const { token, user } = useAuth();
+  usePushNotifications(token, user?.id ?? null);
+
+  return (
+    <NavigationContainer>
+      <StatusBar style="light" />
+      <Stack.Navigator
+        initialRouteName="Login"
+        screenOptions={{
+          headerStyle: { backgroundColor: '#0f172a' },
+          headerTintColor: '#fff',
+        }}
+      >
+        <Stack.Screen
+          name="IniciarSesion"
+          component={IniciarSesionScreen}
+          options={{ title: 'Iniciar Sesion' }}
+        />
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen name="Registro" component={RegistroScreen} options={{ title: 'Registro' }} />
+        <Stack.Screen
+          name="CambiarContrasena"
+          component={CambiarContrasenaScreen}
+          options={{ title: 'Cambiar Contrasena' }}
+        />
+        <Stack.Screen
+          name="MenuPrincipal"
+          component={MenuPrincipalScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="PacienteResumen"
+          component={PacienteResumenScreen}
+          options={{ title: 'Resumen del Paciente' }}
+        />
+        <Stack.Screen
+          name="ExpedienteGestion"
+          component={ExpedienteGestionScreen}
+          options={{ title: 'Gestionar Expediente' }}
+        />
+        <Stack.Screen
+          name="PacienteForm"
+          component={PacienteFormScreen}
+          options={{ title: 'Pacientes' }}
+        />
+        <Stack.Screen
+          name="ConsultaForm"
+          component={ConsultaFormScreen}
+          options={{ title: 'Consultas' }}
+        />
+        <Stack.Screen name="CitaForm" component={CitaFormScreen} options={{ title: 'Citas' }} />
+        <Stack.Screen name="VacunaForm" component={VacunaFormScreen} options={{ title: 'Vacunas' }} />
+        <Stack.Screen
+          name="MedicacionForm"
+          component={MedicacionFormScreen}
+          options={{ title: 'Medicacion' }}
+        />
+        <Stack.Screen
+          name="DocumentoForm"
+          component={DocumentoFormScreen}
+          options={{ title: 'Documentos' }}
+        />
+        <Stack.Screen
+          name="RecordatorioForm"
+          component={RecordatorioFormScreen}
+          options={{ title: 'Recordatorios' }}
+        />
+        <Stack.Screen
+          name="RegistroDentalForm"
+          component={RegistroDentalFormScreen}
+          options={{ title: 'Registro Dental' }}
+        />
+        <Stack.Screen
+          name="Alergia"
+          component={AlergiaScreen}
+          options={{ title: 'Alergias' }}
+        />
+        <Stack.Screen
+          name="Educacion"
+          component={EducacionScreen}
+          options={{ title: 'Academia Saludable' }}
+        />
+        <Stack.Screen
+          name="EducacionNivel"
+          component={EducacionNivelScreen}
+          options={{ title: 'Detalle del Nivel' }}
+        />
+        <Stack.Screen
+          name="EducacionTema"
+          component={EducacionTemaScreen}
+          options={{ title: 'Detalle del Tema' }}
+        />
+        <Stack.Screen
+          name="RecordatorioList"
+          component={RecordatorioListScreen}
+          options={{ title: 'Recordatorios' }}
+        />
+        <Stack.Screen
+          name="SobreNosotros"
+          component={SobreNosotrosScreen}
+          options={{ title: 'Sobre Nosotros' }}
+        />
+        <Stack.Screen name="Contacto" component={ContactoScreen} options={{ title: 'Contacto' }} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
 
 export default function App() {
   return (
     <AuthProvider>
-      <NavigationContainer>
-        <StatusBar style="light" />
-        <Stack.Navigator
-          initialRouteName="IniciarSesion"
-          screenOptions={{
-            headerStyle: { backgroundColor: '#0f172a' },
-            headerTintColor: '#fff',
-          }}
-        >
-          <Stack.Screen
-            name="IniciarSesion"
-            component={IniciarSesionScreen}
-            options={{ title: 'inicio' }}
-          />
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen
-            name="CambiarContrasena"
-            component={CambiarContrasenaScreen}
-            options={{ title: 'cambiar contrasena' }}
-          />
-          <Stack.Screen
-            name="MenuPrincipal"
-            component={MenuPrincipalScreen}
-            options={{ title: 'menu principal' }}
-          />
-          <Stack.Screen
-            name="PacienteResumen"
-            component={PacienteResumenScreen}
-            options={{ title: 'resumen del paciente' }}
-          />
-          <Stack.Screen
-            name="ExpedienteGestion"
-            component={ExpedienteGestionScreen}
-            options={{ title: 'gestionar expediente' }}
-          />
-          <Stack.Screen
-            name="PacienteForm"
-            component={PacienteFormScreen}
-            options={{ title: 'pacientes' }}
-          />
-          <Stack.Screen
-            name="ConsultaForm"
-            component={ConsultaFormScreen}
-            options={{ title: 'consultas' }}
-          />
-          <Stack.Screen name="CitaForm" component={CitaFormScreen} options={{ title: 'citas' }} />
-          <Stack.Screen name="VacunaForm" component={VacunaFormScreen} options={{ title: 'vacunas' }} />
-          <Stack.Screen
-            name="MedicacionForm"
-            component={MedicacionFormScreen}
-            options={{ title: 'medicacion' }}
-          />
-          <Stack.Screen
-            name="DocumentoForm"
-            component={DocumentoFormScreen}
-            options={{ title: 'documentos' }}
-          />
-          <Stack.Screen
-            name="RecordatorioForm"
-            component={RecordatorioFormScreen}
-            options={{ title: 'recordatorios' }}
-          />
-          <Stack.Screen
-            name="RegistroDentalForm"
-            component={RegistroDentalFormScreen}
-            options={{ title: 'registro dental' }}
-          />
-          <Stack.Screen
-            name="RecordatorioList"
-            component={RecordatorioListScreen}
-            options={{ title: 'recordatorios' }}
-          />
-          <Stack.Screen
-            name="SobreNosotros"
-            component={SobreNosotrosScreen}
-            options={{ title: 'sobre nosotros' }}
-          />
-          <Stack.Screen name="Contacto" component={ContactoScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <AppNavigator />
     </AuthProvider>
   );
 }

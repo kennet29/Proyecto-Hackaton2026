@@ -8,6 +8,7 @@ import { GestionSaludModule } from './modules/gestionsalud.module';
 import { AuthModule } from './auth/auth.module';
 import { PasswordResetToken } from './auth/entities/password-reset-token.entity';
 import { RevokedToken } from './auth/entities/revoked-token.entity';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { RevokedToken } from './auth/entities/revoked-token.entity';
     DatabaseModule,
     GestionSaludModule,
     AuthModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

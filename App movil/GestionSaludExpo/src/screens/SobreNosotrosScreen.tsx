@@ -4,28 +4,28 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 export function SobreNosotrosScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>sobre nosotros</Text>
+      <Text style={styles.title}>Sobre Nosotros</Text>
       <Text style={styles.paragraph}>
-        gestion salud nace para centralizar tus historiales clinicos, recordatorios de medicamentos y
-        seguimientos cronicos. empoderamos al paciente con herramientas simples y seguras.
+        Gestion Salud nace para centralizar tus historiales clinicos, recordatorios de medicamentos y
+        seguimientos cronicos. Empoderamos al paciente con herramientas simples y seguras.
       </Text>
-      <Text style={styles.subtitle}>nuestros pilares</Text>
+      <Text style={styles.subtitle}>Nuestros Pilares</Text>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>seguridad</Text>
+        <Text style={styles.cardTitle}>Seguridad</Text>
         <Text style={styles.cardText}>
-          cifrado extremo a extremo y autenticacion moderna para proteger tus datos.
+          Cifrado extremo a extremo y autenticacion moderna para proteger tus datos.
         </Text>
       </View>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>acompanamiento</Text>
+        <Text style={styles.cardTitle}>Acompanamiento</Text>
         <Text style={styles.cardText}>
-          recordatorios inteligentes y tableros que muestran tus avances y controles pendientes.
+          Recordatorios inteligentes y tableros que muestran tus avances y controles pendientes.
         </Text>
       </View>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>integraciones</Text>
+        <Text style={styles.cardTitle}>Integraciones</Text>
         <Text style={styles.cardText}>
-          conectamos con laboratorios, clinicas y aseguradoras para reducir el papeleo.
+          Conectamos con laboratorios, clinicas y aseguradoras para reducir el papeleo.
         </Text>
       </View>
     </ScrollView>
@@ -40,7 +40,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    textTransform: 'uppercase',
     marginBottom: 12,
     color: '#111',
   },
@@ -67,7 +66,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 4,
     color: '#0f172a',
-    textTransform: 'uppercase',
   },
   cardText: {
     fontSize: 15,

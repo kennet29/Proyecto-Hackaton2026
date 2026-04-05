@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../config/api';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 export function CitaFormScreen() {
   const [form, setForm] = useState({
@@ -19,7 +19,7 @@ export function CitaFormScreen() {
 
   const handleSubmit = async () => {
     if (!form.pacienteId || !form.fecha) {
-      Alert.alert('faltan datos', 'paciente y fecha son requeridos');
+      Alert.alert('Faltan Datos', 'Paciente y fecha son requeridos');
       return;
     }
     try {
@@ -40,45 +40,45 @@ export function CitaFormScreen() {
       });
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body?.message ?? 'no se pudo agendar la cita');
+        throw new Error(body?.message ?? 'No se pudo agendar la cita');
       }
-      Alert.alert('cita creada', 'la cita quedo registrada');
+      Alert.alert('Cita Creada', 'La cita quedó registrada');
       setForm({ pacienteId: '', fecha: '', especialidad: '', motivo: '' });
     } catch (error) {
-      Alert.alert('error', error instanceof Error ? error.message : 'fallo la peticion');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Falló la petición');
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>programar cita</Text>
+      <Text style={styles.title}>Programar Cita</Text>
       <TextInput
         style={styles.input}
-        placeholder="paciente id"
+        placeholder="Paciente ID"
         keyboardType="numeric"
         value={form.pacienteId}
         onChangeText={(value) => handleChange('pacienteId', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="fecha (YYYY-MM-DDTHH:MM)"
+        placeholder="Fecha (YYYY-MM-DDTHH:MM)"
         value={form.fecha}
         onChangeText={(value) => handleChange('fecha', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="especialidad"
+        placeholder="Especialidad"
         value={form.especialidad}
         onChangeText={(value) => handleChange('especialidad', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="motivo"
+        placeholder="Motivo"
         value={form.motivo}
         onChangeText={(value) => handleChange('motivo', value)}
       />
       <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
-        <Text style={styles.btnText}>guardar cita</Text>
+        <Text style={styles.btnText}>Guardar Cita</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -93,7 +93,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 16,
-    textTransform: 'uppercase',
   },
   input: {
     borderWidth: 1,

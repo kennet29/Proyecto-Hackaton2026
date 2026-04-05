@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../config/api';
 
 type Recordatorio = {
   recordatoriocitaid: number;
@@ -12,7 +13,6 @@ type Recordatorio = {
   estado?: string;
 };
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 export function RecordatorioListScreen() {
   const [data, setData] = useState<Recordatorio[]>([]);
@@ -29,12 +29,12 @@ export function RecordatorioListScreen() {
       const response = await fetch(`${API_URL}/recordatoriocita`, { headers });
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body?.message ?? 'no se pudieron obtener los recordatorios');
+        throw new Error(body?.message ?? 'No se pudieron obtener los recordatorios');
       }
       const body = await response.json();
       setData(Array.isArray(body) ? body : []);
     } catch (error) {
-      Alert.alert('error', error instanceof Error ? error.message : 'fallo la consulta');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Fallo la consulta');
     } finally {
       setLoading(false);
     }
@@ -46,19 +46,19 @@ export function RecordatorioListScreen() {
 
   const renderItem = ({ item }: { item: Recordatorio }) => (
     <View style={styles.card}>
-      <Text style={styles.title}>recordatorio #{item.recordatoriocitaid}</Text>
-      <Text style={styles.text}>cita: {item.citaid}</Text>
-      <Text style={styles.text}>paciente: {item.pacienteid}</Text>
-      <Text style={styles.text}>fecha: {new Date(item.fecharecordatorio).toLocaleString()}</Text>
-      <Text style={styles.text}>mensaje: {item.mensaje}</Text>
-      <Text style={styles.text}>canal: {item.canal ?? 'sin especificar'}</Text>
-      <Text style={styles.text}>estado: {item.estado ?? 'pendiente'}</Text>
+      <Text style={styles.title}>Recordatorio #{item.recordatoriocitaid}</Text>
+      <Text style={styles.text}>Cita: {item.citaid}</Text>
+      <Text style={styles.text}>Paciente: {item.pacienteid}</Text>
+      <Text style={styles.text}>Fecha: {new Date(item.fecharecordatorio).toLocaleString()}</Text>
+      <Text style={styles.text}>Mensaje: {item.mensaje}</Text>
+      <Text style={styles.text}>Canal: {item.canal ?? 'sin especificar'}</Text>
+      <Text style={styles.text}>Estado: {item.estado ?? 'pendiente'}</Text>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>recordatorios programados</Text>
+      <Text style={styles.header}>Recordatorios Programados</Text>
       <FlatList
         data={data}
         keyExtractor={(item) => item.recordatoriocitaid.toString()}
@@ -66,11 +66,11 @@ export function RecordatorioListScreen() {
         contentContainerStyle={styles.listContent}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#fff" />}
         ListEmptyComponent={
-          !loading ? <Text style={styles.empty}>aun no tienes recordatorios registrados</Text> : null
+          !loading ? <Text style={styles.empty}>Aun no tienes recordatorios registrados</Text> : null
         }
       />
       <TouchableOpacity style={styles.reloadBtn} onPress={fetchData} disabled={loading}>
-        <Text style={styles.reloadText}>{loading ? 'actualizando...' : 'actualizar'}</Text>
+        <Text style={styles.reloadText}>{loading ? 'Actualizando...' : 'Actualizar'}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -87,7 +87,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#fff',
     marginBottom: 12,
-    textTransform: 'uppercase',
   },
   listContent: {
     paddingBottom: 60,

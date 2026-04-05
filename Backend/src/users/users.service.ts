@@ -10,6 +10,7 @@ import * as bcrypt from 'bcryptjs';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Usuario } from './entities/user.entity';
+import { createHash } from 'crypto';
 
 @Injectable()
 export class UsersService {
@@ -21,12 +22,14 @@ export class UsersService {
   async create(payload: CreateUserDto): Promise<Usuario> {
     try {
       const hashed = await bcrypt.hash(payload.password, 10);
+      const fingerprintHash = this.hashFingerprint(payload.fingerprintTemplate);
       const entity = this.usuarioRepository.create({
         username: payload.username,
         pacienteId: payload.pacienteId,
         role: payload.role ?? 'paciente',
         activo: payload.activo ?? true,
         hashPassword: Buffer.from(hashed, 'utf8'),
+        fingerprintHash,
       });
       return await this.usuarioRepository.save(entity);
     } catch (error) {
@@ -63,6 +66,9 @@ export class UsersService {
     if (payload.password) {
       const hashed = await bcrypt.hash(payload.password, 10);
       user.hashPassword = Buffer.from(hashed, 'utf8');
+    }
+    if (payload.fingerprintTemplate !== undefined) {
+      user.fingerprintHash = this.hashFingerprint(payload.fingerprintTemplate);
     }
     if (payload.lastLogin !== undefined) {
       user.lastLogin = payload.lastLogin;
@@ -104,5 +110,20 @@ export class UsersService {
       );
     }
     throw new InternalServerErrorException(`no se pudo ${action} el usuario`);
+  }
+
+  private hashFingerprint(template?: string): Buffer | undefined {
+    if (!template) {
+      return undefined;
+    }
+    try {
+      const raw = Buffer.from(template, 'base64');
+      if (!raw.length) {
+        throw new Error('empty');
+      }
+      return createHash('sha256').update(raw).digest();
+    } catch {
+      throw new BadRequestException('huella digital invalida, envia una cadena base64 valida');
+    }
   }
 }

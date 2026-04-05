@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException, NotFoundException, Logger } from '@n
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHash, timingSafeEqual } from 'crypto';
 import { Repository } from 'typeorm';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
@@ -43,10 +43,26 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('credenciales invalidas');
     }
-    const hash = user.hashPassword ? user.hashPassword.toString('utf8') : '';
-    const isValid = await bcrypt.compare(credentials.password, hash);
-    if (!isValid) {
-      throw new UnauthorizedException('credenciales invalidas');
+    const usedFingerprint = Boolean(credentials.fingerprintTemplate);
+    if (usedFingerprint) {
+      if (!user.fingerprintHash) {
+        throw new UnauthorizedException('no hay una huella registrada para este usuario');
+      }
+      const providedHash = this.hashFingerprint(credentials.fingerprintTemplate!);
+      const storedHash = user.fingerprintHash;
+      if (
+        !storedHash ||
+        storedHash.length !== providedHash.length ||
+        !timingSafeEqual(storedHash, providedHash)
+      ) {
+        throw new UnauthorizedException('huella digital no reconocida');
+      }
+    } else {
+      const hash = user.hashPassword ? user.hashPassword.toString('utf8') : '';
+      const isValid = await bcrypt.compare(credentials.password ?? '', hash);
+      if (!isValid) {
+        throw new UnauthorizedException('credenciales invalidas');
+      }
     }
     await this.usersService.registerLogin(user.id);
     const linkedRelations = await this.usuarioPacienteRepository.find({
@@ -147,5 +163,17 @@ export class AuthService {
       return user.creadoPor;
     }
     return null;
+  }
+
+  private hashFingerprint(template: string): Buffer {
+    try {
+      const raw = Buffer.from(template, 'base64');
+      if (!raw.length) {
+        throw new Error('empty');
+      }
+      return createHash('sha256').update(raw).digest();
+    } catch {
+      throw new UnauthorizedException('huella digital invalida');
+    }
   }
 }

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../config/api';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 export function VacunaFormScreen() {
   const [form, setForm] = useState({
@@ -20,7 +20,7 @@ export function VacunaFormScreen() {
 
   const handleSubmit = async () => {
     if (!form.pacienteId || !form.nombre || !form.fecha) {
-      Alert.alert('faltan datos', 'paciente, nombre y fecha son requeridos');
+      Alert.alert('Faltan Datos', 'Paciente, nombre y fecha son requeridos');
       return;
     }
     try {
@@ -42,51 +42,51 @@ export function VacunaFormScreen() {
       });
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body?.message ?? 'no se pudo registrar la vacuna');
+        throw new Error(body?.message ?? 'No se pudo registrar la vacuna');
       }
-      Alert.alert('vacuna registrada', 'el carnet fue actualizado');
+      Alert.alert('Vacuna Registrada', 'El carnet fue actualizado');
       setForm({ pacienteId: '', nombre: '', fecha: '', lote: '', proximaDosis: '' });
     } catch (error) {
-      Alert.alert('error', error instanceof Error ? error.message : 'fallo la peticion');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Falló la petición');
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>registrar vacuna</Text>
+      <Text style={styles.title}>Registrar Vacuna</Text>
       <TextInput
         style={styles.input}
-        placeholder="paciente id"
+        placeholder="Paciente ID"
         keyboardType="numeric"
         value={form.pacienteId}
         onChangeText={(value) => handleChange('pacienteId', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="nombre vacuna"
+        placeholder="Nombre Vacuna"
         value={form.nombre}
         onChangeText={(value) => handleChange('nombre', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="fecha aplicacion (YYYY-MM-DD)"
+        placeholder="Fecha Aplicacion (YYYY-MM-DD)"
         value={form.fecha}
         onChangeText={(value) => handleChange('fecha', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="lote"
+        placeholder="Lote"
         value={form.lote}
         onChangeText={(value) => handleChange('lote', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="proxima dosis (YYYY-MM-DD)"
+        placeholder="Proxima Dosis (YYYY-MM-DD)"
         value={form.proximaDosis}
         onChangeText={(value) => handleChange('proximaDosis', value)}
       />
       <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
-        <Text style={styles.btnText}>guardar vacuna</Text>
+        <Text style={styles.btnText}>Guardar Vacuna</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -101,7 +101,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 16,
-    textTransform: 'uppercase',
   },
   input: {
     borderWidth: 1,

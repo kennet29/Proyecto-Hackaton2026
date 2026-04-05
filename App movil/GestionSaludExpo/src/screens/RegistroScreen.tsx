@@ -1,0 +1,400 @@
+﻿import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/types';
+import { API_URL } from '../config/api';
+import * as LocalAuthentication from 'expo-local-authentication';
+import {
+  generateFingerprintTemplate,
+  saveFingerprintTemplate,
+} from '../utils/fingerprint';
+
+type Props = NativeStackScreenProps<RootStackParamList, 'Registro'>;
+type FeedbackState = { type: 'success' | 'error'; message: string } | null;
+
+const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => {
+  if (!feedback) {
+    return null;
+  }
+  const isSuccess = feedback.type === 'success';
+  return (
+    <View
+      style={[
+        styles.feedbackBox,
+        isSuccess ? styles.feedbackSuccess : styles.feedbackError,
+      ]}
+    >
+      <Text
+        style={[
+          styles.feedbackText,
+          isSuccess ? styles.feedbackTextSuccess : styles.feedbackTextError,
+        ]}
+      >
+        {feedback.message}
+      </Text>
+    </View>
+  );
+};
+
+const formatErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    if (/native module is null/i.test(error.message)) {
+      return 'No se pudo acceder al almacenamiento local de este dispositivo. Reinstala Expo Go o vuelve a compilar para habilitar la huella.';
+    }
+    return error.message;
+  }
+  return 'Ocurrió un error inesperado. Intenta nuevamente.';
+};
+
+export function RegistroScreen({ navigation }: Props) {
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [fingerprintTemplate, setFingerprintTemplate] = useState<string | null>(null);
+  const [fingerprintStatus, setFingerprintStatus] = useState<'idle' | 'saved'>('idle');
+  const [feedback, setFeedback] = useState<FeedbackState>(null);
+
+  const sanitizeText = (value: string) => value.replace(/[^a-zA-Z\s]/g, '');
+  const sanitizeUsername = (value: string) => value.replace(/[^a-zA-Z0-9._-]/g, '');
+  const sanitizePassword = (value: string) => value;
+  const sanitizeEmail = (value: string) => value.replace(/\s/g, '').toLowerCase();
+
+  useEffect(() => {
+    const checkBiometrics = async () => {
+      try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const enrolled = await LocalAuthentication.isEnrolledAsync();
+        setBiometricAvailable(hasHardware && enrolled);
+      } catch {
+        setBiometricAvailable(false);
+      }
+    };
+    checkBiometrics();
+  }, []);
+
+  const handleRegisterFingerprint = async () => {
+    try {
+      if (!biometricAvailable) {
+        Alert.alert('Biometría No Disponible', 'Configura tu huella en este dispositivo antes de continuar.');
+        return;
+      }
+      const auth = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Confirma tu huella para guardarla',
+      });
+      if (!auth.success) {
+        Alert.alert('Huella Cancelada', 'No se guardó ninguna huella.');
+        return;
+      }
+      const template = generateFingerprintTemplate();
+      setFingerprintTemplate(template);
+      setFingerprintStatus('saved');
+      Alert.alert('Huella Registrada', 'Se enviará junto con tu registro.');
+    } catch (error) {
+      Alert.alert(
+        'Error biométrico',
+        error instanceof Error ? error.message : 'No se pudo registrar la huella. Intenta nuevamente.',
+      );
+    }
+  };
+
+  const handleRegister = async () => {
+    setFeedback(null);
+    if (!fullName || !email || !username || !password || !confirmPassword) {
+      const message = 'Completa todos los datos para continuar.';
+      setFeedback({ type: 'error', message });
+      Alert.alert('Campos Incompletos', message);
+      return;
+    }
+    if (password !== confirmPassword) {
+      const message = 'La contraseña y su confirmación no coinciden.';
+      setFeedback({ type: 'error', message });
+      Alert.alert('Validación', message);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName,
+          email,
+          username,
+          password,
+          fingerprintTemplate: fingerprintTemplate ?? undefined,
+        }),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(body?.message ?? 'No se pudo crear la cuenta');
+      }
+      let successMessage = body?.message ?? 'Cuenta creada correctamente. Ya puedes iniciar sesión.';
+      if (fingerprintTemplate) {
+        try {
+          await saveFingerprintTemplate(username, fingerprintTemplate);
+        } catch (storageError) {
+          console.warn('No se pudo guardar la huella localmente', storageError);
+          successMessage =
+            'Cuenta creada, pero no pudimos guardar la huella en este dispositivo. Podrás registrarla nuevamente desde este mismo teléfono.';
+        }
+      }
+      setFeedback({ type: 'success', message: successMessage });
+      Alert.alert('Cuenta Creada', successMessage, [
+        { text: 'Ir al login', onPress: () => navigation.replace('Login') },
+      ]);
+    } catch (error) {
+      const message = formatErrorMessage(error);
+      setFeedback({ type: 'error', message });
+      Alert.alert('Error', message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.title}>Crear Cuenta</Text>
+        <Text style={styles.subtitle}>Completa tus datos para registrarte en Gestión Salud.</Text>
+        <FeedbackBanner feedback={feedback} />
+
+        <Text style={styles.label}>Nombre Completo</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Ej: Andrea Lopez"
+          placeholderTextColor="#94a3b8"
+          autoCapitalize="words"
+          value={fullName}
+          onChangeText={(text) => setFullName(sanitizeText(text))}
+        />
+
+        <Text style={styles.label}>Correo Electrónico</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="tu@email.com"
+          placeholderTextColor="#94a3b8"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          value={email}
+          onChangeText={(text) => setEmail(sanitizeEmail(text))}
+        />
+
+        <Text style={styles.label}>Usuario</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="usuario.demo"
+          placeholderTextColor="#94a3b8"
+          autoCapitalize="none"
+          autoCorrect={false}
+          value={username}
+          onChangeText={(text) => setUsername(sanitizeUsername(text))}
+        />
+
+        <Text style={styles.label}>Contraseña</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Mínimo 8 caracteres"
+          placeholderTextColor="#94a3b8"
+          secureTextEntry
+          value={password}
+          onChangeText={(text) => setPassword(sanitizePassword(text))}
+        />
+
+        <Text style={styles.label}>Confirmar Contraseña</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Repite la contraseña"
+          placeholderTextColor="#94a3b8"
+          secureTextEntry
+          value={confirmPassword}
+          onChangeText={(text) => setConfirmPassword(sanitizePassword(text))}
+        />
+
+        {biometricAvailable ? (
+          <View style={styles.fingerprintBox}>
+            <Text style={styles.label}>Huella Digital</Text>
+            <Text style={styles.fingerprintHint}>
+              Registra tu huella para iniciar sesión desde este dispositivo sin contraseña.
+            </Text>
+            <TouchableOpacity
+              style={[styles.fingerprintBtn, fingerprintStatus === 'saved' && styles.fingerprintBtnActive]}
+              onPress={handleRegisterFingerprint}
+              disabled={loading}
+            >
+              <Text
+                style={[styles.fingerprintBtnText, fingerprintStatus === 'saved' && styles.fingerprintBtnTextActive]}
+              >
+                {fingerprintStatus === 'saved' ? 'Huella lista' : 'Registrar huella'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <Text style={styles.fingerprintWarning}>
+            Configura la huella en tu teléfono para habilitar esta opción.
+          </Text>
+        )}
+
+        <TouchableOpacity
+          style={styles.primaryBtn}
+          onPress={handleRegister}
+          disabled={loading}
+          accessibilityLabel="Crear cuenta"
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.primaryLabel}>Registrarme</Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.secondaryBtn} onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.secondaryLabel}>Ya Tengo Cuenta</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: '#0f172a',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 8,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#475569',
+    marginBottom: 20,
+  },
+  feedbackBox: {
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+  },
+  feedbackSuccess: {
+    backgroundColor: '#dcfce7',
+    borderColor: '#22c55e',
+  },
+  feedbackError: {
+    backgroundColor: '#fee2e2',
+    borderColor: '#ef4444',
+  },
+  feedbackText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  feedbackTextSuccess: {
+    color: '#166534',
+  },
+  feedbackTextError: {
+    color: '#b91c1c',
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+    marginBottom: 6,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#cbd5f5',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+    fontSize: 15,
+    color: '#0f172a',
+  },
+  fingerprintBox: {
+    borderWidth: 1,
+    borderColor: '#cbd5f5',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    backgroundColor: '#f8fafc',
+  },
+  fingerprintHint: {
+    fontSize: 12,
+    color: '#475569',
+    marginBottom: 10,
+  },
+  fingerprintBtn: {
+    borderWidth: 1,
+    borderColor: '#2563eb',
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  fingerprintBtnActive: {
+    backgroundColor: '#2563eb10',
+  },
+  fingerprintBtnText: {
+    color: '#2563eb',
+    fontWeight: '600',
+  },
+  fingerprintBtnTextActive: {
+    color: '#1e40af',
+  },
+  fingerprintWarning: {
+    fontSize: 12,
+    color: '#f97316',
+    marginBottom: 12,
+  },
+  primaryBtn: {
+    backgroundColor: '#2563eb',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 6,
+    marginBottom: 10,
+  },
+  primaryLabel: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  secondaryBtn: {
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#64748b',
+    alignItems: 'center',
+  },
+  secondaryLabel: {
+    color: '#0f172a',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+});

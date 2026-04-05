@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../config/api';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 export function RegistroDentalFormScreen() {
   const [form, setForm] = useState({
@@ -22,7 +22,7 @@ export function RegistroDentalFormScreen() {
 
   const handleSubmit = async () => {
     if (!form.pacienteId || !form.fechaAtencion || !form.procedimiento) {
-      Alert.alert('faltan datos', 'paciente, fecha y procedimiento son obligatorios');
+      Alert.alert('Faltan Datos', 'Paciente, fecha y procedimiento son obligatorios');
       return;
     }
     try {
@@ -46,9 +46,9 @@ export function RegistroDentalFormScreen() {
       });
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body?.message ?? 'no se pudo registrar la atencion dental');
+        throw new Error(body?.message ?? 'No se pudo registrar la atencion dental');
       }
-      Alert.alert('registro guardado', 'se agrego la atencion dental');
+      Alert.alert('Registro Guardado', 'Se agrego la atencion dental');
       setForm({
         pacienteId: '',
         fechaAtencion: '',
@@ -59,59 +59,59 @@ export function RegistroDentalFormScreen() {
         notas: '',
       });
     } catch (error) {
-      Alert.alert('error', error instanceof Error ? error.message : 'fallo la solicitud');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Fallo la solicitud');
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>registro dental</Text>
+      <Text style={styles.title}>Registro Dental</Text>
       <TextInput
         style={styles.input}
-        placeholder="paciente id"
+        placeholder="Paciente ID"
         keyboardType="numeric"
         value={form.pacienteId}
         onChangeText={(value) => handleChange('pacienteId', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="fecha atencion (YYYY-MM-DDTHH:MM)"
+        placeholder="Fecha Atencion (YYYY-MM-DDTHH:MM)"
         value={form.fechaAtencion}
         onChangeText={(value) => handleChange('fechaAtencion', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="procedimiento"
+        placeholder="Procedimiento"
         value={form.procedimiento}
         onChangeText={(value) => handleChange('procedimiento', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="diagnostico"
+        placeholder="Diagnostico"
         value={form.diagnostico}
         onChangeText={(value) => handleChange('diagnostico', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="odontologo"
+        placeholder="Odontologo"
         value={form.odontologo}
         onChangeText={(value) => handleChange('odontologo', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="piezas tratadas"
+        placeholder="Piezas Tratadas"
         value={form.piezasTratadas}
         onChangeText={(value) => handleChange('piezasTratadas', value)}
       />
       <TextInput
         style={[styles.input, styles.multiline]}
-        placeholder="notas"
+        placeholder="Notas"
         value={form.notas}
         multiline
         onChangeText={(value) => handleChange('notas', value)}
       />
       <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
-        <Text style={styles.btnText}>guardar registro</Text>
+        <Text style={styles.btnText}>Guardar Registro</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -126,7 +126,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 16,
-    textTransform: 'uppercase',
   },
   input: {
     borderWidth: 1,

@@ -1,5 +1,6 @@
-﻿import { createZodDto } from 'nestjs-zod';
+import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
+import { fingerprintTemplateSchema } from '../../common/schemas/fingerprint.schema';
 
 export const createUserSchema = z.object({
   username: z.string().min(3).max(60),
@@ -7,6 +8,7 @@ export const createUserSchema = z.object({
   pacienteId: z.number().int().positive().optional(),
   role: z.string().min(3).max(40).optional(),
   activo: z.boolean().optional(),
+  fingerprintTemplate: fingerprintTemplateSchema.optional(),
 });
 
 export class CreateUserDto extends createZodDto(createUserSchema) {}

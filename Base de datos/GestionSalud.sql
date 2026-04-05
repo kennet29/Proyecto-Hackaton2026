@@ -32,6 +32,7 @@ create table usuario (
     pacienteid int null,
     nombreusuario nvarchar(60) not null unique,
     hashpassword varbinary(256) not null,
+    huelladigitalhash varbinary(64) null,
     rolprincipal nvarchar(40) not null default 'paciente',
     activo bit not null default 1,
     ultimoingreso datetime2 null,

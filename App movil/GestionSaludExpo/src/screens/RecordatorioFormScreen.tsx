@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../config/api';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 export function RecordatorioFormScreen() {
   const [form, setForm] = useState({
@@ -20,7 +20,7 @@ export function RecordatorioFormScreen() {
 
   const handleSubmit = async () => {
     if (!form.citaId || !form.pacienteId || !form.fecha || !form.mensaje) {
-      Alert.alert('faltan datos', 'cita, paciente, fecha y mensaje son obligatorios');
+      Alert.alert('Faltan Datos', 'Cita, paciente, fecha y mensaje son obligatorios');
       return;
     }
     try {
@@ -42,53 +42,53 @@ export function RecordatorioFormScreen() {
       });
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body?.message ?? 'no se pudo crear el recordatorio');
+        throw new Error(body?.message ?? 'No se pudo crear el recordatorio');
       }
-      Alert.alert('recordatorio creado', 'se notificara al paciente conforme al canal elegido');
+      Alert.alert('Recordatorio Creado', 'Se notificara al paciente conforme al canal elegido');
       setForm({ citaId: '', pacienteId: '', fecha: '', mensaje: 'recordatorio de cita', canal: '' });
     } catch (error) {
-      Alert.alert('error', error instanceof Error ? error.message : 'fallo la solicitud');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Fallo la solicitud');
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>nuevo recordatorio</Text>
+      <Text style={styles.title}>Nuevo Recordatorio</Text>
       <TextInput
         style={styles.input}
-        placeholder="cita id"
+        placeholder="Cita ID"
         keyboardType="numeric"
         value={form.citaId}
         onChangeText={(value) => handleChange('citaId', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="paciente id"
+        placeholder="Paciente ID"
         keyboardType="numeric"
         value={form.pacienteId}
         onChangeText={(value) => handleChange('pacienteId', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="fecha recordatorio (YYYY-MM-DDTHH:MM)"
+        placeholder="Fecha Recordatorio (YYYY-MM-DDTHH:MM)"
         value={form.fecha}
         onChangeText={(value) => handleChange('fecha', value)}
       />
       <TextInput
         style={[styles.input, styles.multiline]}
-        placeholder="mensaje"
+        placeholder="Mensaje"
         value={form.mensaje}
         multiline
         onChangeText={(value) => handleChange('mensaje', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="canal (sms, email, push)"
+        placeholder="Canal (SMS, email, push)"
         value={form.canal}
         onChangeText={(value) => handleChange('canal', value)}
       />
       <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
-        <Text style={styles.btnText}>guardar recordatorio</Text>
+        <Text style={styles.btnText}>Guardar Recordatorio</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -103,7 +103,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 16,
-    textTransform: 'uppercase',
   },
   input: {
     borderWidth: 1,

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../config/api';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 export function DocumentoFormScreen() {
   const [form, setForm] = useState({
@@ -20,7 +20,7 @@ export function DocumentoFormScreen() {
 
   const handleSubmit = async () => {
     if (!form.pacienteId || !form.tipoDocumentoId) {
-      Alert.alert('faltan datos', 'paciente y tipo de documento son obligatorios');
+      Alert.alert('Faltan Datos', 'Paciente y tipo de documento son obligatorios');
       return;
     }
     try {
@@ -42,53 +42,53 @@ export function DocumentoFormScreen() {
       });
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body?.message ?? 'no se pudo cargar el documento');
+        throw new Error(body?.message ?? 'No se pudo cargar el documento');
       }
-      Alert.alert('documento guardado', 'se adjunto al expediente');
+      Alert.alert('Documento Guardado', 'Se adjunto al expediente');
       setForm({ pacienteId: '', tipoDocumentoId: '', entidadOrigen: 'general', notas: '', url: '' });
     } catch (error) {
-      Alert.alert('error', error instanceof Error ? error.message : 'fallo la peticion');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Falló la petición');
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>documento clinico</Text>
+      <Text style={styles.title}>Documento Clinico</Text>
       <TextInput
         style={styles.input}
-        placeholder="paciente id"
+        placeholder="Paciente ID"
         keyboardType="numeric"
         value={form.pacienteId}
         onChangeText={(value) => handleChange('pacienteId', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="tipo documento id"
+        placeholder="Tipo Documento ID"
         keyboardType="numeric"
         value={form.tipoDocumentoId}
         onChangeText={(value) => handleChange('tipoDocumentoId', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="entidad de origen (consultamedica, vacuna, general)"
+        placeholder="Entidad De Origen (consultamedica, vacuna, general)"
         value={form.entidadOrigen}
         onChangeText={(value) => handleChange('entidadOrigen', value)}
       />
       <TextInput
         style={styles.input}
-        placeholder="url externa (opcional)"
+        placeholder="URL Externa (Opcional)"
         value={form.url}
         onChangeText={(value) => handleChange('url', value)}
       />
       <TextInput
         style={[styles.input, styles.multiline]}
-        placeholder="notas"
+        placeholder="Notas"
         value={form.notas}
         multiline
         onChangeText={(value) => handleChange('notas', value)}
       />
       <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
-        <Text style={styles.btnText}>guardar documento</Text>
+        <Text style={styles.btnText}>Guardar Documento</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -103,7 +103,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 16,
-    textTransform: 'uppercase',
   },
   input: {
     borderWidth: 1,

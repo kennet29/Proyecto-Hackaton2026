@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useEffect, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -6,43 +6,196 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Pressable,
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../config/api';
+import * as LocalAuthentication from 'expo-local-authentication';
+import { Ionicons } from '@expo/vector-icons';
+import { loadFingerprintTemplate } from '../utils/fingerprint';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+type FeedbackState = { type: 'success' | 'error'; message: string } | null;
+type LoginApiResponse = {
+  accessToken: string;
+  user: {
+    id: number;
+    username: string;
+    role?: string;
+    pacienteId?: number | null;
+    pacienteIds?: number[];
+  };
+  message?: string;
+};
+
+const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => {
+  if (!feedback) {
+    return null;
+  }
+  const isSuccess = feedback.type === 'success';
+  return (
+    <View
+      style={[
+        styles.feedbackBox,
+        isSuccess ? styles.feedbackSuccess : styles.feedbackError,
+      ]}
+    >
+      <Text
+        style={[
+          styles.feedbackText,
+          isSuccess ? styles.feedbackTextSuccess : styles.feedbackTextError,
+        ]}
+      >
+        {feedback.message}
+      </Text>
+    </View>
+  );
+};
+
+const formatErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    if (/native module is null/i.test(error.message)) {
+      return 'No se pudo acceder al almacenamiento seguro en este dispositivo. Reinstala Expo Go o vuelve a compilar la app para habilitar AsyncStorage.';
+    }
+    return error.message;
+  }
+  return 'Ocurrió un error inesperado. Intenta nuevamente.';
+};
 
 export function LoginScreen({ navigation }: Props) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fingerprintLoading, setFingerprintLoading] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [fingerprintTemplate, setFingerprintTemplate] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<FeedbackState>(null);
   const { login } = useAuth();
+  const fingerprintReady = useMemo(() => biometricAvailable && !!fingerprintTemplate, [biometricAvailable, fingerprintTemplate]);
+  const fingerprintStatusMessage = useMemo(() => {
+    if (!biometricAvailable) {
+      return 'Activa la biometria en tu dispositivo para usar esta funcion.';
+    }
+    if (!username) {
+      return 'Ingresa tu usuario para detectar la huella guardada en este dispositivo.';
+    }
+    if (!fingerprintTemplate) {
+      return 'Registra tu huella desde este dispositivo durante el registro para poder usarla aquí.';
+    }
+    return 'Usa tu huella para iniciar sesion sin contrasena.';
+  }, [biometricAvailable, fingerprintTemplate, username]);
+
+  const sanitizeUsername = (value: string) => value.replace(/[^a-zA-Z0-9._-]/g, '');
+
+  useEffect(() => {
+    const checkBiometrics = async () => {
+      try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const enrolled = await LocalAuthentication.isEnrolledAsync();
+        setBiometricAvailable(hasHardware && enrolled);
+      } catch {
+        setBiometricAvailable(false);
+      }
+    };
+    checkBiometrics();
+  }, []);
+
+  useEffect(() => {
+    const loadTemplate = async () => {
+      if (!username) {
+        setFingerprintTemplate(null);
+        return;
+      }
+      try {
+        const stored = await loadFingerprintTemplate(username);
+        setFingerprintTemplate(stored);
+      } catch (error) {
+        console.warn('No se pudo leer la huella local', error);
+        setFingerprintTemplate(null);
+      }
+    };
+    loadTemplate();
+  }, [username]);
+
+  const executeLogin = async (payload: Record<string, unknown>): Promise<LoginApiResponse> => {
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok || !body?.accessToken || !body?.user) {
+      throw new Error(body?.message ?? 'credenciales invalidas');
+    }
+    login({ token: body.accessToken, user: body.user });
+    setFeedback({
+      type: 'success',
+      message: body?.message ?? 'Inicio de sesi?n exitoso.',
+    });
+    return body as LoginApiResponse;
+  };
 
   const handleLogin = async () => {
+    setFeedback(null);
     if (!username || !password) {
-      Alert.alert('campos incompletos', 'por favor llena usuario y password');
+      const message = 'Por favor completa usuario y contraseña.';
+      setFeedback({ type: 'error', message });
+      Alert.alert('Campos Incompletos', message);
       return;
     }
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-      const body = await response.json().catch(() => null);
-      if (!response.ok || !body?.accessToken || !body?.user) {
-        throw new Error(body?.message ?? 'credenciales invalidas');
-      }
-      login({ token: body.accessToken, user: body.user });
+      const body = await executeLogin({ username, password });
+      Alert.alert('Bienvenido', body?.message ?? 'Inicio de sesión exitoso');
       navigation.reset({ index: 0, routes: [{ name: 'MenuPrincipal' }] });
     } catch (error) {
-      Alert.alert('error', error instanceof Error ? error.message : 'no se pudo iniciar sesion');
+      const message = formatErrorMessage(error);
+      setFeedback({ type: 'error', message });
+      Alert.alert('Error', message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFingerprintLogin = async () => {
+    setFeedback(null);
+    if (!username) {
+      const message = 'Ingresa el usuario asociado a la huella.';
+      setFeedback({ type: 'error', message });
+      Alert.alert('Usuario Requerido', message);
+      return;
+    }
+    if (!fingerprintTemplate) {
+      const message = 'Registra tu huella durante el registro en este mismo dispositivo para usar esta opción.';
+      setFeedback({ type: 'error', message });
+      Alert.alert('Huella No Encontrada', message);
+      return;
+    }
+    if (!biometricAvailable) {
+      const message = 'Habilita la biometría en este dispositivo.';
+      setFeedback({ type: 'error', message });
+      Alert.alert('Biometría No Disponible', message);
+      return;
+    }
+    try {
+      setFingerprintLoading(true);
+      const auth = await LocalAuthentication.authenticateAsync({ promptMessage: 'Autentícate con tu huella' });
+      if (!auth.success) {
+        throw new Error('autenticación cancelada');
+      }
+      const body = await executeLogin({ username, fingerprintTemplate });
+      Alert.alert('Bienvenido', body?.message ?? 'Inicio de sesión exitoso');
+      navigation.reset({ index: 0, routes: [{ name: 'MenuPrincipal' }] });
+    } catch (error) {
+      const message = formatErrorMessage(error);
+      setFeedback({ type: 'error', message });
+      Alert.alert('Error', message);
+    } finally {
+      setFingerprintLoading(false);
     }
   };
 
@@ -51,40 +204,68 @@ export function LoginScreen({ navigation }: Props) {
       <View style={[styles.circle, styles.blueCircle]} />
       <View style={[styles.circle, styles.orangeCircle]} />
       <View style={styles.card}>
-        <Text style={styles.welcome}>bienvenido</Text>
-        <Text style={styles.subtitle}>nos alegra tenerte de vuelta</Text>
-        <Text style={styles.label}>usuario</Text>
+        <Text style={styles.welcome}>Bienvenido</Text>
+        <Text style={styles.subtitle}>Nos Alegra Tenerte De Vuelta</Text>
+        <FeedbackBanner feedback={feedback} />
+        <Text style={styles.label}>Usuario</Text>
         <TextInput
           style={styles.input}
-          placeholder="ej: usuario.demo"
+          placeholder="Ej: Usuario.demo"
           placeholderTextColor="#9ca3af"
           autoCapitalize="none"
+          autoCorrect={false}
           value={username}
-          onChangeText={setUsername}
+          onChangeText={(text) => setUsername(sanitizeUsername(text))}
         />
-        <Text style={styles.label}>contrasena</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="escribe tu contrasena"
-          placeholderTextColor="#9ca3af"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+        <Text style={styles.label}>Contraseña</Text>
+        <View style={styles.passwordWrapper}>
+          <TextInput
+            style={[styles.input, styles.passwordInput]}
+            placeholder="Escribe Tu Contraseña"
+            placeholderTextColor="#9ca3af"
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={(text) => setPassword(text)}
+          />
+          <Pressable onPress={() => setShowPassword((prev) => !prev)} style={styles.togglePassword}>
+            <Text style={styles.togglePasswordText}>{showPassword ? 'Ocultar' : 'Ver'}</Text>
+          </Pressable>
+        </View>
         <View style={styles.actions}>
-          <Text style={styles.remember}>recordarme</Text>
+          <Text style={styles.remember}>Recordarme</Text>
           <TouchableOpacity onPress={() => navigation.navigate('CambiarContrasena')}>
-            <Text style={styles.forget}>olvide mi contrasena</Text>
+            <Text style={styles.forget}>Olvide Mi Contraseña</Text>
           </TouchableOpacity>
         </View>
         <TouchableOpacity style={styles.primaryBtn} onPress={handleLogin} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>iniciar</Text>}
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Iniciar</Text>}
         </TouchableOpacity>
+        <View style={styles.fingerprintSection}>
+          <View style={styles.fingerprintHeader}>
+            <Ionicons name="finger-print-outline" size={22} color="#1d4ed8" />
+            <Text style={styles.fingerprintTitle}>Huella digital</Text>
+          </View>
+          <Text style={styles.fingerprintHint}>{fingerprintStatusMessage}</Text>
+          <TouchableOpacity
+            style={[styles.fingerprintAction, (!fingerprintReady || fingerprintLoading) && styles.fingerprintActionDisabled]}
+            onPress={handleFingerprintLogin}
+            disabled={!fingerprintReady || fingerprintLoading}
+            accessibilityLabel="Iniciar sesion con huella digital"
+          >
+            {fingerprintLoading ? (
+              <ActivityIndicator color="#1d4ed8" />
+            ) : (
+              <Text style={[styles.fingerprintActionText, !fingerprintReady && styles.fingerprintActionTextDisabled]}>
+                {fingerprintReady ? 'Ingresar con huella' : 'Huella no disponible'}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
         <Text style={styles.footer}>
-          ¿no tienes cuenta?
-          <Text style={styles.link} onPress={() => Alert.alert('contacta al administrador')}>
+          ¿No Tienes Cuenta?
+          <Text style={styles.link} onPress={() => navigation.navigate('Registro')}>
             {' '}
-            registrarme
+            Registrarme
           </Text>
         </Text>
       </View>
@@ -124,7 +305,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     color: '#6b7280',
-    textTransform: 'uppercase',
     marginBottom: 4,
     fontWeight: '600',
   },
@@ -136,6 +316,23 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     fontSize: 15,
     color: '#111',
+  },
+  passwordWrapper: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  passwordInput: {
+    paddingRight: 70,
+  },
+  togglePassword: {
+    position: 'absolute',
+    right: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  togglePasswordText: {
+    color: '#2563eb',
+    fontWeight: '600',
   },
   actions: {
     flexDirection: 'row',
@@ -163,6 +360,48 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
   },
+  fingerprintSection: {
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+    borderRadius: 12,
+    padding: 14,
+    backgroundColor: '#eff6ff',
+  },
+  fingerprintHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    columnGap: 8,
+  },
+  fingerprintTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1e3a8a',
+  },
+  fingerprintHint: {
+    fontSize: 12,
+    color: '#1e40af',
+    marginBottom: 10,
+  },
+  fingerprintAction: {
+    borderWidth: 1,
+    borderColor: '#1d4ed8',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  fingerprintActionDisabled: {
+    borderColor: '#cbd5f5',
+    backgroundColor: '#e0e7ff',
+  },
+  fingerprintActionText: {
+    color: '#1d4ed8',
+    fontWeight: '700',
+  },
+  fingerprintActionTextDisabled: {
+    color: '#94a3b8',
+  },
   footer: {
     textAlign: 'center',
     marginTop: 16,
@@ -189,4 +428,29 @@ const styles = StyleSheet.create({
     bottom: 90,
     right: 30,
   },
+  feedbackBox: {
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+  },
+  feedbackSuccess: {
+    backgroundColor: '#ecfccb',
+    borderColor: '#65a30d',
+  },
+  feedbackError: {
+    backgroundColor: '#fee2e2',
+    borderColor: '#b91c1c',
+  },
+  feedbackText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  feedbackTextSuccess: {
+    color: '#365314',
+  },
+  feedbackTextError: {
+    color: '#7f1d1d',
+  },
 });
+

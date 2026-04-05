@@ -12,10 +12,10 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
 
   const onSubmit = () => {
     if (!email || !newPassword) {
-      Alert.alert('faltan datos', 'correo y nueva contraseña son requeridos');
+      Alert.alert('Faltan Datos', 'correo y nueva contraseña son requeridos');
       return;
     }
-    Alert.alert('solicitud enviada', 'revisa tu correo para confirmar el cambio');
+    Alert.alert('Solicitud Enviada', 'Revisa tu correo para confirmar el cambio');
     navigation.goBack();
   };
 
@@ -24,7 +24,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
       <Text style={styles.title}>cambiar contraseña</Text>
       <TextInput
         style={styles.input}
-        placeholder="correo"
+        placeholder="Correo"
         keyboardType="email-address"
         autoCapitalize="none"
         placeholderTextColor="#94a3b8"
@@ -33,7 +33,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
       />
       <TextInput
         style={styles.input}
-        placeholder="codigo (opcional)"
+        placeholder="Codigo (Opcional)"
         placeholderTextColor="#94a3b8"
         value={code}
         onChangeText={setCode}
@@ -47,7 +47,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
         onChangeText={setNewPassword}
       />
       <TouchableOpacity style={styles.primaryBtn} onPress={onSubmit}>
-        <Text style={styles.btnText}>guardar</Text>
+        <Text style={styles.btnText}>Guardar</Text>
       </TouchableOpacity>
     </View>
   );
@@ -64,7 +64,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginVertical: 18,
     color: '#0f172a',
-    textTransform: 'uppercase',
   },
   input: {
     borderWidth: 1,
