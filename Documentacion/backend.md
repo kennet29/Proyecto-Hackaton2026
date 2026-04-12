@@ -242,3 +242,18 @@ Cada servicio define `PRIMARY_KEYS` al inicio (`*.service.ts`). Para tablas con 
 - Considera agregar pruebas e2e para flujos sensibles (login, reset, permisos QR) usando `@nestjs/testing`.
 - Documenta los endpoints generados automaticamente en una coleccion (ej. Postman) para que el equipo movil tenga ejemplos concretos.
 - Si se agregan nuevas tablas clinicas, actualiza `allowedTables` en `database.schemas.ts` y la lista `TABLES` del script para mantener ambos modulos sincronizados.
+
+## 14. Observabilidad en el cliente
+Aunque el backend expone logs estructurados, es necesario capturar la perspectiva del app movil para poder correlacionar incidentes:
+- Integra un SDK como Sentry, Firebase Crashlytics o App Center en React Native/Expo para registrar fallos, rechazos de promesas y errores de JS nativos.
+- Propaga el `requestId` o `traceId` entregado por el backend (puede extraerse del encabezado `x-request-id` si se agrega) en cada solicitud para enlazar eventos cliente-servidor.
+- Envia metricas de uso (pantallas visitadas, duracion en formularios) anonimizadas para medir friccion en registros clinicos. Usa un buffer y reintentos para zonas con baja conectividad.
+- Expone un modulo comun para logging (`logger.ts`) que normalice niveles (`info`, `warn`, `error`) y pueda redirigirlos a consola durante desarrollo y a un proveedor externo en produccion.
+
+## 15. Sincronizacion offline
+El dominio medico exige que la app funcione aun sin conectividad constante. Recomendaciones:
+- Implementa un cache persistente (AsyncStorage, MMKV o WatermelonDB) que almacene los expedientes consultados y permita lectura offline.
+- Diseña una cola de acciones pendientes (por ejemplo, `redux-offline`, `react-query` con `persister`) para formularios como `CitaFormScreen`, `VacunaFormScreen` o `RegistroDentalFormScreen`. Cada accion debe incluir un identificador temporal y politicas de reintento exponencial.
+- Expone un indicador de estado (icono o banner) que informe si los datos estan sincronizados, pendientes o con errores. Permite reintentos manuales cuando se recupere la conexion.
+- Define conflictos de escritura: cuando el backend responde 409/412, muestra al usuario las diferencias y ofrece fusionar o sobrescribir. Para campos sensibles (signos vitales, medicacion) prioriza la version mas reciente segun timestamp.
+- Asegura que los JWT o tokens de acceso se refresquen incluso offline. Guarda el `refresh token` (si se implementa) cifrado y bloquea acciones criticas si el token expiro y no hay red para renovarlo.
