@@ -92,6 +92,8 @@ Usa `@nestjs/config` globalmente (`AppModule`). Carga la configuracion desde `.e
 - `src/auth/entities/password-reset-token.entity.ts`: tokens de restablecimiento con expiracion y marca `used`.
 - `src/auth/entities/revoked-token.entity.ts`: lista negra de JWT (`jwtId`).
 - `src/modules/permisoacceso/*.entity.ts`: permisos otorgados a medicos, tokens QR temporales.
+- `src/modules/periodo/*`: modulo especializado para calendario menstrual, sintomas, prediccion, historial y reporte medico.
+- `src/modules/saludmental/*`: modulo especializado para registro diario, habitos, estadisticas, alertas y reporte medico de salud mental.
 - Todas las demas tablas estan bajo `src/modules/<tabla>/<tabla>.entity.ts`, generadas automaticamente y sincronizadas con SQL Server.
 
 ### 7.3 Generador de modulos
@@ -184,10 +186,27 @@ Rutas descritas en 8.5 (`src/modules/usuariopaciente/`).
 | `POST /notifications/parse` | Recibe `{ scheduleText, timezone?, referenceDate? }` y responde con la fecha en ISO tras pasar por `chrono-node`. Usa `NOTIFICATIONS_DEFAULT_TZ` cuando falta la zona. |
 | `POST /notifications/natural` | Igual que parse, pero crea un registro real llamando a `NotificacionService.create`. El DTO extiende `CreateNotificacionDto` (usa `pacienteId`, `tipo`, `mensaje`, etc.) y rellena `fechaprogramada` con la fecha calculada. Guarda `campoprueba01` con el texto original y `campoprueba02` con la zona.
 
-### 9.7 Gateway de base de datos (`src/database`)
+### 9.7 Periodo
+- `POST /periodo`: registrar periodo.
+- `PATCH /periodo/:id/sintomas`: registrar sintomas, dolor, flujo u observaciones.
+- `GET /periodo/calendario/:pacienteId?mes=4&anio=2026`: ver calendario mensual con registros y predicciones.
+- `GET /periodo/paciente/:pacienteId/prediccion`: obtener siguiente periodo, ovulacion estimada y ventana fertil.
+- `GET /periodo/paciente/:pacienteId/historial`: listar historial y metricas basicas.
+- `GET /periodo/paciente/:pacienteId/reporte-medico`: generar resumen clinico orientativo.
+
+### 9.8 Salud mental
+- `POST /salud-mental`: crear un registro diario completo.
+- `PATCH /salud-mental/:id/registro-diario`: actualizar estado de animo, estres, ansiedad, sueno y nota personal.
+- `PATCH /salud-mental/:id/habitos`: actualizar ejercicio, hidratacion, descanso, tiempo social y pausas digitales.
+- `GET /salud-mental/paciente/:pacienteId/estadisticas`: promedio semanal, tendencia mensual y relacion sueno/animo.
+- `GET /salud-mental/paciente/:pacienteId/alertas`: alertas por estres alto, poco sueno o cambios fuertes de animo.
+- `GET /salud-mental/paciente/:pacienteId/reporte-medico?formato=pdf`: devuelve bloque `pdf`, graficas e historial por fecha.
+- `GET /salud-mental/paciente/:pacienteId/historial?desde=2026-04-01&hasta=2026-04-30`: historial filtrado por fecha.
+
+### 9.9 Gateway de base de datos (`src/database`)
 Ya descrito en 7.4. Requiere JWT.
 
-### 9.8 CRUD autogenerado de GestionSalud
+### 9.10 CRUD autogenerado de GestionSalud
 Cada carpeta bajo `src/modules/<tabla>/` expone el mismo juego de rutas REST con el prefijo igual al nombre de la tabla. Ejemplos:
 | Prefijo | Entidad TypeORM | Uso principal |
 | --- | --- | --- |

@@ -94,7 +94,7 @@ const sections: Section[] = [
       {
         label: 'Consultas Medicas',
         description: 'Motivos, diagnosticos y tratamientos',
-        navigateTo: 'ConsultaForm',
+        navigateTo: 'ConsultaList',
       },
       {
         label: 'Citas Programadas',
@@ -340,17 +340,6 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               Vincula familiares o pacientes que compartirán este expediente.
             </Text>
           </View>
-          <TouchableOpacity
-            style={styles.refreshBtn}
-            onPress={fetchLinkedPatients}
-            disabled={loadingPatients}
-          >
-            {loadingPatients ? (
-              <ActivityIndicator color="#1d4ed8" />
-            ) : (
-              <Text style={styles.refreshLabel}>Actualizar</Text>
-            )}
-          </TouchableOpacity>
         </View>
         <FeedbackBanner feedback={patientFeedback} />
         {loadingPatients ? (
@@ -613,17 +602,6 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     fontSize: 13,
     marginTop: 2,
-  },
-  refreshBtn: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#fff',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  refreshLabel: {
-    color: '#1d4ed8',
-    fontWeight: '700',
   },
   stateBox: {
     backgroundColor: '#0f172a',

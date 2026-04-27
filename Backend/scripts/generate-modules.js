@@ -49,6 +49,10 @@ const TABLES = [
 
 const SCHEMA = 'dbo';
 const OUTPUT_ROOT = path.join(__dirname, '..', 'src', 'modules');
+const EXTRA_MODULES = [
+  { moduleName: 'PeriodoModule', modulePath: './periodo/periodo.module' },
+  { moduleName: 'SaludmentalModule', modulePath: './saludmental/saludmental.module' },
+];
 
 const dataSource = new DataSource({
   type: 'mssql',
@@ -419,10 +423,11 @@ async function generateModule(table) {
 }
 
 function buildAggregator(modulesMeta) {
-  const imports = modulesMeta
+  const combinedModules = [...modulesMeta, ...EXTRA_MODULES];
+  const imports = combinedModules
     .map(({ moduleName, modulePath }) => `import { ${moduleName} } from '${modulePath}';`)
     .join('\n');
-  const moduleNames = modulesMeta.map(({ moduleName }) => moduleName);
+  const moduleNames = combinedModules.map(({ moduleName }) => moduleName);
   const body = `@Module({\n  imports: [${moduleNames.join(', ')}],\n  exports: [${moduleNames.join(', ')}],\n})\nexport class GestionSaludModule {}\n`;
   return `import { Module } from '@nestjs/common';\n${imports}\n\n${body}`;
 }

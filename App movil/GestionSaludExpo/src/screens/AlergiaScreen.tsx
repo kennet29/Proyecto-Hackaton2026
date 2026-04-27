@@ -500,15 +500,6 @@ export function AlergiaScreen() {
         ))
       )}
 
-      <TouchableOpacity
-        style={styles.primaryBtn}
-        onPress={() => setShowForm((prev) => !prev)}
-      >
-        <Text style={styles.primaryBtnText}>
-          {showForm ? 'Cerrar formulario' : 'Registrar nueva alergia'}
-        </Text>
-      </TouchableOpacity>
-
       {showForm && (
         <View style={styles.formCard}>
           <Text style={styles.formTitle}>Nueva Alergia</Text>
@@ -653,6 +644,9 @@ export function AlergiaScreen() {
           </TouchableOpacity>
         </View>
       )}
+      <TouchableOpacity style={styles.fab} onPress={() => setShowForm((prev) => !prev)}>
+        <Text style={styles.fabText}>{showForm ? '×' : '+'}</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -796,6 +790,28 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
     fontSize: 15,
+  },
+  fab: {
+    position: 'absolute',
+    right: 24,
+    bottom: 24,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#2563eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 7,
+  },
+  fabText: {
+    color: '#fff',
+    fontSize: 30,
+    lineHeight: 32,
+    fontWeight: '700',
   },
   formCard: {
     backgroundColor: '#fff',

@@ -12,9 +12,13 @@ import { SobreNosotrosScreen } from './src/screens/SobreNosotrosScreen';
 import { ContactoScreen } from './src/screens/ContactoScreen';
 import { PacienteFormScreen } from './src/screens/PacienteFormScreen';
 import { ConsultaFormScreen } from './src/screens/ConsultaFormScreen';
+import { ConsultaListScreen } from './src/screens/ConsultaListScreen';
 import { CitaFormScreen } from './src/screens/CitaFormScreen';
 import { VacunaFormScreen } from './src/screens/VacunaFormScreen';
 import { MedicacionFormScreen } from './src/screens/MedicacionFormScreen';
+import { LesionFormScreen } from './src/screens/LesionFormScreen';
+import { OperacionFormScreen } from './src/screens/OperacionFormScreen';
+import { CondicionCronicaFormScreen } from './src/screens/CondicionCronicaFormScreen';
 import { DocumentoFormScreen } from './src/screens/DocumentoFormScreen';
 import { RecordatorioFormScreen } from './src/screens/RecordatorioFormScreen';
 import { RegistroDentalFormScreen } from './src/screens/RegistroDentalFormScreen';
@@ -26,6 +30,8 @@ import { EducacionNivelScreen } from './src/screens/EducacionNivelScreen';
 import { EducacionTemaScreen } from './src/screens/EducacionTemaScreen';
 import { RegistroScreen } from './src/screens/RegistroScreen';
 import { AlergiaScreen } from './src/screens/AlergiaScreen';
+import { PeriodoScreen } from './src/screens/PeriodoScreen';
+import { SaludMentalScreen } from './src/screens/SaludMentalScreen';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -81,6 +87,11 @@ const AppNavigator = () => {
           options={{ title: 'Pacientes' }}
         />
         <Stack.Screen
+          name="ConsultaList"
+          component={ConsultaListScreen}
+          options={{ title: 'Consultas Médicas' }}
+        />
+        <Stack.Screen
           name="ConsultaForm"
           component={ConsultaFormScreen}
           options={{ title: 'Consultas' }}
@@ -91,6 +102,27 @@ const AppNavigator = () => {
           name="MedicacionForm"
           component={MedicacionFormScreen}
           options={{ title: 'Medicacion' }}
+        />
+        <Stack.Screen
+          name="LesionForm"
+          component={LesionFormScreen}
+          options={{ title: 'Lesiones' }}
+        />
+        <Stack.Screen
+          name="OperacionForm"
+          component={OperacionFormScreen}
+          options={{ title: 'Operaciones' }}
+        />
+        <Stack.Screen
+          name="CondicionCronicaForm"
+          component={CondicionCronicaFormScreen}
+          options={{ title: 'Condiciones Cronicas' }}
+        />
+        <Stack.Screen name="Periodo" component={PeriodoScreen} options={{ title: 'Periodo' }} />
+        <Stack.Screen
+          name="SaludMental"
+          component={SaludMentalScreen}
+          options={{ title: 'Salud Mental' }}
         />
         <Stack.Screen
           name="DocumentoForm"
