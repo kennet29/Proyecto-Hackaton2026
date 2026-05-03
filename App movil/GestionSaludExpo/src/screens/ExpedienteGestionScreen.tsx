@@ -146,6 +146,7 @@ const sections: Section[] = [
       {
         label: 'Habitos Diarios',
         description: 'Actividad fisica, sueno y alimentacion',
+        navigateTo: 'Habitos',
       },
       {
         label: 'Antecedentes Familiares',

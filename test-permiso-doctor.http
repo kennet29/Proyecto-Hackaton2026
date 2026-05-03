@@ -1,0 +1,136 @@
+@baseUrl = http://localhost:3010/api/v1
+@suffix = {{$timestamp}}
+@password = Prueba123
+
+### 1. Crear usuario paciente
+# @name crearUsuarioPaciente
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "username": "paciente_permiso_{{suffix}}",
+  "password": "{{password}}",
+  "role": "paciente"
+}
+
+### 2. Iniciar sesion como paciente
+# @name loginPaciente
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "paciente_permiso_{{suffix}}",
+  "password": "{{password}}"
+}
+
+### 3. Crear paciente
+# @name crearPaciente
+POST {{baseUrl}}/paciente
+Authorization: Bearer {{loginPaciente.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "nombres": "Paciente",
+  "apellidos": "Permiso",
+  "fechanacimiento": "1996-01-15",
+  "sexo": "F",
+  "email": "paciente.permiso.{{suffix}}@demo.local"
+}
+
+### 4. Vincular usuario paciente con el expediente creado
+# @name vincularPaciente
+POST {{baseUrl}}/usuario-paciente
+Authorization: Bearer {{loginPaciente.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "pacienteId": {{crearPaciente.response.body.$.pacienteId}},
+  "parentesco": "titular",
+  "esPrincipal": true
+}
+
+### 5. Crear un registro de salud mental para el paciente
+# @name crearRegistroSaludMental
+POST {{baseUrl}}/salud-mental
+Authorization: Bearer {{loginPaciente.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "pacienteId": {{crearPaciente.response.body.$.pacienteId}},
+  "fecha": "2026-04-30",
+  "estadoAnimo": 5,
+  "estres": 4,
+  "ansiedad": 3,
+  "horasSueno": 7.5,
+  "notaPersonal": "Registro de prueba para permiso medico"
+}
+
+### 6. Crear usuario doctor
+# @name crearUsuarioDoctor
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "username": "doctor_permiso_{{suffix}}",
+  "password": "{{password}}",
+  "role": "medico"
+}
+
+### 7. Iniciar sesion como doctor
+# @name loginDoctor
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "doctor_permiso_{{suffix}}",
+  "password": "{{password}}"
+}
+
+### 8. Registrar datos profesionales del doctor
+# @name registrarDoctor
+POST {{baseUrl}}/medicoregistro
+Authorization: Bearer {{loginDoctor.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "usuarioId": {{crearUsuarioDoctor.response.body.$.id}},
+  "hospitaltrabajo": "Hospital Escuela Demo",
+  "titulo": "Doctor en Medicina",
+  "numerolicencia": "LIC-{{suffix}}",
+  "especialidadprincipal": "Medicina general",
+  "documentorespaldo": "uploads/medicos/titulo-demo.pdf"
+}
+
+### 9. Aprobar al doctor
+# @name aprobarDoctor
+PATCH {{baseUrl}}/medicoregistro/{{registrarDoctor.response.body.$.medicoregistroId}}
+Authorization: Bearer {{loginDoctor.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "estado": "aprobado",
+  "observaciones": "Aprobado para prueba local"
+}
+
+### 10. Paciente concede permiso temporal de 15 minutos al doctor
+# @name crearPermisoTemporal
+POST {{baseUrl}}/permiso-acceso/paciente/{{crearPaciente.response.body.$.pacienteId}}
+Authorization: Bearer {{loginPaciente.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "medicoId": {{crearUsuarioDoctor.response.body.$.id}},
+  "tipo": "temporal",
+  "duracion": "15m",
+  "notas": "Permiso temporal de prueba"
+}
+
+### 11. Doctor lista sus permisos activos
+# @name permisosDoctor
+GET {{baseUrl}}/permiso-acceso/mios
+Authorization: Bearer {{loginDoctor.response.body.$.accessToken}}
+
+### 12. Doctor consulta historial de salud mental del paciente
+# @name historialComoDoctor
+GET {{baseUrl}}/salud-mental/paciente/{{crearPaciente.response.body.$.pacienteId}}/historial
+Authorization: Bearer {{loginDoctor.response.body.$.accessToken}}

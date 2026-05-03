@@ -10,6 +10,7 @@ export type RootStackParamList = {
   PacienteResumen: undefined;
   ExpedienteGestion: undefined;
   PacienteForm: undefined;
+  PacienteEditor: { pacienteId?: number } | undefined;
   ConsultaList: undefined;
   ConsultaForm: { consulta?: { consultaId: number; pacienteId: number; fechaconsulta: string; motivo: string; diagnostico?: string; tratamiento?: string; } } | undefined;
   CitaForm: undefined;
@@ -23,6 +24,7 @@ export type RootStackParamList = {
   RegistroDentalForm: undefined;
   RecordatorioList: undefined;
   Alergia: undefined;
+  Habitos: undefined;
   Periodo: undefined;
   SaludMental: undefined;
   Educacion: undefined;

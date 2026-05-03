@@ -1,9 +1,20 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView, Platform } from 'react-native';
-import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
-import { Picker } from '@react-native-picker/picker';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
+import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
+
+type Props = NativeStackScreenProps<RootStackParamList, 'PacienteForm'>;
 
 type LinkedPatient = {
   relationId: number;
@@ -14,68 +25,12 @@ type LinkedPatient = {
   parentesco?: string | null;
 };
 
-const toDateOnlyString = (input?: Date | string | null): string => {
-  if (!input) return '';
-  if (input instanceof Date) {
-    if (Number.isNaN(input.getTime())) {
-      return '';
-    }
-    return [
-      input.getFullYear(),
-      String(input.getMonth() + 1).padStart(2, '0'),
-      String(input.getDate()).padStart(2, '0'),
-    ].join('-');
-  }
-  const trimmed = input.trim();
-  if (!trimmed) return '';
-  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (match) {
-    const [, year, month, day] = match;
-    return `${year}-${month}-${day}`;
-  }
-  const parsed = new Date(trimmed);
-  if (!Number.isNaN(parsed.getTime())) {
-    return toDateOnlyString(parsed);
-  }
-  return '';
-};
+export function PacienteFormScreen({ navigation }: Props) {
+  const { token } = useAuth();
+  const [linkedPatients, setLinkedPatients] = useState<LinkedPatient[]>([]);
+  const [loadingPatients, setLoadingPatients] = useState(false);
+  const [patientLoadError, setPatientLoadError] = useState<string | null>(null);
 
-const parseDateForPicker = (value?: string) => {
-  if (value) {
-    const parsed = new Date(value);
-    if (!Number.isNaN(parsed.getTime())) {
-      return parsed;
-    }
-    const segments = value.split('-').map((segment) => Number(segment));
-    if (segments.length === 3 && segments.every((segment) => !Number.isNaN(segment))) {
-      return new Date(segments[0], segments[1] - 1, segments[2]);
-    }
-  }
-  return new Date();
-};
-
-const formatDisplayDate = (value?: string) => {
-  if (!value) {
-    return 'Seleccionar fecha de nacimiento';
-  }
-  const parsed = parseDateForPicker(value);
-  return parsed.toLocaleDateString('es-NI', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-};
-
-export function PacienteFormScreen() {
-  const [form, setForm] = useState({
-    nombres: '',
-    apellidos: '',
-    sexo: '',
-    telefono: '',
-    email: '',
-    fechaNacimiento: '',
-  });
-  const { token, user } = useAuth();
   const authHeaders = useMemo<Record<string, string>>(() => {
     const base: Record<string, string> = {};
     if (token) {
@@ -83,36 +38,6 @@ export function PacienteFormScreen() {
     }
     return base;
   }, [token]);
-  const [linkedPatients, setLinkedPatients] = useState<LinkedPatient[]>([]);
-  const [loadingPatients, setLoadingPatients] = useState(false);
-  const [patientLoadError, setPatientLoadError] = useState<string | null>(null);
-  const [showIOSDatePicker, setShowIOSDatePicker] = useState(false);
-
-  const handleChange = (key: keyof typeof form, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleBirthDateChange = (selectedDate: Date) => {
-    handleChange('fechaNacimiento', toDateOnlyString(selectedDate));
-  };
-
-  const showBirthDatePicker = () => {
-    if (Platform.OS === 'android') {
-      DateTimePickerAndroid.open({
-        value: parseDateForPicker(form.fechaNacimiento),
-        mode: 'date',
-        is24Hour: true,
-        maximumDate: new Date(),
-        onChange: (event, selectedDate) => {
-          if (event.type === 'set' && selectedDate) {
-            handleBirthDateChange(selectedDate);
-          }
-        },
-      });
-      return;
-    }
-    setShowIOSDatePicker(true);
-  };
 
   const fetchLinkedPatients = useCallback(async () => {
     if (!token) {
@@ -121,6 +46,7 @@ export function PacienteFormScreen() {
       setPatientLoadError(null);
       return;
     }
+
     setLoadingPatients(true);
     setPatientLoadError(null);
     try {
@@ -131,6 +57,7 @@ export function PacienteFormScreen() {
       if (!response.ok) {
         throw new Error(relationsBody?.message ?? 'No se pudieron consultar tus personas registradas.');
       }
+
       const relations: any[] = Array.isArray(relationsBody) ? relationsBody : [];
       const enriched = await Promise.all(
         relations.map(async (relation) => {
@@ -143,6 +70,7 @@ export function PacienteFormScreen() {
           if (!Number.isFinite(pacienteId)) {
             return null;
           }
+
           let nombreCompleto =
             relation?.displayName ??
             relation?.nombrePaciente ??
@@ -150,6 +78,7 @@ export function PacienteFormScreen() {
             `Paciente #${pacienteId}`;
           let sexo = relation?.sexo ?? relation?.paciente?.sexo ?? null;
           let contacto = relation?.telefono ?? relation?.email ?? null;
+
           try {
             const patientResponse = await fetch(`${API_URL}/paciente/${pacienteId}`, {
               headers: authHeaders,
@@ -163,8 +92,9 @@ export function PacienteFormScreen() {
               contacto = patientBody?.telefono ?? patientBody?.email ?? contacto;
             }
           } catch {
-            // ignorar errores individuales
+            // Se mantiene el dato de la relacion si el detalle del paciente falla.
           }
+
           return {
             relationId:
               relation?.id ??
@@ -190,173 +120,110 @@ export function PacienteFormScreen() {
     }
   }, [authHeaders, token]);
 
-  useEffect(() => {
-    fetchLinkedPatients();
-  }, [fetchLinkedPatients]);
-
-  const handleSubmit = async () => {
-    if (!form.nombres || !form.apellidos || !form.sexo) {
-      Alert.alert('Faltan Datos', 'Nombres, apellidos y genero son obligatorios');
-      return;
-    }
-    try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-      const response = await fetch(`${API_URL}/paciente`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          nombres: form.nombres,
-          apellidos: form.apellidos,
-          sexo: form.sexo,
-          telefono: form.telefono || undefined,
-          email: form.email || undefined,
-          fechanacimiento: form.fechaNacimiento || undefined,
-          creadopor: user?.username ?? undefined,
-        }),
-      });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(body?.message ?? 'Error al crear paciente');
-      }
-      const pacienteId =
-        body?.pacienteId ??
-        body?.pacienteid ??
-        body?.id ??
-        body?.paciente?.pacienteId;
-      if (!pacienteId) {
-        throw new Error('El backend no devolvió el identificador del paciente');
-      }
-      const relationResponse = await fetch(`${API_URL}/usuario-paciente`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          pacienteId,
-        }),
-      });
-      const relationBody = await relationResponse.json().catch(() => ({}));
-      if (!relationResponse.ok) {
-        throw new Error(relationBody?.message ?? 'No se pudo vincular el paciente al usuario');
-      }
-      Alert.alert('Paciente Registrado', 'El paciente se guardó y vinculó correctamente');
-      setForm({
-        nombres: '',
-        apellidos: '',
-        sexo: '',
-        telefono: '',
-        email: '',
-        fechaNacimiento: '',
-      });
+  useFocusEffect(
+    useCallback(() => {
       fetchLinkedPatients();
-    } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo guardar');
-    }
-  };
+    }, [fetchLinkedPatients]),
+  );
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Nuevo Paciente</Text>
-      <View style={styles.section}>
+    <View style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>Pacientes</Text>
+            <Text style={styles.subtitle}>Administra las personas vinculadas a tu cuenta.</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigation.navigate('PacienteEditor')}
+            accessibilityLabel="Crear paciente"
+          >
+            <Ionicons name="add" size={28} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Pacientes de este usuario</Text>
           <TouchableOpacity onPress={fetchLinkedPatients} disabled={loadingPatients}>
             <Text style={styles.linkText}>{loadingPatients ? 'Cargando...' : 'Actualizar'}</Text>
           </TouchableOpacity>
         </View>
+
         {patientLoadError ? <Text style={styles.errorText}>{patientLoadError}</Text> : null}
-        {!loadingPatients && linkedPatients.length === 0 ? (
-          <Text style={styles.emptyText}>No hay personas vinculadas a este usuario todavía.</Text>
+
+        {loadingPatients ? (
+          <View style={styles.loadingCard}>
+            <ActivityIndicator size="large" color="#2563eb" />
+            <Text style={styles.loadingText}>Cargando pacientes...</Text>
+          </View>
         ) : null}
+
+        {!loadingPatients && linkedPatients.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyTitle}>No hay pacientes vinculados</Text>
+            <Text style={styles.emptyText}>Usa el boton + para registrar el primero.</Text>
+          </View>
+        ) : null}
+
         {linkedPatients.map((patient) => (
-          <View key={patient.relationId} style={styles.patientCard}>
-            <Text style={styles.patientName}>{patient.nombreCompleto}</Text>
+          <TouchableOpacity
+            key={patient.relationId}
+            style={styles.patientCard}
+            onPress={() => navigation.navigate('PacienteEditor', { pacienteId: patient.pacienteId })}
+          >
+            <View style={styles.patientCardHeader}>
+              <View style={styles.patientIcon}>
+                <Ionicons name="person-outline" size={22} color="#2563eb" />
+              </View>
+              <View style={styles.patientMain}>
+                <Text style={styles.patientName}>{patient.nombreCompleto}</Text>
+                <Text style={styles.patientId}>ID #{patient.pacienteId}</Text>
+              </View>
+              <Ionicons name="create-outline" size={22} color="#2563eb" />
+            </View>
             {patient.sexo ? <Text style={styles.patientMeta}>Genero: {patient.sexo}</Text> : null}
             {patient.parentesco ? <Text style={styles.patientMeta}>Parentesco: {patient.parentesco}</Text> : null}
             {patient.contacto ? <Text style={styles.patientMeta}>Contacto: {patient.contacto}</Text> : null}
-          </View>
+          </TouchableOpacity>
         ))}
-      </View>
-
-      <Text style={styles.sectionTitle}>Registrar nuevo paciente</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Nombres"
-        value={form.nombres}
-        onChangeText={(value) => handleChange('nombres', value)}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Apellidos"
-        value={form.apellidos}
-        onChangeText={(value) => handleChange('apellidos', value)}
-      />
-      <Text style={styles.label}>Genero</Text>
-      <View style={styles.pickerShell}>
-        <Picker
-          selectedValue={form.sexo}
-          onValueChange={(value) => handleChange('sexo', String(value))}
-        >
-          <Picker.Item label="Selecciona un genero" value="" />
-          <Picker.Item label="Femenino" value="F" />
-          <Picker.Item label="Masculino" value="M" />
-        </Picker>
-      </View>
-      <TextInput
-        style={styles.input}
-        placeholder="Telefono"
-        keyboardType="phone-pad"
-        value={form.telefono}
-        onChangeText={(value) => handleChange('telefono', value)}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Correo"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={form.email}
-        onChangeText={(value) => handleChange('email', value)}
-      />
-      <Text style={styles.label}>Fecha de nacimiento</Text>
-      <TouchableOpacity style={styles.dateField} onPress={showBirthDatePicker}>
-        <Text style={form.fechaNacimiento ? styles.dateValue : styles.datePlaceholder}>
-          {formatDisplayDate(form.fechaNacimiento)}
-        </Text>
-      </TouchableOpacity>
-      {showIOSDatePicker ? (
-        <DateTimePicker
-          value={parseDateForPicker(form.fechaNacimiento)}
-          mode="date"
-          display="spinner"
-          maximumDate={new Date()}
-          onChange={(_, selectedDate) => {
-            if (selectedDate) {
-              handleBirthDateChange(selectedDate);
-            }
-          }}
-        />
-      ) : null}
-      <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
-        <Text style={styles.btnText}>Guardar Paciente</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 24,
+  screen: {
+    flex: 1,
     backgroundColor: '#fff',
   },
+  container: {
+    padding: 24,
+    paddingBottom: 36,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 22,
+  },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 16,
+    fontSize: 26,
+    fontWeight: '800',
     color: '#0f172a',
   },
-  section: {
-    marginBottom: 20,
+  subtitle: {
+    color: '#64748b',
+    marginTop: 4,
+    maxWidth: 240,
+  },
+  addButton: {
+    width: 54,
+    height: 54,
+    borderRadius: 18,
+    backgroundColor: '#2563eb',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -368,86 +235,79 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#0f172a',
-    marginBottom: 12,
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#0f172a',
-    marginBottom: 8,
   },
   linkText: {
     color: '#2563eb',
-    fontWeight: '600',
-  },
-  patientCard: {
-    borderWidth: 1,
-    borderColor: '#dbeafe',
-    backgroundColor: '#eff6ff',
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 10,
-  },
-  patientName: {
-    fontSize: 16,
     fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 4,
-  },
-  patientMeta: {
-    color: '#334155',
-    marginBottom: 2,
-  },
-  emptyText: {
-    color: '#64748b',
-    marginBottom: 12,
   },
   errorText: {
     color: '#b91c1c',
     marginBottom: 12,
   },
-  input: {
+  loadingCard: {
     borderWidth: 1,
-    borderColor: '#cbd5f5',
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 12,
+    borderColor: '#dbeafe',
+    backgroundColor: '#eff6ff',
+    borderRadius: 12,
+    padding: 18,
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#334155',
+    marginTop: 10,
+  },
+  emptyCard: {
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 18,
+  },
+  emptyTitle: {
+    color: '#0f172a',
+    fontWeight: '800',
     fontSize: 16,
+    marginBottom: 4,
   },
-  pickerShell: {
-    borderWidth: 1,
-    borderColor: '#cbd5f5',
-    borderRadius: 10,
-    marginBottom: 12,
-    overflow: 'hidden',
-    backgroundColor: '#fff',
+  emptyText: {
+    color: '#64748b',
   },
-  dateField: {
+  patientCard: {
     borderWidth: 1,
-    borderColor: '#cbd5f5',
-    borderRadius: 10,
+    borderColor: '#dbeafe',
+    backgroundColor: '#eff6ff',
+    borderRadius: 12,
     padding: 14,
-    marginBottom: 12,
-    backgroundColor: '#fff',
+    marginBottom: 10,
   },
-  dateValue: {
+  patientCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  patientIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: '#dbeafe',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  patientMain: {
+    flex: 1,
+  },
+  patientName: {
     fontSize: 16,
+    fontWeight: '800',
     color: '#0f172a',
   },
-  datePlaceholder: {
-    fontSize: 16,
-    color: '#94a3b8',
+  patientId: {
+    color: '#64748b',
+    marginTop: 2,
   },
-  primaryBtn: {
-    backgroundColor: '#2563eb',
-    paddingVertical: 16,
-    borderRadius: 10,
-    marginTop: 8,
-  },
-  btnText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: '600',
-    fontSize: 16,
+  patientMeta: {
+    color: '#334155',
+    marginBottom: 2,
   },
 });

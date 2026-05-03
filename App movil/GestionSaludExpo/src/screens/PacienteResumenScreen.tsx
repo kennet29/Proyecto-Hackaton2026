@@ -427,7 +427,16 @@ export function PacienteResumenScreen({ navigation }: Props) {
               ID #{(selectedPatient?.pacienteId ?? selectedPatientId) || 'N/A'}
             </Text>
           </View>
-          <TouchableOpacity style={styles.manageButton} onPress={() => navigation.navigate('PacienteForm')}>
+          <TouchableOpacity
+            style={styles.manageButton}
+            onPress={() => {
+              const pacienteId = Number(selectedPatient?.pacienteId ?? selectedPatientId);
+              navigation.navigate(
+                'PacienteEditor',
+                Number.isFinite(pacienteId) && pacienteId > 0 ? { pacienteId } : undefined,
+              );
+            }}
+          >
             <Text style={styles.manageButtonText}>Gestionar</Text>
           </TouchableOpacity>
         </View>

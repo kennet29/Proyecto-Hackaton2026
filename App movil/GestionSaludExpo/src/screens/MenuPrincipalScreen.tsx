@@ -105,6 +105,14 @@ const options: OptionItem[] = [
     navigateTo: 'SaludMental',
   },
   {
+    key: 'habitos',
+    label: 'Habitos',
+    description: 'Actividad fisica, sueno y alimentacion',
+    icon: 'walk-outline',
+    accent: '#2dd4bf',
+    navigateTo: 'Habitos',
+  },
+  {
     key: 'operaciones',
     label: 'Operaciones',
     description: 'Consulta cirugias y resultados',

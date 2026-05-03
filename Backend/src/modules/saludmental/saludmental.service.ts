@@ -153,7 +153,7 @@ export class SaludmentalService {
       totalRegistros: records.length,
       historialPorFecha: records
         .slice()
-        .sort((a, b) => b.fecha.getTime() - a.fecha.getTime())
+        .sort((a, b) => this.toDate(b.fecha).getTime() - this.toDate(a.fecha).getTime())
         .map((record) => this.toResponse(record)),
     };
   }
@@ -204,7 +204,7 @@ export class SaludmentalService {
     const alertas = this.buildAlerts(records);
     const historialPorFecha = records
       .slice()
-      .sort((a, b) => b.fecha.getTime() - a.fecha.getTime())
+      .sort((a, b) => this.toDate(b.fecha).getTime() - this.toDate(a.fecha).getTime())
       .map((record) => this.toResponse(record));
 
     return {
@@ -271,7 +271,7 @@ export class SaludmentalService {
     });
 
     return records.filter((record) => {
-      const time = record.fecha.getTime();
+      const time = this.toDate(record.fecha).getTime();
       if (fromDate && time < fromDate.getTime()) {
         return false;
       }
@@ -377,9 +377,11 @@ export class SaludmentalService {
       };
     }
 
-    const latestDate = records[records.length - 1].fecha;
+    const latestDate = this.toDate(records[records.length - 1].fecha);
     const windowStart = this.addDays(latestDate, -6);
-    const weekly = records.filter((record) => record.fecha.getTime() >= windowStart.getTime());
+    const weekly = records.filter(
+      (record) => this.toDate(record.fecha).getTime() >= windowStart.getTime(),
+    );
 
     return {
       ventana: {
@@ -581,7 +583,11 @@ export class SaludmentalService {
     };
   }
 
-  private toIsoDate(value: Date): string {
-    return value.toISOString().slice(0, 10);
+  private toDate(value: Date | string): Date {
+    return value instanceof Date ? value : new Date(value);
+  }
+
+  private toIsoDate(value: Date | string): string {
+    return this.toDate(value).toISOString().slice(0, 10);
   }
 }

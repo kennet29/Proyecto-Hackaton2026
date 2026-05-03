@@ -11,6 +11,7 @@ import { MenuPrincipalScreen } from './src/screens/MenuPrincipalScreen';
 import { SobreNosotrosScreen } from './src/screens/SobreNosotrosScreen';
 import { ContactoScreen } from './src/screens/ContactoScreen';
 import { PacienteFormScreen } from './src/screens/PacienteFormScreen';
+import { PacienteEditorScreen } from './src/screens/PacienteEditorScreen';
 import { ConsultaFormScreen } from './src/screens/ConsultaFormScreen';
 import { ConsultaListScreen } from './src/screens/ConsultaListScreen';
 import { CitaFormScreen } from './src/screens/CitaFormScreen';
@@ -30,6 +31,7 @@ import { EducacionNivelScreen } from './src/screens/EducacionNivelScreen';
 import { EducacionTemaScreen } from './src/screens/EducacionTemaScreen';
 import { RegistroScreen } from './src/screens/RegistroScreen';
 import { AlergiaScreen } from './src/screens/AlergiaScreen';
+import { HabitosScreen } from './src/screens/HabitosScreen';
 import { PeriodoScreen } from './src/screens/PeriodoScreen';
 import { SaludMentalScreen } from './src/screens/SaludMentalScreen';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
@@ -85,6 +87,13 @@ const AppNavigator = () => {
           name="PacienteForm"
           component={PacienteFormScreen}
           options={{ title: 'Pacientes' }}
+        />
+        <Stack.Screen
+          name="PacienteEditor"
+          component={PacienteEditorScreen}
+          options={({ route }) => ({
+            title: route.params?.pacienteId ? 'Editar Paciente' : 'Nuevo Paciente',
+          })}
         />
         <Stack.Screen
           name="ConsultaList"
@@ -143,6 +152,11 @@ const AppNavigator = () => {
           name="Alergia"
           component={AlergiaScreen}
           options={{ title: 'Alergias' }}
+        />
+        <Stack.Screen
+          name="Habitos"
+          component={HabitosScreen}
+          options={{ title: 'Habitos' }}
         />
         <Stack.Screen
           name="Educacion"
