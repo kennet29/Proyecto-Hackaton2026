@@ -195,11 +195,12 @@ export function PacienteFormScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#0f172a',
   },
   container: {
     padding: 24,
     paddingBottom: 36,
+    backgroundColor: '#0f172a',
   },
   header: {
     flexDirection: 'row',
@@ -210,10 +211,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#0f172a',
+    color: '#f8fafc',
   },
   subtitle: {
-    color: '#64748b',
+    color: '#cbd5e1',
     marginTop: 4,
     maxWidth: 240,
   },
@@ -233,50 +234,50 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#0f172a',
+    fontWeight: '800',
+    color: '#f8fafc',
   },
   linkText: {
-    color: '#2563eb',
-    fontWeight: '700',
+    color: '#7dd3fc',
+    fontWeight: '800',
   },
   errorText: {
-    color: '#b91c1c',
+    color: '#fca5a5',
     marginBottom: 12,
   },
   loadingCard: {
     borderWidth: 1,
-    borderColor: '#dbeafe',
-    backgroundColor: '#eff6ff',
-    borderRadius: 12,
+    borderColor: '#334155',
+    backgroundColor: '#1e293b',
+    borderRadius: 18,
     padding: 18,
     alignItems: 'center',
   },
   loadingText: {
-    color: '#334155',
+    color: '#cbd5e1',
     marginTop: 10,
   },
   emptyCard: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
+    borderColor: '#334155',
+    backgroundColor: '#1e293b',
+    borderRadius: 18,
     padding: 18,
   },
   emptyTitle: {
-    color: '#0f172a',
+    color: '#f8fafc',
     fontWeight: '800',
     fontSize: 16,
     marginBottom: 4,
   },
   emptyText: {
-    color: '#64748b',
+    color: '#cbd5e1',
   },
   patientCard: {
     borderWidth: 1,
-    borderColor: '#dbeafe',
-    backgroundColor: '#eff6ff',
-    borderRadius: 12,
+    borderColor: '#334155',
+    backgroundColor: '#1e293b',
+    borderRadius: 18,
     padding: 14,
     marginBottom: 10,
   },
@@ -289,7 +290,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 14,
-    backgroundColor: '#dbeafe',
+    backgroundColor: '#082f49',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -300,14 +301,14 @@ const styles = StyleSheet.create({
   patientName: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#0f172a',
+    color: '#f8fafc',
   },
   patientId: {
-    color: '#64748b',
+    color: '#cbd5e1',
     marginTop: 2,
   },
   patientMeta: {
-    color: '#334155',
+    color: '#cbd5e1',
     marginBottom: 2,
   },
 });

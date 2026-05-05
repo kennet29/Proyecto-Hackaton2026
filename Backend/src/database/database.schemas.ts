@@ -26,6 +26,7 @@ export const allowedTables = [
   'embarazo',
   'controlprenatal',
   'documentoclinico',
+  'examenclinico',
   'notificacion',
   'recordatoriocita',
   'medicacion',

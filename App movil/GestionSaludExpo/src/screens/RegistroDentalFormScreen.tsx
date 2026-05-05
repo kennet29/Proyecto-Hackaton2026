@@ -455,43 +455,46 @@ export function RegistroDentalFormScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 24,
-    backgroundColor: '#fff',
+    backgroundColor: '#0f172a',
     gap: 12,
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: '800',
     marginBottom: 4,
-    color: '#0f172a',
+    color: '#f8fafc',
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#0f172a',
+    fontWeight: '700',
+    color: '#f8fafc',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#d4d4d8',
-    borderRadius: 10,
+    borderColor: '#334155',
+    borderRadius: 14,
     padding: 14,
     fontSize: 16,
+    backgroundColor: '#0b1220',
+    color: '#f8fafc',
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#d4d4d8',
-    borderRadius: 10,
+    borderColor: '#334155',
+    borderRadius: 14,
     overflow: 'hidden',
+    backgroundColor: '#0b1220',
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#d4d4d8',
-    borderRadius: 10,
+    borderColor: '#334155',
+    borderRadius: 14,
     padding: 14,
-    backgroundColor: '#ecfeff',
+    backgroundColor: '#0b1220',
   },
   dateButtonText: {
     fontSize: 16,
-    color: '#0f172a',
+    color: '#f8fafc',
   },
   row: {
     flexDirection: 'row',
@@ -503,7 +506,7 @@ const styles = StyleSheet.create({
   primaryBtn: {
     backgroundColor: '#0ea5e9',
     paddingVertical: 16,
-    borderRadius: 10,
+    borderRadius: 14,
     marginTop: 12,
   },
   btnText: {
@@ -519,18 +522,18 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   loadingText: {
-    color: '#475569',
+    color: '#cbd5e1',
   },
   emptyBox: {
     borderWidth: 1,
-    borderColor: '#bae6fd',
-    backgroundColor: '#f0f9ff',
-    borderRadius: 10,
+    borderColor: '#334155',
+    backgroundColor: '#1e293b',
+    borderRadius: 14,
     padding: 14,
     gap: 8,
   },
   emptyText: {
-    color: '#0c4a6e',
+    color: '#cbd5e1',
   },
   secondaryBtn: {
     alignSelf: 'flex-start',
@@ -544,11 +547,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   errorText: {
-    color: '#b91c1c',
+    color: '#fca5a5',
   },
   selectedPatientText: {
-    color: '#0f172a',
-    fontWeight: '600',
+    color: '#e2e8f0',
+    fontWeight: '700',
   },
   multiline: {
     minHeight: 120,
@@ -556,19 +559,20 @@ const styles = StyleSheet.create({
   iosPickerWrapper: {
     marginTop: 6,
     borderWidth: 1,
-    borderColor: '#d4d4d8',
+    borderColor: '#334155',
     borderRadius: 16,
     overflow: 'hidden',
+    backgroundColor: '#0b1220',
   },
   iosPickerDoneBtn: {
     borderTopWidth: 1,
-    borderTopColor: '#d4d4d8',
+    borderTopColor: '#334155',
     paddingVertical: 10,
     alignItems: 'center',
-    backgroundColor: '#e0f2fe',
+    backgroundColor: '#172554',
   },
   iosPickerDoneText: {
-    color: '#075985',
+    color: '#bfdbfe',
     fontWeight: '700',
   },
 });

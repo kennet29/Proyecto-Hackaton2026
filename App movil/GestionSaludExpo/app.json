@@ -33,6 +33,13 @@
     },
     "plugins": [
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permite seleccionar fotos de examenes para adjuntarlas al expediente.",
+          "cameraPermission": "Permite tomar fotos de hojas de examenes para convertirlas en PDF."
+        }
+      ],
+      [
         "expo-notifications",
         {
           "icon": "./assets/icon.png",

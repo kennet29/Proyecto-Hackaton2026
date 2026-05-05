@@ -1941,6 +1941,46 @@ ALTER TABLE [dbo].[medicoregistro] CHECK CONSTRAINT [ck_medicoregistro_estado]
 GO
 ALTER TABLE [dbo].[registromensual]  WITH CHECK ADD CHECK  (([mes]>=(1) AND [mes]<=(12)))
 GO
+/****** Object:  Table [dbo].[examenclinico]    Script Date: 4 may. 2026 12:00:00 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[examenclinico](
+	[examenclinicoid] [int] IDENTITY(1,1) NOT NULL,
+	[pacienteid] [int] NOT NULL,
+	[consultaid] [int] NULL,
+	[nombreexamen] [nvarchar](160) NOT NULL,
+	[tipoexamen] [nvarchar](120) NULL,
+	[laboratorio] [nvarchar](160) NULL,
+	[fechaexamen] [date] NOT NULL,
+	[fecharesultado] [date] NULL,
+	[resultadotexto] [nvarchar](max) NULL,
+	[observaciones] [nvarchar](max) NULL,
+	[archivopdf] [varbinary](max) NULL,
+	[nombrearchivopdf] [nvarchar](260) NULL,
+	[mimearchivopdf] [nvarchar](100) NULL,
+	[creadopor] [nvarchar](60) NULL,
+	[creadoen] [datetime2](7) NOT NULL,
+	[modificadopor] [nvarchar](60) NULL,
+	[modificadoen] [datetime2](7) NULL,
+	[campoprueba01] [nvarchar](200) NULL,
+	[campoprueba02] [nvarchar](200) NULL,
+	[campoprueba03] [nvarchar](200) NULL,
+	[campoprueba04] [nvarchar](200) NULL,
+	[campoprueba05] [nvarchar](200) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[examenclinicoid] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+CREATE NONCLUSTERED INDEX [IX_examenclinico_paciente_fecha] ON [dbo].[examenclinico]
+(
+	[pacienteid] ASC,
+	[fechaexamen] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
 USE [master]
 GO
 ALTER DATABASE [gestionsalud] SET  READ_WRITE 

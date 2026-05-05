@@ -32,8 +32,10 @@ import { EducacionTemaScreen } from './src/screens/EducacionTemaScreen';
 import { RegistroScreen } from './src/screens/RegistroScreen';
 import { AlergiaScreen } from './src/screens/AlergiaScreen';
 import { HabitosScreen } from './src/screens/HabitosScreen';
+import { SeguimientoFisicoScreen } from './src/screens/SeguimientoFisicoScreen';
 import { PeriodoScreen } from './src/screens/PeriodoScreen';
 import { SaludMentalScreen } from './src/screens/SaludMentalScreen';
+import { ExamenClinicoScreen } from './src/screens/ExamenClinicoScreen';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -134,6 +136,11 @@ const AppNavigator = () => {
           options={{ title: 'Salud Mental' }}
         />
         <Stack.Screen
+          name="ExamenClinico"
+          component={ExamenClinicoScreen}
+          options={{ title: 'Examenes Clinicos' }}
+        />
+        <Stack.Screen
           name="DocumentoForm"
           component={DocumentoFormScreen}
           options={{ title: 'Documentos' }}
@@ -157,6 +164,11 @@ const AppNavigator = () => {
           name="Habitos"
           component={HabitosScreen}
           options={{ title: 'Habitos' }}
+        />
+        <Stack.Screen
+          name="SeguimientoFisico"
+          component={SeguimientoFisicoScreen}
+          options={{ title: 'Seguimiento Fisico' }}
         />
         <Stack.Screen
           name="Educacion"

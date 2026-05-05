@@ -594,36 +594,38 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   pickerShell: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#0b1220',
     borderRadius: 16,
     overflow: 'hidden',
   },
   picker: {
-    color: '#111827',
+    color: '#f8fafc',
   },
   errorText: {
-    color: '#991b1b',
+    color: '#fca5a5',
     marginBottom: 12,
     fontWeight: '600',
   },
   loadingCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1e293b',
     borderRadius: 24,
     padding: 22,
     alignItems: 'center',
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
   },
   loadingText: {
-    color: '#475569',
+    color: '#cbd5e1',
     marginTop: 10,
   },
   profileCard: {
-    backgroundColor: '#fffdf8',
+    backgroundColor: '#1e293b',
     borderRadius: 28,
     padding: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#eadfce',
+    borderColor: '#334155',
   },
   profileTop: {
     flexDirection: 'row',
@@ -632,12 +634,12 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   profileName: {
-    color: '#1f2937',
+    color: '#f8fafc',
     fontSize: 26,
     fontWeight: '800',
   },
   profileMeta: {
-    color: '#6b7280',
+    color: '#cbd5e1',
     marginTop: 4,
   },
   manageButton: {
@@ -658,15 +660,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: '#efe7da',
+    borderBottomColor: '#334155',
     paddingBottom: 8,
   },
   infoLabel: {
-    color: '#6b7280',
+    color: '#94a3b8',
     fontSize: 13,
   },
   infoValue: {
-    color: '#111827',
+    color: '#f8fafc',
     fontSize: 13,
     fontWeight: '700',
     maxWidth: '58%',
@@ -680,12 +682,12 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     width: '48%',
-    backgroundColor: '#fff',
+    backgroundColor: '#1e293b',
     borderRadius: 22,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#eadfce',
+    borderColor: '#334155',
   },
   metricTop: {
     flexDirection: 'row',
@@ -706,25 +708,25 @@ const styles = StyleSheet.create({
     borderRadius: 99,
   },
   metricValue: {
-    color: '#111827',
+    color: '#f8fafc',
     fontSize: 30,
     fontWeight: '800',
   },
   metricLabel: {
-    color: '#6b7280',
+    color: '#94a3b8',
     fontSize: 13,
     marginTop: 4,
   },
   sectionCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1e293b',
     borderRadius: 26,
     padding: 18,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#eadfce',
+    borderColor: '#334155',
   },
   sectionTitle: {
-    color: '#1f2937',
+    color: '#f8fafc',
     fontSize: 18,
     fontWeight: '800',
   },
@@ -742,7 +744,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyCopy: {
-    color: '#6b7280',
+    color: '#cbd5e1',
     fontSize: 14,
   },
   tagWrap: {
@@ -750,7 +752,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   tag: {
-    backgroundColor: '#f3efe7',
+    backgroundColor: '#0b1220',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -758,7 +760,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   tagText: {
-    color: '#334155',
+    color: '#cbd5e1',
     fontSize: 13,
     fontWeight: '600',
   },

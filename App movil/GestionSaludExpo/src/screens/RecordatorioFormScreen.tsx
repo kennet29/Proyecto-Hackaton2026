@@ -97,20 +97,23 @@ export function RecordatorioFormScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 24,
-    backgroundColor: '#fff',
+    backgroundColor: '#0f172a',
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: '800',
     marginBottom: 16,
+    color: '#f8fafc',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#d4d4d8',
-    borderRadius: 10,
+    borderColor: '#334155',
+    borderRadius: 14,
     padding: 14,
     marginBottom: 12,
     fontSize: 16,
+    backgroundColor: '#0b1220',
+    color: '#f8fafc',
   },
   multiline: {
     height: 100,
@@ -119,13 +122,13 @@ const styles = StyleSheet.create({
   primaryBtn: {
     backgroundColor: '#14b8a6',
     paddingVertical: 16,
-    borderRadius: 10,
+    borderRadius: 14,
     marginTop: 8,
   },
   btnText: {
     color: '#fff',
     textAlign: 'center',
-    fontWeight: '600',
+    fontWeight: '800',
     fontSize: 16,
   },
 });

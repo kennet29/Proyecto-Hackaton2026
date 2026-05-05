@@ -1210,7 +1210,7 @@ const styles = StyleSheet.create({
 
     padding: 20,
 
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#0f172a",
 
     gap: 16,
 
@@ -1222,7 +1222,7 @@ const styles = StyleSheet.create({
 
     fontWeight: "700",
 
-    color: "#0f172a",
+    color: "#f8fafc",
 
   },
 
@@ -1230,7 +1230,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 20,
 
-    backgroundColor: "#fff",
+    backgroundColor: "#1e293b",
 
     padding: 12,
 
@@ -1262,13 +1262,13 @@ const styles = StyleSheet.create({
 
     marginTop: 8,
 
-    color: "#475569",
+    color: "#cbd5e1",
 
   },
 
   errorText: {
 
-    color: "#b91c1c",
+    color: "#fca5a5",
 
     marginTop: 8,
 
@@ -1280,7 +1280,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 20,
 
-    backgroundColor: "#fff",
+    backgroundColor: "#1e293b",
 
     padding: 16,
 
@@ -1294,7 +1294,7 @@ const styles = StyleSheet.create({
 
     fontWeight: "700",
 
-    color: "#0f172a",
+    color: "#f8fafc",
 
     textTransform: "capitalize",
 
@@ -1302,7 +1302,7 @@ const styles = StyleSheet.create({
 
   emptyText: {
 
-    color: "#475569",
+    color: "#cbd5e1",
 
   },
 
@@ -1310,7 +1310,7 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#e2e8f0",
+    borderColor: "#334155",
 
     borderRadius: 14,
 
@@ -1426,7 +1426,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 20,
 
-    backgroundColor: "#fff",
+    backgroundColor: "#1e293b",
 
     padding: 16,
 
@@ -1446,7 +1446,7 @@ const styles = StyleSheet.create({
 
   patientChip: {
 
-    backgroundColor: "#e0f2fe",
+    backgroundColor: "#082f49",
 
     borderRadius: 12,
 
@@ -1458,7 +1458,7 @@ const styles = StyleSheet.create({
 
   patientChipTitle: {
 
-    color: "#0f172a",
+    color: "#f8fafc",
 
     fontWeight: "700",
 
@@ -1466,7 +1466,7 @@ const styles = StyleSheet.create({
 
   patientChipSubtitle: {
 
-    color: "#0f172a",
+    color: "#cbd5e1",
 
     fontSize: 12,
 
@@ -1476,9 +1476,9 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#fed7aa",
+    borderColor: "#334155",
 
-    backgroundColor: "#fff7ed",
+    backgroundColor: "#1e293b",
 
     borderRadius: 12,
 
@@ -1512,7 +1512,7 @@ const styles = StyleSheet.create({
 
   formCard: {
 
-    backgroundColor: "#fff",
+    backgroundColor: "#1e293b",
 
     borderRadius: 20,
 
@@ -1528,7 +1528,7 @@ const styles = StyleSheet.create({
 
     fontWeight: "700",
 
-    color: "#0f172a",
+    color: "#f8fafc",
 
   },
 
@@ -1536,7 +1536,7 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#cbd5f5",
+    borderColor: "#334155",
 
     borderRadius: 12,
 
@@ -1550,7 +1550,7 @@ const styles = StyleSheet.create({
 
     fontWeight: "600",
 
-    color: "#0f172a",
+    color: "#f8fafc",
 
   },
 
@@ -1568,7 +1568,7 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#cbd5f5",
+    borderColor: "#334155",
 
     borderRadius: 12,
 
@@ -1576,13 +1576,13 @@ const styles = StyleSheet.create({
 
     paddingHorizontal: 14,
 
-    backgroundColor: "#f1f5f9",
+    backgroundColor: "#0b1220",
 
   },
 
   dateButtonText: {
 
-    color: "#0f172a",
+    color: "#f8fafc",
 
     fontSize: 15,
 
@@ -1594,11 +1594,11 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#cbd5f5",
+    borderColor: "#334155",
 
     borderRadius: 16,
 
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#0b1220",
 
     overflow: "hidden",
 
@@ -1608,19 +1608,19 @@ const styles = StyleSheet.create({
 
     borderTopWidth: 1,
 
-    borderTopColor: "#cbd5f5",
+    borderTopColor: "#334155",
 
     paddingVertical: 10,
 
     alignItems: "center",
 
-    backgroundColor: "#e0f2fe",
+    backgroundColor: "#172554",
 
   },
 
   iosPickerDoneText: {
 
-    color: "#0f172a",
+    color: "#bfdbfe",
 
     fontWeight: "700",
 
@@ -1630,7 +1630,7 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#d4d4d8",
+    borderColor: "#334155",
 
     borderRadius: 12,
 
@@ -1671,8 +1671,3 @@ const styles = StyleSheet.create({
   },
 
 });
-
-
-
-
-

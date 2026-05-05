@@ -398,33 +398,37 @@ export function ConsultaFormScreen({ route }: Props) {
 const styles = StyleSheet.create({
   container: {
     padding: 24,
-    backgroundColor: '#fff',
+    backgroundColor: '#0f172a',
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: '800',
     marginBottom: 16,
+    color: '#f8fafc',
   },
   label: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 8,
-    color: '#111827',
+    color: '#f8fafc',
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#d4d4d8',
-    borderRadius: 10,
+    borderColor: '#334155',
+    borderRadius: 14,
     marginBottom: 12,
     overflow: 'hidden',
+    backgroundColor: '#0b1220',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#d4d4d8',
-    borderRadius: 10,
+    borderColor: '#334155',
+    borderRadius: 14,
     padding: 14,
     marginBottom: 12,
     fontSize: 16,
+    backgroundColor: '#0b1220',
+    color: '#f8fafc',
   },
   multiline: {
     height: 100,
@@ -433,7 +437,7 @@ const styles = StyleSheet.create({
   primaryBtn: {
     backgroundColor: '#0ea5e9',
     paddingVertical: 16,
-    borderRadius: 10,
+    borderRadius: 14,
     marginTop: 8,
   },
   btnText: {
@@ -443,7 +447,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   errorText: {
-    color: '#b91c1c',
+    color: '#fca5a5',
     marginBottom: 12,
   },
   dateTimeRow: {
@@ -454,24 +458,24 @@ const styles = StyleSheet.create({
   dateButton: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#d4d4d8',
-    borderRadius: 10,
+    borderColor: '#334155',
+    borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 12,
-    backgroundColor: '#fff',
+    backgroundColor: '#0b1220',
   },
   dateButtonText: {
     fontSize: 15,
-    color: '#111827',
+    color: '#f8fafc',
     textAlign: 'center',
   },
   iosPickerCard: {
     borderWidth: 1,
-    borderColor: '#d4d4d8',
-    borderRadius: 10,
+    borderColor: '#334155',
+    borderRadius: 14,
     marginBottom: 12,
     overflow: 'hidden',
-    backgroundColor: '#fff',
+    backgroundColor: '#0b1220',
   },
   secondaryBtn: {
     alignSelf: 'flex-end',
@@ -479,7 +483,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   secondaryBtnText: {
-    color: '#0ea5e9',
-    fontWeight: '600',
+    color: '#7dd3fc',
+    fontWeight: '700',
   },
 });

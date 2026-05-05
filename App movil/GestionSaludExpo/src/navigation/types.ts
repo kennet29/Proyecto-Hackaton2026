@@ -25,8 +25,10 @@ export type RootStackParamList = {
   RecordatorioList: undefined;
   Alergia: undefined;
   Habitos: undefined;
+  SeguimientoFisico: undefined;
   Periodo: undefined;
   SaludMental: undefined;
+  ExamenClinico: undefined;
   Educacion: undefined;
   EducacionNivel: { nivelId: NivelEducativoId };
   EducacionTema: { nivelId: NivelEducativoId; temaId: string };
