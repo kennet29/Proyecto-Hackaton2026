@@ -8,7 +8,9 @@
     "start": "node dist/main.js",
     "start:dev": "ts-node-dev --respawn --transpile-only src/main.ts",
     "start:debug": "ts-node-dev --respawn --inspect src/main.ts",
-    "lint": "echo \"no lint configurado\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "npm run typecheck",
+    "test": "npm run build && node --test dist/**/*.spec.js",
     "generate:modules": "node ./scripts/generate-modules.js"
   },
   "keywords": [],

@@ -1,2 +1,1 @@
-export { UpdateAlergiaDto } from './create-alergia.dto';
-
+export { UpdateAlergiaDto } from "./create-alergia.dto";

@@ -1,2 +1,1 @@
-export { UpdateMedicacionDto } from './create-medicacion.dto';
-
+export { UpdateMedicacionDto } from "./create-medicacion.dto";

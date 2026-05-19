@@ -1,2 +1,1 @@
-export { UpdatePermisoDto } from './create-permiso.dto';
-
+export { UpdatePermisoDto } from "./create-permiso.dto";

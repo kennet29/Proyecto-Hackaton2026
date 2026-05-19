@@ -66,6 +66,8 @@ export function RegistroScreen({ navigation }: Props) {
   const [fingerprintTemplate, setFingerprintTemplate] = useState<string | null>(null);
   const [fingerprintStatus, setFingerprintStatus] = useState<'idle' | 'saved'>('idle');
   const [feedback, setFeedback] = useState<FeedbackState>(null);
+  const [registrationEnabled, setRegistrationEnabled] = useState(true);
+  const [bootstrapMode, setBootstrapMode] = useState(false);
 
   const sanitizeText = (value: string) => value.replace(/[^a-zA-Z\s]/g, '');
   const sanitizeUsername = (value: string) => value.replace(/[^a-zA-Z0-9._-]/g, '');
@@ -85,6 +87,24 @@ export function RegistroScreen({ navigation }: Props) {
     checkBiometrics();
   }, []);
 
+  useEffect(() => {
+    const loadRegistrationStatus = async () => {
+      try {
+        const response = await fetch(`${API_URL}/users/registration-status`);
+        const body = await response.json().catch(() => null);
+        if (!response.ok || !body) {
+          return;
+        }
+        setRegistrationEnabled(Boolean(body.publicRegistrationEnabled));
+        setBootstrapMode(Boolean(body.bootstrapMode));
+      } catch (error) {
+        console.warn('No se pudo consultar el estado del registro', error);
+      }
+    };
+
+    loadRegistrationStatus();
+  }, []);
+
   const handleRegisterFingerprint = async () => {
     try {
       if (!biometricAvailable) {
@@ -93,6 +113,7 @@ export function RegistroScreen({ navigation }: Props) {
       }
       const auth = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Confirma tu huella para guardarla',
+        disableDeviceFallback: true,
       });
       if (!auth.success) {
         Alert.alert('Huella Cancelada', 'No se guardó ninguna huella.');
@@ -112,6 +133,13 @@ export function RegistroScreen({ navigation }: Props) {
 
   const handleRegister = async () => {
     setFeedback(null);
+    if (!registrationEnabled) {
+      const message =
+        'El registro publico esta deshabilitado. Solicita a un administrador que cree tu cuenta.';
+      setFeedback({ type: 'error', message });
+      Alert.alert('Registro no disponible', message);
+      return;
+    }
     if (!fullName || !email || !username || !password || !confirmPassword) {
       const message = 'Completa todos los datos para continuar.';
       setFeedback({ type: 'error', message });
@@ -127,7 +155,7 @@ export function RegistroScreen({ navigation }: Props) {
 
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/users`, {
+      const response = await fetch(`${API_URL}/users/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -171,6 +199,13 @@ export function RegistroScreen({ navigation }: Props) {
         <Text style={styles.title}>Crear Cuenta</Text>
         <Text style={styles.subtitle}>Completa tus datos para registrarte en Gestión Salud.</Text>
         <FeedbackBanner feedback={feedback} />
+        {bootstrapMode ? (
+          <View style={styles.bootstrapNotice}>
+            <Text style={styles.bootstrapNoticeText}>
+              Estás creando el primer usuario del sistema. Esta cuenta recibirá acceso administrador inicial.
+            </Text>
+          </View>
+        ) : null}
 
         <Text style={styles.label}>Nombre Completo</Text>
         <TextInput
@@ -252,7 +287,7 @@ export function RegistroScreen({ navigation }: Props) {
         <TouchableOpacity
           style={styles.primaryBtn}
           onPress={handleRegister}
-          disabled={loading}
+          disabled={loading || !registrationEnabled}
           accessibilityLabel="Crear cuenta"
         >
           {loading ? (
@@ -321,6 +356,19 @@ const styles = StyleSheet.create({
   },
   feedbackTextError: {
     color: '#b91c1c',
+  },
+  bootstrapNotice: {
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#93c5fd',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  bootstrapNoticeText: {
+    color: '#1d4ed8',
+    fontSize: 12,
+    fontWeight: '600',
   },
   label: {
     fontSize: 12,

@@ -1,2 +1,1 @@
-export { UpdateOperacionDto } from './create-operacion.dto';
-
+export { UpdateOperacionDto } from "./create-operacion.dto";

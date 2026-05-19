@@ -1,2 +1,1 @@
-export { UpdateHorariomedicamentoDto } from './create-horariomedicamento.dto';
-
+export { UpdateHorariomedicamentoDto } from "./create-horariomedicamento.dto";

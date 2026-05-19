@@ -1,2 +1,1 @@
-export { UpdateUsuarioDto } from './create-usuario.dto';
-
+export { UpdateUsuarioDto } from "./create-usuario.dto";

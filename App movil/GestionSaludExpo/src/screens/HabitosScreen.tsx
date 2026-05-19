@@ -47,6 +47,20 @@ const formatDate = (value?: string | null) => {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('es-NI');
 };
 
+const getImpactAccent = (value?: string | null) => {
+  const normalized = (value ?? '').toLowerCase();
+  if (normalized.includes('alto') || normalized.includes('severo') || normalized.includes('riesgo')) {
+    return '#ef4444';
+  }
+  if (normalized.includes('medio') || normalized.includes('moderado')) {
+    return '#f59e0b';
+  }
+  if (normalized.includes('bajo') || normalized.includes('positivo') || normalized.includes('saludable')) {
+    return '#22c55e';
+  }
+  return '#38bdf8';
+};
+
 export function HabitosScreen(_: Props) {
   const { token, user } = useAuth();
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
@@ -74,16 +88,28 @@ export function HabitosScreen(_: Props) {
   }, [token]);
 
   const selectedPatientId = Number(form.pacienteId);
-  const visibleRecords = records.filter((record) => {
-    if (!selectedPatientId) return true;
-    return Number(record.pacienteId) === selectedPatientId;
-  });
+  const selectedType = types.find((type) => String(type.tipohabitoId) === form.tipohabitoId) ?? null;
+  const selectedPatient = patients.find((patient) => String(patient.pacienteId) === form.pacienteId) ?? null;
+
+  const visibleRecords = useMemo(() => {
+    const filtered = records.filter((record) => {
+      if (!selectedPatientId) return true;
+      return Number(record.pacienteId) === selectedPatientId;
+    });
+
+    return filtered.slice().sort((left, right) => {
+      const leftDate = left.inicio ?? '';
+      const rightDate = right.inicio ?? '';
+      return rightDate.localeCompare(leftDate);
+    });
+  }, [records, selectedPatientId]);
 
   const loadData = useCallback(async () => {
     if (!token) {
       setLoading(false);
       return;
     }
+
     setLoading(true);
     try {
       const [linkedPatients, typesResponse, recordsResponse] = await Promise.all([
@@ -106,13 +132,11 @@ export function HabitosScreen(_: Props) {
       setPatients(linkedPatients);
       setTypes(normalizedTypes);
       setRecords(Array.isArray(recordBody) ? recordBody : []);
-      setForm((prev) => ({
-        ...prev,
-        pacienteId: prev.pacienteId || String(linkedPatients[0]?.pacienteId ?? ''),
-        tipohabitoId: prev.tipohabitoId || String(normalizedTypes[0]?.tipohabitoId ?? ''),
-      }));
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudieron cargar los datos');
+      Alert.alert(
+        'Error',
+        error instanceof Error ? error.message : 'No se pudieron cargar los datos',
+      );
     } finally {
       setLoading(false);
     }
@@ -180,10 +204,41 @@ export function HabitosScreen(_: Props) {
   const getTypeName = (id: number) =>
     types.find((type) => Number(type.tipohabitoId) === Number(id))?.nombre ?? `Tipo #${id}`;
 
+  const insights = useMemo(() => {
+    const total = visibleRecords.length;
+    const uniqueTypes = new Set(visibleRecords.map((record) => record.tipohabitoId)).size;
+    const riskCount = visibleRecords.filter((record) => {
+      const normalized = (record.impactosalud ?? '').toLowerCase();
+      return normalized.includes('alto') || normalized.includes('severo') || normalized.includes('riesgo');
+    }).length;
+    const healthyCount = visibleRecords.filter((record) => {
+      const normalized = (record.impactosalud ?? '').toLowerCase();
+      return normalized.includes('positivo') || normalized.includes('saludable') || normalized.includes('bajo');
+    }).length;
+    const latest = visibleRecords[0] ?? null;
+
+    const summaryText = total
+      ? healthyCount > riskCount
+        ? 'Predominan habitos con impacto percibido favorable.'
+        : riskCount > 0
+          ? 'Hay habitos que conviene vigilar por su posible impacto en salud.'
+          : 'Aun hace falta mas detalle para detectar patrones claros.'
+      : 'Aun no hay suficientes registros para construir una lectura util.';
+
+    return {
+      total,
+      uniqueTypes,
+      riskCount,
+      healthyCount,
+      latest,
+      summaryText,
+    };
+  }, [visibleRecords]);
+
   if (loading) {
     return (
       <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color="#14b8a6" />
         <Text style={styles.loadingText}>Cargando habitos...</Text>
       </View>
     );
@@ -192,16 +247,27 @@ export function HabitosScreen(_: Props) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
+        <View style={styles.headerBadge}>
+          <Text style={styles.headerBadgeText}>Seguimiento continuo</Text>
+        </View>
         <Text style={styles.title}>Habitos</Text>
-        <Text style={styles.subtitle}>Registra actividad fisica, sueno, alimentacion u otros habitos.</Text>
+        <Text style={styles.subtitle}>
+          Registra actividad fisica, sueno, alimentacion u otros habitos para entender patrones y riesgos.
+        </Text>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Nuevo registro</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.cardTitle}>Contexto del registro</Text>
+          <Text style={styles.cardSubtitle}>Selecciona paciente y tipo antes de guardar el habito.</Text>
+        </View>
 
         <Text style={styles.label}>Paciente</Text>
         <View style={styles.pickerShell}>
-          <Picker selectedValue={form.pacienteId} onValueChange={(value) => handleChange('pacienteId', String(value))}>
+          <Picker
+            selectedValue={form.pacienteId}
+            onValueChange={(value) => handleChange('pacienteId', String(value))}
+          >
             <Picker.Item label="Selecciona un paciente" value="" />
             {patients.map((patient) => (
               <Picker.Item
@@ -230,77 +296,182 @@ export function HabitosScreen(_: Props) {
           </Picker>
         </View>
 
+        {selectedPatient || selectedType ? (
+          <View style={styles.contextBox}>
+            {selectedPatient ? (
+              <Text style={styles.contextText}>Paciente activo: {selectedPatient.displayName}</Text>
+            ) : null}
+            {selectedType ? (
+              <Text style={styles.contextText}>
+                Tipo elegido: {selectedType.nombre}
+                {selectedType.categoria ? ` - ${selectedType.categoria}` : ''}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
+
         {types.length === 0 ? (
           <Text style={styles.warningText}>
             No hay tipos de habito configurados en la base de datos.
           </Text>
         ) : null}
+      </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Categoria"
-          value={form.categoria}
-          onChangeText={(value) => handleChange('categoria', value)}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Nivel"
-          value={form.nivel}
-          onChangeText={(value) => handleChange('nivel', value)}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Frecuencia"
-          value={form.frecuencia}
-          onChangeText={(value) => handleChange('frecuencia', value)}
-        />
-        <View style={styles.inlineFields}>
+      <View style={styles.card}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.cardTitle}>Nuevo registro</Text>
+          <Text style={styles.cardSubtitle}>Completa el nivel, la frecuencia y el impacto observado.</Text>
+        </View>
+
+        <View style={styles.formSection}>
+          <Text style={styles.formSectionTitle}>Detalle principal</Text>
+          <Text style={styles.label}>Categoria</Text>
           <TextInput
-            style={[styles.input, styles.inlineInput]}
-            placeholder="Cantidad"
-            keyboardType="decimal-pad"
-            value={form.cantidad}
-            onChangeText={(value) => handleChange('cantidad', value)}
+            style={styles.input}
+            placeholder="Ej. actividad fisica, alimentacion, sueno"
+            placeholderTextColor="#94a3b8"
+            value={form.categoria}
+            onChangeText={(value) => handleChange('categoria', value)}
           />
+
+          <View style={styles.row}>
+            <View style={styles.fieldGroupHalf}>
+              <Text style={styles.label}>Nivel</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Ej. bajo, medio, alto"
+                placeholderTextColor="#94a3b8"
+                value={form.nivel}
+                onChangeText={(value) => handleChange('nivel', value)}
+              />
+            </View>
+            <View style={styles.fieldGroupHalf}>
+              <Text style={styles.label}>Frecuencia</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Ej. diario, semanal"
+                placeholderTextColor="#94a3b8"
+                value={form.frecuencia}
+                onChangeText={(value) => handleChange('frecuencia', value)}
+              />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.formSection}>
+          <Text style={styles.formSectionTitle}>Medicion y fecha</Text>
+          <View style={styles.row}>
+            <View style={styles.fieldGroupHalf}>
+              <Text style={styles.label}>Cantidad</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Ej. 30"
+                placeholderTextColor="#94a3b8"
+                keyboardType="decimal-pad"
+                value={form.cantidad}
+                onChangeText={(value) => handleChange('cantidad', value)}
+              />
+            </View>
+            <View style={styles.fieldGroupHalf}>
+              <Text style={styles.label}>Unidad</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Ej. min, veces, litros"
+                placeholderTextColor="#94a3b8"
+                value={form.unidad}
+                onChangeText={(value) => handleChange('unidad', value)}
+              />
+            </View>
+          </View>
+
+          <Text style={styles.label}>Fecha de inicio o referencia</Text>
           <TextInput
-            style={[styles.input, styles.inlineInput]}
-            placeholder="Unidad"
-            value={form.unidad}
-            onChangeText={(value) => handleChange('unidad', value)}
+            style={styles.input}
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor="#94a3b8"
+            value={form.inicio}
+            onChangeText={(value) => handleChange('inicio', value)}
           />
         </View>
-        <TextInput
-          style={styles.input}
-          placeholder="Inicio YYYY-MM-DD"
-          value={form.inicio}
-          onChangeText={(value) => handleChange('inicio', value)}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Impacto en salud"
-          value={form.impactosalud}
-          onChangeText={(value) => handleChange('impactosalud', value)}
-        />
-        <TextInput
-          style={[styles.input, styles.multiline]}
-          placeholder="Observaciones"
-          multiline
-          textAlignVertical="top"
-          value={form.observaciones}
-          onChangeText={(value) => handleChange('observaciones', value)}
-        />
+
+        <View style={styles.formSection}>
+          <Text style={styles.formSectionTitle}>Interpretacion clinica</Text>
+          <Text style={styles.label}>Impacto en salud</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ej. positivo, moderado, alto riesgo"
+            placeholderTextColor="#94a3b8"
+            value={form.impactosalud}
+            onChangeText={(value) => handleChange('impactosalud', value)}
+          />
+
+          <Text style={styles.label}>Observaciones</Text>
+          <TextInput
+            style={[styles.input, styles.multiline]}
+            placeholder="Agrega contexto, detonantes, cambios o recomendaciones"
+            placeholderTextColor="#94a3b8"
+            multiline
+            textAlignVertical="top"
+            value={form.observaciones}
+            onChangeText={(value) => handleChange('observaciones', value)}
+          />
+        </View>
 
         <TouchableOpacity
           style={[styles.primaryBtn, submitting && styles.disabledBtn]}
           onPress={handleSubmit}
           disabled={submitting || types.length === 0}
         >
-          <Text style={styles.primaryBtnText}>{submitting ? 'Guardando...' : 'Guardar habito'}</Text>
+          <Text style={styles.primaryBtnText}>
+            {submitting ? 'Guardando...' : 'Guardar habito'}
+          </Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Registros</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.cardTitle}>Lectura rapida</Text>
+          <Text style={styles.cardSubtitle}>Resumen util de la informacion capturada.</Text>
+        </View>
+
+        <View style={styles.metricsRow}>
+          <View style={styles.metricCard}>
+            <Text style={styles.metricLabel}>Registros</Text>
+            <Text style={styles.metricValue}>{insights.total}</Text>
+          </View>
+          <View style={styles.metricCard}>
+            <Text style={styles.metricLabel}>Tipos unicos</Text>
+            <Text style={styles.metricValue}>{insights.uniqueTypes}</Text>
+          </View>
+        </View>
+
+        <View style={styles.metricsRow}>
+          <View style={styles.metricCard}>
+            <Text style={styles.metricLabel}>Con riesgo</Text>
+            <Text style={styles.metricValue}>{insights.riskCount}</Text>
+          </View>
+          <View style={styles.metricCard}>
+            <Text style={styles.metricLabel}>Favorables</Text>
+            <Text style={styles.metricValue}>{insights.healthyCount}</Text>
+          </View>
+        </View>
+
+        <View style={styles.insightBox}>
+          <Text style={styles.insightTitle}>Lo que ya podemos hacer con esta informacion</Text>
+          <Text style={styles.insightText}>{insights.summaryText}</Text>
+          {insights.latest ? (
+            <Text style={styles.insightText}>
+              Ultimo registro: {getTypeName(insights.latest.tipohabitoId)} ({formatDate(insights.latest.inicio)}).
+            </Text>
+          ) : null}
+        </View>
+      </View>
+
+      <View style={styles.card}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.cardTitle}>Registros</Text>
+          <Text style={styles.cardSubtitle}>Historial filtrado por el paciente activo.</Text>
+        </View>
         {visibleRecords.length === 0 ? (
           <Text style={styles.emptyText}>Todavia no hay habitos registrados.</Text>
         ) : (
@@ -309,21 +480,52 @@ export function HabitosScreen(_: Props) {
             scrollEnabled={false}
             keyExtractor={(item) => String(item.habitoId)}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
-            renderItem={({ item }) => (
-              <View style={styles.recordRow}>
-                <Text style={styles.recordTitle}>{getTypeName(item.tipohabitoId)}</Text>
-                <Text style={styles.recordText}>
-                  {formatDate(item.inicio)} {item.frecuencia ? `- ${item.frecuencia}` : ''}
-                </Text>
-                <Text style={styles.recordText}>
-                  {[item.nivel, item.cantidad ? `${item.cantidad} ${item.unidad ?? ''}`.trim() : null]
-                    .filter(Boolean)
-                    .join(' - ') || 'Sin detalle'}
-                </Text>
-                {item.impactosalud ? <Text style={styles.recordText}>Impacto: {item.impactosalud}</Text> : null}
-                {item.observaciones ? <Text style={styles.recordNote}>{item.observaciones}</Text> : null}
-              </View>
-            )}
+            renderItem={({ item }) => {
+              const accent = getImpactAccent(item.impactosalud);
+              return (
+                <View style={styles.recordCard}>
+                  <View style={styles.recordHeader}>
+                    <View style={styles.recordHeaderText}>
+                      <Text style={styles.recordTitle}>{getTypeName(item.tipohabitoId)}</Text>
+                      <Text style={styles.recordText}>
+                        {formatDate(item.inicio)} {item.frecuencia ? `- ${item.frecuencia}` : ''}
+                      </Text>
+                    </View>
+                    {item.impactosalud ? (
+                      <View style={[styles.impactBadge, { borderColor: accent }]}>
+                        <Text style={[styles.impactBadgeText, { color: accent }]}>
+                          {item.impactosalud}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+
+                  <View style={styles.recordMetaRow}>
+                    {item.categoria ? (
+                      <View style={styles.metaChip}>
+                        <Text style={styles.metaChipText}>{item.categoria}</Text>
+                      </View>
+                    ) : null}
+                    {item.nivel ? (
+                      <View style={styles.metaChip}>
+                        <Text style={styles.metaChipText}>Nivel: {item.nivel}</Text>
+                      </View>
+                    ) : null}
+                    {item.cantidad ? (
+                      <View style={styles.metaChip}>
+                        <Text style={styles.metaChipText}>
+                          {item.cantidad} {item.unidad ?? ''}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+
+                  {item.observaciones ? (
+                    <Text style={styles.recordNote}>{item.observaciones}</Text>
+                  ) : null}
+                </View>
+              );
+            }}
           />
         )}
       </View>
@@ -355,6 +557,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f766e',
     borderRadius: 24,
     padding: 20,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#2dd4bf',
+  },
+  headerBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#115e59',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  headerBadgeText: {
+    color: '#ccfbf1',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   title: {
     color: '#fff',
@@ -363,25 +582,33 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: '#ccfbf1',
-    marginTop: 6,
+    lineHeight: 20,
   },
   card: {
     backgroundColor: '#1e293b',
     borderRadius: 22,
     padding: 18,
-    gap: 10,
+    gap: 12,
     borderWidth: 1,
     borderColor: '#334155',
+  },
+  sectionHeader: {
+    gap: 4,
   },
   cardTitle: {
     color: '#f8fafc',
     fontSize: 18,
     fontWeight: '800',
   },
+  cardSubtitle: {
+    color: '#94a3b8',
+    fontSize: 13,
+    lineHeight: 18,
+  },
   label: {
     color: '#f8fafc',
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 13,
   },
   pickerShell: {
     borderWidth: 1,
@@ -389,6 +616,38 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#0b1220',
+  },
+  contextBox: {
+    backgroundColor: '#0f172a',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#334155',
+    padding: 12,
+    gap: 4,
+  },
+  contextText: {
+    color: '#cbd5e1',
+    fontSize: 13,
+  },
+  warningText: {
+    color: '#fde68a',
+    backgroundColor: '#422006',
+    borderRadius: 10,
+    padding: 10,
+    fontWeight: '600',
+  },
+  formSection: {
+    backgroundColor: '#0f172a',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+    padding: 14,
+    gap: 10,
+  },
+  formSectionTitle: {
+    color: '#f8fafc',
+    fontSize: 15,
+    fontWeight: '800',
   },
   input: {
     borderWidth: 1,
@@ -399,19 +658,20 @@ const styles = StyleSheet.create({
     color: '#f8fafc',
     backgroundColor: '#0b1220',
   },
-  inlineFields: {
+  row: {
     flexDirection: 'row',
     gap: 10,
   },
-  inlineInput: {
+  fieldGroupHalf: {
     flex: 1,
+    gap: 8,
   },
   multiline: {
-    minHeight: 86,
+    minHeight: 92,
   },
   primaryBtn: {
     backgroundColor: '#0f766e',
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
   },
@@ -423,22 +683,68 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
   },
-  warningText: {
-    color: '#fde68a',
-    backgroundColor: '#422006',
-    borderRadius: 10,
-    padding: 10,
-    fontWeight: '600',
+  metricsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  metricCard: {
+    flex: 1,
+    backgroundColor: '#0f172a',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#334155',
+    padding: 12,
+    gap: 4,
+  },
+  metricLabel: {
+    color: '#94a3b8',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  metricValue: {
+    color: '#f8fafc',
+    fontSize: 22,
+    fontWeight: '800',
+  },
+  insightBox: {
+    backgroundColor: '#10232a',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#155e75',
+    padding: 14,
+    gap: 6,
+  },
+  insightTitle: {
+    color: '#e0f2fe',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  insightText: {
+    color: '#bae6fd',
+    lineHeight: 19,
   },
   emptyText: {
     color: '#cbd5e1',
   },
   separator: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: '#334155',
-    marginVertical: 10,
+    height: 12,
   },
-  recordRow: {
+  recordCard: {
+    backgroundColor: '#0f172a',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+    padding: 14,
+    gap: 10,
+  },
+  recordHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  recordHeaderText: {
+    flex: 1,
     gap: 4,
   },
   recordTitle: {
@@ -449,10 +755,40 @@ const styles = StyleSheet.create({
   recordText: {
     color: '#cbd5e1',
     fontSize: 13,
+    lineHeight: 18,
+  },
+  impactBadge: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  impactBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  recordMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  metaChip: {
+    backgroundColor: '#111827',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#1f2937',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  metaChipText: {
+    color: '#cbd5e1',
+    fontSize: 12,
+    fontWeight: '700',
   },
   recordNote: {
     color: '#94a3b8',
     fontSize: 13,
-    fontStyle: 'italic',
+    lineHeight: 19,
   },
 });

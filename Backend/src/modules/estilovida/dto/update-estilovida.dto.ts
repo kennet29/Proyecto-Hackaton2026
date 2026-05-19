@@ -1,2 +1,1 @@
-export { UpdateEstilovidaDto } from './create-estilovida.dto';
-
+export { UpdateEstilovidaDto } from "./create-estilovida.dto";

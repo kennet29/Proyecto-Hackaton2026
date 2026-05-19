@@ -1,2 +1,1 @@
-export { UpdateEvaluacionsaludhabitoDto } from './create-evaluacionsaludhabito.dto';
-
+export { UpdateEvaluacionsaludhabitoDto } from "./create-evaluacionsaludhabito.dto";

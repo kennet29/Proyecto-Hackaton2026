@@ -1,9 +1,12 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Controlprenatal } from './controlprenatal.entity';
-import { ControlprenatalService } from './controlprenatal.service';
-import { ControlprenatalController } from './controlprenatal.controller';
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { Controlprenatal } from "./controlprenatal.entity";
+import { ControlprenatalService } from "./controlprenatal.service";
+import { ControlprenatalController } from "./controlprenatal.controller";
 
+/**
+ * Agrupa controladores y proveedores del dominio controlprenatal.
+ */
 @Module({
   imports: [TypeOrmModule.forFeature([Controlprenatal])],
   controllers: [ControlprenatalController],
@@ -11,4 +14,3 @@ import { ControlprenatalController } from './controlprenatal.controller';
   exports: [ControlprenatalService],
 })
 export class ControlprenatalModule {}
-

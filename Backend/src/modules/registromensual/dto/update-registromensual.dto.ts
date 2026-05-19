@@ -1,2 +1,1 @@
-export { UpdateRegistromensualDto } from './create-registromensual.dto';
-
+export { UpdateRegistromensualDto } from "./create-registromensual.dto";

@@ -14,6 +14,7 @@ import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/d
 import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
+import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 
 type LinkedPatient = { pacienteId: number; displayName: string };
 type LesionRecord = {
@@ -230,6 +231,36 @@ export function LesionFormScreen() {
       return;
     }
     try {
+      const offlineResult = await submitJsonWithOfflineFallback({
+        token,
+        path: '/lesion',
+        method: 'POST',
+        description: 'registrar lesion',
+        body: {
+          pacienteId: Number(form.pacienteId),
+          fechalesion: form.fecha,
+          tipo: form.tipo.trim(),
+          partecuerpo: form.parteCuerpo.trim() || undefined,
+          severidad: form.severidad.trim() || undefined,
+          tratamiento: form.tratamiento.trim() || undefined,
+          recuperado: form.recuperado,
+          notas: form.notas.trim() || undefined,
+          creadopor: user?.username ?? undefined,
+        },
+      });
+      if (offlineResult.status === 'queued') {
+        Alert.alert(
+          'Lesion en cola',
+          'No habia conexion. La lesion quedo pendiente de sincronizacion y se enviara automaticamente cuando vuelva la red.',
+        );
+      } else {
+        Alert.alert('Lesion Guardada', 'La lesion fue registrada correctamente');
+        fetchRecords();
+      }
+      resetForm();
+      setShowForm(false);
+      return;
+
       const response = await fetch(`${API_URL}/lesion`, {
         method: 'POST',
         headers,

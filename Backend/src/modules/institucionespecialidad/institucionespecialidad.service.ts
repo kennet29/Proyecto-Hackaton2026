@@ -1,19 +1,41 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
-import { Especialidad } from '../especialidad/especialidad.entity';
-import { Institucionsalud } from '../institucionsalud/institucionsalud.entity';
-import { CreateInstitucionespecialidadDto } from './dto/create-institucionespecialidad.dto';
-import { UpdateInstitucionespecialidadDto } from './dto/update-institucionespecialidad.dto';
-import { Institucionespecialidad } from './institucionespecialidad.entity';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { FindOptionsWhere, Repository } from "typeorm";
+import { Especialidad } from "../especialidad/especialidad.entity";
+import { Institucionsalud } from "../institucionsalud/institucionsalud.entity";
+import { CreateInstitucionespecialidadDto } from "./dto/create-institucionespecialidad.dto";
+import { UpdateInstitucionespecialidadDto } from "./dto/update-institucionespecialidad.dto";
+import { Institucionespecialidad } from "./institucionespecialidad.entity";
 
+/**
+ * Define el tipo institucion especialidad filters utilizado por el backend.
+ */
 type InstitucionEspecialidadFilters = {
+  /**
+   * Identificador persistido para `institucionSaludId`.
+   */
   institucionSaludId?: number;
+  /**
+   * Identificador persistido para `especialidadId`.
+   */
   especialidadId?: number;
+  /**
+   * Campo de datos asociado a `activo`.
+   */
   activo?: boolean;
+  /**
+   * Campo de datos asociado a `destacada`.
+   */
   destacada?: boolean;
 };
 
+/**
+ * Implementa la lógica de negocio y persistencia del dominio institucionespecialidad.
+ */
 @Injectable()
 export class InstitucionespecialidadService {
   constructor(
@@ -25,9 +47,22 @@ export class InstitucionespecialidadService {
     private readonly especialidadRepository: Repository<Especialidad>,
   ) {}
 
-  async create(payload: CreateInstitucionespecialidadDto): Promise<Institucionespecialidad> {
-    await this.assertReferences(payload.institucionSaludId, payload.especialidadId);
-    await this.assertUniquePair(payload.institucionSaludId, payload.especialidadId);
+  /**
+   * Create.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro creado.
+   */
+  async create(
+    payload: CreateInstitucionespecialidadDto,
+  ): Promise<Institucionespecialidad> {
+    await this.assertReferences(
+      payload.institucionSaludId,
+      payload.especialidadId,
+    );
+    await this.assertUniquePair(
+      payload.institucionSaludId,
+      payload.especialidadId,
+    );
 
     const entity = this.institucionEspecialidadRepository.create({
       ...payload,
@@ -39,7 +74,14 @@ export class InstitucionespecialidadService {
     return this.institucionEspecialidadRepository.save(entity);
   }
 
-  async findAll(filters: InstitucionEspecialidadFilters = {}): Promise<Institucionespecialidad[]> {
+  /**
+   * Find all.
+   * @param filters Valor del parámetro `filters`.
+   * @returns Colección de registros encontrados.
+   */
+  async findAll(
+    filters: InstitucionEspecialidadFilters = {},
+  ): Promise<Institucionespecialidad[]> {
     const where: FindOptionsWhere<Institucionespecialidad> = {};
     if (filters.institucionSaludId !== undefined) {
       where.institucionSaludId = filters.institucionSaludId;
@@ -55,26 +97,40 @@ export class InstitucionespecialidadService {
     }
     return this.institucionEspecialidadRepository.find({
       where,
-      order: { destacada: 'DESC', institucionEspecialidadId: 'DESC' },
+      order: { destacada: "DESC", institucionEspecialidadId: "DESC" },
     });
   }
 
+  /**
+   * Find one.
+   * @param id Identificador del registro objetivo.
+   * @returns Resultado de la consulta solicitada.
+   */
   async findOne(id: number): Promise<Institucionespecialidad> {
     const entity = await this.institucionEspecialidadRepository.findOne({
       where: { institucionEspecialidadId: id },
     });
     if (!entity) {
-      throw new NotFoundException(`relacion institucion-especialidad ${id} no encontrada`);
+      throw new NotFoundException(
+        `relacion institucion-especialidad ${id} no encontrada`,
+      );
     }
     return entity;
   }
 
+  /**
+   * Update.
+   * @param id Identificador del registro objetivo.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro actualizado.
+   */
   async update(
     id: number,
     payload: UpdateInstitucionespecialidadDto,
   ): Promise<Institucionespecialidad> {
     const entity = await this.findOne(id);
-    const nextInstitucionId = payload.institucionSaludId ?? entity.institucionSaludId;
+    const nextInstitucionId =
+      payload.institucionSaludId ?? entity.institucionSaludId;
     const nextEspecialidadId = payload.especialidadId ?? entity.especialidadId;
 
     await this.assertReferences(nextInstitucionId, nextEspecialidadId);
@@ -90,15 +146,28 @@ export class InstitucionespecialidadService {
     return this.institucionEspecialidadRepository.save(entity);
   }
 
+  /**
+   * Remove.
+   * @param id Identificador del registro objetivo.
+   * @returns La operación se completa sin devolver contenido.
+   */
   async remove(id: number): Promise<void> {
     const result = await this.institucionEspecialidadRepository.delete({
       institucionEspecialidadId: id,
     });
     if (!result.affected) {
-      throw new NotFoundException(`relacion institucion-especialidad ${id} no encontrada`);
+      throw new NotFoundException(
+        `relacion institucion-especialidad ${id} no encontrada`,
+      );
     }
   }
 
+  /**
+   * Valida references.
+   * @param institucionSaludId Identificador asociado a institucion salud.
+   * @param especialidadId Identificador asociado a especialidad.
+   * @returns La promesa se resuelve cuando la validación se cumple.
+   */
   private async assertReferences(
     institucionSaludId: number,
     especialidadId: number,
@@ -107,7 +176,9 @@ export class InstitucionespecialidadService {
       where: { institucionSaludId },
     });
     if (!institucion) {
-      throw new BadRequestException(`institucion ${institucionSaludId} no existe`);
+      throw new BadRequestException(
+        `institucion ${institucionSaludId} no existe`,
+      );
     }
     const especialidad = await this.especialidadRepository.findOne({
       where: { especialidadId },
@@ -117,6 +188,13 @@ export class InstitucionespecialidadService {
     }
   }
 
+  /**
+   * Valida unique pair.
+   * @param institucionSaludId Identificador asociado a institucion salud.
+   * @param especialidadId Identificador asociado a especialidad.
+   * @param currentId Identificador asociado a current.
+   * @returns La promesa se resuelve cuando la validación se cumple.
+   */
   private async assertUniquePair(
     institucionSaludId: number,
     especialidadId: number,
@@ -127,7 +205,7 @@ export class InstitucionespecialidadService {
     });
     if (existing && existing.institucionEspecialidadId !== currentId) {
       throw new BadRequestException(
-        'esta institucion ya tiene registrada esa especialidad',
+        "esta institucion ya tiene registrada esa especialidad",
       );
     }
   }

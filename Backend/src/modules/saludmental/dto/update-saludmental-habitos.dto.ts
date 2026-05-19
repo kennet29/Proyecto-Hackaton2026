@@ -1,6 +1,9 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
 
+/**
+ * Esquema Zod para validar la actualización de saludmental habitos.
+ */
 export const updateSaludmentalHabitosSchema = z
   .object({
     ejercicioMinutos: z.number().int().min(0).max(1440).optional(),
@@ -11,9 +14,12 @@ export const updateSaludmentalHabitosSchema = z
     modificadoPor: z.string().trim().max(60).optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
-    message: 'debes enviar al menos un campo',
+    message: "debes enviar al menos un campo",
   });
 
+/**
+ * DTO de entrada para actualizar saludmental habitos.
+ */
 export class UpdateSaludmentalHabitosDto extends createZodDto(
   updateSaludmentalHabitosSchema,
 ) {}

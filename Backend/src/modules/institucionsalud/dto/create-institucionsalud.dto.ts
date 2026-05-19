@@ -1,10 +1,20 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
 
 const nullableText = z.string().trim().max(500).nullable().optional();
 
-export const institucionSaludTipos = ['clinica', 'hospital', 'laboratorio'] as const;
+/**
+ * Valor reutilizable asociado a institucion salud tipos.
+ */
+export const institucionSaludTipos = [
+  "clinica",
+  "hospital",
+  "laboratorio",
+] as const;
 
+/**
+ * Esquema Zod para validar la creación de institucionsalud.
+ */
 export const createInstitucionsaludSchema = z.object({
   nombre: z.string().trim().min(1).max(160),
   tipo: z.enum(institucionSaludTipos),
@@ -28,4 +38,9 @@ export const createInstitucionsaludSchema = z.object({
   modificadoEn: z.coerce.date().nullable().optional(),
 });
 
-export class CreateInstitucionsaludDto extends createZodDto(createInstitucionsaludSchema) {}
+/**
+ * DTO de entrada para crear institucionsalud.
+ */
+export class CreateInstitucionsaludDto extends createZodDto(
+  createInstitucionsaludSchema,
+) {}

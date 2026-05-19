@@ -17,9 +17,9 @@ export function IniciarSesionScreen({ navigation }: Props) {
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.secondaryBtn}
-        onPress={() => navigation.navigate('MenuPrincipal')}
+        onPress={() => navigation.navigate('Registro')}
       >
-        <Text style={styles.secondaryText}>Ver Menu Principal</Text>
+        <Text style={styles.secondaryText}>Crear Cuenta</Text>
       </TouchableOpacity>
     </View>
   );

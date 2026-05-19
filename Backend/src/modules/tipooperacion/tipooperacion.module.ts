@@ -1,9 +1,12 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Tipooperacion } from './tipooperacion.entity';
-import { TipooperacionService } from './tipooperacion.service';
-import { TipooperacionController } from './tipooperacion.controller';
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { Tipooperacion } from "./tipooperacion.entity";
+import { TipooperacionService } from "./tipooperacion.service";
+import { TipooperacionController } from "./tipooperacion.controller";
 
+/**
+ * Agrupa controladores y proveedores del dominio tipooperacion.
+ */
 @Module({
   imports: [TypeOrmModule.forFeature([Tipooperacion])],
   controllers: [TipooperacionController],
@@ -11,4 +14,3 @@ import { TipooperacionController } from './tipooperacion.controller';
   exports: [TipooperacionService],
 })
 export class TipooperacionModule {}
-

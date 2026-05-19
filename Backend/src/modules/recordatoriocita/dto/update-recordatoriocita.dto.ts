@@ -1,2 +1,1 @@
-export { UpdateRecordatoriocitaDto } from './create-recordatoriocita.dto';
-
+export { UpdateRecordatoriocitaDto } from "./create-recordatoriocita.dto";

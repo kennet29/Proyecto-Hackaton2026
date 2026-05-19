@@ -15,6 +15,7 @@ import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/d
 import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
+import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 
 type LinkedPatient = {
   pacienteId: number;
@@ -313,6 +314,33 @@ export function VacunaFormScreen() {
       return;
     }
     try {
+      const offlineResult = await submitJsonWithOfflineFallback({
+        token,
+        path: '/vacuna',
+        method: 'POST',
+        description: 'registrar vacuna',
+        body: {
+          pacienteId: Number(form.pacienteId),
+          nombre: form.nombre,
+          fechaaplicacion: form.fecha,
+          lote: form.lote || undefined,
+          proximadosis: form.proximaDosis || undefined,
+          creadopor: user?.username ?? undefined,
+        },
+      });
+      if (offlineResult.status === 'queued') {
+        Alert.alert(
+          'Vacuna en cola',
+          'No habia conexion. La dosis quedo guardada en el dispositivo y se enviara automaticamente cuando vuelva la red.',
+        );
+      } else {
+        Alert.alert('Vacuna Registrada', 'El carnet fue actualizado');
+        fetchVaccines();
+      }
+      setForm({ pacienteId: '', nombre: '', fecha: '', lote: '', proximaDosis: '' });
+      setShowForm(false);
+      return;
+
       const response = await fetch(`${API_URL}/vacuna`, {
         method: 'POST',
         headers: jsonHeaders,

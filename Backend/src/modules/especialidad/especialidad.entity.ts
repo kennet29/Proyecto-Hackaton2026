@@ -1,44 +1,125 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity({ name: 'especialidad' })
+/**
+ * Entidad TypeORM que modela el recurso especialidad.
+ */
+@Entity({ name: "especialidad" })
 export class Especialidad {
-  @PrimaryGeneratedColumn({ name: 'especialidadid', type: 'int' })
+  /**
+   * Identificador persistido para `especialidadId`.
+   */
+  @PrimaryGeneratedColumn({ name: "especialidadid", type: "int" })
   especialidadId!: number;
 
-  @Column({ name: 'nombre', type: 'nvarchar', length: 120 })
+  /**
+   * Nombre descriptivo almacenado en `nombre`.
+   */
+  @Column({ name: "nombre", type: "nvarchar", length: 120 })
   nombre!: string;
 
-  @Column({ name: 'descripcion', type: 'nvarchar', length: 200, nullable: true })
+  /**
+   * Texto descriptivo del campo `descripcion`.
+   */
+  @Column({
+    name: "descripcion",
+    type: "nvarchar",
+    length: 200,
+    nullable: true,
+  })
   descripcion?: string;
 
-  @Column({ name: 'activo', type: 'bit' })
+  /**
+   * Campo de datos asociado a `activo`.
+   */
+  @Column({ name: "activo", type: "bit" })
   activo!: boolean;
 
-  @Column({ name: 'creadopor', type: 'nvarchar', length: 60, nullable: true })
+  /**
+   * Campo de datos asociado a `creadopor`.
+   */
+  @Column({ name: "creadopor", type: "nvarchar", length: 60, nullable: true })
   creadopor?: string;
 
-  @Column({ name: 'creadoen', type: 'datetime2', precision: 7 })
+  /**
+   * Campo de datos asociado a `creadoen`.
+   */
+  @Column({ name: "creadoen", type: "datetime2", precision: 7 })
   creadoen!: Date;
 
-  @Column({ name: 'modificadopor', type: 'nvarchar', length: 60, nullable: true })
+  /**
+   * Campo de datos asociado a `modificadopor`.
+   */
+  @Column({
+    name: "modificadopor",
+    type: "nvarchar",
+    length: 60,
+    nullable: true,
+  })
   modificadopor?: string;
 
-  @Column({ name: 'modificadoen', type: 'datetime2', precision: 7, nullable: true })
+  /**
+   * Campo de datos asociado a `modificadoen`.
+   */
+  @Column({
+    name: "modificadoen",
+    type: "datetime2",
+    precision: 7,
+    nullable: true,
+  })
   modificadoen?: Date;
 
-  @Column({ name: 'campoprueba01', type: 'nvarchar', length: 200, nullable: true })
+  /**
+   * Campo de datos asociado a `campoprueba01`.
+   */
+  @Column({
+    name: "campoprueba01",
+    type: "nvarchar",
+    length: 200,
+    nullable: true,
+  })
   campoprueba01?: string;
 
-  @Column({ name: 'campoprueba02', type: 'nvarchar', length: 200, nullable: true })
+  /**
+   * Campo de datos asociado a `campoprueba02`.
+   */
+  @Column({
+    name: "campoprueba02",
+    type: "nvarchar",
+    length: 200,
+    nullable: true,
+  })
   campoprueba02?: string;
 
-  @Column({ name: 'campoprueba03', type: 'nvarchar', length: 200, nullable: true })
+  /**
+   * Campo de datos asociado a `campoprueba03`.
+   */
+  @Column({
+    name: "campoprueba03",
+    type: "nvarchar",
+    length: 200,
+    nullable: true,
+  })
   campoprueba03?: string;
 
-  @Column({ name: 'campoprueba04', type: 'nvarchar', length: 200, nullable: true })
+  /**
+   * Campo de datos asociado a `campoprueba04`.
+   */
+  @Column({
+    name: "campoprueba04",
+    type: "nvarchar",
+    length: 200,
+    nullable: true,
+  })
   campoprueba04?: string;
 
-  @Column({ name: 'campoprueba05', type: 'nvarchar', length: 200, nullable: true })
+  /**
+   * Campo de datos asociado a `campoprueba05`.
+   */
+  @Column({
+    name: "campoprueba05",
+    type: "nvarchar",
+    length: 200,
+    nullable: true,
+  })
   campoprueba05?: string;
-
 }

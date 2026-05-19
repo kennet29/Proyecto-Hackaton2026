@@ -1,15 +1,21 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
 
+/**
+ * Valor reutilizable asociado a tipos imagen institucion.
+ */
 export const tiposImagenInstitucion = [
-  'logo',
-  'fachada',
-  'interior',
-  'laboratorio',
-  'equipo',
-  'otra',
+  "logo",
+  "fachada",
+  "interior",
+  "laboratorio",
+  "equipo",
+  "otra",
 ] as const;
 
+/**
+ * Esquema Zod para validar la creación de institucionimagen.
+ */
 export const createInstitucionimagenSchema = z.object({
   institucionSaludId: z.number().int().positive(),
   tipoImagen: z.enum(tiposImagenInstitucion).optional(),
@@ -27,4 +33,9 @@ export const createInstitucionimagenSchema = z.object({
   modificadoEn: z.coerce.date().nullable().optional(),
 });
 
-export class CreateInstitucionimagenDto extends createZodDto(createInstitucionimagenSchema) {}
+/**
+ * DTO de entrada para crear institucionimagen.
+ */
+export class CreateInstitucionimagenDto extends createZodDto(
+  createInstitucionimagenSchema,
+) {}

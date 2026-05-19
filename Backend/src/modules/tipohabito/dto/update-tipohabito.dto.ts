@@ -1,2 +1,1 @@
-export { UpdateTipohabitoDto } from './create-tipohabito.dto';
-
+export { UpdateTipohabitoDto } from "./create-tipohabito.dto";

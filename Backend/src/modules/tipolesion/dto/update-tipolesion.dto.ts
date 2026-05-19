@@ -1,2 +1,1 @@
-export { UpdateTipolesionDto } from './create-tipolesion.dto';
-
+export { UpdateTipolesionDto } from "./create-tipolesion.dto";

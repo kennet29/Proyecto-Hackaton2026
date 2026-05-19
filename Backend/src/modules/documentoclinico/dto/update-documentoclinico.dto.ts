@@ -1,2 +1,1 @@
-export { UpdateDocumentoclinicoDto } from './create-documentoclinico.dto';
-
+export { UpdateDocumentoclinicoDto } from "./create-documentoclinico.dto";

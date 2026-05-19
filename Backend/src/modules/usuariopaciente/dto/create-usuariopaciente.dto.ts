@@ -1,6 +1,9 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
 
+/**
+ * Esquema Zod para validar la creación de usuario paciente.
+ */
 export const createUsuarioPacienteSchema = z.object({
   usuarioId: z.number().int().positive().optional(),
   pacienteId: z.number().int().positive(),
@@ -9,4 +12,9 @@ export const createUsuarioPacienteSchema = z.object({
   notas: z.string().max(200).optional(),
 });
 
-export class CreateUsuarioPacienteDto extends createZodDto(createUsuarioPacienteSchema) {}
+/**
+ * DTO de entrada para crear usuario paciente.
+ */
+export class CreateUsuarioPacienteDto extends createZodDto(
+  createUsuarioPacienteSchema,
+) {}

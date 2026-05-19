@@ -15,6 +15,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
+import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ConsultaForm'>;
 
@@ -302,11 +303,38 @@ export function ConsultaFormScreen({ route }: Props) {
       return;
     }
     try {
+      const offlineResult = await submitJsonWithOfflineFallback({
+        token,
+        path: consulta ? `/consultamedica/${consulta.consultaId}` : '/consultamedica',
+        method: consulta ? 'PATCH' : 'POST',
+        description: consulta ? 'actualizar consulta' : 'registrar consulta',
+        body: {
+          pacienteId: Number(form.pacienteId),
+          fechaconsulta: form.fecha,
+          motivo: form.motivo,
+          diagnostico: form.diagnostico || undefined,
+          tratamiento: form.tratamiento || undefined,
+          creadopor: user?.username ?? undefined,
+        },
+      });
+      if (offlineResult.status === 'queued') {
+        Alert.alert(
+          'Consulta en cola',
+          'No habia conexion. La consulta quedo pendiente de sincronizacion y se enviara automaticamente cuando vuelva la red.',
+        );
+      } else {
+        Alert.alert('Consulta Guardada', `Se ${consulta ? 'actualizo' : 'registro'} la atencion`);
+      }
+      setForm({ pacienteId: '', fecha: '', motivo: '', diagnostico: '', tratamiento: '' });
+      setDateValue('');
+      setTimeValue('');
+      return;
+
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
-      const url = consulta ? `${API_URL}/consultamedica/${consulta.consultaId}` : `${API_URL}/consultamedica`;
+      const url = consulta ? `${API_URL}/consultamedica/${consulta?.consultaId}` : `${API_URL}/consultamedica`;
       const method = consulta ? 'PATCH' : 'POST';
       const response = await fetch(url, {
         method,

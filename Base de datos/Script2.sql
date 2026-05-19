@@ -1941,6 +1941,85 @@ ALTER TABLE [dbo].[medicoregistro] CHECK CONSTRAINT [ck_medicoregistro_estado]
 GO
 ALTER TABLE [dbo].[registromensual]  WITH CHECK ADD CHECK  (([mes]>=(1) AND [mes]<=(12)))
 GO
+/****** Object:  Table [dbo].[seguimientopostevento]    Script Date: 9 may. 2026 12:00:00 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[seguimientopostevento](
+	[seguimientoposteventoid] [int] IDENTITY(1,1) NOT NULL,
+	[pacienteid] [int] NOT NULL,
+	[tipoevento] [nvarchar](30) NOT NULL,
+	[operacionid] [int] NULL,
+	[lesionid] [int] NULL,
+	[tituloevento] [nvarchar](160) NOT NULL,
+	[fechaevento] [date] NOT NULL,
+	[fechaseguimiento] [datetime2](7) NOT NULL,
+	[estado] [nvarchar](40) NOT NULL,
+	[evolucion] [nvarchar](max) NULL,
+	[sintomas] [nvarchar](max) NULL,
+	[niveldolor] [int] NULL,
+	[medicacionactual] [nvarchar](max) NULL,
+	[cuidadoshogar] [nvarchar](max) NULL,
+	[notas] [nvarchar](max) NULL,
+	[compartirconmedico] [bit] NOT NULL,
+	[requiereatencion] [bit] NOT NULL,
+	[proximocontrol] [date] NULL,
+	[creadopor] [nvarchar](60) NULL,
+	[creadoen] [datetime2](7) NOT NULL,
+	[modificadopor] [nvarchar](60) NULL,
+	[modificadoen] [datetime2](7) NULL,
+	[campoprueba01] [nvarchar](200) NULL,
+	[campoprueba02] [nvarchar](200) NULL,
+	[campoprueba03] [nvarchar](200) NULL,
+	[campoprueba04] [nvarchar](200) NULL,
+	[campoprueba05] [nvarchar](200) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[seguimientoposteventoid] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[seguimientopostevento] ADD  DEFAULT (sysdatetime()) FOR [fechaseguimiento]
+GO
+ALTER TABLE [dbo].[seguimientopostevento] ADD  DEFAULT ('activo') FOR [estado]
+GO
+ALTER TABLE [dbo].[seguimientopostevento] ADD  DEFAULT ((1)) FOR [compartirconmedico]
+GO
+ALTER TABLE [dbo].[seguimientopostevento] ADD  DEFAULT ((0)) FOR [requiereatencion]
+GO
+ALTER TABLE [dbo].[seguimientopostevento] ADD  DEFAULT (sysdatetime()) FOR [creadoen]
+GO
+CREATE NONCLUSTERED INDEX [IX_seguimientopostevento_paciente_fecha] ON [dbo].[seguimientopostevento]
+(
+	[pacienteid] ASC,
+	[fechaseguimiento] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[seguimientopostevento]  WITH CHECK ADD FOREIGN KEY([pacienteid])
+REFERENCES [dbo].[paciente] ([pacienteid])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[seguimientopostevento]  WITH CHECK ADD FOREIGN KEY([operacionid])
+REFERENCES [dbo].[operacion] ([operacionid])
+ON DELETE SET NULL
+GO
+ALTER TABLE [dbo].[seguimientopostevento]  WITH CHECK ADD FOREIGN KEY([lesionid])
+REFERENCES [dbo].[lesion] ([lesionid])
+ON DELETE SET NULL
+GO
+ALTER TABLE [dbo].[seguimientopostevento]  WITH CHECK ADD  CONSTRAINT [ck_seguimientopostevento_tipoevento] CHECK  (([tipoevento]='emergencia' OR [tipoevento]='lesion' OR [tipoevento]='operacion'))
+GO
+ALTER TABLE [dbo].[seguimientopostevento] CHECK CONSTRAINT [ck_seguimientopostevento_tipoevento]
+GO
+ALTER TABLE [dbo].[seguimientopostevento]  WITH CHECK ADD  CONSTRAINT [ck_seguimientopostevento_estado] CHECK  (([estado]='cerrado' OR [estado]='en observacion' OR [estado]='activo'))
+GO
+ALTER TABLE [dbo].[seguimientopostevento] CHECK CONSTRAINT [ck_seguimientopostevento_estado]
+GO
+ALTER TABLE [dbo].[seguimientopostevento]  WITH CHECK ADD  CONSTRAINT [ck_seguimientopostevento_niveldolor] CHECK  (([niveldolor] IS NULL OR [niveldolor]>=(0) AND [niveldolor]<=(10)))
+GO
+ALTER TABLE [dbo].[seguimientopostevento] CHECK CONSTRAINT [ck_seguimientopostevento_niveldolor]
+GO
 /****** Object:  Table [dbo].[examenclinico]    Script Date: 4 may. 2026 12:00:00 ******/
 SET ANSI_NULLS ON
 GO

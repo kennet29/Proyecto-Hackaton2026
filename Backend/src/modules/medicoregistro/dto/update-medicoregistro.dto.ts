@@ -1,1 +1,1 @@
-export { UpdateMedicoregistroDto } from './create-medicoregistro.dto';
+export { UpdateMedicoregistroDto } from "./create-medicoregistro.dto";

@@ -1,2 +1,1 @@
-export { UpdateControlcronicoDto } from './create-controlcronico.dto';
-
+export { UpdateControlcronicoDto } from "./create-controlcronico.dto";

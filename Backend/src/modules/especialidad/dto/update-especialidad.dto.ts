@@ -1,2 +1,1 @@
-export { UpdateEspecialidadDto } from './create-especialidad.dto';
-
+export { UpdateEspecialidadDto } from "./create-especialidad.dto";

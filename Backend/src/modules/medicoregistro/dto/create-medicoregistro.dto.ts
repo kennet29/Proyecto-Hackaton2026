@@ -1,10 +1,20 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
 
 const nullableString = z.string().nullable().optional();
 
-export const medicoRegistroEstados = ['pendiente', 'aprobado', 'rechazado'] as const;
+/**
+ * Valor reutilizable asociado a medico registro estados.
+ */
+export const medicoRegistroEstados = [
+  "pendiente",
+  "aprobado",
+  "rechazado",
+] as const;
 
+/**
+ * Esquema Zod para validar la creación de medicoregistro.
+ */
 export const createMedicoregistroSchema = z.object({
   usuarioId: z.number().int().positive(),
   hospitaltrabajo: z.string().min(1).max(150),
@@ -22,8 +32,16 @@ export const createMedicoregistroSchema = z.object({
   modificadopor: nullableString,
   modificadoen: z.coerce.date().nullable().optional(),
 });
-export class CreateMedicoregistroDto extends createZodDto(createMedicoregistroSchema) {}
+/**
+ * DTO de entrada para crear medicoregistro.
+ */
+export class CreateMedicoregistroDto extends createZodDto(
+  createMedicoregistroSchema,
+) {}
 
+/**
+ * Esquema Zod para validar la actualización de medicoregistro.
+ */
 export const updateMedicoregistroSchema = z
   .object({
     usuarioId: z.number().int().positive().optional(),
@@ -46,5 +64,12 @@ export const updateMedicoregistroSchema = z
     modificadoen: z.coerce.date().nullable().optional(),
   })
   .partial()
-  .refine((value) => Object.keys(value).length > 0, { message: 'debes enviar al menos un campo' });
-export class UpdateMedicoregistroDto extends createZodDto(updateMedicoregistroSchema) {}
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "debes enviar al menos un campo",
+  });
+/**
+ * DTO de entrada para actualizar medicoregistro.
+ */
+export class UpdateMedicoregistroDto extends createZodDto(
+  updateMedicoregistroSchema,
+) {}

@@ -1,21 +1,40 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { FindOptionsWhere, Repository } from "typeorm";
 import {
   decodeBase64Image,
   validateImageMimeType,
-} from '../../common/utils/base64-image.util';
-import { Institucionsalud } from '../institucionsalud/institucionsalud.entity';
-import { CreateInstitucionimagenDto } from './dto/create-institucionimagen.dto';
-import { UpdateInstitucionimagenDto } from './dto/update-institucionimagen.dto';
-import { Institucionimagen } from './institucionimagen.entity';
+} from "../../common/utils/base64-image.util";
+import { Institucionsalud } from "../institucionsalud/institucionsalud.entity";
+import { CreateInstitucionimagenDto } from "./dto/create-institucionimagen.dto";
+import { UpdateInstitucionimagenDto } from "./dto/update-institucionimagen.dto";
+import { Institucionimagen } from "./institucionimagen.entity";
 
+/**
+ * Define el tipo institucion imagen filters utilizado por el backend.
+ */
 type InstitucionImagenFilters = {
+  /**
+   * Identificador persistido para `institucionSaludId`.
+   */
   institucionSaludId?: number;
+  /**
+   * Campo de datos asociado a `activo`.
+   */
   activo?: boolean;
+  /**
+   * Campo de datos asociado a `tipoImagen`.
+   */
   tipoImagen?: string;
 };
 
+/**
+ * Implementa la lógica de negocio y persistencia del dominio institucionimagen.
+ */
 @Injectable()
 export class InstitucionimagenService {
   constructor(
@@ -25,17 +44,24 @@ export class InstitucionimagenService {
     private readonly institucionRepository: Repository<Institucionsalud>,
   ) {}
 
-  async create(payload: CreateInstitucionimagenDto): Promise<Institucionimagen> {
+  /**
+   * Create.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro creado.
+   */
+  async create(
+    payload: CreateInstitucionimagenDto,
+  ): Promise<Institucionimagen> {
     await this.assertInstitucionExists(payload.institucionSaludId);
 
     const entity = this.institucionImagenRepository.create({
       institucionSaludId: payload.institucionSaludId,
-      tipoImagen: payload.tipoImagen ?? 'otra',
+      tipoImagen: payload.tipoImagen ?? "otra",
       titulo: payload.titulo ?? null,
       descripcion: payload.descripcion ?? null,
       nombreArchivo: payload.nombreArchivo ?? null,
-      mimeType: validateImageMimeType(payload.mimeType, 'mimeType')!,
-      imagen: decodeBase64Image(payload.imagenBase64, 'imagenBase64')!,
+      mimeType: validateImageMimeType(payload.mimeType, "mimeType")!,
+      imagen: decodeBase64Image(payload.imagenBase64, "imagenBase64")!,
       esPrincipal: payload.esPrincipal ?? false,
       ordenVisual: payload.ordenVisual ?? null,
       activo: payload.activo ?? true,
@@ -52,7 +78,14 @@ export class InstitucionimagenService {
     return this.institucionImagenRepository.save(entity);
   }
 
-  async findAll(filters: InstitucionImagenFilters = {}): Promise<Institucionimagen[]> {
+  /**
+   * Find all.
+   * @param filters Valor del parámetro `filters`.
+   * @returns Colección de registros encontrados.
+   */
+  async findAll(
+    filters: InstitucionImagenFilters = {},
+  ): Promise<Institucionimagen[]> {
     const where: FindOptionsWhere<Institucionimagen> = {};
     if (filters.institucionSaludId !== undefined) {
       where.institucionSaludId = filters.institucionSaludId;
@@ -65,10 +98,19 @@ export class InstitucionimagenService {
     }
     return this.institucionImagenRepository.find({
       where,
-      order: { esPrincipal: 'DESC', ordenVisual: 'ASC', institucionImagenId: 'DESC' },
+      order: {
+        esPrincipal: "DESC",
+        ordenVisual: "ASC",
+        institucionImagenId: "DESC",
+      },
     });
   }
 
+  /**
+   * Find one.
+   * @param id Identificador del registro objetivo.
+   * @returns Resultado de la consulta solicitada.
+   */
   async findOne(id: number): Promise<Institucionimagen> {
     const entity = await this.institucionImagenRepository.findOne({
       where: { institucionImagenId: id },
@@ -79,9 +121,19 @@ export class InstitucionimagenService {
     return entity;
   }
 
-  async update(id: number, payload: UpdateInstitucionimagenDto): Promise<Institucionimagen> {
+  /**
+   * Update.
+   * @param id Identificador del registro objetivo.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro actualizado.
+   */
+  async update(
+    id: number,
+    payload: UpdateInstitucionimagenDto,
+  ): Promise<Institucionimagen> {
     const entity = await this.findOne(id);
-    const nextInstitucionId = payload.institucionSaludId ?? entity.institucionSaludId;
+    const nextInstitucionId =
+      payload.institucionSaludId ?? entity.institucionSaludId;
     await this.assertInstitucionExists(nextInstitucionId);
 
     if (payload.institucionSaludId !== undefined) {
@@ -100,10 +152,10 @@ export class InstitucionimagenService {
       entity.nombreArchivo = payload.nombreArchivo ?? null;
     }
     if (payload.mimeType !== undefined) {
-      entity.mimeType = validateImageMimeType(payload.mimeType, 'mimeType')!;
+      entity.mimeType = validateImageMimeType(payload.mimeType, "mimeType")!;
     }
     if (payload.imagenBase64 !== undefined) {
-      entity.imagen = decodeBase64Image(payload.imagenBase64, 'imagenBase64')!;
+      entity.imagen = decodeBase64Image(payload.imagenBase64, "imagenBase64")!;
     }
     if (payload.esPrincipal !== undefined) {
       entity.esPrincipal = payload.esPrincipal;
@@ -132,6 +184,11 @@ export class InstitucionimagenService {
     return this.institucionImagenRepository.save(entity);
   }
 
+  /**
+   * Remove.
+   * @param id Identificador del registro objetivo.
+   * @returns La operación se completa sin devolver contenido.
+   */
   async remove(id: number): Promise<void> {
     const result = await this.institucionImagenRepository.delete({
       institucionImagenId: id,
@@ -141,15 +198,30 @@ export class InstitucionimagenService {
     }
   }
 
-  private async assertInstitucionExists(institucionSaludId: number): Promise<void> {
+  /**
+   * Valida institucion exists.
+   * @param institucionSaludId Identificador asociado a institucion salud.
+   * @returns La promesa se resuelve cuando la validación se cumple.
+   */
+  private async assertInstitucionExists(
+    institucionSaludId: number,
+  ): Promise<void> {
     const institucion = await this.institucionRepository.findOne({
       where: { institucionSaludId },
     });
     if (!institucion) {
-      throw new BadRequestException(`institucion ${institucionSaludId} no existe`);
+      throw new BadRequestException(
+        `institucion ${institucionSaludId} no existe`,
+      );
     }
   }
 
+  /**
+   * Clear principal flag.
+   * @param institucionSaludId Identificador asociado a institucion salud.
+   * @param keepId Identificador asociado a keep.
+   * @returns La operación se completa sin devolver contenido.
+   */
   private async clearPrincipalFlag(
     institucionSaludId: number,
     keepId?: number,
@@ -158,7 +230,9 @@ export class InstitucionimagenService {
       where: { institucionSaludId, esPrincipal: true },
     });
 
-    const updates = images.filter((image) => image.institucionImagenId !== keepId);
+    const updates = images.filter(
+      (image) => image.institucionImagenId !== keepId,
+    );
     if (!updates.length) {
       return;
     }

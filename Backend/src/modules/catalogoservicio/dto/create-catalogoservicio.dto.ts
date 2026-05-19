@@ -1,6 +1,9 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
 
+/**
+ * Esquema Zod para validar la creación de catalogoservicio.
+ */
 export const createCatalogoservicioSchema = z.object({
   codigo: z.string().trim().max(40).nullable().optional(),
   nombre: z.string().trim().min(1).max(150),
@@ -15,4 +18,9 @@ export const createCatalogoservicioSchema = z.object({
   modificadoEn: z.coerce.date().nullable().optional(),
 });
 
-export class CreateCatalogoservicioDto extends createZodDto(createCatalogoservicioSchema) {}
+/**
+ * DTO de entrada para crear catalogoservicio.
+ */
+export class CreateCatalogoservicioDto extends createZodDto(
+  createCatalogoservicioSchema,
+) {}

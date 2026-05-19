@@ -1,1 +1,1 @@
-export { UpdateSaludmentalDto } from './create-saludmental.dto';
+export { UpdateSaludmentalDto } from "./create-saludmental.dto";

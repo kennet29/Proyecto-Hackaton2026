@@ -1,8 +1,11 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
 
-const intensidadOpciones = ['leve', 'moderada', 'intensa'] as const;
+const intensidadOpciones = ["leve", "moderada", "intensa"] as const;
 
+/**
+ * Esquema Zod para validar la creación de seguimientofisico.
+ */
 export const createSeguimientofisicoSchema = z.object({
   pacienteId: z.number().int().positive(),
   fecha: z.coerce.date(),
@@ -25,6 +28,9 @@ export const createSeguimientofisicoSchema = z.object({
   campoPrueba05: z.string().trim().max(200).nullable().optional(),
 });
 
+/**
+ * DTO de entrada para crear seguimientofisico.
+ */
 export class CreateSeguimientofisicoDto extends createZodDto(
   createSeguimientofisicoSchema,
 ) {}

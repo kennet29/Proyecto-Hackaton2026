@@ -1,40 +1,109 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository } from 'typeorm';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Brackets, Repository } from "typeorm";
 import {
   decodeBase64Image,
   validateImageMimeType,
-} from '../../common/utils/base64-image.util';
-import { CreateInstitucionsaludDto } from './dto/create-institucionsalud.dto';
-import { UpdateInstitucionsaludDto } from './dto/update-institucionsalud.dto';
-import { Institucionsalud } from './institucionsalud.entity';
+} from "../../common/utils/base64-image.util";
+import { CreateInstitucionsaludDto } from "./dto/create-institucionsalud.dto";
+import { UpdateInstitucionsaludDto } from "./dto/update-institucionsalud.dto";
+import { Institucionsalud } from "./institucionsalud.entity";
 
+/**
+ * Define el tipo institucion filters utilizado por el backend.
+ */
 type InstitucionFilters = {
+  /**
+   * Campo de datos asociado a `q`.
+   */
   q?: string;
+  /**
+   * Campo de datos asociado a `tipo`.
+   */
   tipo?: string;
+  /**
+   * Campo de datos asociado a `ciudad`.
+   */
   ciudad?: string;
+  /**
+   * Campo de datos asociado a `departamento`.
+   */
   departamento?: string;
+  /**
+   * Campo de datos asociado a `activo`.
+   */
   activo?: boolean;
+  /**
+   * Campo de datos asociado a `conUbicacion`.
+   */
   conUbicacion?: boolean;
+  /**
+   * Identificador persistido para `especialidadId`.
+   */
   especialidadId?: number;
+  /**
+   * Campo de datos asociado a `latMin`.
+   */
   latMin?: number;
+  /**
+   * Campo de datos asociado a `latMax`.
+   */
   latMax?: number;
+  /**
+   * Campo de datos asociado a `lngMin`.
+   */
   lngMin?: number;
+  /**
+   * Campo de datos asociado a `lngMax`.
+   */
   lngMax?: number;
 };
 
+/**
+ * Define el tipo nearby filters utilizado por el backend.
+ */
 type NearbyFilters = {
+  /**
+   * Campo de datos asociado a `latitud`.
+   */
   latitud: number;
+  /**
+   * Campo de datos asociado a `longitud`.
+   */
   longitud: number;
+  /**
+   * Campo de datos asociado a `radioKm`.
+   */
   radioKm?: number;
+  /**
+   * Campo de datos asociado a `limit`.
+   */
   limit?: number;
+  /**
+   * Campo de datos asociado a `tipo`.
+   */
   tipo?: string;
+  /**
+   * Campo de datos asociado a `ciudad`.
+   */
   ciudad?: string;
+  /**
+   * Campo de datos asociado a `departamento`.
+   */
   departamento?: string;
+  /**
+   * Campo de datos asociado a `activo`.
+   */
   activo?: boolean;
+  /**
+   * Identificador persistido para `especialidadId`.
+   */
   especialidadId?: number;
 };
 
+/**
+ * Implementa la lógica de negocio y persistencia del dominio institucionsalud.
+ */
 @Injectable()
 export class InstitucionsaludService {
   constructor(
@@ -42,6 +111,11 @@ export class InstitucionsaludService {
     private readonly institucionRepository: Repository<Institucionsalud>,
   ) {}
 
+  /**
+   * Create.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro creado.
+   */
   create(payload: CreateInstitucionsaludDto): Promise<Institucionsalud> {
     const entity = this.institucionRepository.create({
       activo: payload.activo ?? true,
@@ -57,8 +131,9 @@ export class InstitucionsaludService {
       horarioAtencion: payload.horarioAtencion ?? null,
       latitud: payload.latitud ?? null,
       longitud: payload.longitud ?? null,
-      logoImagen: decodeBase64Image(payload.logoBase64, 'logoBase64') ?? null,
-      logoMimeType: validateImageMimeType(payload.logoMimeType, 'logoMimeType') ?? null,
+      logoImagen: decodeBase64Image(payload.logoBase64, "logoBase64") ?? null,
+      logoMimeType:
+        validateImageMimeType(payload.logoMimeType, "logoMimeType") ?? null,
       logoNombreArchivo: payload.logoNombreArchivo ?? null,
       creadoEn: payload.creadoEn ?? new Date(),
       creadoPor: payload.creadoPor ?? null,
@@ -68,85 +143,100 @@ export class InstitucionsaludService {
     return this.institucionRepository.save(entity);
   }
 
+  /**
+   * Find all.
+   * @param filters Valor del parámetro `filters`.
+   * @returns Colección de registros encontrados.
+   */
   async findAll(filters: InstitucionFilters = {}): Promise<Institucionsalud[]> {
-    const qb = this.institucionRepository.createQueryBuilder('institucion');
+    const qb = this.institucionRepository.createQueryBuilder("institucion");
 
     if (filters.q) {
       const q = `%${filters.q.trim()}%`;
       qb.andWhere(
         new Brackets((subQb) => {
           subQb
-            .where('institucion.nombre LIKE :q', { q })
-            .orWhere('institucion.descripcion LIKE :q', { q })
-            .orWhere('institucion.direccion LIKE :q', { q })
-            .orWhere('institucion.ciudad LIKE :q', { q })
-            .orWhere('institucion.departamento LIKE :q', { q });
+            .where("institucion.nombre LIKE :q", { q })
+            .orWhere("institucion.descripcion LIKE :q", { q })
+            .orWhere("institucion.direccion LIKE :q", { q })
+            .orWhere("institucion.ciudad LIKE :q", { q })
+            .orWhere("institucion.departamento LIKE :q", { q });
         }),
       );
     }
 
     if (filters.tipo) {
-      qb.andWhere('LOWER(institucion.tipo) = LOWER(:tipo)', {
+      qb.andWhere("LOWER(institucion.tipo) = LOWER(:tipo)", {
         tipo: filters.tipo.trim(),
       });
     }
 
     if (filters.ciudad) {
-      qb.andWhere('LOWER(institucion.ciudad) = LOWER(:ciudad)', {
+      qb.andWhere("LOWER(institucion.ciudad) = LOWER(:ciudad)", {
         ciudad: filters.ciudad.trim(),
       });
     }
 
     if (filters.departamento) {
-      qb.andWhere('LOWER(institucion.departamento) = LOWER(:departamento)', {
+      qb.andWhere("LOWER(institucion.departamento) = LOWER(:departamento)", {
         departamento: filters.departamento.trim(),
       });
     }
 
     if (filters.activo !== undefined) {
-      qb.andWhere('institucion.activo = :activo', { activo: filters.activo });
+      qb.andWhere("institucion.activo = :activo", { activo: filters.activo });
     }
 
     if (filters.especialidadId !== undefined) {
       qb.innerJoin(
-        'institucionespecialidad',
-        'institucionEspecialidad',
-        'institucionEspecialidad.institucionsaludid = institucion.institucionsaludid AND institucionEspecialidad.activo = 1 AND institucionEspecialidad.especialidadid = :especialidadId',
+        "institucionespecialidad",
+        "institucionEspecialidad",
+        "institucionEspecialidad.institucionsaludid = institucion.institucionsaludid AND institucionEspecialidad.activo = 1 AND institucionEspecialidad.especialidadid = :especialidadId",
         { especialidadId: filters.especialidadId },
       );
     }
 
     if (filters.conUbicacion === true) {
-      qb.andWhere('institucion.latitud IS NOT NULL')
-        .andWhere('institucion.longitud IS NOT NULL');
+      qb.andWhere("institucion.latitud IS NOT NULL").andWhere(
+        "institucion.longitud IS NOT NULL",
+      );
     } else if (filters.conUbicacion === false) {
       qb.andWhere(
         new Brackets((subQb) => {
           subQb
-            .where('institucion.latitud IS NULL')
-            .orWhere('institucion.longitud IS NULL');
+            .where("institucion.latitud IS NULL")
+            .orWhere("institucion.longitud IS NULL");
         }),
       );
     }
 
     if (filters.latMin !== undefined) {
-      qb.andWhere('institucion.latitud >= :latMin', { latMin: filters.latMin });
+      qb.andWhere("institucion.latitud >= :latMin", { latMin: filters.latMin });
     }
     if (filters.latMax !== undefined) {
-      qb.andWhere('institucion.latitud <= :latMax', { latMax: filters.latMax });
+      qb.andWhere("institucion.latitud <= :latMax", { latMax: filters.latMax });
     }
     if (filters.lngMin !== undefined) {
-      qb.andWhere('institucion.longitud >= :lngMin', { lngMin: filters.lngMin });
+      qb.andWhere("institucion.longitud >= :lngMin", {
+        lngMin: filters.lngMin,
+      });
     }
     if (filters.lngMax !== undefined) {
-      qb.andWhere('institucion.longitud <= :lngMax', { lngMax: filters.lngMax });
+      qb.andWhere("institucion.longitud <= :lngMax", {
+        lngMax: filters.lngMax,
+      });
     }
 
-    qb.orderBy('institucion.nombre', 'ASC');
+    qb.orderBy("institucion.nombre", "ASC");
 
     return qb.getMany();
   }
 
+  /**
+   * Find nearby.
+   * @param filters Valor del parámetro `filters`.
+   * @returns Resultado de la operación.
+   */
   async findNearby(filters: NearbyFilters) {
     const radioKm = filters.radioKm ?? 10;
     const limit = filters.limit ?? 50;
@@ -174,6 +264,11 @@ export class InstitucionsaludService {
       .slice(0, limit);
   }
 
+  /**
+   * Find one.
+   * @param id Identificador del registro objetivo.
+   * @returns Resultado de la consulta solicitada.
+   */
   async findOne(id: number): Promise<Institucionsalud> {
     const entity = await this.institucionRepository.findOne({
       where: { institucionSaludId: id },
@@ -184,7 +279,16 @@ export class InstitucionsaludService {
     return entity;
   }
 
-  async update(id: number, payload: UpdateInstitucionsaludDto): Promise<Institucionsalud> {
+  /**
+   * Update.
+   * @param id Identificador del registro objetivo.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro actualizado.
+   */
+  async update(
+    id: number,
+    payload: UpdateInstitucionsaludDto,
+  ): Promise<Institucionsalud> {
     const entity = await this.findOne(id);
     if (payload.nombre !== undefined) {
       entity.nombre = payload.nombre;
@@ -223,11 +327,12 @@ export class InstitucionsaludService {
       entity.longitud = payload.longitud ?? null;
     }
     if (payload.logoBase64 !== undefined) {
-      entity.logoImagen = decodeBase64Image(payload.logoBase64, 'logoBase64') ?? null;
+      entity.logoImagen =
+        decodeBase64Image(payload.logoBase64, "logoBase64") ?? null;
     }
     if (payload.logoMimeType !== undefined) {
       entity.logoMimeType =
-        validateImageMimeType(payload.logoMimeType, 'logoMimeType') ?? null;
+        validateImageMimeType(payload.logoMimeType, "logoMimeType") ?? null;
     }
     if (payload.logoNombreArchivo !== undefined) {
       entity.logoNombreArchivo = payload.logoNombreArchivo ?? null;
@@ -248,13 +353,28 @@ export class InstitucionsaludService {
     return this.institucionRepository.save(entity);
   }
 
+  /**
+   * Remove.
+   * @param id Identificador del registro objetivo.
+   * @returns La operación se completa sin devolver contenido.
+   */
   async remove(id: number): Promise<void> {
-    const result = await this.institucionRepository.delete({ institucionSaludId: id });
+    const result = await this.institucionRepository.delete({
+      institucionSaludId: id,
+    });
     if (!result.affected) {
       throw new NotFoundException(`institucion ${id} no encontrada`);
     }
   }
 
+  /**
+   * Calculate distance km.
+   * @param originLat Valor del parámetro `originLat`.
+   * @param originLng Valor del parámetro `originLng`.
+   * @param destinationLat Valor del parámetro `destinationLat`.
+   * @param destinationLng Valor del parámetro `destinationLng`.
+   * @returns Resultado de la operación.
+   */
   private calculateDistanceKm(
     originLat: number,
     originLng: number,
@@ -274,6 +394,11 @@ export class InstitucionsaludService {
     return Math.round(earthRadiusKm * c * 100) / 100;
   }
 
+  /**
+   * Convierte el valor a radians.
+   * @param value Valor de entrada que se debe transformar o validar.
+   * @returns Valor convertido al formato de salida esperado.
+   */
   private toRadians(value: number): number {
     return (value * Math.PI) / 180;
   }

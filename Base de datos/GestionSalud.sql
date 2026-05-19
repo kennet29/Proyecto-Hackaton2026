@@ -669,6 +669,32 @@ create table habitoespecifico (
     foreign key (tipohabitoid) references tipohabito(tipohabitoid)
 );
 
+create table seguimientofisico (
+    seguimientofisicoid int identity primary key,
+    pacienteid int not null,
+    fecha date not null,
+    peso decimal(6,2) null,
+    minutosejercicio int null,
+    tipoejercicio nvarchar(120) null,
+    intensidad nvarchar(30) null,
+    pasos int null,
+    caloriasquemadas int null,
+    distanciakm decimal(6,2) null,
+    notas nvarchar(max) null,
+    creadopor nvarchar(60) null,
+    creadoen datetime2 not null default sysdatetime(),
+    modificadopor nvarchar(60) null,
+    modificadoen datetime2 null,
+    campoprueba01 nvarchar(200) null,
+    campoprueba02 nvarchar(200) null,
+    campoprueba03 nvarchar(200) null,
+    campoprueba04 nvarchar(200) null,
+    campoprueba05 nvarchar(200) null,
+    foreign key (pacienteid) references paciente(pacienteid),
+    constraint uq_seguimientofisico_paciente_fecha unique (pacienteid, fecha),
+    constraint ck_seguimientofisico_intensidad check (intensidad is null or intensidad in ('leve','moderada','intensa'))
+);
+
 create table puntajeriesgo (
     puntajeriesgoid int identity primary key,
     pacienteid int not null,

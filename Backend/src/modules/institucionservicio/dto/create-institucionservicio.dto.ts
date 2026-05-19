@@ -1,6 +1,9 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
 
+/**
+ * Esquema Zod para validar la creación de institucionservicio.
+ */
 export const createInstitucionservicioSchema = z.object({
   institucionSaludId: z.number().int().positive(),
   catalogoServicioId: z.number().int().positive(),
@@ -15,4 +18,9 @@ export const createInstitucionservicioSchema = z.object({
   modificadoEn: z.coerce.date().nullable().optional(),
 });
 
-export class CreateInstitucionservicioDto extends createZodDto(createInstitucionservicioSchema) {}
+/**
+ * DTO de entrada para crear institucionservicio.
+ */
+export class CreateInstitucionservicioDto extends createZodDto(
+  createInstitucionservicioSchema,
+) {}

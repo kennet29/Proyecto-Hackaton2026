@@ -1,2 +1,1 @@
-export { UpdateTipovacunaDto } from './create-tipovacuna.dto';
-
+export { UpdateTipovacunaDto } from "./create-tipovacuna.dto";

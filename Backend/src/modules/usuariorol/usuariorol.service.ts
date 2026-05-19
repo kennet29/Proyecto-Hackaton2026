@@ -1,15 +1,25 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Usuariorol } from './usuariorol.entity';
-import { CreateUsuariorolDto } from './dto/create-usuariorol.dto';
-import { UpdateUsuariorolDto } from './dto/update-usuariorol.dto';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Usuariorol } from "./usuariorol.entity";
+import { CreateUsuariorolDto } from "./dto/create-usuariorol.dto";
+import { UpdateUsuariorolDto } from "./dto/update-usuariorol.dto";
 
 const PRIMARY_KEYS = ["usuariorolId"];
-const PRIMARY_KEY_TYPES: Record<string, 'number' | 'string' | 'boolean' | 'Date'> = {
-  usuariorolId: 'number',
+const PRIMARY_KEY_TYPES: Record<
+  string,
+  "number" | "string" | "boolean" | "Date"
+> = {
+  usuariorolId: "number",
 };
 
+/**
+ * Implementa la lógica de negocio y persistencia del dominio usuariorol.
+ */
 @Injectable()
 export class UsuariorolService {
   constructor(
@@ -17,15 +27,31 @@ export class UsuariorolService {
     private readonly usuariorolRepository: Repository<Usuariorol>,
   ) {}
 
+  /**
+   * Create.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro creado.
+   */
   create(payload: CreateUsuariorolDto): Promise<Usuariorol> {
-    const entity = this.usuariorolRepository.create(payload as Partial<Usuariorol>);
+    const entity = this.usuariorolRepository.create(
+      payload as Partial<Usuariorol>,
+    );
     return this.usuariorolRepository.save(entity);
   }
 
+  /**
+   * Find all.
+   * @returns Colección de registros encontrados.
+   */
   findAll(): Promise<Usuariorol[]> {
     return this.usuariorolRepository.find();
   }
 
+  /**
+   * Find one.
+   * @param id Identificador del registro objetivo.
+   * @returns Resultado de la consulta solicitada.
+   */
   async findOne(id: string): Promise<Usuariorol> {
     const where = this.parseId(id);
     const entity = await this.usuariorolRepository.findOne({ where });
@@ -35,12 +61,23 @@ export class UsuariorolService {
     return entity;
   }
 
+  /**
+   * Update.
+   * @param id Identificador del registro objetivo.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro actualizado.
+   */
   async update(id: string, payload: UpdateUsuariorolDto): Promise<Usuariorol> {
     const entity = await this.findOne(id);
     Object.assign(entity, payload);
     return this.usuariorolRepository.save(entity);
   }
 
+  /**
+   * Remove.
+   * @param id Identificador del registro objetivo.
+   * @returns La operación se completa sin devolver contenido.
+   */
   async remove(id: string): Promise<void> {
     const where = this.parseId(id);
     const result = await this.usuariorolRepository.delete(where);
@@ -49,17 +86,24 @@ export class UsuariorolService {
     }
   }
 
+  /**
+   * Interpreta id.
+   * @param rawId Identificador asociado a raw.
+   * @returns Valor interpretado a partir de la entrada recibida.
+   */
   private parseId(rawId: string): Record<string, any> {
     if (!PRIMARY_KEYS.length) {
-      throw new BadRequestException('la tabla no define una clave primaria');
+      throw new BadRequestException("la tabla no define una clave primaria");
     }
     if (PRIMARY_KEYS.length === 1) {
       const key = PRIMARY_KEYS[0];
       return { [key]: this.castValue(rawId, PRIMARY_KEY_TYPES[key]) };
     }
-    const segments = rawId.split(',').map((segment) => segment.trim());
+    const segments = rawId.split(",").map((segment) => segment.trim());
     if (segments.length !== PRIMARY_KEYS.length) {
-      throw new BadRequestException('usa valores separados por coma siguiendo el orden de la clave primaria');
+      throw new BadRequestException(
+        "usa valores separados por coma siguiendo el orden de la clave primaria",
+      );
     }
     const where: Record<string, any> = {};
     segments.forEach((segment, index) => {
@@ -69,27 +113,33 @@ export class UsuariorolService {
     return where;
   }
 
+  /**
+   * Cast value.
+   * @param value Valor de entrada que se debe transformar o validar.
+   * @param type Valor del parámetro `type`.
+   * @returns Resultado de la operación.
+   */
   private castValue(value: string, type: string): any {
-    if (type === 'number') {
+    if (type === "number") {
       const num = Number(value);
       if (Number.isNaN(num)) {
-        throw new BadRequestException('el identificador debe ser numerico');
+        throw new BadRequestException("el identificador debe ser numerico");
       }
       return num;
     }
-    if (type === 'boolean') {
-      if (value === '1' || value.toLowerCase() === 'true') {
+    if (type === "boolean") {
+      if (value === "1" || value.toLowerCase() === "true") {
         return true;
       }
-      if (value === '0' || value.toLowerCase() === 'false') {
+      if (value === "0" || value.toLowerCase() === "false") {
         return false;
       }
-      throw new BadRequestException('el identificador booleano es invalido');
+      throw new BadRequestException("el identificador booleano es invalido");
     }
-    if (type === 'Date') {
+    if (type === "Date") {
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) {
-        throw new BadRequestException('el identificador de fecha es invalido');
+        throw new BadRequestException("el identificador de fecha es invalido");
       }
       return date;
     }

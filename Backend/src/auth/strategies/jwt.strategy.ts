@@ -1,10 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { TokenRevocationService } from '../token-revocation.service';
-import { AuthenticatedUser } from '../auth.service';
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { PassportStrategy } from "@nestjs/passport";
+import { ExtractJwt, Strategy } from "passport-jwt";
+import { TokenRevocationService } from "../token-revocation.service";
+import { AuthenticatedUser } from "../auth.service";
 
+/**
+ * Clase que implementa el flujo jwt strategy.
+ */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
@@ -14,10 +17,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET', 'dev-secret'),
+      secretOrKey: configService.get<string>("JWT_SECRET", "dev-secret"),
     });
   }
 
+  /**
+   * Validate.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Resultado de la operación.
+   */
   async validate(payload: {
     sub: number;
     username: string;

@@ -3,27 +3,33 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { randomBytes } from 'crypto';
-import { UsersService } from '../../users/users.service';
-import { AuthenticatedUser } from '../../auth/auth.service';
-import { PermisoAcceso } from './permisoacceso.entity';
-import { CreatePermisoAccesoDto, temporalDurations } from './dto/create-permisoacceso.dto';
-import { PacienteAccessService } from '../../auth/paciente-access.service';
-import { UpdatePermisoAccesoDto } from './dto/update-permisoacceso.dto';
-import { PermisoAccesoToken } from './permisoacceso-token.entity';
-import { CreatePermisoAccesoQrDto } from './dto/create-permisoacceso-qr.dto';
-import { ClaimPermisoAccesoQrDto } from './dto/claim-permisoacceso-qr.dto';
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { randomBytes } from "crypto";
+import { UsersService } from "../../users/users.service";
+import { AuthenticatedUser } from "../../auth/auth.service";
+import { PermisoAcceso } from "./permisoacceso.entity";
+import {
+  CreatePermisoAccesoDto,
+  temporalDurations,
+} from "./dto/create-permisoacceso.dto";
+import { PacienteAccessService } from "../../auth/paciente-access.service";
+import { UpdatePermisoAccesoDto } from "./dto/update-permisoacceso.dto";
+import { PermisoAccesoToken } from "./permisoacceso-token.entity";
+import { CreatePermisoAccesoQrDto } from "./dto/create-permisoacceso-qr.dto";
+import { ClaimPermisoAccesoQrDto } from "./dto/claim-permisoacceso-qr.dto";
 
 const durationMap: Record<(typeof temporalDurations)[number], number> = {
-  '15m': 15,
-  '1h': 60,
-  '1d': 60 * 24,
+  "15m": 15,
+  "1h": 60,
+  "1d": 60 * 24,
 };
 
+/**
+ * Implementa la lógica de negocio y persistencia del dominio permisoacceso.
+ */
 @Injectable()
 export class PermisoaccesoService {
   constructor(
@@ -36,6 +42,13 @@ export class PermisoaccesoService {
     private readonly configService: ConfigService,
   ) {}
 
+  /**
+   * Grant.
+   * @param pacienteId Identificador asociado a paciente.
+   * @param payload Datos validados que recibe la operación.
+   * @param actor Valor del parámetro `actor`.
+   * @returns Resultado de la operación.
+   */
   async grant(
     pacienteId: number,
     payload: CreatePermisoAccesoDto,
@@ -44,8 +57,10 @@ export class PermisoaccesoService {
     await this.ensureActorControlsPaciente(actor, pacienteId);
 
     const medico = await this.usersService.findOne(payload.medicoId);
-    if (medico.role?.toLowerCase() !== 'medico') {
-      throw new BadRequestException('el usuario seleccionado no es un medico valido');
+    if (medico.role?.toLowerCase() !== "medico") {
+      throw new BadRequestException(
+        "el usuario seleccionado no es un medico valido",
+      );
     }
 
     await this.deactivateExisting(pacienteId, payload.medicoId);
@@ -55,35 +70,60 @@ export class PermisoaccesoService {
       pacienteId,
       medicoId: payload.medicoId,
       tipo: payload.tipo,
-      duracion: payload.tipo === 'temporal' ? payload.duracion ?? null : null,
+      duracion: payload.tipo === "temporal" ? (payload.duracion ?? null) : null,
       fechaInicio: now,
-      fechaFin: payload.tipo === 'temporal' ? this.calculateEndDate(now, payload.duracion!) : null,
-      estado: 'activo',
+      fechaFin:
+        payload.tipo === "temporal"
+          ? this.calculateEndDate(now, payload.duracion!)
+          : null,
+      estado: "activo",
       notas: payload.notas ?? null,
       creadoPor: actor.username,
     });
     return this.permisoRepository.save(permiso);
   }
 
+  /**
+   * Create qr token.
+   * @param permisoId Identificador asociado a permiso.
+   * @param payload Datos validados que recibe la operación.
+   * @param actor Valor del parámetro `actor`.
+   * @returns Registro creado.
+   */
   async createQrToken(
     permisoId: number,
     payload: CreatePermisoAccesoQrDto,
     actor: AuthenticatedUser,
-  ): Promise<{ token: string; expiresAt: Date; deepLink: string }> {
-    const permiso = await this.permisoRepository.findOne({ where: { id: permisoId } });
+  ): Promise<{
+    /**
+     * Campo de datos asociado a `token`.
+     */
+    token: string; /**
+     * Campo de datos asociado a `expiresAt`.
+     */
+    expiresAt: Date; /**
+     * Campo de datos asociado a `deepLink`.
+     */
+    deepLink: string;
+  }> {
+    const permiso = await this.permisoRepository.findOne({
+      where: { id: permisoId },
+    });
     if (!permiso) {
-      throw new NotFoundException('permiso no encontrado');
+      throw new NotFoundException("permiso no encontrado");
     }
     await this.ensureActorControlsPaciente(actor, permiso.pacienteId);
-    if (permiso.estado !== 'activo') {
-      throw new BadRequestException('solo los permisos activos pueden generar un QR');
+    if (permiso.estado !== "activo") {
+      throw new BadRequestException(
+        "solo los permisos activos pueden generar un QR",
+      );
     }
     if (permiso.fechaFin && permiso.fechaFin.getTime() < Date.now()) {
-      throw new BadRequestException('el permiso ya expiro, crea uno nuevo');
+      throw new BadRequestException("el permiso ya expiro, crea uno nuevo");
     }
     const minutes = payload.duracionMinutos ?? 5;
     const expiresAt = new Date(Date.now() + minutes * 60 * 1000);
-    const tokenValue = randomBytes(24).toString('hex');
+    const tokenValue = randomBytes(24).toString("hex");
     const record = this.tokenRepository.create({
       token: tokenValue,
       permisoId: permiso.id,
@@ -93,95 +133,151 @@ export class PermisoaccesoService {
     });
     await this.tokenRepository.save(record);
     const baseDeepLink =
-      this.configService.get<string>('QR_DEEPLINK_BASE') ?? 'gestionsalud://permiso-acceso';
+      this.configService.get<string>("QR_DEEPLINK_BASE") ??
+      "gestionsalud://permiso-acceso";
     const deepLink = `${baseDeepLink}?token=${encodeURIComponent(tokenValue)}`;
     return { token: tokenValue, expiresAt, deepLink };
   }
 
+  /**
+   * Claim qr token.
+   * @param payload Datos validados que recibe la operación.
+   * @param actor Valor del parámetro `actor`.
+   * @returns Resultado de la operación.
+   */
   async claimQrToken(
     payload: ClaimPermisoAccesoQrDto,
     actor: AuthenticatedUser,
-  ): Promise<{ message: string; permisoId: number; pacienteId: number; expira?: Date | null }> {
-    if (actor.role?.toLowerCase() !== 'medico') {
-      throw new ForbiddenException('solo un medico puede reclamar un QR');
+  ): Promise<{
+    /**
+     * Campo de datos asociado a `message`.
+     */
+    message: string; /**
+     * Identificador persistido para `permisoId`.
+     */
+    permisoId: number; /**
+     * Identificador persistido para `pacienteId`.
+     */
+    pacienteId: number; /**
+     * Campo de datos asociado a `expira`.
+     */
+    expira?: Date | null;
+  }> {
+    if (actor.role?.toLowerCase() !== "medico") {
+      throw new ForbiddenException("solo un medico puede reclamar un QR");
     }
     const record = await this.tokenRepository.findOne({
       where: { token: payload.token },
-      relations: ['permiso'],
+      relations: ["permiso"],
     });
     if (!record) {
-      throw new NotFoundException('token no encontrado');
+      throw new NotFoundException("token no encontrado");
     }
     if (record.used) {
-      throw new BadRequestException('este token ya fue utilizado');
+      throw new BadRequestException("este token ya fue utilizado");
     }
     if (record.expiresAt.getTime() < Date.now()) {
-      throw new BadRequestException('el token ya expiro, solicita uno nuevo');
+      throw new BadRequestException("el token ya expiro, solicita uno nuevo");
     }
     const permiso = record.permiso;
     if (permiso.medicoId !== actor.userId) {
-      throw new ForbiddenException('este permiso no esta asignado a tu usuario');
+      throw new ForbiddenException(
+        "este permiso no esta asignado a tu usuario",
+      );
     }
-    if (permiso.estado !== 'activo') {
-      throw new BadRequestException('el permiso ya no esta activo');
+    if (permiso.estado !== "activo") {
+      throw new BadRequestException("el permiso ya no esta activo");
     }
     if (permiso.fechaFin && permiso.fechaFin.getTime() < Date.now()) {
-      throw new BadRequestException('el permiso ya expiro');
+      throw new BadRequestException("el permiso ya expiro");
     }
     record.used = true;
     record.usedBy = actor.userId;
     record.usedOn = new Date();
     await this.tokenRepository.save(record);
     return {
-      message: 'permiso validado correctamente',
+      message: "permiso validado correctamente",
       permisoId: permiso.id,
       pacienteId: permiso.pacienteId,
       expira: permiso.fechaFin ?? null,
     };
   }
 
-  async listForPaciente(pacienteId: number, actor: AuthenticatedUser): Promise<PermisoAcceso[]> {
+  /**
+   * List for paciente.
+   * @param pacienteId Identificador asociado a paciente.
+   * @param actor Valor del parámetro `actor`.
+   * @returns Resultado de la operación.
+   */
+  async listForPaciente(
+    pacienteId: number,
+    actor: AuthenticatedUser,
+  ): Promise<PermisoAcceso[]> {
     await this.ensureActorControlsPaciente(actor, pacienteId);
     const permisos = await this.permisoRepository.find({
       where: { pacienteId },
-      order: { fechaInicio: 'DESC' },
+      order: { fechaInicio: "DESC" },
     });
     return this.refreshStatuses(permisos);
   }
 
+  /**
+   * List for medico.
+   * @param actor Valor del parámetro `actor`.
+   * @returns Resultado de la operación.
+   */
   async listForMedico(actor: AuthenticatedUser): Promise<PermisoAcceso[]> {
-    if (actor.role?.toLowerCase() !== 'medico') {
-      throw new ForbiddenException('solo un medico puede consultar estos permisos');
+    if (actor.role?.toLowerCase() !== "medico") {
+      throw new ForbiddenException(
+        "solo un medico puede consultar estos permisos",
+      );
     }
     const permisos = await this.permisoRepository.find({
       where: { medicoId: actor.userId },
-      order: { fechaInicio: 'DESC' },
+      order: { fechaInicio: "DESC" },
     });
     return this.refreshStatuses(permisos);
   }
 
+  /**
+   * Revoke.
+   * @param permisoId Identificador asociado a permiso.
+   * @param actor Valor del parámetro `actor`.
+   * @returns La operación se completa sin devolver contenido.
+   */
   async revoke(permisoId: number, actor: AuthenticatedUser): Promise<void> {
-    const permiso = await this.permisoRepository.findOne({ where: { id: permisoId } });
+    const permiso = await this.permisoRepository.findOne({
+      where: { id: permisoId },
+    });
     if (!permiso) {
-      throw new NotFoundException('permiso no encontrado');
+      throw new NotFoundException("permiso no encontrado");
     }
     await this.ensureActorControlsPaciente(actor, permiso.pacienteId);
-    if (permiso.estado !== 'revocado') {
-      permiso.estado = 'revocado';
+    if (permiso.estado !== "revocado") {
+      permiso.estado = "revocado";
       permiso.fechaFin = permiso.fechaFin ?? new Date();
       permiso.modificadoPor = actor.username;
       await this.permisoRepository.save(permiso);
     }
   }
 
+  /**
+   * Update.
+   * @param permisoId Identificador asociado a permiso.
+   * @param payload Datos validados que recibe la operación.
+   * @param actor Valor del parámetro `actor`.
+   * @returns Registro actualizado.
+   */
   async update(
     permisoId: number,
     payload: UpdatePermisoAccesoDto,
     actor: AuthenticatedUser,
   ): Promise<PermisoAcceso> {
-    const permiso = await this.permisoRepository.findOne({ where: { id: permisoId } });
+    const permiso = await this.permisoRepository.findOne({
+      where: { id: permisoId },
+    });
     if (!permiso) {
-      throw new NotFoundException('permiso no encontrado');
+      throw new NotFoundException("permiso no encontrado");
     }
     await this.ensureActorControlsPaciente(actor, permiso.pacienteId);
 
@@ -194,19 +290,22 @@ export class PermisoaccesoService {
     }
 
     const nextTipo = permiso.tipo;
-    if (nextTipo === 'temporal') {
+    if (nextTipo === "temporal") {
       const durationValue = payload.duracion ?? permiso.duracion ?? null;
       if (!durationValue) {
-        throw new BadRequestException('los permisos temporales requieren una duracion');
+        throw new BadRequestException(
+          "los permisos temporales requieren una duracion",
+        );
       }
       if (
         !temporalDurations.includes(
           durationValue as (typeof temporalDurations)[number],
         )
       ) {
-        throw new BadRequestException('duracion temporal no valida');
+        throw new BadRequestException("duracion temporal no valida");
       }
-      const shouldRecalculate = payload.duracion !== undefined || payload.tipo === 'temporal';
+      const shouldRecalculate =
+        payload.duracion !== undefined || payload.tipo === "temporal";
       permiso.duracion = durationValue;
       if (shouldRecalculate) {
         const now = new Date();
@@ -222,14 +321,16 @@ export class PermisoaccesoService {
     }
 
     if (payload.estado) {
-      if (payload.estado === 'revocado') {
-        permiso.estado = 'revocado';
+      if (payload.estado === "revocado") {
+        permiso.estado = "revocado";
         permiso.fechaFin = permiso.fechaFin ?? new Date();
-      } else if (payload.estado === 'activo') {
+      } else if (payload.estado === "activo") {
         if (permiso.fechaFin && permiso.fechaFin.getTime() < Date.now()) {
-          throw new BadRequestException('no puedes reactivar un permiso expirado');
+          throw new BadRequestException(
+            "no puedes reactivar un permiso expirado",
+          );
         }
-        permiso.estado = 'activo';
+        permiso.estado = "activo";
       }
     }
 
@@ -237,38 +338,74 @@ export class PermisoaccesoService {
     return this.permisoRepository.save(permiso);
   }
 
-  private async ensureActorControlsPaciente(actor: AuthenticatedUser, pacienteId: number) {
+  /**
+   * Ensure actor controls paciente.
+   * @param actor Valor del parámetro `actor`.
+   * @param pacienteId Identificador asociado a paciente.
+   * @returns Resultado de la operación.
+   */
+  private async ensureActorControlsPaciente(
+    actor: AuthenticatedUser,
+    pacienteId: number,
+  ) {
     if (await this.pacienteAccessService.canManagePaciente(actor, pacienteId)) {
       return;
     }
-    throw new ForbiddenException('no puedes gestionar permisos para este paciente');
+    throw new ForbiddenException(
+      "no puedes gestionar permisos para este paciente",
+    );
   }
 
-  private calculateEndDate(start: Date, duration: (typeof temporalDurations)[number]): Date {
+  /**
+   * Calculate end date.
+   * @param start Valor del parámetro `start`.
+   * @param duration Valor del parámetro `duration`.
+   * @returns Resultado de la operación.
+   */
+  private calculateEndDate(
+    start: Date,
+    duration: (typeof temporalDurations)[number],
+  ): Date {
     const minutes = durationMap[duration];
     const result = new Date(start);
     result.setMinutes(result.getMinutes() + minutes);
     return result;
   }
 
-  private async deactivateExisting(pacienteId: number, medicoId: number): Promise<void> {
+  /**
+   * Deactivate existing.
+   * @param pacienteId Identificador asociado a paciente.
+   * @param medicoId Identificador asociado a medico.
+   * @returns La operación se completa sin devolver contenido.
+   */
+  private async deactivateExisting(
+    pacienteId: number,
+    medicoId: number,
+  ): Promise<void> {
     await this.permisoRepository.update(
-      { pacienteId, medicoId, estado: 'activo' },
-      { estado: 'revocado', fechaFin: new Date() },
+      { pacienteId, medicoId, estado: "activo" },
+      { estado: "revocado", fechaFin: new Date() },
     );
   }
 
-  private async refreshStatuses(permisos: PermisoAcceso[]): Promise<PermisoAcceso[]> {
+  /**
+   * Refresh statuses.
+   * @param permisos Valor del parámetro `permisos`.
+   * @returns Resultado de la operación.
+   */
+  private async refreshStatuses(
+    permisos: PermisoAcceso[],
+  ): Promise<PermisoAcceso[]> {
     const now = Date.now();
     const expired = permisos.filter(
       (permiso) =>
-        permiso.estado === 'activo' &&
+        permiso.estado === "activo" &&
         permiso.fechaFin &&
         permiso.fechaFin.getTime() < now,
     );
     if (expired.length) {
       for (const permiso of expired) {
-        permiso.estado = 'expirado';
+        permiso.estado = "expirado";
       }
       await this.permisoRepository.save(expired);
     }

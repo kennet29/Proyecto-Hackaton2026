@@ -1,2 +1,1 @@
-export { UpdateCondicioncronicaDto } from './create-condicioncronica.dto';
-
+export { UpdateCondicioncronicaDto } from "./create-condicioncronica.dto";

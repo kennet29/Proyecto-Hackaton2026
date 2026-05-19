@@ -26,6 +26,18 @@ const getProjectId = (): string | undefined => {
   return easProjectId ?? easConfigId;
 };
 
+const getPushRegistrationBlocker = (): string | null => {
+  if (Platform.OS === 'android' && Constants.executionEnvironment === 'storeClient') {
+    return 'Las notificaciones push remotas no funcionan en Expo Go para Android. Usa un development build.';
+  }
+
+  if (!getProjectId()) {
+    return 'Falta configurar extra.eas.projectId en app.json para obtener el Expo push token.';
+  }
+
+  return null;
+};
+
 const ensureAndroidChannel = async () => {
   if (Platform.OS !== 'android') {
     return;
@@ -69,10 +81,17 @@ const syncTokenWithBackend = async (expoPushToken: string, authToken?: string | 
   }
 };
 
-const registerForPushNotificationsAsync = async (): Promise<string | null> => {
+const registerForPushNotificationsAsync = async (): Promise<{ token: string | null; error: string | null }> => {
   if (!Device.isDevice) {
-    console.warn('Las notificaciones push requieren ejecutarse en un dispositivo físico');
-    return null;
+    return {
+      token: null,
+      error: 'Las notificaciones push requieren ejecutarse en un dispositivo fisico.',
+    };
+  }
+
+  const blocker = getPushRegistrationBlocker();
+  if (blocker) {
+    return { token: null, error: blocker };
   }
 
   let { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -82,18 +101,12 @@ const registerForPushNotificationsAsync = async (): Promise<string | null> => {
   }
 
   if (existingStatus !== 'granted') {
-    console.warn('No se otorgaron permisos de notificaciones');
-    return null;
+    return { token: null, error: 'No se otorgaron permisos de notificaciones.' };
   }
 
-  const projectId = getProjectId();
-  if (!projectId) {
-    console.warn('Agrega el projectId de EAS para obtener tokens push');
-    return null;
-  }
-
+  const projectId = getProjectId()!;
   const { data } = await Notifications.getExpoPushTokenAsync({ projectId });
-  return data;
+  return { token: data, error: null };
 };
 
 export const usePushNotifications = (authToken?: string | null, userId?: number | null) => {
@@ -112,14 +125,20 @@ export const usePushNotifications = (authToken?: string | null, userId?: number 
         if (storedToken) {
           setExpoPushToken(storedToken);
         }
-        const token = await registerForPushNotificationsAsync();
+        const { token, error } = await registerForPushNotificationsAsync();
+        if (error) {
+          if (mounted) {
+            setRegistrationError(error);
+          }
+          return;
+        }
         if (!token) {
-          setRegistrationError('Sin permisos para notificaciones');
           return;
         }
         if (!mounted) {
           return;
         }
+        setRegistrationError(null);
         setExpoPushToken(token);
         await AsyncStorage.setItem(STORAGE_KEY, token);
         await syncTokenWithBackend(token, authToken, userId);
@@ -153,6 +172,3 @@ export const usePushNotifications = (authToken?: string | null, userId?: number 
 
   return { expoPushToken, registrationError };
 };
-
-
-

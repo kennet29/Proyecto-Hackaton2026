@@ -2,41 +2,113 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Paciente } from '../paciente/paciente.entity';
-import { CreateSaludmentalDto } from './dto/create-saludmental.dto';
-import { UpdateSaludmentalHabitosDto } from './dto/update-saludmental-habitos.dto';
-import { UpdateSaludmentalRegistroDiarioDto } from './dto/update-saludmental-registro-diario.dto';
-import { UpdateSaludmentalDto } from './dto/update-saludmental.dto';
-import { Saludmental } from './saludmental.entity';
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Paciente } from "../paciente/paciente.entity";
+import { CreateSaludmentalDto } from "./dto/create-saludmental.dto";
+import { UpdateSaludmentalHabitosDto } from "./dto/update-saludmental-habitos.dto";
+import { UpdateSaludmentalRegistroDiarioDto } from "./dto/update-saludmental-registro-diario.dto";
+import { UpdateSaludmentalDto } from "./dto/update-saludmental.dto";
+import { Saludmental } from "./saludmental.entity";
 
+/**
+ * Define el tipo saludmental response utilizado por el backend.
+ */
 type SaludmentalResponse = {
+  /**
+   * Identificador persistido para `saludmentalId`.
+   */
   saludmentalId: number;
+  /**
+   * Identificador persistido para `pacienteId`.
+   */
   pacienteId: number;
+  /**
+   * Fecha asociada al campo `fecha`.
+   */
   fecha: string;
+  /**
+   * Estado actual registrado en `estadoAnimo`.
+   */
   estadoAnimo: number;
+  /**
+   * Indicador booleano persistido en `estres`.
+   */
   estres: number;
+  /**
+   * Campo de datos asociado a `ansiedad`.
+   */
   ansiedad: number;
+  /**
+   * Campo de datos asociado a `horasSueno`.
+   */
   horasSueno: number | null;
+  /**
+   * Campo de datos asociado a `notaPersonal`.
+   */
   notaPersonal: string | null;
+  /**
+   * Campo de datos asociado a `ejercicioMinutos`.
+   */
   ejercicioMinutos: number | null;
+  /**
+   * Campo de datos asociado a `hidratacionLitros`.
+   */
   hidratacionLitros: number | null;
+  /**
+   * Campo de datos asociado a `descansoHoras`.
+   */
   descansoHoras: number | null;
+  /**
+   * Campo de datos asociado a `tiempoSocialMinutos`.
+   */
   tiempoSocialMinutos: number | null;
+  /**
+   * Campo de datos asociado a `pausasDigitales`.
+   */
   pausasDigitales: number | null;
+  /**
+   * Campo de datos asociado a `creadoPor`.
+   */
   creadoPor: string | null;
+  /**
+   * Campo de datos asociado a `creadoEn`.
+   */
   creadoEn: string;
+  /**
+   * Campo de datos asociado a `modificadoPor`.
+   */
   modificadoPor: string | null;
+  /**
+   * Campo de datos asociado a `modificadoEn`.
+   */
   modificadoEn: string | null;
+  /**
+   * Campo de datos asociado a `campoPrueba01`.
+   */
   campoPrueba01: string | null;
+  /**
+   * Campo de datos asociado a `campoPrueba02`.
+   */
   campoPrueba02: string | null;
+  /**
+   * Campo de datos asociado a `campoPrueba03`.
+   */
   campoPrueba03: string | null;
+  /**
+   * Campo de datos asociado a `campoPrueba04`.
+   */
   campoPrueba04: string | null;
+  /**
+   * Campo de datos asociado a `campoPrueba05`.
+   */
   campoPrueba05: string | null;
 };
 
+/**
+ * Implementa la lógica de negocio y persistencia del dominio saludmental.
+ */
 @Injectable()
 export class SaludmentalService {
   constructor(
@@ -46,6 +118,11 @@ export class SaludmentalService {
     private readonly pacienteRepository: Repository<Paciente>,
   ) {}
 
+  /**
+   * Create.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro creado.
+   */
   async create(payload: CreateSaludmentalDto): Promise<SaludmentalResponse> {
     await this.assertPacienteExists(payload.pacienteId);
     const entity = this.saludmentalRepository.create(
@@ -55,18 +132,33 @@ export class SaludmentalService {
     return this.toResponse(saved);
   }
 
+  /**
+   * Find all.
+   * @returns Colección de registros encontrados.
+   */
   async findAll(): Promise<SaludmentalResponse[]> {
     const records = await this.saludmentalRepository.find({
-      order: { fecha: 'DESC', saludmentalId: 'DESC' },
+      order: { fecha: "DESC", saludmentalId: "DESC" },
     });
     return records.map((record) => this.toResponse(record));
   }
 
+  /**
+   * Find one.
+   * @param id Identificador del registro objetivo.
+   * @returns Resultado de la consulta solicitada.
+   */
   async findOne(id: number): Promise<SaludmentalResponse> {
     const entity = await this.findEntity(id);
     return this.toResponse(entity);
   }
 
+  /**
+   * Update.
+   * @param id Identificador del registro objetivo.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro actualizado.
+   */
   async update(
     id: number,
     payload: UpdateSaludmentalDto,
@@ -77,14 +169,29 @@ export class SaludmentalService {
     return this.toResponse(saved);
   }
 
+  /**
+   * Remove.
+   * @param id Identificador del registro objetivo.
+   * @returns La operación se completa sin devolver contenido.
+   */
   async remove(id: number): Promise<void> {
     await this.findEntity(id);
-    const result = await this.saludmentalRepository.delete({ saludmentalId: id });
+    const result = await this.saludmentalRepository.delete({
+      saludmentalId: id,
+    });
     if (!result.affected) {
-      throw new NotFoundException(`registro ${id} no encontrado en saludmental`);
+      throw new NotFoundException(
+        `registro ${id} no encontrado en saludmental`,
+      );
     }
   }
 
+  /**
+   * Update registro diario.
+   * @param id Identificador del registro objetivo.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro actualizado.
+   */
   async updateRegistroDiario(
     id: number,
     payload: UpdateSaludmentalRegistroDiarioDto,
@@ -114,6 +221,12 @@ export class SaludmentalService {
     return this.toResponse(saved);
   }
 
+  /**
+   * Update habitos.
+   * @param id Identificador del registro objetivo.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro actualizado.
+   */
   async updateHabitos(
     id: number,
     payload: UpdateSaludmentalHabitosDto,
@@ -140,6 +253,13 @@ export class SaludmentalService {
     return this.toResponse(saved);
   }
 
+  /**
+   * Get historial.
+   * @param pacienteId Identificador asociado a paciente.
+   * @param from Valor del parámetro `from`.
+   * @param to Valor del parámetro `to`.
+   * @returns Resultado de la consulta solicitada.
+   */
   async getHistorial(pacienteId: number, from?: string, to?: string) {
     await this.assertPacienteExists(pacienteId);
     const records = await this.findPacienteRecords(
@@ -153,11 +273,21 @@ export class SaludmentalService {
       totalRegistros: records.length,
       historialPorFecha: records
         .slice()
-        .sort((a, b) => this.toDate(b.fecha).getTime() - this.toDate(a.fecha).getTime())
+        .sort(
+          (a, b) =>
+            this.toDate(b.fecha).getTime() - this.toDate(a.fecha).getTime(),
+        )
         .map((record) => this.toResponse(record)),
     };
   }
 
+  /**
+   * Get estadisticas.
+   * @param pacienteId Identificador asociado a paciente.
+   * @param from Valor del parámetro `from`.
+   * @param to Valor del parámetro `to`.
+   * @returns Resultado de la consulta solicitada.
+   */
   async getEstadisticas(pacienteId: number, from?: string, to?: string) {
     await this.assertPacienteExists(pacienteId);
     const records = await this.findPacienteRecords(
@@ -174,6 +304,11 @@ export class SaludmentalService {
     };
   }
 
+  /**
+   * Get alertas.
+   * @param pacienteId Identificador asociado a paciente.
+   * @returns Resultado de la consulta solicitada.
+   */
   async getAlertas(pacienteId: number) {
     await this.assertPacienteExists(pacienteId);
     const records = await this.findPacienteRecords(pacienteId);
@@ -186,16 +321,28 @@ export class SaludmentalService {
     };
   }
 
+  /**
+   * Get reporte medico.
+   * @param pacienteId Identificador asociado a paciente.
+   * @param from Valor del parámetro `from`.
+   * @param to Valor del parámetro `to`.
+   * @param formato Valor del parámetro `formato`.
+   * @returns Resultado de la consulta solicitada.
+   */
   async getReporteMedico(
     pacienteId: number,
     from?: string,
     to?: string,
-    formato = 'json',
+    formato = "json",
   ) {
     await this.assertPacienteExists(pacienteId);
     const fromDate = this.parseOptionalDate(from);
     const toDate = this.parseOptionalDate(to);
-    const records = await this.findPacienteRecords(pacienteId, fromDate, toDate);
+    const records = await this.findPacienteRecords(
+      pacienteId,
+      fromDate,
+      toDate,
+    );
     const estadisticas = {
       promedioSemanal: this.buildWeeklyAverage(records),
       tendenciaMensual: this.buildMonthlyTrend(records),
@@ -204,7 +351,10 @@ export class SaludmentalService {
     const alertas = this.buildAlerts(records);
     const historialPorFecha = records
       .slice()
-      .sort((a, b) => this.toDate(b.fecha).getTime() - this.toDate(a.fecha).getTime())
+      .sort(
+        (a, b) =>
+          this.toDate(b.fecha).getTime() - this.toDate(a.fecha).getTime(),
+      )
       .map((record) => this.toResponse(record));
 
     return {
@@ -216,18 +366,18 @@ export class SaludmentalService {
         hasta: toDate ? this.toIsoDate(toDate) : null,
       },
       pdf: {
-        listo: formato.toLowerCase() === 'pdf',
-        titulo: 'Reporte medico de salud mental',
+        listo: formato.toLowerCase() === "pdf",
+        titulo: "Reporte medico de salud mental",
         resumen:
           records.length > 0
             ? `Se analizaron ${records.length} registros diarios de salud mental.`
-            : 'No hay registros disponibles para el periodo solicitado.',
+            : "No hay registros disponibles para el periodo solicitado.",
         secciones: [
-          'Registro diario',
-          'Habitos',
-          'Estadisticas',
-          'Alertas',
-          'Historial por fecha',
+          "Registro diario",
+          "Habitos",
+          "Estadisticas",
+          "Alertas",
+          "Historial por fecha",
         ],
       },
       graficas: {
@@ -240,17 +390,29 @@ export class SaludmentalService {
     };
   }
 
+  /**
+   * Busca entity.
+   * @param id Identificador del registro objetivo.
+   * @returns Resultado de la operación.
+   */
   private async findEntity(id: number): Promise<Saludmental> {
     const entity = await this.saludmentalRepository.findOne({
       where: { saludmentalId: id },
     });
     if (!entity) {
-      throw new NotFoundException(`registro ${id} no encontrado en saludmental`);
+      throw new NotFoundException(
+        `registro ${id} no encontrado en saludmental`,
+      );
     }
     await this.assertPacienteExists(entity.pacienteId);
     return entity;
   }
 
+  /**
+   * Valida paciente exists.
+   * @param pacienteId Identificador asociado a paciente.
+   * @returns La promesa se resuelve cuando la validación se cumple.
+   */
   private async assertPacienteExists(pacienteId: number): Promise<void> {
     const paciente = await this.pacienteRepository.findOne({
       where: { pacienteId },
@@ -260,6 +422,13 @@ export class SaludmentalService {
     }
   }
 
+  /**
+   * Busca paciente records.
+   * @param pacienteId Identificador asociado a paciente.
+   * @param fromDate Valor del parámetro `fromDate`.
+   * @param toDate Valor del parámetro `toDate`.
+   * @returns Resultado de la operación.
+   */
   private async findPacienteRecords(
     pacienteId: number,
     fromDate?: Date,
@@ -267,7 +436,7 @@ export class SaludmentalService {
   ): Promise<Saludmental[]> {
     const records = await this.saludmentalRepository.find({
       where: { pacienteId },
-      order: { fecha: 'ASC', saludmentalId: 'ASC' },
+      order: { fecha: "ASC", saludmentalId: "ASC" },
     });
 
     return records.filter((record) => {
@@ -282,13 +451,19 @@ export class SaludmentalService {
     });
   }
 
+  /**
+   * Map payload for save.
+   * @param payload Datos validados que recibe la operación.
+   * @param isCreate Valor del parámetro `isCreate`.
+   * @returns Resultado de la operación.
+   */
   private mapPayloadForSave(
     payload: CreateSaludmentalDto | UpdateSaludmentalDto,
     isCreate: boolean,
   ): Partial<Saludmental> {
     const mapped: Partial<Saludmental> = {};
 
-    if ('pacienteId' in payload && payload.pacienteId !== undefined) {
+    if ("pacienteId" in payload && payload.pacienteId !== undefined) {
       mapped.pacienteId = payload.pacienteId;
     }
     if (payload.fecha !== undefined) {
@@ -348,16 +523,16 @@ export class SaludmentalService {
 
     if (isCreate) {
       mapped.creadoEn =
-        'creadoEn' in payload && payload.creadoEn
+        "creadoEn" in payload && payload.creadoEn
           ? new Date(payload.creadoEn)
           : new Date();
       mapped.modificadoEn =
-        'modificadoEn' in payload && payload.modificadoEn
+        "modificadoEn" in payload && payload.modificadoEn
           ? new Date(payload.modificadoEn)
           : undefined;
     } else {
       mapped.modificadoEn =
-        'modificadoEn' in payload && payload.modificadoEn
+        "modificadoEn" in payload && payload.modificadoEn
           ? new Date(payload.modificadoEn)
           : new Date();
     }
@@ -365,6 +540,11 @@ export class SaludmentalService {
     return mapped;
   }
 
+  /**
+   * Construye weekly average.
+   * @param records Valor del parámetro `records`.
+   * @returns Estructura construida para el flujo interno.
+   */
   private buildWeeklyAverage(records: Saludmental[]) {
     if (!records.length) {
       return {
@@ -395,11 +575,16 @@ export class SaludmentalService {
       horasSueno: this.average(
         weekly
           .map((record) => record.horasSueno)
-          .filter((value): value is number => typeof value === 'number'),
+          .filter((value): value is number => typeof value === "number"),
       ),
     };
   }
 
+  /**
+   * Construye monthly trend.
+   * @param records Valor del parámetro `records`.
+   * @returns Estructura construida para el flujo interno.
+   */
   private buildMonthlyTrend(records: Saludmental[]) {
     const groups = new Map<string, Saludmental[]>();
 
@@ -416,20 +601,27 @@ export class SaludmentalService {
       .map(([mes, items]) => ({
         mes,
         registros: items.length,
-        estadoAnimoPromedio: this.average(items.map((item) => item.estadoAnimo)),
+        estadoAnimoPromedio: this.average(
+          items.map((item) => item.estadoAnimo),
+        ),
         estresPromedio: this.average(items.map((item) => item.estres)),
         ansiedadPromedio: this.average(items.map((item) => item.ansiedad)),
         horasSuenoPromedio: this.average(
           items
             .map((item) => item.horasSueno)
-            .filter((value): value is number => typeof value === 'number'),
+            .filter((value): value is number => typeof value === "number"),
         ),
       }));
   }
 
+  /**
+   * Construye sleep mood relation.
+   * @param records Valor del parámetro `records`.
+   * @returns Estructura construida para el flujo interno.
+   */
   private buildSleepMoodRelation(records: Saludmental[]) {
     const points = records
-      .filter((record) => typeof record.horasSueno === 'number')
+      .filter((record) => typeof record.horasSueno === "number")
       .map((record) => ({
         fecha: this.toIsoDate(record.fecha),
         horasSueno: record.horasSueno as number,
@@ -445,6 +637,11 @@ export class SaludmentalService {
     };
   }
 
+  /**
+   * Construye alerts.
+   * @param records Valor del parámetro `records`.
+   * @returns Estructura construida para el flujo interno.
+   */
   private buildAlerts(records: Saludmental[]) {
     if (!records.length) {
       return [];
@@ -452,7 +649,7 @@ export class SaludmentalService {
 
     const alerts: Array<{
       tipo: string;
-      severidad: 'media' | 'alta';
+      severidad: "media" | "alta";
       fecha: string;
       detalle: string;
     }> = [];
@@ -460,18 +657,20 @@ export class SaludmentalService {
     const latest = records[records.length - 1];
     if (latest.estres >= 4) {
       alerts.push({
-        tipo: 'estres_alto',
-        severidad: latest.estres === 5 ? 'alta' : 'media',
+        tipo: "estres_alto",
+        severidad: latest.estres === 5 ? "alta" : "media",
         fecha: this.toIsoDate(latest.fecha),
-        detalle: 'Se detecto un nivel de estres alto en el registro mas reciente.',
+        detalle:
+          "Se detecto un nivel de estres alto en el registro mas reciente.",
       });
     }
-    if (typeof latest.horasSueno === 'number' && latest.horasSueno < 6) {
+    if (typeof latest.horasSueno === "number" && latest.horasSueno < 6) {
       alerts.push({
-        tipo: 'poco_sueno',
-        severidad: latest.horasSueno < 4 ? 'alta' : 'media',
+        tipo: "poco_sueno",
+        severidad: latest.horasSueno < 4 ? "alta" : "media",
         fecha: this.toIsoDate(latest.fecha),
-        detalle: 'Las horas de sueno del ultimo registro estan por debajo de 6.',
+        detalle:
+          "Las horas de sueno del ultimo registro estan por debajo de 6.",
       });
     }
     if (records.length > 1) {
@@ -479,10 +678,11 @@ export class SaludmentalService {
       const diff = Math.abs(latest.estadoAnimo - previous.estadoAnimo);
       if (diff >= 2) {
         alerts.push({
-          tipo: 'cambio_fuerte_animo',
-          severidad: diff >= 3 ? 'alta' : 'media',
+          tipo: "cambio_fuerte_animo",
+          severidad: diff >= 3 ? "alta" : "media",
           fecha: this.toIsoDate(latest.fecha),
-          detalle: 'El estado de animo cambio de forma marcada respecto al registro anterior.',
+          detalle:
+            "El estado de animo cambio de forma marcada respecto al registro anterior.",
         });
       }
     }
@@ -490,17 +690,27 @@ export class SaludmentalService {
     return alerts;
   }
 
+  /**
+   * Interpreta optional date.
+   * @param value Valor de entrada que se debe transformar o validar.
+   * @returns Valor interpretado a partir de la entrada recibida.
+   */
   private parseOptionalDate(value?: string): Date | undefined {
     if (!value) {
       return undefined;
     }
     const parsed = new Date(value);
     if (Number.isNaN(parsed.getTime())) {
-      throw new BadRequestException('la fecha enviada en filtros es invalida');
+      throw new BadRequestException("la fecha enviada en filtros es invalida");
     }
     return parsed;
   }
 
+  /**
+   * Average.
+   * @param values Colección de valores usada por el cálculo o la validación.
+   * @returns Resultado de la operación.
+   */
   private average(values: number[]): number | null {
     if (!values.length) {
       return null;
@@ -509,15 +719,21 @@ export class SaludmentalService {
     return Math.round((total / values.length) * 100) / 100;
   }
 
+  /**
+   * Calculate correlation.
+   * @param xs Valor del parámetro `xs`.
+   * @param ys Valor del parámetro `ys`.
+   * @returns Resultado de la operación.
+   */
   private calculateCorrelation(xs: number[], ys: number[]) {
     if (xs.length < 2 || ys.length < 2 || xs.length !== ys.length) {
-      return { valor: null, lectura: 'sin_datos' };
+      return { valor: null, lectura: "sin_datos" };
     }
 
     const xAvg = this.average(xs);
     const yAvg = this.average(ys);
     if (xAvg === null || yAvg === null) {
-      return { valor: null, lectura: 'sin_datos' };
+      return { valor: null, lectura: "sin_datos" };
     }
 
     let numerator = 0;
@@ -533,15 +749,15 @@ export class SaludmentalService {
     }
 
     if (!xVariance || !yVariance) {
-      return { valor: 0, lectura: 'neutral' };
+      return { valor: 0, lectura: "neutral" };
     }
 
     const value = numerator / Math.sqrt(xVariance * yVariance);
-    let lectura = 'neutral';
+    let lectura = "neutral";
     if (value >= 0.3) {
-      lectura = 'positiva';
+      lectura = "positiva";
     } else if (value <= -0.3) {
-      lectura = 'negativa';
+      lectura = "negativa";
     }
 
     return {
@@ -550,12 +766,23 @@ export class SaludmentalService {
     };
   }
 
+  /**
+   * Add days.
+   * @param date Fecha de referencia para la operación.
+   * @param days Valor del parámetro `days`.
+   * @returns Resultado de la operación.
+   */
   private addDays(date: Date, days: number): Date {
     const result = new Date(date);
     result.setUTCDate(result.getUTCDate() + days);
     return result;
   }
 
+  /**
+   * Convierte el valor a response.
+   * @param entity Valor del parámetro `entity`.
+   * @returns Valor convertido al formato de salida esperado.
+   */
   private toResponse(entity: Saludmental): SaludmentalResponse {
     return {
       saludmentalId: entity.saludmentalId,
@@ -583,10 +810,20 @@ export class SaludmentalService {
     };
   }
 
+  /**
+   * Convierte el valor a date.
+   * @param value Valor de entrada que se debe transformar o validar.
+   * @returns Valor convertido al formato de salida esperado.
+   */
   private toDate(value: Date | string): Date {
     return value instanceof Date ? value : new Date(value);
   }
 
+  /**
+   * Convierte el valor a iso date.
+   * @param value Valor de entrada que se debe transformar o validar.
+   * @returns Valor convertido al formato de salida esperado.
+   */
   private toIsoDate(value: Date | string): string {
     return this.toDate(value).toISOString().slice(0, 10);
   }

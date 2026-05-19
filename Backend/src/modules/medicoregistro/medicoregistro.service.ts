@@ -1,11 +1,18 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Usuario } from '../../users/entities/user.entity';
-import { CreateMedicoregistroDto } from './dto/create-medicoregistro.dto';
-import { UpdateMedicoregistroDto } from './dto/update-medicoregistro.dto';
-import { Medicoregistro } from './medicoregistro.entity';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Usuario } from "../../users/entities/user.entity";
+import { CreateMedicoregistroDto } from "./dto/create-medicoregistro.dto";
+import { UpdateMedicoregistroDto } from "./dto/update-medicoregistro.dto";
+import { Medicoregistro } from "./medicoregistro.entity";
 
+/**
+ * Implementa la lógica de negocio y persistencia del dominio medicoregistro.
+ */
 @Injectable()
 export class MedicoregistroService {
   constructor(
@@ -15,6 +22,11 @@ export class MedicoregistroService {
     private readonly usuarioRepository: Repository<Usuario>,
   ) {}
 
+  /**
+   * Create.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro creado.
+   */
   async create(payload: CreateMedicoregistroDto): Promise<Medicoregistro> {
     await this.ensureUsuarioExists(payload.usuarioId);
 
@@ -22,7 +34,9 @@ export class MedicoregistroService {
       where: { usuarioId: payload.usuarioId },
     });
     if (existing) {
-      throw new BadRequestException('ya existe una solicitud de medico para este usuario');
+      throw new BadRequestException(
+        "ya existe una solicitud de medico para este usuario",
+      );
     }
 
     const entity = this.medicoregistroRepository.create();
@@ -34,9 +48,12 @@ export class MedicoregistroService {
     entity.entidadcertificadora = payload.entidadcertificadora ?? null;
     entity.especialidadprincipal = payload.especialidadprincipal ?? null;
     entity.documentorespaldo = payload.documentorespaldo ?? null;
-    entity.fotocodigominsa = this.decodeBase64(payload.fotocodigominsaBase64, 'fotocodigominsa') ?? null;
-    entity.fototitulo = this.decodeBase64(payload.fototituloBase64, 'fototitulo') ?? null;
-    entity.estado = 'pendiente';
+    entity.fotocodigominsa =
+      this.decodeBase64(payload.fotocodigominsaBase64, "fotocodigominsa") ??
+      null;
+    entity.fototitulo =
+      this.decodeBase64(payload.fototituloBase64, "fototitulo") ?? null;
+    entity.estado = "pendiente";
     entity.fechasolicitud = payload.creadoen ?? new Date();
     entity.observaciones = payload.observaciones ?? null;
     entity.creadopor = payload.creadopor ?? null;
@@ -46,40 +63,74 @@ export class MedicoregistroService {
     return this.medicoregistroRepository.save(entity);
   }
 
+  /**
+   * Find all.
+   * @returns Colección de registros encontrados.
+   */
   findAll(): Promise<Medicoregistro[]> {
     return this.medicoregistroRepository.find({
-      order: { fechasolicitud: 'DESC', medicoregistroId: 'DESC' },
+      order: { fechasolicitud: "DESC", medicoregistroId: "DESC" },
     });
   }
 
+  /**
+   * Find one.
+   * @param id Identificador del registro objetivo.
+   * @returns Resultado de la consulta solicitada.
+   */
   async findOne(id: number): Promise<Medicoregistro> {
     const entity = await this.medicoregistroRepository.findOne({
       where: { medicoregistroId: id },
     });
     if (!entity) {
-      throw new NotFoundException(`registro ${id} no encontrado en medicoregistro`);
+      throw new NotFoundException(
+        `registro ${id} no encontrado en medicoregistro`,
+      );
     }
     return entity;
   }
 
+  /**
+   * Find by usuario.
+   * @param usuarioId Identificador asociado a usuario.
+   * @returns Resultado de la operación.
+   */
   async findByUsuario(usuarioId: number): Promise<Medicoregistro> {
-    const entity = await this.medicoregistroRepository.findOne({ where: { usuarioId } });
+    const entity = await this.medicoregistroRepository.findOne({
+      where: { usuarioId },
+    });
     if (!entity) {
-      throw new NotFoundException(`no existe solicitud medica para el usuario ${usuarioId}`);
+      throw new NotFoundException(
+        `no existe solicitud medica para el usuario ${usuarioId}`,
+      );
     }
     return entity;
   }
 
-  async update(id: number, payload: UpdateMedicoregistroDto): Promise<Medicoregistro> {
+  /**
+   * Update.
+   * @param id Identificador del registro objetivo.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro actualizado.
+   */
+  async update(
+    id: number,
+    payload: UpdateMedicoregistroDto,
+  ): Promise<Medicoregistro> {
     const entity = await this.findOne(id);
 
-    if (payload.usuarioId !== undefined && payload.usuarioId !== entity.usuarioId) {
+    if (
+      payload.usuarioId !== undefined &&
+      payload.usuarioId !== entity.usuarioId
+    ) {
       await this.ensureUsuarioExists(payload.usuarioId);
       const existing = await this.medicoregistroRepository.findOne({
         where: { usuarioId: payload.usuarioId },
       });
       if (existing && existing.medicoregistroId !== entity.medicoregistroId) {
-        throw new BadRequestException('ya existe una solicitud de medico para este usuario');
+        throw new BadRequestException(
+          "ya existe una solicitud de medico para este usuario",
+        );
       }
       entity.usuarioId = payload.usuarioId;
     }
@@ -107,14 +158,16 @@ export class MedicoregistroService {
     }
     if (payload.fotocodigominsaBase64 !== undefined) {
       entity.fotocodigominsa =
-        this.decodeBase64(payload.fotocodigominsaBase64, 'fotocodigominsa') ?? null;
+        this.decodeBase64(payload.fotocodigominsaBase64, "fotocodigominsa") ??
+        null;
     }
     if (payload.fototituloBase64 !== undefined) {
-      entity.fototitulo = this.decodeBase64(payload.fototituloBase64, 'fototitulo') ?? null;
+      entity.fototitulo =
+        this.decodeBase64(payload.fototituloBase64, "fototitulo") ?? null;
     }
     if (payload.estado !== undefined) {
       entity.estado = payload.estado;
-      if (payload.estado === 'pendiente') {
+      if (payload.estado === "pendiente") {
         entity.fecharevision = null;
       } else if (payload.fecharevision === undefined) {
         entity.fecharevision = new Date();
@@ -143,21 +196,46 @@ export class MedicoregistroService {
     return this.medicoregistroRepository.save(entity);
   }
 
+  /**
+   * Remove.
+   * @param id Identificador del registro objetivo.
+   * @returns La operación se completa sin devolver contenido.
+   */
   async remove(id: number): Promise<void> {
-    const result = await this.medicoregistroRepository.delete({ medicoregistroId: id });
+    const result = await this.medicoregistroRepository.delete({
+      medicoregistroId: id,
+    });
     if (!result.affected) {
-      throw new NotFoundException(`registro ${id} no encontrado en medicoregistro`);
+      throw new NotFoundException(
+        `registro ${id} no encontrado en medicoregistro`,
+      );
     }
   }
 
+  /**
+   * Ensure usuario exists.
+   * @param usuarioId Identificador asociado a usuario.
+   * @returns La operación se completa sin devolver contenido.
+   */
   private async ensureUsuarioExists(usuarioId: number): Promise<void> {
-    const usuario = await this.usuarioRepository.findOne({ where: { id: usuarioId } });
+    const usuario = await this.usuarioRepository.findOne({
+      where: { id: usuarioId },
+    });
     if (!usuario) {
       throw new BadRequestException(`el usuario ${usuarioId} no existe`);
     }
   }
 
-  private decodeBase64(value: string | null | undefined, field: string): Buffer | null | undefined {
+  /**
+   * Decode base64.
+   * @param value Valor de entrada que se debe transformar o validar.
+   * @param field Valor del parámetro `field`.
+   * @returns Resultado de la operación.
+   */
+  private decodeBase64(
+    value: string | null | undefined,
+    field: string,
+  ): Buffer | null | undefined {
     if (value === undefined) {
       return undefined;
     }
@@ -170,15 +248,21 @@ export class MedicoregistroService {
       return null;
     }
 
-    const payload = trimmed.startsWith('data:')
-      ? (trimmed.split(',', 2)[1] ?? '').trim()
-      : trimmed.replace(/\s+/g, '');
+    const payload = trimmed.startsWith("data:")
+      ? (trimmed.split(",", 2)[1] ?? "").trim()
+      : trimmed.replace(/\s+/g, "");
 
-    if (!payload || payload.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(payload)) {
-      throw new BadRequestException(`${field} debe ser una cadena base64 valida`);
+    if (
+      !payload ||
+      payload.length % 4 !== 0 ||
+      !/^[A-Za-z0-9+/]+={0,2}$/.test(payload)
+    ) {
+      throw new BadRequestException(
+        `${field} debe ser una cadena base64 valida`,
+      );
     }
 
-    const buffer = Buffer.from(payload, 'base64');
+    const buffer = Buffer.from(payload, "base64");
     if (!buffer.length) {
       throw new BadRequestException(`${field} no contiene datos validos`);
     }

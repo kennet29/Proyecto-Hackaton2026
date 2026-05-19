@@ -214,7 +214,7 @@ Cada carpeta bajo `src/modules/<tabla>/` expone el mismo juego de rutas REST con
 | `usuario` | `src/modules/usuario/usuario.entity.ts` | Replica directa de la tabla `usuario` (se usa principalmente via `users/`). |
 | `rol`, `permiso`, `rolpermiso`, `usuariorol` | Control fino de roles/permisos a nivel tabla. |
 | `especialidad`, `tipovacuna`, `tipolesion`, `tipooperacion`, `tipodocumentoclinico`, `tipocondicioncronica`, `tipohabito` | Catalogos de soporte.
-| `consultamedica`, `citamedica`, `documentoclinico`, `examenclinico`, `notificacion`, `recordatoriocita`, `medicacion`, `horariomedicamento`, `lesion`, `vacuna`, `operacion` | Registros clinicos principales.
+| `consultamedica`, `citamedica`, `documentoclinico`, `examenclinico`, `seguimientopostevento`, `notificacion`, `recordatoriocita`, `medicacion`, `horariomedicamento`, `lesion`, `vacuna`, `operacion` | Registros clinicos principales.
 | `desparasitacion`, `registrodental`, `registromensual`, `embarazo`, `controlprenatal` | Programas especificos.
 | `alergia`, `antecedentefamiliar`, `habitoespecifico`, `puntajeriesgo`, `condicioncronica`, `objetivocronico`, `controlcronico`, `adherenciacronica`, `evaluacionsaludhabito`, `detalleevaluacionsalud` | Seguimiento de condiciones y habitos.
 Cada servicio define `PRIMARY_KEYS` al inicio (`*.service.ts`). Para tablas con llaves compuestas, envia los IDs separados por coma siguiendo ese orden. Todas las respuestas devuelven el registro completo persistido via TypeORM.

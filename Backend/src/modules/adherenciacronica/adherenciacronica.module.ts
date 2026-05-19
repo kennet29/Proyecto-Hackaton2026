@@ -1,9 +1,12 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Adherenciacronica } from './adherenciacronica.entity';
-import { AdherenciacronicaService } from './adherenciacronica.service';
-import { AdherenciacronicaController } from './adherenciacronica.controller';
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { Adherenciacronica } from "./adherenciacronica.entity";
+import { AdherenciacronicaService } from "./adherenciacronica.service";
+import { AdherenciacronicaController } from "./adherenciacronica.controller";
 
+/**
+ * Agrupa controladores y proveedores del dominio adherenciacronica.
+ */
 @Module({
   imports: [TypeOrmModule.forFeature([Adherenciacronica])],
   controllers: [AdherenciacronicaController],
@@ -11,4 +14,3 @@ import { AdherenciacronicaController } from './adherenciacronica.controller';
   exports: [AdherenciacronicaService],
 })
 export class AdherenciacronicaModule {}
-

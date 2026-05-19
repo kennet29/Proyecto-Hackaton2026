@@ -15,6 +15,7 @@ import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/d
 import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
+import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 
 type LinkedPatient = {
   pacienteId: number;
@@ -341,6 +342,34 @@ export function MedicacionFormScreen() {
       return;
     }
     try {
+      const offlineResult = await submitJsonWithOfflineFallback({
+        token,
+        path: '/medicacion',
+        method: 'POST',
+        description: 'registrar medicacion',
+        body: {
+          pacienteId: Number(form.pacienteId),
+          nombremedicamento: form.nombre,
+          dosis: form.dosis || undefined,
+          viaadministracion: form.via || undefined,
+          fechainicio: form.fechaInicio,
+          fechafin: form.fechaFin || undefined,
+          creadopor: user?.username ?? undefined,
+        },
+      });
+      if (offlineResult.status === 'queued') {
+        Alert.alert(
+          'Medicacion en cola',
+          'No habia conexion. La medicacion quedo guardada localmente y se sincronizara automaticamente cuando vuelva la red.',
+        );
+      } else {
+        Alert.alert('Medicacion guardada', 'Se agrego a los horarios');
+        fetchMedications();
+      }
+      setForm({ pacienteId: '', nombre: '', dosis: '', via: '', fechaInicio: '', fechaFin: '' });
+      setShowForm(false);
+      return;
+
       const response = await fetch(`${API_URL}/medicacion`, {
         method: 'POST',
         headers: jsonHeaders,

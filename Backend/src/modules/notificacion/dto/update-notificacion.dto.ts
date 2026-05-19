@@ -1,2 +1,1 @@
-export { UpdateNotificacionDto } from './create-notificacion.dto';
-
+export { UpdateNotificacionDto } from "./create-notificacion.dto";

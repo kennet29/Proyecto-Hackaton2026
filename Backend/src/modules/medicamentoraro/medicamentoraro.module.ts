@@ -1,9 +1,12 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { MedicamentoraroController } from './medicamentoraro.controller';
-import { Medicamentoraro } from './medicamentoraro.entity';
-import { MedicamentoraroService } from './medicamentoraro.service';
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { MedicamentoraroController } from "./medicamentoraro.controller";
+import { Medicamentoraro } from "./medicamentoraro.entity";
+import { MedicamentoraroService } from "./medicamentoraro.service";
 
+/**
+ * Agrupa controladores y proveedores del dominio medicamentoraro.
+ */
 @Module({
   imports: [TypeOrmModule.forFeature([Medicamentoraro])],
   controllers: [MedicamentoraroController],

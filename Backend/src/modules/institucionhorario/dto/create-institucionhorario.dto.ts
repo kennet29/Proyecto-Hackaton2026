@@ -1,8 +1,11 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
 
-const timeSchema = z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'hora invalida');
+const timeSchema = z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "hora invalida");
 
+/**
+ * Valor reutilizable asociado a institucionhorario fields.
+ */
 export const institucionhorarioFields = {
   institucionSaludId: z.number().int().positive(),
   diaSemana: z.number().int().min(1).max(7),
@@ -18,22 +21,38 @@ export const institucionhorarioFields = {
   modificadoEn: z.coerce.date().nullable().optional(),
 } satisfies z.ZodRawShape;
 
-export const institucionhorarioFieldsSchema = z.object(institucionhorarioFields);
-
-export const createInstitucionhorarioSchema = z
-  .object(institucionhorarioFields)
-  .superRefine(
-  (value, ctx) => {
-    const cerrado = value.cerrado ?? false;
-    const veinticuatroHoras = value.veinticuatroHoras ?? false;
-    if (!cerrado && !veinticuatroHoras && (!value.horaInicio || !value.horaFin)) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'horaInicio y horaFin son obligatorias si no esta cerrado ni es 24 horas',
-        path: ['horaInicio'],
-      });
-    }
-  },
+/**
+ * Esquema Zod utilizado por institucionhorario fields.
+ */
+export const institucionhorarioFieldsSchema = z.object(
+  institucionhorarioFields,
 );
 
-export class CreateInstitucionhorarioDto extends createZodDto(createInstitucionhorarioSchema) {}
+/**
+ * Esquema Zod para validar la creación de institucionhorario.
+ */
+export const createInstitucionhorarioSchema = z
+  .object(institucionhorarioFields)
+  .superRefine((value, ctx) => {
+    const cerrado = value.cerrado ?? false;
+    const veinticuatroHoras = value.veinticuatroHoras ?? false;
+    if (
+      !cerrado &&
+      !veinticuatroHoras &&
+      (!value.horaInicio || !value.horaFin)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "horaInicio y horaFin son obligatorias si no esta cerrado ni es 24 horas",
+        path: ["horaInicio"],
+      });
+    }
+  });
+
+/**
+ * DTO de entrada para crear institucionhorario.
+ */
+export class CreateInstitucionhorarioDto extends createZodDto(
+  createInstitucionhorarioSchema,
+) {}

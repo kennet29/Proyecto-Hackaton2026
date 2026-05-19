@@ -1,5 +1,11 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException } from "@nestjs/common";
 
+/**
+ * Decode base64 image.
+ * @param value Valor de entrada que se debe transformar o validar.
+ * @param field Valor del parámetro `field`.
+ * @returns Resultado de la operación.
+ */
 export function decodeBase64Image(
   value: string | null | undefined,
   field: string,
@@ -16,15 +22,19 @@ export function decodeBase64Image(
     return null;
   }
 
-  const payload = trimmed.startsWith('data:')
-    ? (trimmed.split(',', 2)[1] ?? '').trim()
-    : trimmed.replace(/\s+/g, '');
+  const payload = trimmed.startsWith("data:")
+    ? (trimmed.split(",", 2)[1] ?? "").trim()
+    : trimmed.replace(/\s+/g, "");
 
-  if (!payload || payload.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(payload)) {
+  if (
+    !payload ||
+    payload.length % 4 !== 0 ||
+    !/^[A-Za-z0-9+/]+={0,2}$/.test(payload)
+  ) {
     throw new BadRequestException(`${field} debe ser una cadena base64 valida`);
   }
 
-  const buffer = Buffer.from(payload, 'base64');
+  const buffer = Buffer.from(payload, "base64");
   if (!buffer.length) {
     throw new BadRequestException(`${field} no contiene datos validos`);
   }
@@ -32,6 +42,12 @@ export function decodeBase64Image(
   return buffer;
 }
 
+/**
+ * Validate image mime type.
+ * @param value Valor de entrada que se debe transformar o validar.
+ * @param field Valor del parámetro `field`.
+ * @returns Resultado de la operación.
+ */
 export function validateImageMimeType(
   value: string | null | undefined,
   field: string,
@@ -48,8 +64,10 @@ export function validateImageMimeType(
     return null;
   }
 
-  if (!normalized.startsWith('image/')) {
-    throw new BadRequestException(`${field} debe ser un mime type de imagen valido`);
+  if (!normalized.startsWith("image/")) {
+    throw new BadRequestException(
+      `${field} debe ser un mime type de imagen valido`,
+    );
   }
 
   return normalized;

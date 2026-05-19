@@ -1,2 +1,1 @@
-export { UpdateDetalleevaluacionsaludDto } from './create-detalleevaluacionsalud.dto';
-
+export { UpdateDetalleevaluacionsaludDto } from "./create-detalleevaluacionsalud.dto";

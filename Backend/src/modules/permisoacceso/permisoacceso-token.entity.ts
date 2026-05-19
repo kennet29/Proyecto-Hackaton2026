@@ -6,42 +6,82 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
-import { PermisoAcceso } from './permisoacceso.entity';
+} from "typeorm";
+import { PermisoAcceso } from "./permisoacceso.entity";
 
-@Entity({ name: 'permisoacceso_token' })
+/**
+ * Entidad TypeORM que modela el recurso permiso acceso token.
+ */
+@Entity({ name: "permisoacceso_token" })
 export class PermisoAccesoToken {
-  @PrimaryGeneratedColumn('uuid')
+  /**
+   * Identificador persistido para `id`.
+   */
+  @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @Column({ name: 'token', type: 'nvarchar', length: 128, unique: true })
+  /**
+   * Campo de datos asociado a `token`.
+   */
+  @Column({ name: "token", type: "nvarchar", length: 128, unique: true })
   token!: string;
 
-  @Column({ name: 'permisoid' })
+  /**
+   * Identificador persistido para `permisoId`.
+   */
+  @Column({ name: "permisoid" })
   permisoId!: number;
 
-  @ManyToOne(() => PermisoAcceso, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'permisoid' })
+  /**
+   * Campo de datos asociado a `permiso`.
+   */
+  @ManyToOne(() => PermisoAcceso, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "permisoid" })
   permiso!: PermisoAcceso;
 
-  @Column({ name: 'expiraen', type: 'datetime2' })
+  /**
+   * Campo de datos asociado a `expiresAt`.
+   */
+  @Column({ name: "expiraen", type: "datetime2" })
   expiresAt!: Date;
 
-  @Column({ name: 'usado', type: 'bit', default: false })
+  /**
+   * Campo de datos asociado a `used`.
+   */
+  @Column({ name: "usado", type: "bit", default: false })
   used!: boolean;
 
-  @Column({ name: 'usadopor', type: 'int', nullable: true })
+  /**
+   * Campo de datos asociado a `usedBy`.
+   */
+  @Column({ name: "usadopor", type: "int", nullable: true })
   usedBy?: number | null;
 
-  @Column({ name: 'usadoen', type: 'datetime2', nullable: true })
+  /**
+   * Campo de datos asociado a `usedOn`.
+   */
+  @Column({ name: "usadoen", type: "datetime2", nullable: true })
   usedOn?: Date | null;
 
-  @Column({ name: 'creadopor', type: 'nvarchar', length: 60, nullable: true })
+  /**
+   * Campo de datos asociado a `creadoPor`.
+   */
+  @Column({ name: "creadopor", type: "nvarchar", length: 60, nullable: true })
   creadoPor?: string | null;
 
-  @CreateDateColumn({ name: 'creadoen', type: 'datetime2', default: () => 'SYSDATETIME()' })
+  /**
+   * Campo de datos asociado a `creadoEn`.
+   */
+  @CreateDateColumn({
+    name: "creadoen",
+    type: "datetime2",
+    default: () => "SYSDATETIME()",
+  })
   creadoEn!: Date;
 
-  @UpdateDateColumn({ name: 'modificadoen', type: 'datetime2', nullable: true })
+  /**
+   * Campo de datos asociado a `modificadoEn`.
+   */
+  @UpdateDateColumn({ name: "modificadoen", type: "datetime2", nullable: true })
   modificadoEn?: Date | null;
 }

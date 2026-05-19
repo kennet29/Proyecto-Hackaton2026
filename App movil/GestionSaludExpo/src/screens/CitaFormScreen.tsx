@@ -35,6 +35,7 @@ import { Picker } from "@react-native-picker/picker";
 import { useAuth } from "../context/AuthContext";
 
 import { API_URL } from "../config/api";
+import { submitJsonWithOfflineFallback } from "../utils/offlineWriteQueue";
 
 
 
@@ -726,6 +727,60 @@ export function CitaFormScreen() {
     setIsSubmitting(true);
 
     try {
+
+      const offlineResult = await submitJsonWithOfflineFallback({
+
+        token,
+
+        path: "/citamedica",
+
+        method: "POST",
+
+        description: "registrar cita",
+
+        body: {
+
+          pacienteId: Number(form.pacienteId),
+
+          fechacita: form.fecha,
+
+          especialidad: form.especialidad || undefined,
+
+          motivo: form.motivo || undefined,
+
+          creadopor: user?.username ?? undefined,
+
+        },
+
+      });
+
+      if (offlineResult.status === "queued") {
+
+        Alert.alert(
+
+          "Cita en cola",
+
+          "No habia conexion. La cita quedo guardada en este dispositivo y se sincronizara cuando vuelva la red.",
+
+        );
+
+      } else {
+
+        Alert.alert("Cita creada", "La cita quedo registrada");
+
+        fetchAppointments();
+
+      }
+
+      setForm({ pacienteId: "", fecha: "", especialidad: "", motivo: "" });
+
+      setFormDate(selectedDate);
+
+      setFormTime("09:00");
+
+      setShowForm(false);
+
+      return;
 
       const response = await fetch(`${API_URL}/citamedica`, {
 

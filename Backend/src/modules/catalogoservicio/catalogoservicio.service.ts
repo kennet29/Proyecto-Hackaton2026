@@ -1,15 +1,31 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, QueryFailedError, Repository } from 'typeorm';
-import { Catalogoservicio } from './catalogoservicio.entity';
-import { CreateCatalogoservicioDto } from './dto/create-catalogoservicio.dto';
-import { UpdateCatalogoservicioDto } from './dto/update-catalogoservicio.dto';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { FindOptionsWhere, QueryFailedError, Repository } from "typeorm";
+import { Catalogoservicio } from "./catalogoservicio.entity";
+import { CreateCatalogoservicioDto } from "./dto/create-catalogoservicio.dto";
+import { UpdateCatalogoservicioDto } from "./dto/update-catalogoservicio.dto";
 
+/**
+ * Define el tipo catalogo servicio filters utilizado por el backend.
+ */
 type CatalogoServicioFilters = {
+  /**
+   * Campo de datos asociado a `categoria`.
+   */
   categoria?: string;
+  /**
+   * Campo de datos asociado a `activo`.
+   */
   activo?: boolean;
 };
 
+/**
+ * Implementa la lógica de negocio y persistencia del dominio catalogoservicio.
+ */
 @Injectable()
 export class CatalogoservicioService {
   constructor(
@@ -17,6 +33,11 @@ export class CatalogoservicioService {
     private readonly catalogoServicioRepository: Repository<Catalogoservicio>,
   ) {}
 
+  /**
+   * Create.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro creado.
+   */
   async create(payload: CreateCatalogoservicioDto): Promise<Catalogoservicio> {
     try {
       const entity = this.catalogoServicioRepository.create({
@@ -33,7 +54,14 @@ export class CatalogoservicioService {
     }
   }
 
-  async findAll(filters: CatalogoServicioFilters = {}): Promise<Catalogoservicio[]> {
+  /**
+   * Find all.
+   * @param filters Valor del parámetro `filters`.
+   * @returns Colección de registros encontrados.
+   */
+  async findAll(
+    filters: CatalogoServicioFilters = {},
+  ): Promise<Catalogoservicio[]> {
     const where: FindOptionsWhere<Catalogoservicio> = {};
     if (filters.categoria) {
       where.categoria = filters.categoria;
@@ -43,10 +71,15 @@ export class CatalogoservicioService {
     }
     return this.catalogoServicioRepository.find({
       where,
-      order: { nombre: 'ASC' },
+      order: { nombre: "ASC" },
     });
   }
 
+  /**
+   * Find one.
+   * @param id Identificador del registro objetivo.
+   * @returns Resultado de la consulta solicitada.
+   */
   async findOne(id: number): Promise<Catalogoservicio> {
     const entity = await this.catalogoServicioRepository.findOne({
       where: { catalogoServicioId: id },
@@ -57,7 +90,16 @@ export class CatalogoservicioService {
     return entity;
   }
 
-  async update(id: number, payload: UpdateCatalogoservicioDto): Promise<Catalogoservicio> {
+  /**
+   * Update.
+   * @param id Identificador del registro objetivo.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro actualizado.
+   */
+  async update(
+    id: number,
+    payload: UpdateCatalogoservicioDto,
+  ): Promise<Catalogoservicio> {
     const entity = await this.findOne(id);
     Object.assign(entity, payload);
     entity.modificadoEn = payload.modificadoEn ?? new Date();
@@ -68,6 +110,11 @@ export class CatalogoservicioService {
     }
   }
 
+  /**
+   * Remove.
+   * @param id Identificador del registro objetivo.
+   * @returns La operación se completa sin devolver contenido.
+   */
   async remove(id: number): Promise<void> {
     const result = await this.catalogoServicioRepository.delete({
       catalogoServicioId: id,
@@ -77,11 +124,23 @@ export class CatalogoservicioService {
     }
   }
 
+  /**
+   * Handle unique code error.
+   * @param error Error original que se está procesando.
+   * @returns Resultado de la operación.
+   */
   private handleUniqueCodeError(error: unknown): never {
     if (error instanceof QueryFailedError) {
-      const driverError = error.driverError as { number?: number } | undefined;
+      const driverError = error.driverError as
+        | {
+            /**
+             * Campo de datos asociado a `number`.
+             */
+            number?: number;
+          }
+        | undefined;
       if (driverError?.number === 2627 || driverError?.number === 2601) {
-        throw new BadRequestException('ya existe un servicio con ese codigo');
+        throw new BadRequestException("ya existe un servicio con ese codigo");
       }
     }
     throw error as Error;

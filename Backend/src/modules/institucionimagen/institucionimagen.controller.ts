@@ -9,51 +9,93 @@ import {
   Patch,
   Post,
   Query,
-} from '@nestjs/common';
-import { CreateInstitucionimagenDto } from './dto/create-institucionimagen.dto';
-import { UpdateInstitucionimagenDto } from './dto/update-institucionimagen.dto';
-import { InstitucionimagenService } from './institucionimagen.service';
+} from "@nestjs/common";
+import { CreateInstitucionimagenDto } from "./dto/create-institucionimagen.dto";
+import { UpdateInstitucionimagenDto } from "./dto/update-institucionimagen.dto";
+import { InstitucionimagenService } from "./institucionimagen.service";
 
-@Controller('institucionimagen')
+/**
+ * Expone los endpoints HTTP del dominio institucionimagen.
+ */
+@Controller("institucionimagen")
 export class InstitucionimagenController {
-  constructor(private readonly institucionImagenService: InstitucionimagenService) {}
+  constructor(
+    private readonly institucionImagenService: InstitucionimagenService,
+  ) {}
 
+  /**
+   * Create.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro creado.
+   */
   @Post()
   create(@Body() payload: CreateInstitucionimagenDto) {
     return this.institucionImagenService.create(payload);
   }
 
+  /**
+   * Find all.
+   * @param institucionSaludId Identificador asociado a institucion salud.
+   * @param activoParam Valor del parámetro `activoParam`.
+   * @param tipoImagen Valor del parámetro `tipoImagen`.
+   * @returns Colección de registros encontrados.
+   */
   @Get()
   findAll(
-    @Query('institucionSaludId') institucionSaludId?: string,
-    @Query('activo') activoParam?: string,
-    @Query('tipoImagen') tipoImagen?: string,
+    @Query("institucionSaludId") institucionSaludId?: string,
+    @Query("activo") activoParam?: string,
+    @Query("tipoImagen") tipoImagen?: string,
   ) {
     return this.institucionImagenService.findAll({
-      institucionSaludId: this.parseOptionalNumber(institucionSaludId, 'institucionSaludId'),
-      activo: this.parseOptionalBoolean(activoParam, 'activo'),
+      institucionSaludId: this.parseOptionalNumber(
+        institucionSaludId,
+        "institucionSaludId",
+      ),
+      activo: this.parseOptionalBoolean(activoParam, "activo"),
       tipoImagen,
     });
   }
 
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  /**
+   * Find one.
+   * @param id Identificador del registro objetivo.
+   * @returns Resultado de la consulta solicitada.
+   */
+  @Get(":id")
+  findOne(@Param("id", ParseIntPipe) id: number) {
     return this.institucionImagenService.findOne(id);
   }
 
-  @Patch(':id')
+  /**
+   * Update.
+   * @param id Identificador del registro objetivo.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro actualizado.
+   */
+  @Patch(":id")
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param("id", ParseIntPipe) id: number,
     @Body() payload: UpdateInstitucionimagenDto,
   ) {
     return this.institucionImagenService.update(id, payload);
   }
 
-  @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
+  /**
+   * Remove.
+   * @param id Identificador del registro objetivo.
+   * @returns La operación se completa sin devolver contenido.
+   */
+  @Delete(":id")
+  remove(@Param("id", ParseIntPipe) id: number) {
     return this.institucionImagenService.remove(id);
   }
 
+  /**
+   * Interpreta optional number.
+   * @param value Valor de entrada que se debe transformar o validar.
+   * @param field Valor del parámetro `field`.
+   * @returns Valor interpretado a partir de la entrada recibida.
+   */
   private parseOptionalNumber(value: string | undefined, field: string) {
     if (value === undefined) {
       return undefined;
@@ -65,15 +107,21 @@ export class InstitucionimagenController {
     return parsed;
   }
 
+  /**
+   * Interpreta optional boolean.
+   * @param value Valor de entrada que se debe transformar o validar.
+   * @param field Valor del parámetro `field`.
+   * @returns Valor interpretado a partir de la entrada recibida.
+   */
   private parseOptionalBoolean(value: string | undefined, field: string) {
     if (value === undefined) {
       return undefined;
     }
     const normalized = value.trim().toLowerCase();
-    if (normalized === 'true' || normalized === '1') {
+    if (normalized === "true" || normalized === "1") {
       return true;
     }
-    if (normalized === 'false' || normalized === '0') {
+    if (normalized === "false" || normalized === "0") {
       return false;
     }
     throw new BadRequestException(`${field} debe ser booleano`);

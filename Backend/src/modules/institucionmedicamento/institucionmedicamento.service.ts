@@ -1,18 +1,37 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
-import { Institucionsalud } from '../institucionsalud/institucionsalud.entity';
-import { Medicamentoraro } from '../medicamentoraro/medicamentoraro.entity';
-import { CreateInstitucionmedicamentoDto } from './dto/create-institucionmedicamento.dto';
-import { UpdateInstitucionmedicamentoDto } from './dto/update-institucionmedicamento.dto';
-import { Institucionmedicamento } from './institucionmedicamento.entity';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { FindOptionsWhere, Repository } from "typeorm";
+import { Institucionsalud } from "../institucionsalud/institucionsalud.entity";
+import { Medicamentoraro } from "../medicamentoraro/medicamentoraro.entity";
+import { CreateInstitucionmedicamentoDto } from "./dto/create-institucionmedicamento.dto";
+import { UpdateInstitucionmedicamentoDto } from "./dto/update-institucionmedicamento.dto";
+import { Institucionmedicamento } from "./institucionmedicamento.entity";
 
+/**
+ * Define el tipo institucion medicamento filters utilizado por el backend.
+ */
 type InstitucionMedicamentoFilters = {
+  /**
+   * Identificador persistido para `institucionSaludId`.
+   */
   institucionSaludId?: number;
+  /**
+   * Identificador persistido para `medicamentoRaroId`.
+   */
   medicamentoRaroId?: number;
+  /**
+   * Campo de datos asociado a `disponibilidad`.
+   */
   disponibilidad?: string;
 };
 
+/**
+ * Implementa la lógica de negocio y persistencia del dominio institucionmedicamento.
+ */
 @Injectable()
 export class InstitucionmedicamentoService {
   constructor(
@@ -24,13 +43,26 @@ export class InstitucionmedicamentoService {
     private readonly medicamentoRaroRepository: Repository<Medicamentoraro>,
   ) {}
 
-  async create(payload: CreateInstitucionmedicamentoDto): Promise<Institucionmedicamento> {
-    await this.assertReferences(payload.institucionSaludId, payload.medicamentoRaroId);
-    await this.assertUniquePair(payload.institucionSaludId, payload.medicamentoRaroId);
+  /**
+   * Create.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro creado.
+   */
+  async create(
+    payload: CreateInstitucionmedicamentoDto,
+  ): Promise<Institucionmedicamento> {
+    await this.assertReferences(
+      payload.institucionSaludId,
+      payload.medicamentoRaroId,
+    );
+    await this.assertUniquePair(
+      payload.institucionSaludId,
+      payload.medicamentoRaroId,
+    );
 
     const entity = this.institucionMedicamentoRepository.create({
       ...payload,
-      disponibilidad: payload.disponibilidad ?? 'limitado',
+      disponibilidad: payload.disponibilidad ?? "limitado",
       fechaUltimaActualizacion: payload.fechaUltimaActualizacion ?? new Date(),
       creadoEn: payload.creadoEn ?? new Date(),
       modificadoEn: payload.modificadoEn ?? null,
@@ -38,7 +70,14 @@ export class InstitucionmedicamentoService {
     return this.institucionMedicamentoRepository.save(entity);
   }
 
-  async findAll(filters: InstitucionMedicamentoFilters = {}): Promise<Institucionmedicamento[]> {
+  /**
+   * Find all.
+   * @param filters Valor del parámetro `filters`.
+   * @returns Colección de registros encontrados.
+   */
+  async findAll(
+    filters: InstitucionMedicamentoFilters = {},
+  ): Promise<Institucionmedicamento[]> {
     const where: FindOptionsWhere<Institucionmedicamento> = {};
     if (filters.institucionSaludId !== undefined) {
       where.institucionSaludId = filters.institucionSaludId;
@@ -51,27 +90,42 @@ export class InstitucionmedicamentoService {
     }
     return this.institucionMedicamentoRepository.find({
       where,
-      order: { fechaUltimaActualizacion: 'DESC' },
+      order: { fechaUltimaActualizacion: "DESC" },
     });
   }
 
+  /**
+   * Find one.
+   * @param id Identificador del registro objetivo.
+   * @returns Resultado de la consulta solicitada.
+   */
   async findOne(id: number): Promise<Institucionmedicamento> {
     const entity = await this.institucionMedicamentoRepository.findOne({
       where: { institucionMedicamentoId: id },
     });
     if (!entity) {
-      throw new NotFoundException(`relacion institucion-medicamento ${id} no encontrada`);
+      throw new NotFoundException(
+        `relacion institucion-medicamento ${id} no encontrada`,
+      );
     }
     return entity;
   }
 
+  /**
+   * Update.
+   * @param id Identificador del registro objetivo.
+   * @param payload Datos validados que recibe la operación.
+   * @returns Registro actualizado.
+   */
   async update(
     id: number,
     payload: UpdateInstitucionmedicamentoDto,
   ): Promise<Institucionmedicamento> {
     const entity = await this.findOne(id);
-    const nextInstitucionId = payload.institucionSaludId ?? entity.institucionSaludId;
-    const nextMedicamentoId = payload.medicamentoRaroId ?? entity.medicamentoRaroId;
+    const nextInstitucionId =
+      payload.institucionSaludId ?? entity.institucionSaludId;
+    const nextMedicamentoId =
+      payload.medicamentoRaroId ?? entity.medicamentoRaroId;
 
     await this.assertReferences(nextInstitucionId, nextMedicamentoId);
     if (
@@ -88,15 +142,28 @@ export class InstitucionmedicamentoService {
     return this.institucionMedicamentoRepository.save(entity);
   }
 
+  /**
+   * Remove.
+   * @param id Identificador del registro objetivo.
+   * @returns La operación se completa sin devolver contenido.
+   */
   async remove(id: number): Promise<void> {
     const result = await this.institucionMedicamentoRepository.delete({
       institucionMedicamentoId: id,
     });
     if (!result.affected) {
-      throw new NotFoundException(`relacion institucion-medicamento ${id} no encontrada`);
+      throw new NotFoundException(
+        `relacion institucion-medicamento ${id} no encontrada`,
+      );
     }
   }
 
+  /**
+   * Valida references.
+   * @param institucionSaludId Identificador asociado a institucion salud.
+   * @param medicamentoRaroId Identificador asociado a medicamento raro.
+   * @returns La promesa se resuelve cuando la validación se cumple.
+   */
   private async assertReferences(
     institucionSaludId: number,
     medicamentoRaroId: number,
@@ -105,17 +172,28 @@ export class InstitucionmedicamentoService {
       where: { institucionSaludId },
     });
     if (!institucion) {
-      throw new BadRequestException(`institucion ${institucionSaludId} no existe`);
+      throw new BadRequestException(
+        `institucion ${institucionSaludId} no existe`,
+      );
     }
 
     const medicamento = await this.medicamentoRaroRepository.findOne({
       where: { medicamentoRaroId },
     });
     if (!medicamento) {
-      throw new BadRequestException(`medicamento raro ${medicamentoRaroId} no existe`);
+      throw new BadRequestException(
+        `medicamento raro ${medicamentoRaroId} no existe`,
+      );
     }
   }
 
+  /**
+   * Valida unique pair.
+   * @param institucionSaludId Identificador asociado a institucion salud.
+   * @param medicamentoRaroId Identificador asociado a medicamento raro.
+   * @param currentId Identificador asociado a current.
+   * @returns La promesa se resuelve cuando la validación se cumple.
+   */
   private async assertUniquePair(
     institucionSaludId: number,
     medicamentoRaroId: number,
@@ -126,7 +204,7 @@ export class InstitucionmedicamentoService {
     });
     if (existing && existing.institucionMedicamentoId !== currentId) {
       throw new BadRequestException(
-        'esta institucion ya tiene registrado ese medicamento raro',
+        "esta institucion ya tiene registrado ese medicamento raro",
       );
     }
   }

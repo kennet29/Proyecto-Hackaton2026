@@ -1,9 +1,12 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Citamedica } from './citamedica.entity';
-import { CitamedicaService } from './citamedica.service';
-import { CitamedicaController } from './citamedica.controller';
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { Citamedica } from "./citamedica.entity";
+import { CitamedicaService } from "./citamedica.service";
+import { CitamedicaController } from "./citamedica.controller";
 
+/**
+ * Agrupa controladores y proveedores del dominio citamedica.
+ */
 @Module({
   imports: [TypeOrmModule.forFeature([Citamedica])],
   controllers: [CitamedicaController],
@@ -11,4 +14,3 @@ import { CitamedicaController } from './citamedica.controller';
   exports: [CitamedicaService],
 })
 export class CitamedicaModule {}
-

@@ -1,2 +1,1 @@
-export { UpdateLesionDto } from './create-lesion.dto';
-
+export { UpdateLesionDto } from "./create-lesion.dto";

@@ -1,43 +1,104 @@
-﻿import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+﻿import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from "typeorm";
 
-@Entity({ name: 'usuario' })
+/**
+ * Entidad TypeORM que modela el recurso usuario.
+ */
+@Entity({ name: "usuario" })
 export class Usuario {
-  @PrimaryGeneratedColumn({ name: 'usuarioid' })
+  /**
+   * Identificador persistido para `id`.
+   */
+  @PrimaryGeneratedColumn({ name: "usuarioid" })
   id!: number;
 
-  @Column({ name: 'pacienteid', nullable: true })
+  /**
+   * Identificador persistido para `pacienteId`.
+   */
+  @Column({ name: "pacienteid", nullable: true })
   pacienteId?: number;
 
-  @Column({ name: 'nombreusuario' })
+  /**
+   * Campo de datos asociado a `username`.
+   */
+  @Column({ name: "nombreusuario" })
   username!: string;
 
-  @Column({ name: 'hashpassword', type: 'varbinary', length: 256 })
+  /**
+   * Campo de datos asociado a `hashPassword`.
+   */
+  @Column({ name: "hashpassword", type: "varbinary", length: 256 })
   hashPassword!: Buffer;
 
-  @Column({ name: 'huelladigitalhash', type: 'varbinary', length: 64, nullable: true })
+  /**
+   * Campo de datos asociado a `fingerprintHash`.
+   */
+  @Column({
+    name: "huelladigitalhash",
+    type: "varbinary",
+    length: 64,
+    nullable: true,
+  })
   fingerprintHash?: Buffer | null;
 
-  @Column({ name: 'rolprincipal', default: 'paciente' })
+  /**
+   * Campo de datos asociado a `role`.
+   */
+  @Column({ name: "rolprincipal", default: "paciente" })
   role!: string;
 
-  @Column({ name: 'activo', type: 'bit', default: true })
+  /**
+   * Campo de datos asociado a `activo`.
+   */
+  @Column({ name: "activo", type: "bit", default: true })
   activo!: boolean;
 
-  @Column({ name: 'ultimoingreso', type: 'datetime2', nullable: true })
+  /**
+   * Campo de datos asociado a `lastLogin`.
+   */
+  @Column({ name: "ultimoingreso", type: "datetime2", nullable: true })
   lastLogin?: Date;
 
-  @Column({ name: 'fechacreacion', type: 'datetime2', default: () => 'SYSDATETIME()' })
+  /**
+   * Fecha asociada al campo `fechaCreacion`.
+   */
+  @Column({
+    name: "fechacreacion",
+    type: "datetime2",
+    default: () => "SYSDATETIME()",
+  })
   fechaCreacion!: Date;
 
-  @Column({ name: 'creadopor', nullable: true })
+  /**
+   * Campo de datos asociado a `creadoPor`.
+   */
+  @Column({ name: "creadopor", nullable: true })
   creadoPor?: string;
 
-  @CreateDateColumn({ name: 'creadoen', type: 'datetime2', default: () => 'SYSDATETIME()' })
+  /**
+   * Campo de datos asociado a `creadoEn`.
+   */
+  @CreateDateColumn({
+    name: "creadoen",
+    type: "datetime2",
+    default: () => "SYSDATETIME()",
+  })
   creadoEn!: Date;
 
-  @Column({ name: 'modificadopor', nullable: true })
+  /**
+   * Campo de datos asociado a `modificadoPor`.
+   */
+  @Column({ name: "modificadopor", nullable: true })
   modificadoPor?: string;
 
-  @UpdateDateColumn({ name: 'modificadoen', type: 'datetime2', nullable: true })
+  /**
+   * Campo de datos asociado a `modificadoEn`.
+   */
+  @UpdateDateColumn({ name: "modificadoen", type: "datetime2", nullable: true })
   modificadoEn?: Date;
 }

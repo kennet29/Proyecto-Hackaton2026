@@ -1,9 +1,12 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Desparasitacion } from './desparasitacion.entity';
-import { DesparasitacionService } from './desparasitacion.service';
-import { DesparasitacionController } from './desparasitacion.controller';
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { Desparasitacion } from "./desparasitacion.entity";
+import { DesparasitacionService } from "./desparasitacion.service";
+import { DesparasitacionController } from "./desparasitacion.controller";
 
+/**
+ * Agrupa controladores y proveedores del dominio desparasitacion.
+ */
 @Module({
   imports: [TypeOrmModule.forFeature([Desparasitacion])],
   controllers: [DesparasitacionController],
@@ -11,4 +14,3 @@ import { DesparasitacionController } from './desparasitacion.controller';
   exports: [DesparasitacionService],
 })
 export class DesparasitacionModule {}
-

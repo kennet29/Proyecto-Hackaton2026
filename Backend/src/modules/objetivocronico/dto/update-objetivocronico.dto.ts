@@ -1,2 +1,1 @@
-export { UpdateObjetivocronicoDto } from './create-objetivocronico.dto';
-
+export { UpdateObjetivocronicoDto } from "./create-objetivocronico.dto";

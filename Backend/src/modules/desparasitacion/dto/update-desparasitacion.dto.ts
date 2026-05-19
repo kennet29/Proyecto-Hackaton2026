@@ -1,2 +1,1 @@
-export { UpdateDesparasitacionDto } from './create-desparasitacion.dto';
-
+export { UpdateDesparasitacionDto } from "./create-desparasitacion.dto";

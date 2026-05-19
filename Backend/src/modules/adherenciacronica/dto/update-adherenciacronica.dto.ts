@@ -1,2 +1,1 @@
-export { UpdateAdherenciacronicaDto } from './create-adherenciacronica.dto';
-
+export { UpdateAdherenciacronicaDto } from "./create-adherenciacronica.dto";

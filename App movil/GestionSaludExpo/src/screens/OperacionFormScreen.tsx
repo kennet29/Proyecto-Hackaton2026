@@ -13,6 +13,7 @@ import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/d
 import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
+import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 
 type LinkedPatient = { pacienteId: number; displayName: string };
 type TipoOperacion = { tipooperacionId: number; nombre: string };
@@ -229,6 +230,37 @@ export function OperacionFormScreen() {
       return;
     }
     try {
+      const offlineResult = await submitJsonWithOfflineFallback({
+        token,
+        path: '/operacion',
+        method: 'POST',
+        description: 'registrar operacion',
+        body: {
+          pacienteId: Number(form.pacienteId),
+          tipooperacionId: form.tipooperacionId ? Number(form.tipooperacionId) : undefined,
+          fechaoperacion: form.fecha,
+          tipo: form.tipo.trim(),
+          hospital: form.hospital.trim() || undefined,
+          cirujano: form.cirujano.trim() || undefined,
+          resultado: form.resultado.trim() || undefined,
+          complicaciones: form.complicaciones.trim() || undefined,
+          estado: form.estado.trim() || 'Registrada',
+          creadopor: user?.username ?? undefined,
+        },
+      });
+      if (offlineResult.status === 'queued') {
+        Alert.alert(
+          'Operacion en cola',
+          'No habia conexion. La operacion quedo guardada localmente y se sincronizara automaticamente cuando vuelva la red.',
+        );
+      } else {
+        Alert.alert('Operacion Guardada', 'La operacion fue registrada correctamente');
+        fetchRecords();
+      }
+      resetForm();
+      setShowForm(false);
+      return;
+
       const response = await fetch(`${API_URL}/operacion`, {
         method: 'POST',
         headers,

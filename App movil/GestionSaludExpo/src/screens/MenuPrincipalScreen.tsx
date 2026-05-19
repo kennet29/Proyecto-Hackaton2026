@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../navigation/types';
+import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../config/api';
 
 type MenuTabKey = 'inicio' | 'medico' | 'bienestar' | 'gestion';
 
@@ -143,6 +145,14 @@ const medicalOptions: OptionItem[] = [
     navigateTo: 'CondicionCronicaForm',
   },
   {
+    key: 'control-cronico',
+    label: 'Control Cronico',
+    description: 'Registra mediciones y seguimiento de condiciones ya abiertas',
+    icon: 'stats-chart-outline',
+    accent: '#16a34a',
+    navigateTo: 'ControlCronico',
+  },
+  {
     key: 'operaciones',
     label: 'Operaciones',
     description: 'Consulta cirugias, resultados y seguimiento',
@@ -175,12 +185,36 @@ const medicalOptions: OptionItem[] = [
     navigateTo: 'RegistroDentalForm',
   },
   {
+    key: 'embarazo',
+    label: 'Embarazo',
+    description: 'Seguimiento de inicio, controles y fecha probable de parto',
+    icon: 'flower-outline',
+    accent: '#ec4899',
+    navigateTo: 'Embarazo',
+  },
+  {
+    key: 'desparasitacion',
+    label: 'Desparasitacion',
+    description: 'Registro de producto, dosis y proxima aplicacion',
+    icon: 'leaf-outline',
+    accent: '#38bdf8',
+    navigateTo: 'Desparasitacion',
+  },
+  {
     key: 'examenes',
     label: 'Examenes Clinicos',
     description: 'Resultados, fotos de hojas y PDF asociado a la consulta',
     icon: 'document-text-outline',
     accent: '#38bdf8',
     navigateTo: 'ExamenClinico',
+  },
+  {
+    key: 'seguimiento-postevento',
+    label: 'Seguimiento De Caso',
+    description: 'Evolucion despues de operacion, lesion o emergencia',
+    icon: 'clipboard-outline',
+    accent: '#22c55e',
+    navigateTo: 'SeguimientoPostevento',
   },
 ];
 
@@ -285,7 +319,28 @@ const optionsByTab: Record<MenuTabKey, OptionItem[]> = {
   gestion: managementOptions,
 };
 
+function WellnessAssistantIcon() {
+  return (
+    <View style={styles.assistantIconShell}>
+      <View style={styles.assistantIconFlame} />
+      <View style={styles.assistantIconHead}>
+        <View style={styles.assistantIconFace}>
+          <View style={styles.assistantIconEye} />
+          <View style={styles.assistantIconMouth} />
+          <View style={styles.assistantIconEye} />
+        </View>
+      </View>
+      <View style={styles.assistantIconEarLeft} />
+      <View style={styles.assistantIconEarRight} />
+      <View style={styles.assistantIconBody} />
+      <View style={styles.assistantIconFootLeft} />
+      <View style={styles.assistantIconFootRight} />
+    </View>
+  );
+}
+
 export function MenuPrincipalScreen({ navigation }: Props) {
+  const { token, logout, user } = useAuth();
   const [activeTab, setActiveTab] = useState<MenuTabKey>('inicio');
 
   const activeMeta = useMemo(
@@ -294,6 +349,23 @@ export function MenuPrincipalScreen({ navigation }: Props) {
   );
 
   const activeOptions = useMemo(() => optionsByTab[activeTab] ?? [], [activeTab]);
+
+  const handleLogout = async () => {
+    try {
+      if (token) {
+        await fetch(`${API_URL}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+    } catch (error) {
+      console.warn('No se pudo notificar el cierre de sesion al backend', error);
+    } finally {
+      logout();
+    }
+  };
 
   const handleOptionPress = (item: OptionItem) => {
     if (item.actionTab) {
@@ -310,11 +382,27 @@ export function MenuPrincipalScreen({ navigation }: Props) {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
         <View style={styles.heroCard}>
-          <View style={styles.heroBadge}>
-            <Ionicons name={activeMeta.icon} size={16} color="#38bdf8" />
-            <Text style={styles.heroBadgeText}>{activeMeta.label}</Text>
+          <View style={styles.heroTopRow}>
+            <View style={styles.heroBadge}>
+              <Ionicons name={activeMeta.icon} size={16} color="#38bdf8" />
+              <Text style={styles.heroBadgeText}>{activeMeta.label}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={() =>
+                Alert.alert('Cerrar sesion', '¿Deseas salir de esta cuenta?', [
+                  { text: 'Cancelar', style: 'cancel' },
+                  { text: 'Salir', style: 'destructive', onPress: () => void handleLogout() },
+                ])
+              }
+            >
+              <Ionicons name="log-out-outline" size={18} color="#f8fafc" />
+            </TouchableOpacity>
           </View>
           <Text style={styles.pageTitle}>{activeMeta.title}</Text>
+          <Text style={styles.userLabel}>
+            Sesion activa: {user?.username ?? 'usuario'}{user?.role ? ` · ${user.role}` : ''}
+          </Text>
           <Text style={styles.pageSubtitle}>{activeMeta.subtitle}</Text>
         </View>
 
@@ -340,6 +428,16 @@ export function MenuPrincipalScreen({ navigation }: Props) {
           )}
           contentContainerStyle={styles.listContent}
         />
+
+        {activeTab === 'bienestar' ? (
+          <TouchableOpacity
+            style={styles.assistantFab}
+            activeOpacity={0.9}
+            onPress={() => navigation.navigate('NanoConsejero')}
+          >
+            <WellnessAssistantIcon />
+          </TouchableOpacity>
+        ) : null}
 
         <View style={styles.navbar}>
           {tabMeta.map((tab) => {
@@ -389,6 +487,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1e3a5f',
   },
+  heroTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   heroBadge: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
@@ -405,10 +508,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
+  logoutButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#16263f',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#29466b',
+  },
   pageTitle: {
     color: '#f8fafc',
     fontSize: 24,
     fontWeight: '800',
+  },
+  userLabel: {
+    color: '#93c5fd',
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 8,
   },
   pageSubtitle: {
     color: '#cbd5f5',
@@ -417,7 +536,7 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   listContent: {
-    paddingBottom: 12,
+    paddingBottom: 120,
   },
   list: {
     flex: 1,
@@ -452,6 +571,123 @@ const styles = StyleSheet.create({
     color: '#cbd5f5',
     fontSize: 13,
     lineHeight: 18,
+  },
+  assistantFab: {
+    position: 'absolute',
+    right: 24,
+    bottom: 116,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#fff7fb',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#fecdd3',
+    shadowColor: '#020617',
+    shadowOpacity: 0.24,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
+    zIndex: 20,
+  },
+  assistantIconShell: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  assistantIconFlame: {
+    position: 'absolute',
+    top: 0,
+    right: 8,
+    width: 11,
+    height: 11,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    borderBottomLeftRadius: 10,
+    backgroundColor: '#fb334b',
+    transform: [{ rotate: '22deg' }],
+  },
+  assistantIconHead: {
+    width: 29,
+    height: 23,
+    marginTop: 4,
+    borderRadius: 11,
+    backgroundColor: '#fb334b',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  assistantIconFace: {
+    width: 23,
+    height: 18,
+    borderRadius: 8,
+    backgroundColor: '#21162d',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+  },
+  assistantIconEye: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#f8fafc',
+  },
+  assistantIconMouth: {
+    width: 4,
+    height: 2,
+    borderBottomLeftRadius: 3,
+    borderBottomRightRadius: 3,
+    backgroundColor: '#f8fafc',
+    marginTop: 4,
+  },
+  assistantIconEarLeft: {
+    position: 'absolute',
+    top: 14,
+    left: 1,
+    width: 3,
+    height: 9,
+    borderRadius: 2,
+    backgroundColor: '#21162d',
+  },
+  assistantIconEarRight: {
+    position: 'absolute',
+    top: 14,
+    right: 1,
+    width: 3,
+    height: 9,
+    borderRadius: 2,
+    backgroundColor: '#21162d',
+  },
+  assistantIconBody: {
+    width: 14,
+    height: 9,
+    marginTop: 3,
+    borderTopLeftRadius: 6,
+    borderTopRightRadius: 6,
+    borderBottomLeftRadius: 9,
+    borderBottomRightRadius: 9,
+    backgroundColor: '#fb334b',
+  },
+  assistantIconFootLeft: {
+    position: 'absolute',
+    bottom: 2,
+    left: 8,
+    width: 8,
+    height: 5,
+    borderRadius: 4,
+    backgroundColor: '#fb334b',
+    transform: [{ rotate: '22deg' }],
+  },
+  assistantIconFootRight: {
+    position: 'absolute',
+    bottom: 2,
+    right: 8,
+    width: 8,
+    height: 5,
+    borderRadius: 4,
+    backgroundColor: '#fb334b',
+    transform: [{ rotate: '-22deg' }],
   },
   navbar: {
     flexDirection: 'row',

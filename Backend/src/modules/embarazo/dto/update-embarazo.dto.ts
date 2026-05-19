@@ -1,2 +1,1 @@
-export { UpdateEmbarazoDto } from './create-embarazo.dto';
-
+export { UpdateEmbarazoDto } from "./create-embarazo.dto";

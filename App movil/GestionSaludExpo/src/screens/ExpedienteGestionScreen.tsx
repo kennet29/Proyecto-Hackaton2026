@@ -29,163 +29,12 @@ type LinkedPerson = {
   contacto?: string | null;
 };
 
-type ModuleItem = {
-  label: string;
-  description: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  accent: string;
-  navigateTo?: keyof RootStackParamList;
-};
-
-type ModuleSection = {
-  title: string;
-  helper: string;
-  accent: string;
-  items: ModuleItem[];
-};
-
 const formatErrorMessage = (error: unknown) => {
   if (error instanceof Error) {
     return error.message;
   }
   return 'No se pudo completar la accion. Intenta nuevamente.';
 };
-
-const sections: ModuleSection[] = [
-  {
-    title: 'Perfil y archivos',
-    helper: 'Identidad, contacto y documentos base del expediente.',
-    accent: '#38bdf8',
-    items: [
-      {
-        label: 'Perfil del paciente',
-        description: 'Nombres, documento, telefono y datos personales.',
-        icon: 'person-circle-outline',
-        accent: '#38bdf8',
-        navigateTo: 'PacienteForm',
-      },
-      {
-        label: 'Documentos clinicos',
-        description: 'Estudios, recetas, reportes e imagenes.',
-        icon: 'documents-outline',
-        accent: '#c084fc',
-        navigateTo: 'DocumentoForm',
-      },
-    ],
-  },
-  {
-    title: 'Atencion clinica',
-    helper: 'Consultas, citas y registros de seguimiento medico.',
-    accent: '#fb7185',
-    items: [
-      {
-        label: 'Consultas medicas',
-        description: 'Diagnosticos, motivo de consulta y tratamiento.',
-        icon: 'medkit-outline',
-        accent: '#a78bfa',
-        navigateTo: 'ConsultaList',
-      },
-      {
-        label: 'Citas programadas',
-        description: 'Agenda, control y seguimiento de citas.',
-        icon: 'calendar-outline',
-        accent: '#fb7185',
-        navigateTo: 'CitaForm',
-      },
-      {
-        label: 'Registro dental',
-        description: 'Procedimientos odontologicos y piezas tratadas.',
-        icon: 'color-wand-outline',
-        accent: '#fb923c',
-        navigateTo: 'RegistroDentalForm',
-      },
-      {
-        label: 'Vacunas',
-        description: 'Dosis aplicadas, lotes y proximas fechas.',
-        icon: 'shield-checkmark-outline',
-        accent: '#60a5fa',
-        navigateTo: 'VacunaForm',
-      },
-      {
-        label: 'Alergias',
-        description: 'Reacciones, alertas y antecedentes relevantes.',
-        icon: 'warning-outline',
-        accent: '#fbbf24',
-        navigateTo: 'Alergia',
-      },
-    ],
-  },
-  {
-    title: 'Tratamiento y control',
-    helper: 'Medicacion, recordatorios y condiciones de largo plazo.',
-    accent: '#f97316',
-    items: [
-      {
-        label: 'Medicacion',
-        description: 'Dosis, horarios, duracion y vias de administracion.',
-        icon: 'flask-outline',
-        accent: '#f97316',
-        navigateTo: 'MedicacionForm',
-      },
-      {
-        label: 'Recordatorios',
-        description: 'Alertas personalizadas para citas y tratamientos.',
-        icon: 'notifications-outline',
-        accent: '#f472b6',
-        navigateTo: 'RecordatorioForm',
-      },
-      {
-        label: 'Agenda de recordatorios',
-        description: 'Vista completa del cronograma de avisos.',
-        icon: 'timer-outline',
-        accent: '#38bdf8',
-        navigateTo: 'RecordatorioList',
-      },
-      {
-        label: 'Condiciones cronicas',
-        description: 'Seguimiento y control de enfermedades cronicas.',
-        icon: 'pulse-outline',
-        accent: '#22c55e',
-        navigateTo: 'CondicionCronicaForm',
-      },
-    ],
-  },
-  {
-    title: 'Habitos y bienestar',
-    helper: 'Rutinas diarias, peso, salud mental y estilo de vida.',
-    accent: '#2dd4bf',
-    items: [
-      {
-        label: 'Habitos',
-        description: 'Sueno, alimentacion, ejercicio y riesgos.',
-        icon: 'walk-outline',
-        accent: '#2dd4bf',
-        navigateTo: 'Habitos',
-      },
-      {
-        label: 'Seguimiento fisico',
-        description: 'Peso, pasos, calorias y progreso diario.',
-        icon: 'barbell-outline',
-        accent: '#38bdf8',
-        navigateTo: 'SeguimientoFisico',
-      },
-      {
-        label: 'Salud mental',
-        description: 'Registro emocional, alertas y bienestar diario.',
-        icon: 'heart-outline',
-        accent: '#22c55e',
-        navigateTo: 'SaludMental',
-      },
-      {
-        label: 'Periodo',
-        description: 'Control de ciclo, sintomas y prediccion.',
-        icon: 'moon-outline',
-        accent: '#ec4899',
-        navigateTo: 'Periodo',
-      },
-    ],
-  },
-];
 
 const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => {
   if (!feedback) return null;
@@ -207,39 +56,14 @@ const StatCard: React.FC<{ label: string; value: string; accent: string }> = ({
   value,
   accent,
 }) => (
-  <View style={[styles.statCard, { borderColor: `${accent}66` }]}>
-    <Text style={[styles.statValue, { color: accent }]}>{value}</Text>
+  <View style={[styles.statCard, { borderColor: `${accent}40`, backgroundColor: `${accent}12` }]}>
+    <View style={[styles.statAccentBar, { backgroundColor: accent }]} />
+    <Text style={[styles.statValue, { color: accent }]} numberOfLines={2}>
+      {value}
+    </Text>
     <Text style={styles.statLabel}>{label}</Text>
   </View>
 );
-
-const ModuleCard: React.FC<{
-  item: ModuleItem;
-  onPress: (route?: keyof RootStackParamList) => void;
-}> = ({ item, onPress }) => {
-  const actionable = Boolean(item.navigateTo);
-  return (
-    <TouchableOpacity
-      style={[styles.moduleCard, { borderColor: `${item.accent}66` }, !actionable && styles.moduleCardDisabled]}
-      disabled={!actionable}
-      onPress={() => onPress(item.navigateTo)}
-    >
-      <View style={[styles.moduleIcon, { backgroundColor: `${item.accent}22` }]}>
-        <Ionicons name={item.icon} size={20} color={item.accent} />
-      </View>
-      <View style={styles.moduleContent}>
-        <Text style={styles.moduleTitle}>{item.label}</Text>
-        <Text style={styles.moduleDescription}>{item.description}</Text>
-      </View>
-      <View style={styles.moduleActionWrap}>
-        <Text style={[styles.moduleAction, actionable ? styles.moduleActionEnabled : styles.moduleActionDisabled]}>
-          {actionable ? 'Abrir' : 'Proximamente'}
-        </Text>
-        {actionable ? <Ionicons name="chevron-forward" size={18} color="#cbd5f5" /> : null}
-      </View>
-    </TouchableOpacity>
-  );
-};
 
 export function ExpedienteGestionScreen({ navigation }: Props) {
   const { user, token } = useAuth();
@@ -273,11 +97,6 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
 
   const displayName = user?.username?.split('@')[0] ?? 'Paciente';
   const principalCount = linkedPatients.filter((person) => person.esPrincipal).length;
-
-  const handleNavigate = (route?: keyof RootStackParamList) => {
-    if (!route) return;
-    navigation.navigate(route as never);
-  };
 
   const authHeaders = useCallback(
     (extra?: Record<string, string>) => ({
@@ -426,14 +245,11 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
             <Ionicons name="folder-open-outline" size={16} color="#38bdf8" />
             <Text style={styles.heroBadgeText}>Expediente</Text>
           </View>
-          <TouchableOpacity style={styles.heroGhostBtn} onPress={() => handleNavigate('PacienteResumen')}>
-            <Text style={styles.heroGhostBtnText}>Ver resumen</Text>
-          </TouchableOpacity>
         </View>
 
-        <Text style={styles.heroTitle}>Gestiona tu expediente desde un solo lugar</Text>
+        <Text style={styles.heroTitle}>Personas asociadas al expediente</Text>
         <Text style={styles.heroSubtitle}>
-          Organiza personas vinculadas, documentos, consultas y modulos clinicos con una vista mas clara.
+          Crea y administra familiares o pacientes vinculados a tu cuenta desde una sola vista.
         </Text>
 
         <View style={styles.statsRow}>
@@ -523,25 +339,6 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                     ) : null}
                     {person.notas ? <Text style={styles.personNotes}>{person.notas}</Text> : null}
                   </View>
-                </View>
-
-                <View style={styles.personActionsRow}>
-                  <TouchableOpacity
-                    style={styles.personActionBtn}
-                    onPress={() =>
-                      navigation.navigate('PacienteEditor', { pacienteId: person.pacienteId })
-                    }
-                  >
-                    <Ionicons name="create-outline" size={16} color="#e2e8f0" />
-                    <Text style={styles.personActionText}>Editar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.personActionBtn}
-                    onPress={() => handleNavigate('PacienteResumen')}
-                  >
-                    <Ionicons name="analytics-outline" size={16} color="#e2e8f0" />
-                    <Text style={styles.personActionText}>Resumen</Text>
-                  </TouchableOpacity>
                 </View>
               </View>
             ))}
@@ -635,32 +432,6 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
           </View>
         ) : null}
       </View>
-
-      {sections.map((section) => (
-        <View key={section.title} style={styles.sectionCard}>
-          <View style={styles.sectionTopRow}>
-            <View>
-              <Text style={styles.sectionTitle}>{section.title}</Text>
-              <Text style={styles.sectionHelper}>{section.helper}</Text>
-            </View>
-            <View style={[styles.sectionAccentPill, { borderColor: `${section.accent}66` }]}>
-              <Text style={[styles.sectionAccentText, { color: section.accent }]}>
-                {section.items.length} modulos
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.moduleList}>
-            {section.items.map((item) => (
-              <ModuleCard
-                key={`${section.title}-${item.label}`}
-                item={item}
-                onPress={handleNavigate}
-              />
-            ))}
-          </View>
-        </View>
-      ))}
     </ScrollView>
   );
 }
@@ -668,7 +439,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#f4f1ea',
   },
   content: {
     padding: 20,
@@ -676,66 +447,63 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   heroCard: {
-    backgroundColor: '#111c34',
-    borderRadius: 28,
-    padding: 20,
+    backgroundColor: '#fffaf3',
+    borderRadius: 30,
+    padding: 22,
     borderWidth: 1,
-    borderColor: '#1e3a5f',
+    borderColor: '#d9ccb8',
     gap: 14,
   },
   heroTopRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
     gap: 12,
   },
   heroBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#0b1220',
+    backgroundColor: '#efe4d4',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   heroBadgeText: {
-    color: '#dbeafe',
+    color: '#5f4a34',
     fontSize: 12,
-    fontWeight: '700',
-  },
-  heroGhostBtn: {
-    borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-  },
-  heroGhostBtnText: {
-    color: '#e2e8f0',
-    fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   heroTitle: {
-    color: '#f8fafc',
+    color: '#1f2937',
     fontSize: 26,
     fontWeight: '800',
     lineHeight: 32,
   },
   heroSubtitle: {
-    color: '#cbd5e1',
+    color: '#6b7280',
     fontSize: 14,
     lineHeight: 21,
   },
   statsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
   },
   statCard: {
-    flex: 1,
-    backgroundColor: '#0b1220',
-    borderRadius: 18,
+    flexGrow: 1,
+    flexBasis: '31%',
+    minWidth: 92,
+    borderRadius: 20,
     padding: 14,
     borderWidth: 1,
+  },
+  statAccentBar: {
+    width: 36,
+    height: 4,
+    borderRadius: 999,
+    marginBottom: 10,
   },
   statValue: {
     fontSize: 18,
@@ -743,16 +511,16 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statLabel: {
-    color: '#94a3b8',
+    color: '#6b7280',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   panelCard: {
-    backgroundColor: '#1e293b',
-    borderRadius: 26,
+    backgroundColor: '#fff',
+    borderRadius: 28,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#e5ddd1',
     gap: 14,
   },
   panelHeaderRow: {
@@ -762,12 +530,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   panelTitle: {
-    color: '#f8fafc',
+    color: '#111827',
     fontSize: 20,
     fontWeight: '800',
   },
   panelHelper: {
-    color: '#cbd5e1',
+    color: '#6b7280',
     fontSize: 13,
     lineHeight: 19,
   },
@@ -776,13 +544,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#bae6fd',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    backgroundColor: '#0f766e',
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   primaryActionText: {
-    color: '#0f172a',
+    color: '#f0fdfa',
     fontWeight: '800',
     fontSize: 13,
   },
@@ -794,7 +562,7 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   feedbackSuccess: {
-    backgroundColor: '#14532d',
+    backgroundColor: '#166534',
   },
   feedbackError: {
     backgroundColor: '#7f1d1d',
@@ -807,20 +575,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   stateCard: {
-    backgroundColor: '#0f172a',
-    borderRadius: 20,
+    backgroundColor: '#f8fafc',
+    borderRadius: 22,
     padding: 20,
     alignItems: 'center',
     gap: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   stateTitle: {
-    color: '#f8fafc',
+    color: '#0f172a',
     fontSize: 16,
     fontWeight: '800',
     textAlign: 'center',
   },
   stateText: {
-    color: '#cbd5e1',
+    color: '#64748b',
     fontSize: 13,
     lineHeight: 19,
     textAlign: 'center',
@@ -829,11 +599,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   personCard: {
-    backgroundColor: '#0f172a',
-    borderRadius: 20,
+    backgroundColor: '#fbfdff',
+    borderRadius: 22,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#22304a',
+    borderColor: '#dbe5f0',
     gap: 12,
   },
   personMainRow: {
@@ -846,7 +616,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#082f49',
+    backgroundColor: '#dbeafe',
   },
   personCopy: {
     flex: 1,
@@ -859,13 +629,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   personName: {
-    color: '#f8fafc',
+    color: '#111827',
     fontSize: 16,
     fontWeight: '800',
     flexShrink: 1,
   },
   personBadge: {
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#dcfce7',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -876,51 +646,33 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   personMeta: {
-    color: '#cbd5e1',
+    color: '#64748b',
     fontSize: 13,
   },
   personContact: {
-    color: '#e2e8f0',
+    color: '#334155',
     fontSize: 13,
   },
   personNotes: {
-    color: '#94a3b8',
+    color: '#64748b',
     fontSize: 12,
     lineHeight: 17,
   },
-  personActionsRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  personActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#172235',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  personActionText: {
-    color: '#e2e8f0',
-    fontSize: 13,
-    fontWeight: '700',
-  },
   formCard: {
-    backgroundColor: '#111c34',
-    borderRadius: 22,
+    backgroundColor: '#fffaf3',
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#22304a',
+    borderColor: '#eadfce',
     padding: 16,
     gap: 14,
   },
   formTitle: {
-    color: '#f8fafc',
+    color: '#111827',
     fontSize: 18,
     fontWeight: '800',
   },
   formSubtitle: {
-    color: '#cbd5e1',
+    color: '#6b7280',
     fontSize: 13,
     lineHeight: 19,
   },
@@ -928,13 +680,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   input: {
-    backgroundColor: '#0b1220',
+    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#d7dde5',
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 13,
-    color: '#f8fafc',
+    color: '#111827',
     fontSize: 15,
   },
   multilineInput: {
@@ -945,17 +697,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 16,
-    backgroundColor: '#0b1220',
+    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 14,
+    borderWidth: 1,
+    borderColor: '#e5ddd1',
   },
   switchTitle: {
-    color: '#f8fafc',
+    color: '#111827',
     fontSize: 14,
     fontWeight: '700',
   },
   switchHelper: {
-    color: '#94a3b8',
+    color: '#6b7280',
     fontSize: 12,
     marginTop: 2,
     maxWidth: 240,
@@ -965,102 +719,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#bae6fd',
-    borderRadius: 14,
+    backgroundColor: '#fed7aa',
+    borderRadius: 16,
     paddingVertical: 14,
   },
   submitBtnDisabled: {
     opacity: 0.7,
   },
   submitBtnText: {
-    color: '#0f172a',
+    color: '#7c2d12',
     fontSize: 15,
     fontWeight: '800',
-  },
-  sectionCard: {
-    backgroundColor: '#1e293b',
-    borderRadius: 26,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#334155',
-    gap: 14,
-  },
-  sectionTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  sectionTitle: {
-    color: '#f8fafc',
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  sectionHelper: {
-    color: '#cbd5e1',
-    fontSize: 13,
-    lineHeight: 19,
-    maxWidth: 250,
-  },
-  sectionAccentPill: {
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  sectionAccentText: {
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  moduleList: {
-    gap: 10,
-  },
-  moduleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    backgroundColor: '#0f172a',
-    borderWidth: 1,
-    borderRadius: 18,
-    padding: 14,
-  },
-  moduleCardDisabled: {
-    opacity: 0.7,
-  },
-  moduleIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  moduleContent: {
-    flex: 1,
-    gap: 3,
-  },
-  moduleTitle: {
-    color: '#f8fafc',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  moduleDescription: {
-    color: '#cbd5e1',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  moduleActionWrap: {
-    alignItems: 'flex-end',
-    gap: 4,
-  },
-  moduleAction: {
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  moduleActionEnabled: {
-    color: '#93c5fd',
-  },
-  moduleActionDisabled: {
-    color: '#94a3b8',
   },
 });

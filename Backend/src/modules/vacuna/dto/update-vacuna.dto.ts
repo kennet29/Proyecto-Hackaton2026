@@ -1,2 +1,1 @@
-export { UpdateVacunaDto } from './create-vacuna.dto';
-
+export { UpdateVacunaDto } from "./create-vacuna.dto";

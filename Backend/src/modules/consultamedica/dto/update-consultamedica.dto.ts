@@ -1,2 +1,1 @@
-export { UpdateConsultamedicaDto } from './create-consultamedica.dto';
-
+export { UpdateConsultamedicaDto } from "./create-consultamedica.dto";

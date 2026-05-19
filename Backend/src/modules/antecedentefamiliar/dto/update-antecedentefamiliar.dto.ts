@@ -1,2 +1,1 @@
-export { UpdateAntecedentefamiliarDto } from './create-antecedentefamiliar.dto';
-
+export { UpdateAntecedentefamiliarDto } from "./create-antecedentefamiliar.dto";

@@ -1,2 +1,1 @@
-export { UpdateUsuariorolDto } from './create-usuariorol.dto';
-
+export { UpdateUsuariorolDto } from "./create-usuariorol.dto";

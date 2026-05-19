@@ -1,2 +1,1 @@
-export { UpdateRegistrodentalDto } from './create-registrodental.dto';
-
+export { UpdateRegistrodentalDto } from "./create-registrodental.dto";

@@ -1,2 +1,1 @@
-export { UpdateHabitoespecificoDto } from './create-habitoespecifico.dto';
-
+export { UpdateHabitoespecificoDto } from "./create-habitoespecifico.dto";

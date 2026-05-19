@@ -1,7 +1,10 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
-import { fingerprintTemplateSchema } from '../../common/schemas/fingerprint.schema';
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
+import { fingerprintTemplateSchema } from "../../common/schemas/fingerprint.schema";
 
+/**
+ * Esquema Zod para validar la creación de user.
+ */
 export const createUserSchema = z.object({
   username: z.string().min(3).max(60),
   password: z.string().min(6).max(128),
@@ -11,4 +14,7 @@ export const createUserSchema = z.object({
   fingerprintTemplate: fingerprintTemplateSchema.optional(),
 });
 
+/**
+ * DTO de entrada para crear user.
+ */
 export class CreateUserDto extends createZodDto(createUserSchema) {}

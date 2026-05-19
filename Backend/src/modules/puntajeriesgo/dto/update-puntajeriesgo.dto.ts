@@ -1,2 +1,1 @@
-export { UpdatePuntajeriesgoDto } from './create-puntajeriesgo.dto';
-
+export { UpdatePuntajeriesgoDto } from "./create-puntajeriesgo.dto";

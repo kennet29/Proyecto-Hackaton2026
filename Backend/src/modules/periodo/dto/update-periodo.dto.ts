@@ -1,1 +1,1 @@
-export { UpdatePeriodoDto } from './create-periodo.dto';
+export { UpdatePeriodoDto } from "./create-periodo.dto";

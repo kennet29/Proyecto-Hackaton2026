@@ -1,10 +1,13 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
 
 const scoreSchema = z.number().int().min(1).max(5);
 const decimalHourSchema = z.number().min(0).max(24);
 const positiveMinutesSchema = z.number().int().min(0).max(1440);
 
+/**
+ * Esquema Zod para validar la creación de saludmental.
+ */
 export const createSaludmentalSchema = z.object({
   pacienteId: z.number().int(),
   fecha: z.coerce.date(),
@@ -29,13 +32,26 @@ export const createSaludmentalSchema = z.object({
   campoPrueba05: z.string().trim().max(200).optional(),
 });
 
-export class CreateSaludmentalDto extends createZodDto(createSaludmentalSchema) {}
+/**
+ * DTO de entrada para crear saludmental.
+ */
+export class CreateSaludmentalDto extends createZodDto(
+  createSaludmentalSchema,
+) {}
 
+/**
+ * Esquema Zod para validar la actualización de saludmental.
+ */
 export const updateSaludmentalSchema = createSaludmentalSchema
   .omit({ pacienteId: true })
   .partial()
   .refine((value) => Object.keys(value).length > 0, {
-    message: 'debes enviar al menos un campo',
+    message: "debes enviar al menos un campo",
   });
 
-export class UpdateSaludmentalDto extends createZodDto(updateSaludmentalSchema) {}
+/**
+ * DTO de entrada para actualizar saludmental.
+ */
+export class UpdateSaludmentalDto extends createZodDto(
+  updateSaludmentalSchema,
+) {}

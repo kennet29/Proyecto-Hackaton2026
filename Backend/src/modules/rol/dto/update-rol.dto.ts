@@ -1,2 +1,1 @@
-export { UpdateRolDto } from './create-rol.dto';
-
+export { UpdateRolDto } from "./create-rol.dto";

@@ -8,66 +8,137 @@ import {
   Patch,
   Post,
   Req,
-} from '@nestjs/common';
-import { Request } from 'express';
-import { AuthenticatedUser } from '../../auth/auth.service';
-import { CreatePermisoAccesoDto } from './dto/create-permisoacceso.dto';
-import { PermisoaccesoService } from './permisoacceso.service';
-import { UpdatePermisoAccesoDto } from './dto/update-permisoacceso.dto';
-import { CreatePermisoAccesoQrDto } from './dto/create-permisoacceso-qr.dto';
-import { ClaimPermisoAccesoQrDto } from './dto/claim-permisoacceso-qr.dto';
+} from "@nestjs/common";
+import { Request } from "express";
+import { AuthenticatedUser } from "../../auth/auth.service";
+import { CreatePermisoAccesoDto } from "./dto/create-permisoacceso.dto";
+import { PermisoaccesoService } from "./permisoacceso.service";
+import { UpdatePermisoAccesoDto } from "./dto/update-permisoacceso.dto";
+import { CreatePermisoAccesoQrDto } from "./dto/create-permisoacceso-qr.dto";
+import { ClaimPermisoAccesoQrDto } from "./dto/claim-permisoacceso-qr.dto";
 
-@Controller('permiso-acceso')
+/**
+ * Expone los endpoints HTTP del dominio permisoacceso.
+ */
+@Controller("permiso-acceso")
 export class PermisoaccesoController {
   constructor(private readonly permisosService: PermisoaccesoService) {}
 
-  @Post('paciente/:pacienteId')
+  /**
+   * Create.
+   * @param pacienteId Identificador asociado a paciente.
+   * @param payload Datos validados que recibe la operación.
+   * @param req Solicitud HTTP actual.
+   * @returns Registro creado.
+   */
+  @Post("paciente/:pacienteId")
   create(
-    @Param('pacienteId', ParseIntPipe) pacienteId: number,
+    @Param("pacienteId", ParseIntPipe) pacienteId: number,
     @Body() payload: CreatePermisoAccesoDto,
     @Req() req: Request,
   ) {
-    return this.permisosService.grant(pacienteId, payload, req.user as AuthenticatedUser);
+    return this.permisosService.grant(
+      pacienteId,
+      payload,
+      req.user as AuthenticatedUser,
+    );
   }
 
-  @Get('paciente/:pacienteId')
+  /**
+   * Find for paciente.
+   * @param pacienteId Identificador asociado a paciente.
+   * @param req Solicitud HTTP actual.
+   * @returns Resultado de la operación.
+   */
+  @Get("paciente/:pacienteId")
   findForPaciente(
-    @Param('pacienteId', ParseIntPipe) pacienteId: number,
+    @Param("pacienteId", ParseIntPipe) pacienteId: number,
     @Req() req: Request,
   ) {
-    return this.permisosService.listForPaciente(pacienteId, req.user as AuthenticatedUser);
+    return this.permisosService.listForPaciente(
+      pacienteId,
+      req.user as AuthenticatedUser,
+    );
   }
 
-  @Get('mios')
+  /**
+   * Find for medico.
+   * @param req Solicitud HTTP actual.
+   * @returns Resultado de la operación.
+   */
+  @Get("mios")
   findForMedico(@Req() req: Request) {
     return this.permisosService.listForMedico(req.user as AuthenticatedUser);
   }
 
-  @Delete(':permisoId')
-  revoke(@Param('permisoId', ParseIntPipe) permisoId: number, @Req() req: Request) {
-    return this.permisosService.revoke(permisoId, req.user as AuthenticatedUser);
+  /**
+   * Revoke.
+   * @param permisoId Identificador asociado a permiso.
+   * @param req Solicitud HTTP actual.
+   * @returns Resultado de la operación.
+   */
+  @Delete(":permisoId")
+  revoke(
+    @Param("permisoId", ParseIntPipe) permisoId: number,
+    @Req() req: Request,
+  ) {
+    return this.permisosService.revoke(
+      permisoId,
+      req.user as AuthenticatedUser,
+    );
   }
 
-  @Patch(':permisoId')
+  /**
+   * Update.
+   * @param permisoId Identificador asociado a permiso.
+   * @param payload Datos validados que recibe la operación.
+   * @param req Solicitud HTTP actual.
+   * @returns Registro actualizado.
+   */
+  @Patch(":permisoId")
   update(
-    @Param('permisoId', ParseIntPipe) permisoId: number,
+    @Param("permisoId", ParseIntPipe) permisoId: number,
     @Body() payload: UpdatePermisoAccesoDto,
     @Req() req: Request,
   ) {
-    return this.permisosService.update(permisoId, payload, req.user as AuthenticatedUser);
+    return this.permisosService.update(
+      permisoId,
+      payload,
+      req.user as AuthenticatedUser,
+    );
   }
 
-  @Post(':permisoId/qr')
+  /**
+   * Generate qr.
+   * @param permisoId Identificador asociado a permiso.
+   * @param payload Datos validados que recibe la operación.
+   * @param req Solicitud HTTP actual.
+   * @returns Resultado de la operación.
+   */
+  @Post(":permisoId/qr")
   generateQr(
-    @Param('permisoId', ParseIntPipe) permisoId: number,
+    @Param("permisoId", ParseIntPipe) permisoId: number,
     @Body() payload: CreatePermisoAccesoQrDto,
     @Req() req: Request,
   ) {
-    return this.permisosService.createQrToken(permisoId, payload, req.user as AuthenticatedUser);
+    return this.permisosService.createQrToken(
+      permisoId,
+      payload,
+      req.user as AuthenticatedUser,
+    );
   }
 
-  @Post('qr/claim')
+  /**
+   * Claim qr.
+   * @param payload Datos validados que recibe la operación.
+   * @param req Solicitud HTTP actual.
+   * @returns Resultado de la operación.
+   */
+  @Post("qr/claim")
   claimQr(@Body() payload: ClaimPermisoAccesoQrDto, @Req() req: Request) {
-    return this.permisosService.claimQrToken(payload, req.user as AuthenticatedUser);
+    return this.permisosService.claimQrToken(
+      payload,
+      req.user as AuthenticatedUser,
+    );
   }
 }

@@ -7,41 +7,77 @@ import {
   PrimaryGeneratedColumn,
   Unique,
   UpdateDateColumn,
-} from 'typeorm';
-import { Usuario } from '../../users/entities/user.entity';
+} from "typeorm";
+import { Usuario } from "../../users/entities/user.entity";
 
-@Entity({ name: 'tokenrevocado' })
-@Unique(['jwtId'])
+/**
+ * Entidad TypeORM que modela el recurso revoked token.
+ */
+@Entity({ name: "tokenrevocado" })
+@Unique(["jwtId"])
 export class RevokedToken {
-  @PrimaryGeneratedColumn({ name: 'tokenrevocadoid' })
+  /**
+   * Identificador persistido para `id`.
+   */
+  @PrimaryGeneratedColumn({ name: "tokenrevocadoid" })
   id!: number;
 
-  @Column({ name: 'jti', length: 128 })
+  /**
+   * Identificador persistido para `jwtId`.
+   */
+  @Column({ name: "jti", length: 128 })
   jwtId!: string;
 
-  @Column({ name: 'usuarioid' })
+  /**
+   * Identificador persistido para `usuarioId`.
+   */
+  @Column({ name: "usuarioid" })
   usuarioId!: number;
 
-  @ManyToOne(() => Usuario, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'usuarioid' })
+  /**
+   * Campo de datos asociado a `usuario`.
+   */
+  @ManyToOne(() => Usuario, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "usuarioid" })
   usuario!: Usuario;
 
-  @Column({ name: 'expira', type: 'datetime2' })
+  /**
+   * Campo de datos asociado a `expiresAt`.
+   */
+  @Column({ name: "expira", type: "datetime2" })
   expiresAt!: Date;
 
-  @Column({ name: 'motivo', length: 120, nullable: true })
+  /**
+   * Campo de datos asociado a `reason`.
+   */
+  @Column({ name: "motivo", length: 120, nullable: true })
   reason?: string;
 
-  @Column({ name: 'creadopor', length: 60, nullable: true })
+  /**
+   * Campo de datos asociado a `creadoPor`.
+   */
+  @Column({ name: "creadopor", length: 60, nullable: true })
   creadoPor?: string;
 
-  @CreateDateColumn({ name: 'creadoen', type: 'datetime2', default: () => 'SYSDATETIME()' })
+  /**
+   * Campo de datos asociado a `creadoEn`.
+   */
+  @CreateDateColumn({
+    name: "creadoen",
+    type: "datetime2",
+    default: () => "SYSDATETIME()",
+  })
   creadoEn!: Date;
 
-  @Column({ name: 'modificadopor', length: 60, nullable: true })
+  /**
+   * Campo de datos asociado a `modificadoPor`.
+   */
+  @Column({ name: "modificadopor", length: 60, nullable: true })
   modificadoPor?: string;
 
-  @UpdateDateColumn({ name: 'modificadoen', type: 'datetime2', nullable: true })
+  /**
+   * Campo de datos asociado a `modificadoEn`.
+   */
+  @UpdateDateColumn({ name: "modificadoen", type: "datetime2", nullable: true })
   modificadoEn?: Date;
-
 }

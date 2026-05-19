@@ -1,6 +1,9 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
 
+/**
+ * Esquema Zod para validar la creación de medicamentoraro.
+ */
 export const createMedicamentoraroSchema = z.object({
   nombreGenerico: z.string().trim().min(1).max(160),
   nombreComercial: z.string().trim().max(160).nullable().optional(),
@@ -18,4 +21,9 @@ export const createMedicamentoraroSchema = z.object({
   modificadoEn: z.coerce.date().nullable().optional(),
 });
 
-export class CreateMedicamentoraroDto extends createZodDto(createMedicamentoraroSchema) {}
+/**
+ * DTO de entrada para crear medicamentoraro.
+ */
+export class CreateMedicamentoraroDto extends createZodDto(
+  createMedicamentoraroSchema,
+) {}

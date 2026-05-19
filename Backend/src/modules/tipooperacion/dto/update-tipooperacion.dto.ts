@@ -1,2 +1,1 @@
-export { UpdateTipooperacionDto } from './create-tipooperacion.dto';
-
+export { UpdateTipooperacionDto } from "./create-tipooperacion.dto";

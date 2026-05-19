@@ -1,13 +1,19 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
 
+/**
+ * Valor reutilizable asociado a disponibilidad medicamento opciones.
+ */
 export const disponibilidadMedicamentoOpciones = [
-  'disponible',
-  'limitado',
-  'agotado',
-  'por_encargo',
+  "disponible",
+  "limitado",
+  "agotado",
+  "por_encargo",
 ] as const;
 
+/**
+ * Esquema Zod para validar la creación de institucionmedicamento.
+ */
 export const createInstitucionmedicamentoSchema = z.object({
   institucionSaludId: z.number().int().positive(),
   medicamentoRaroId: z.number().int().positive(),
@@ -24,6 +30,9 @@ export const createInstitucionmedicamentoSchema = z.object({
   modificadoEn: z.coerce.date().nullable().optional(),
 });
 
+/**
+ * DTO de entrada para crear institucionmedicamento.
+ */
 export class CreateInstitucionmedicamentoDto extends createZodDto(
   createInstitucionmedicamentoSchema,
 ) {}

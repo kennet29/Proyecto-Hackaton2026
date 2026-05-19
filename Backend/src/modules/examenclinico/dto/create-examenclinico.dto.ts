@@ -1,8 +1,11 @@
-import { createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
 
 const nullableString = z.string().trim().nullable().optional();
 
+/**
+ * Esquema Zod para validar la creación de examenclinico.
+ */
 export const createExamenclinicoSchema = z.object({
   pacienteId: z.number().int().positive(),
   consultaId: z.number().int().positive().nullable().optional(),
@@ -26,12 +29,25 @@ export const createExamenclinicoSchema = z.object({
   campoPrueba05: z.string().trim().max(200).nullable().optional(),
 });
 
-export class CreateExamenclinicoDto extends createZodDto(createExamenclinicoSchema) {}
+/**
+ * DTO de entrada para crear examenclinico.
+ */
+export class CreateExamenclinicoDto extends createZodDto(
+  createExamenclinicoSchema,
+) {}
 
+/**
+ * Esquema Zod para validar la actualización de examenclinico.
+ */
 export const updateExamenclinicoSchema = createExamenclinicoSchema
   .partial()
   .refine((value) => Object.keys(value).length > 0, {
-    message: 'debes enviar al menos un campo',
+    message: "debes enviar al menos un campo",
   });
 
-export class UpdateExamenclinicoDto extends createZodDto(updateExamenclinicoSchema) {}
+/**
+ * DTO de entrada para actualizar examenclinico.
+ */
+export class UpdateExamenclinicoDto extends createZodDto(
+  updateExamenclinicoSchema,
+) {}

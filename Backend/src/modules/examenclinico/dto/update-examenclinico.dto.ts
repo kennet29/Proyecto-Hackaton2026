@@ -1,1 +1,1 @@
-export { UpdateExamenclinicoDto } from './create-examenclinico.dto';
+export { UpdateExamenclinicoDto } from "./create-examenclinico.dto";

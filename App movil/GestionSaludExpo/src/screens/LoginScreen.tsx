@@ -151,7 +151,6 @@ export function LoginScreen({ navigation }: Props) {
       setLoading(true);
       const body = await executeLogin({ username, password });
       Alert.alert('Bienvenido', body?.message ?? 'Inicio de sesión exitoso');
-      navigation.reset({ index: 0, routes: [{ name: 'MenuPrincipal' }] });
     } catch (error) {
       const message = formatErrorMessage(error);
       setFeedback({ type: 'error', message });
@@ -183,13 +182,15 @@ export function LoginScreen({ navigation }: Props) {
     }
     try {
       setFingerprintLoading(true);
-      const auth = await LocalAuthentication.authenticateAsync({ promptMessage: 'Autentícate con tu huella' });
+      const auth = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Autentícate con tu huella',
+        disableDeviceFallback: true,
+      });
       if (!auth.success) {
         throw new Error('autenticación cancelada');
       }
       const body = await executeLogin({ username, fingerprintTemplate });
       Alert.alert('Bienvenido', body?.message ?? 'Inicio de sesión exitoso');
-      navigation.reset({ index: 0, routes: [{ name: 'MenuPrincipal' }] });
     } catch (error) {
       const message = formatErrorMessage(error);
       setFeedback({ type: 'error', message });
