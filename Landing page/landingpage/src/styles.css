@@ -1,0 +1,20 @@
+@import "leaflet/dist/leaflet.css";
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #f4efe4;
+}
+
+.leaflet-container {
+  font-family: "Trebuchet MS", "Gill Sans", sans-serif;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  box-shadow: 0 14px 30px rgba(18, 50, 58, 0.16);
+}
