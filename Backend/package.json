@@ -10,7 +10,7 @@
     "start:debug": "ts-node-dev --respawn --inspect src/main.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "npm run typecheck",
-    "test": "npm run build && node --test dist/**/*.spec.js",
+    "test": "npm run build && node ./scripts/run-tests.js",
     "generate:modules": "node ./scripts/generate-modules.js"
   },
   "keywords": [],
