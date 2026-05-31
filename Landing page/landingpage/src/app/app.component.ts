@@ -57,39 +57,39 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   currentNicaraguaDate = '';
 
   readonly navSections: NavSection[] = [
-    { id: 'sobre-nosotros', label: 'Lorem ipsum' },
-    { id: 'servicios', label: 'Dolor sit' },
-    { id: 'caracteristicas', label: 'Amet elit' },
-    { id: 'app-movil', label: 'Consectetur' },
-    { id: 'mapa', label: 'Adipiscing' },
-    { id: 'precios', label: 'Tempor' },
-    { id: 'contacto', label: 'Incididunt' },
-    { id: 'faq', label: 'Quis autem' },
-    { id: 'blog', label: 'Voluptatem' }
+    { id: 'sobre-nosotros', label: 'Sobre nosotros' },
+    { id: 'servicios', label: 'Servicios' },
+    { id: 'caracteristicas', label: 'Funciones' },
+    { id: 'app-movil', label: 'App movil' },
+    { id: 'mapa', label: 'Mapa de salud' },
+    { id: 'precios', label: 'Planes' },
+    { id: 'contacto', label: 'Contacto' },
+    { id: 'faq', label: 'Preguntas' },
+    { id: 'blog', label: 'Recursos' }
   ];
 
-  readonly heroSignals = ['Lorem ipsum', 'Dolor sit', 'Amet elit', 'Sed do'];
+  readonly heroSignals = ['Expediente seguro', 'Recordatorios', 'Mapa de clinicas', 'Seguimiento preventivo'];
 
-  readonly mobileBenefits = ['Lorem ipsum', 'Dolor sit amet', 'Consectetur elit', 'Sed do eiusmod'];
+  readonly mobileBenefits = ['Agenda medica', 'Control cronico', 'Alertas inteligentes', 'Acceso familiar'];
 
   readonly heroStats: HeroStat[] = [
-    { value: '24h', label: 'lorem ipsum dolor sit amet' },
-    { value: '+42%', label: 'consectetur adipiscing elit' },
-    { value: '3x', label: 'sed do eiusmod tempor' }
+    { value: '24/7', label: 'acceso al expediente desde cualquier lugar' },
+    { value: '+40', label: 'modulos y registros clinicos integrados' },
+    { value: '1 app', label: 'para pacientes, familias y seguimiento' }
   ];
 
   readonly features = [
     {
-      title: 'Agenda centralizada',
-      description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
+      title: 'Citas y recordatorios',
+      description: 'Programa consultas, vacunas y controles con alertas claras para no perder seguimiento.'
     },
     {
-      title: 'Lorem ipsum',
-      description: 'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+      title: 'Expediente clinico digital',
+      description: 'Organiza alergias, medicacion, examenes y antecedentes en un solo flujo.'
     },
     {
-      title: 'Dolor sit amet',
-      description: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.'
+      title: 'Directorio geolocalizado',
+      description: 'Ubica centros de salud, servicios y puntos de atencion con un mapa interactivo.'
     }
   ];
 
@@ -97,44 +97,44 @@ export class AppComponent implements AfterViewInit, OnDestroy {
 
   readonly pricing = [
     {
-      name: 'Basico',
+      name: 'Piloto',
+      price: '$0',
+      detail: 'Ideal para validar el flujo principal con equipos pequenos.',
+      bullets: ['Acceso web', 'Mapa de servicios', 'Demo funcional']
+    },
+    {
+      name: 'Profesional',
       price: '$19',
-      detail: 'Lorem ipsum dolor sit amet.',
-      bullets: ['Lorem ipsum dolor', 'Sit amet elit', 'Consectetur adipiscing']
+      detail: 'Pensado para atencion individual y seguimiento frecuente.',
+      bullets: ['Agenda y recordatorios', 'Expediente digital', 'Reportes de seguimiento']
     },
     {
-      name: 'Lorem',
-      price: '$49',
-      detail: 'Consectetur adipiscing elit sed do.',
-      bullets: ['Eiusmod tempor', 'Incididunt ut labore', 'Magna aliqua']
-    },
-    {
-      name: 'Ipsum',
-      price: '$99',
-      detail: 'Ut enim ad minim veniam.',
-      bullets: ['Quis nostrud', 'Exercitation ullamco', 'Laboris nisi']
+      name: 'Institucional',
+      price: 'Cotizar',
+      detail: 'Para clinicas, programas comunitarios y equipos multidisciplinarios.',
+      bullets: ['Usuarios y roles', 'Panel administrativo', 'Implementacion guiada']
     }
   ];
 
   readonly faq = [
     {
-      question: 'Lorem ipsum dolor sit amet?',
-      answer: 'Consectetur adipiscing elit, sed do eiusmod tempor incididunt.'
+      question: 'Que resuelve NICAPRIME?',
+      answer: 'Centraliza expediente, citas, recordatorios, mapa de servicios y seguimiento clinico en una sola plataforma.'
     },
     {
-      question: 'Quis autem vel eum iure?',
-      answer: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco.'
+      question: 'Funciona desde telefono y computadora?',
+      answer: 'Si. La experiencia esta pensada para uso movil, pero tambien se adapta a escritorio.'
     },
     {
-      question: 'Sed ut perspiciatis unde?',
-      answer: 'Duis aute irure dolor in reprehenderit in voluptate velit.'
+      question: 'Puede usarse para pacientes y personal de salud?',
+      answer: 'Si. El proyecto contempla flujos para pacientes, familiares y profesionales con distintos modulos.'
     }
   ];
 
   readonly articles = [
-    'Lorem ipsum dolor sit amet',
-    'Consectetur adipiscing elit sed do',
-    'Eiusmod tempor incididunt ut labore'
+    'Como digitalizar el seguimiento preventivo sin perder trazabilidad',
+    'Buenas practicas para recordatorios medicos y adherencia',
+    'Por que un mapa de servicios mejora el acceso a la atencion'
   ];
 
   readonly footerSocials: FooterSocial[] = [
@@ -150,19 +150,19 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   readonly footerSections: FooterSection[] = [
     {
       title: 'NICAPRIME',
-      links: ['Lorem ipsum', 'Dolor sit amet', 'Consectetur', 'Adipiscing elit', 'Sed do', 'Tempor']
+      links: ['Inicio', 'Sobre nosotros', 'Servicios', 'App movil', 'Mapa de salud', 'Contacto']
     },
     {
-      title: 'Lorem',
-      links: ['Ipsum', 'Dolor', 'Amet']
+      title: 'Producto',
+      links: ['Expediente digital', 'Recordatorios', 'Seguimiento', 'Directorio']
     },
     {
-      title: 'Ipsum',
-      links: ['Consectetur', 'Adipiscing', 'Voluptatem', 'Accusantium']
+      title: 'Soluciones',
+      links: ['Pacientes', 'Familias', 'Profesionales', 'Instituciones']
     },
     {
-      title: 'Dolor',
-      links: ['Perspiciatis', 'Omnis iste', 'Natus error', 'Sit voluptatem', 'Aperiam']
+      title: 'Recursos',
+      links: ['Preguntas frecuentes', 'Demo', 'Roadmap', 'Contacto']
     }
   ];
 
@@ -264,7 +264,17 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   private generateMapPoints(): MapPoint[] {
-    const pointStatuses = ['Lorem', 'Ipsum', 'Dolor'];
+    const pointStatuses = ['Activo', 'Revision', 'Proximamente'];
+    const pointNames = [
+      'Managua Central',
+      'Leon Norte',
+      'Esteli Red',
+      'Matagalpa Clinico',
+      'Jinotega Comunitario',
+      'Chinandega Integral',
+      'Masaya Preventivo',
+      'Granada Familiar'
+    ];
     const points: MapPoint[] = [];
 
     for (let index = 0; index < 8; index += 1) {
@@ -273,7 +283,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
 
       points.push({
         id: index + 1,
-        name: `Lorem ${String(index + 1).padStart(2, '0')}`,
+        name: pointNames[index],
         lat: 11.15 + (latSeed * 2.2),
         lng: -87.35 + (lngSeed * 3.25),
         status: pointStatuses[index % pointStatuses.length]
@@ -332,6 +342,8 @@ export class AppComponent implements AfterViewInit, OnDestroy {
         return '#ff4d73';
       case 'Revision':
         return '#f49708';
+      case 'Proximamente':
+        return '#38f28e';
       default:
         return '#2986bf';
     }
