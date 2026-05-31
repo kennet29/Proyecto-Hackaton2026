@@ -1,6 +1,8 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 
+const nullableString = z.string().trim().nullable().optional();
+
 /**
  * Esquema Zod para validar la creación de medicacion.
  */
@@ -15,6 +17,9 @@ export const createMedicacionSchema = z.object({
   fechainicio: z.coerce.date(),
   fechafin: z.coerce.date().nullable().optional(),
   medicacionactiva: z.boolean().optional(),
+  archivoRecetaBase64: nullableString,
+  nombreArchivoReceta: z.string().trim().max(200).nullable().optional(),
+  mimeArchivoReceta: z.string().trim().max(100).nullable().optional(),
   creadopor: z.string().nullable().optional(),
   creadoen: z.coerce.date().optional(),
   modificadopor: z.string().nullable().optional(),

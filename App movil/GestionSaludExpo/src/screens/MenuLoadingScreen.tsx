@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { healthTips } from '../data/healthTips';
@@ -9,8 +9,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'MenuLoading'>;
 const LOADER_SCALE = 1.48;
 const LOADER_WIDTH = 220 * LOADER_SCALE;
 const LOADER_HEIGHT = 84 * LOADER_SCALE;
-const LOADER_BACKGROUND = '#111c34';
-const ECG_COLOR = '#38bdf8';
+const LOADER_BACKGROUND = '#182A44';
+const ECG_COLOR = '#29B6FF';
 const DISPLAY_TIP_COUNT = 3;
 const ENTER_DURATION_MS = 2500;
 const TIP_ROTATION_MS = 1600;
@@ -201,11 +201,11 @@ export function MenuLoadingScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   screen: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     paddingHorizontal: 24,
     paddingTop: 18,
     paddingBottom: 28,
@@ -241,22 +241,22 @@ const styles = StyleSheet.create({
   loaderCard: {
     width: '100%',
     maxWidth: 370,
-    backgroundColor: '#111c34',
+    backgroundColor: '#182A44',
     borderRadius: 30,
     borderWidth: 1,
-    borderColor: '#1e3a5f',
+    borderColor: '#1B3355',
     paddingHorizontal: 18,
     paddingTop: 18,
     paddingBottom: 20,
     alignItems: 'center',
-    shadowColor: '#020617',
+    shadowColor: '#071120',
     shadowOpacity: 0.28,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 12 },
     elevation: 10,
   },
   loaderEyebrow: {
-    color: '#7dd3fc',
+    color: '#29B6FF',
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.2,
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#29466b',
+    borderColor: '#27496D',
   },
   loaderGrid: {
     ...StyleSheet.absoluteFillObject,
@@ -316,17 +316,17 @@ const styles = StyleSheet.create({
     backgroundColor: LOADER_BACKGROUND,
   },
   loadingText: {
-    color: '#dbeafe',
+    color: '#C9D7E8',
     fontSize: 15,
     fontWeight: '700',
   },
   tipsCard: {
-    backgroundColor: '#111c34',
+    backgroundColor: '#182A44',
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#1e3a5f',
-    shadowColor: '#020617',
+    borderColor: '#1B3355',
+    shadowColor: '#071120',
     shadowOpacity: 0.2,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
@@ -339,28 +339,28 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   tipsTitle: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 16,
     fontWeight: '800',
   },
   tipsCounter: {
-    color: '#7dd3fc',
+    color: '#29B6FF',
     fontSize: 12,
     fontWeight: '700',
   },
   primaryTip: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     fontSize: 15,
     lineHeight: 23,
     fontWeight: '600',
   },
   tipDivider: {
     height: 1,
-    backgroundColor: '#29466b',
+    backgroundColor: '#27496D',
     marginVertical: 12,
   },
   secondaryTip: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     fontSize: 13,
     lineHeight: 19,
     marginTop: 6,

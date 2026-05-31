@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Platform,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,10 +10,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import DateTimePicker, {
+  DateTimePickerAndroid,
+} from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
-import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
+import type { RootStackParamList } from '../navigation/types';
+import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
+import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 
 type AlergiaRecord = {
   alergiaId: number;
@@ -29,98 +36,62 @@ type AlergiaRecord = {
   creadoen?: string | null;
 };
 
-type FeedbackState = { type: 'success' | 'error'; message: string } | null;
-
-type LinkedPatient = {
+type PatientAlergiaSummary = {
   pacienteId: number;
-  displayName: string;
-  parentesco?: string | null;
+  patientName: string;
+  total: number;
+  activeCount: number;
+  latestDate: string | null;
+  tipos: string[];
 };
 
-const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => {
-  if (!feedback) {
-    return null;
-  }
-  const isSuccess = feedback.type === 'success';
-  return (
-    <View
-      style={[
-        styles.feedbackBox,
-        isSuccess ? styles.feedbackSuccess : styles.feedbackError,
-      ]}
-    >
-      <Text
-        style={[
-          styles.feedbackText,
-          isSuccess ? styles.feedbackTextSuccess : styles.feedbackTextError,
-        ]}
-      >
-        {feedback.message}
-      </Text>
-    </View>
-  );
+type AlergiaScreenProps = {
+  mode?: 'list' | 'create';
 };
 
-const formatErrorMessage = (error: unknown) => {
-  if (error instanceof Error) {
-    return error.message;
+const toDateOnlyString = (input?: Date | string | null): string => {
+  if (!input) return '';
+  if (input instanceof Date) {
+    if (Number.isNaN(input.getTime())) return '';
+    return [
+      input.getFullYear(),
+      String(input.getMonth() + 1).padStart(2, '0'),
+      String(input.getDate()).padStart(2, '0'),
+    ].join('-');
   }
-  return 'No se pudo completar la acción, intenta nuevamente.';
+  const match = String(input).trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+  const parsed = new Date(input);
+  return Number.isNaN(parsed.getTime()) ? '' : toDateOnlyString(parsed);
 };
 
-const toDateOnlyString = (date: Date) => {
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, '0'),
-    String(date.getDate()).padStart(2, '0'),
-  ].join('-');
+const parseDateForPicker = (value?: string) => {
+  const normalized = toDateOnlyString(value);
+  const parts = normalized.split('-').map(Number);
+  if (parts.length === 3 && parts.every((part) => !Number.isNaN(part))) {
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+  return new Date();
 };
 
-const extractDatePortion = (value?: string | Date | null): string => {
-  if (!value) {
-    return '';
-  }
-  if (value instanceof Date) {
-    if (Number.isNaN(value.getTime())) {
-      return '';
-    }
-    return toDateOnlyString(value);
-  }
-  const trimmed = String(value).trim();
-  if (!trimmed) {
-    return '';
-  }
-  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (match) {
-    const [, year, month, day] = match;
-    return `${year}-${month}-${day}`;
-  }
-  const fallback = new Date(trimmed);
-  if (!Number.isNaN(fallback.getTime())) {
-    return toDateOnlyString(fallback);
-  }
-  return '';
+const normalizeText = (value: unknown) => {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  return text ? text : null;
 };
 
-const parseLocalDateString = (value?: string | Date | null) => {
-  const portion = extractDatePortion(value);
-  if (!portion) {
-    return null;
-  }
-  const segments = portion.split('-').map((segment) => Number(segment));
-  if (segments.length !== 3 || segments.some((segment) => Number.isNaN(segment))) {
-    return null;
-  }
-  const [year, month, day] = segments;
-  return new Date(year, month - 1, day);
+const formatDisplayDate = (value?: string) => {
+  if (!value) return 'Selecciona fecha';
+  return parseDateForPicker(value).toLocaleDateString('es-NI', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 };
 
-const formatDate = (value?: string | null) => {
-  const parsed = parseLocalDateString(value);
-  if (!parsed) {
-    const raw = typeof value === 'string' ? value.trim() : '';
-    return raw || 'Sin fecha';
-  }
+const formatRecordDate = (value?: string | null) => {
+  if (!value) return 'Sin fecha';
+  const parsed = parseDateForPicker(value);
   return parsed.toLocaleDateString('es-NI', {
     year: 'numeric',
     month: 'short',
@@ -128,14 +99,66 @@ const formatDate = (value?: string | null) => {
   });
 };
 
-export function AlergiaScreen() {
+const getStatusColors = (status?: string | null) => {
+  const normalized = normalizeText(status)?.toLowerCase() ?? '';
+  if (normalized.includes('inact')) {
+    return { backgroundColor: '#FF4D7318', color: '#FF4D73', borderColor: '#FF4D73' };
+  }
+  return { backgroundColor: '#38F28E18', color: '#38F28E', borderColor: '#38F28E' };
+};
+
+const getSeverityColors = (severity?: string | null) => {
+  const normalized = normalizeText(severity)?.toLowerCase() ?? '';
+  if (normalized.includes('grave') || normalized.includes('alta') || normalized.includes('severa')) {
+    return { backgroundColor: '#FF4D7318', color: '#FF4D73', borderColor: '#FF4D73' };
+  }
+  if (normalized.includes('moder')) {
+    return { backgroundColor: '#FF4D7318', color: '#FF4D73', borderColor: '#FF4D73' };
+  }
+  return { backgroundColor: '#182A44', color: '#29B6FF', borderColor: '#29B6FF' };
+};
+
+export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const isCreateMode = mode === 'create';
+  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
   const { token, user } = useAuth();
   const defaultPacienteId = useMemo(
     () => (user?.pacienteId ? String(user.pacienteId) : ''),
     [user?.pacienteId],
   );
-  const buildInitialForm = useCallback(
-    () => ({
+  const [patientOptions, setPatientOptions] = useState<LinkedPatient[]>([]);
+  const [records, setRecords] = useState<AlergiaRecord[]>([]);
+  const [loadingPatients, setLoadingPatients] = useState(false);
+  const [loadingRecords, setLoadingRecords] = useState(true);
+  const [showIOSDatePicker, setShowIOSDatePicker] = useState(false);
+  const [selectedPatientId, setSelectedPatientId] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [form, setForm] = useState({
+    pacienteId: defaultPacienteId,
+    tipo: '',
+    desencadenante: '',
+    severidad: '',
+    reaccion: '',
+    tratamiento: '',
+    fechadiagnostico: '',
+    estado: 'Activa',
+    observaciones: '',
+  });
+
+  const authHeaders = useMemo<Record<string, string>>(() => {
+    const base: Record<string, string> = {};
+    if (token) {
+      base.Authorization = `Bearer ${token}`;
+    }
+    return base;
+  }, [token]);
+
+  const handleChange = (key: keyof typeof form, value: string) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
+
+  const resetForm = useCallback(() => {
+    setForm({
       pacienteId: defaultPacienteId,
       tipo: '',
       desencadenante: '',
@@ -145,178 +168,148 @@ export function AlergiaScreen() {
       fechadiagnostico: '',
       estado: 'Activa',
       observaciones: '',
-    }),
-    [defaultPacienteId],
-  );
-
-  const [records, setRecords] = useState<AlergiaRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [patientOptions, setPatientOptions] = useState<LinkedPatient[]>([]);
-  const [loadingPatients, setLoadingPatients] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState(buildInitialForm);
-  const [showIOSDatePicker, setShowIOSDatePicker] = useState(false);
-
-  useEffect(() => {
-    if (!editingId) {
-      setForm((prev) => ({ ...prev, pacienteId: defaultPacienteId }));
-    }
-  }, [defaultPacienteId, editingId]);
-
-  const headers = useMemo(() => {
-    const base: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) {
-      base.Authorization = `Bearer ${token}`;
-    }
-    return base;
-  }, [token]);
+    });
+  }, [defaultPacienteId]);
 
   const fetchPatients = useCallback(async () => {
-    if (!token) {
-      setPatientOptions([]);
-      return;
-    }
+    if (!token) return;
     setLoadingPatients(true);
     try {
-      const response = await fetch(`${API_URL}/usuario-paciente/mis-pacientes`, { headers });
-      const relations = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(relations?.message ?? 'No se pudieron cargar las personas registradas.');
+      let normalized = await fetchLinkedPatients(authHeaders, { forceRefresh: true });
+      if (normalized.length === 0 && user?.pacienteId) {
+        normalized = [
+          {
+            pacienteId: Number(user.pacienteId),
+            displayName: user?.username?.split('@')[0] || `Paciente #${user.pacienteId}`,
+          },
+        ];
       }
-      const items: LinkedPatient[] = Array.isArray(relations)
-        ? await Promise.all(
-            relations.map(async (relation: any) => {
-              const pacienteId = relation.pacienteId;
-              let displayName = `Paciente #${pacienteId}`;
-              try {
-                const patientResponse = await fetch(`${API_URL}/paciente/${pacienteId}`, { headers });
-                const patient = await patientResponse.json().catch(() => null);
-                if (patient && patientResponse.ok) {
-                  const nombres = patient?.nombres ?? '';
-                  const apellidos = patient?.apellidos ?? '';
-                  const candidate = `${nombres} ${apellidos}`.trim();
-                  if (candidate) {
-                    displayName = candidate;
-                  }
-                }
-              } catch {
-                // ignorar errores individuales
-              }
-              return {
-                pacienteId,
-                displayName: relation.esPrincipal
-                  ? `${displayName} (Principal)`
-                  : displayName,
-                parentesco: relation.parentesco ?? null,
-              };
-            }),
-          )
-        : [];
-      setPatientOptions(items);
-      if (!form.pacienteId && items.length > 0) {
-        setForm((prev) => ({ ...prev, pacienteId: String(items[0].pacienteId) }));
-      }
+      setPatientOptions(normalized);
+      setForm((prev) => {
+        if (prev.pacienteId || normalized.length === 0) return prev;
+        return { ...prev, pacienteId: String(normalized[0].pacienteId) };
+      });
     } catch (error) {
-      setFeedback({ type: 'error', message: formatErrorMessage(error) });
+      Alert.alert('Error', error instanceof Error ? error.message : 'Fallo al cargar pacientes');
     } finally {
       setLoadingPatients(false);
     }
-  }, [headers, token, form.pacienteId]);
+  }, [authHeaders, token, user?.pacienteId, user?.username]);
 
   const fetchRecords = useCallback(async () => {
+    if (!token) return;
+    setLoadingRecords(true);
     try {
-      setRefreshing(true);
-      const response = await fetch(`${API_URL}/alergia`, { headers });
+      const response = await fetch(`${API_URL}/alergia`, { headers: authHeaders });
       const body = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(body?.message ?? 'No se pudieron obtener las alergias');
-      }
-      const normalized = Array.isArray(body)
-        ? body.map((item) => {
-            const cleanDate = extractDatePortion(item?.fechadiagnostico);
-            return {
-              ...item,
-              fechadiagnostico: cleanDate || null,
-            };
-          })
-        : [];
-      setRecords(normalized as AlergiaRecord[]);
+      if (!response.ok) throw new Error(body?.message ?? 'No se pudieron cargar las alergias');
+      setRecords(
+        (Array.isArray(body) ? body : [])
+          .map((item: any, index: number) => ({
+            alergiaId: Number(item?.alergiaId ?? item?.alergiaid ?? item?.id ?? index + 1),
+            pacienteId: Number(item?.pacienteId ?? item?.pacienteid ?? 0),
+            tipo: normalizeText(item?.tipo) ?? '',
+            desencadenante: normalizeText(item?.desencadenante),
+            severidad: normalizeText(item?.severidad),
+            reaccion: normalizeText(item?.reaccion),
+            tratamiento: normalizeText(item?.tratamiento),
+            fechadiagnostico: toDateOnlyString(item?.fechadiagnostico) || null,
+            estado: normalizeText(item?.estado),
+            observaciones: normalizeText(item?.observaciones),
+            creadoen: normalizeText(item?.creadoen),
+          }))
+          .filter((item: AlergiaRecord) => Number.isFinite(item.pacienteId) && item.pacienteId > 0)
+          .sort((a: AlergiaRecord, b: AlergiaRecord) => {
+            const aDate = new Date(a.fechadiagnostico ?? a.creadoen ?? 0).getTime();
+            const bDate = new Date(b.fechadiagnostico ?? b.creadoen ?? 0).getTime();
+            return bDate - aDate;
+          }),
+      );
     } catch (error) {
-      setFeedback({ type: 'error', message: formatErrorMessage(error) });
+      Alert.alert('Error', error instanceof Error ? error.message : 'Fallo al cargar alergias');
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      setLoadingRecords(false);
     }
-  }, [headers]);
+  }, [authHeaders, token]);
 
-  useEffect(() => {
-    fetchRecords();
-  }, [fetchRecords]);
-  useEffect(() => {
-    fetchPatients();
-  }, [fetchPatients]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchPatients();
+      fetchRecords();
+    }, [fetchPatients, fetchRecords]),
+  );
 
-  const resetForm = useCallback(() => {
-    setForm(buildInitialForm());
-    setEditingId(null);
-  }, [buildInitialForm]);
+  const patientNameById = useMemo(() => {
+    const map: Record<number, string> = {};
+    patientOptions.forEach((patient) => {
+      map[patient.pacienteId] = patient.displayName;
+    });
+    return map;
+  }, [patientOptions]);
 
-  const cancelEditing = () => {
-    resetForm();
-    setFeedback(null);
-  };
-
-  const handleChange = (key: keyof typeof form, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const parseLocalDateString = (value?: string) => {
-    if (!value) {
-      return null;
+  const filteredRecords = useMemo(() => {
+    const activePatientId = Number(selectedPatientId);
+    if (Number.isFinite(activePatientId) && activePatientId > 0) {
+      return records.filter((record) => record.pacienteId === activePatientId);
     }
-    const parts = value.split('-');
-    if (parts.length !== 3) {
-      return null;
-    }
-    const [yearStr, monthStr, dayStr] = parts;
-    const year = Number(yearStr);
-    const month = Number(monthStr);
-    const day = Number(dayStr);
-    if ([year, month, day].some((part) => Number.isNaN(part))) {
-      return null;
-    }
-    return new Date(year, month - 1, day);
-  };
+    return records;
+  }, [records, selectedPatientId]);
 
-  const getCurrentDateValue = () =>
-    parseLocalDateString(form.fechadiagnostico) ?? new Date();
+  const patientSummaries = useMemo<PatientAlergiaSummary[]>(() => {
+    const grouped = new Map<number, AlergiaRecord[]>();
+    records.forEach((record) => {
+      const list = grouped.get(record.pacienteId) ?? [];
+      list.push(record);
+      grouped.set(record.pacienteId, list);
+    });
 
-  const handleDateConfirm = (date: Date) => {
-    const iso = [
-      date.getFullYear(),
-      String(date.getMonth() + 1).padStart(2, '0'),
-      String(date.getDate()).padStart(2, '0'),
-    ].join('-');
-    handleChange('fechadiagnostico', iso);
-    if (Platform.OS === 'ios') {
-      setShowIOSDatePicker(false);
+    return Array.from(grouped.entries())
+      .map(([pacienteId, items]) => ({
+        pacienteId,
+        patientName: patientNameById[pacienteId] ?? `Paciente #${pacienteId}`,
+        total: items.length,
+        activeCount: items.filter((item) => (normalizeText(item.estado) ?? 'activa').toLowerCase() !== 'inactiva').length,
+        latestDate: items[0]?.fechadiagnostico ?? items[0]?.creadoen ?? null,
+        tipos: Array.from(
+          new Set(items.map((item) => normalizeText(item.tipo)).filter((value): value is string => Boolean(value))),
+        ),
+      }))
+      .sort(
+        (a, b) =>
+          new Date(b.latestDate ?? 0).getTime() - new Date(a.latestDate ?? 0).getTime(),
+      );
+  }, [patientNameById, records]);
+
+  const visibleSummaries = useMemo(() => {
+    const activePatientId = Number(selectedPatientId);
+    if (Number.isFinite(activePatientId) && activePatientId > 0) {
+      return patientSummaries.filter((summary) => summary.pacienteId === activePatientId);
     }
-  };
+    return patientSummaries;
+  }, [patientSummaries, selectedPatientId]);
+
+  const metrics = useMemo(() => {
+    const severeCount = filteredRecords.filter((record) => {
+      const severity = (normalizeText(record.severidad) ?? '').toLowerCase();
+      return severity.includes('grave') || severity.includes('alta') || severity.includes('severa');
+    }).length;
+    return {
+      total: filteredRecords.length,
+      patients: new Set(filteredRecords.map((record) => record.pacienteId)).size,
+      active: filteredRecords.filter((record) => (normalizeText(record.estado) ?? 'activa').toLowerCase() !== 'inactiva').length,
+      severe: severeCount,
+    };
+  }, [filteredRecords]);
 
   const openDatePicker = () => {
-    const baseDate = getCurrentDateValue();
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
-        value: baseDate,
+        value: parseDateForPicker(form.fechadiagnostico),
         mode: 'date',
         is24Hour: true,
-        onChange: (event, selectedDate) => {
-          if (event.type === 'set' && selectedDate) {
-            handleDateConfirm(selectedDate);
+        onChange: (event, selected) => {
+          if (event.type === 'set' && selected) {
+            handleChange('fechadiagnostico', toDateOnlyString(selected));
           }
         },
       });
@@ -325,635 +318,824 @@ export function AlergiaScreen() {
     setShowIOSDatePicker(true);
   };
 
-  const formatInputDate = (value?: string | null) => {
-    if (!value) {
-      return 'Selecciona una fecha';
-    }
-    const parsed = parseLocalDateString(value);
-    if (!parsed) {
-      return value;
-    }
-    return parsed.toLocaleDateString('es-NI', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
-
-  const ensurePatientOption = (record: AlergiaRecord) => {
-    if (!record.pacienteId) {
-      return;
-    }
-    setPatientOptions((prev) => {
-      if (prev.some((item) => item.pacienteId === record.pacienteId)) {
-        return prev;
-      }
-      const extraOption: LinkedPatient = {
-        pacienteId: record.pacienteId,
-        displayName: `Paciente #${record.pacienteId}`,
-        parentesco: undefined,
-      };
-      return [...prev, extraOption];
-    });
-  };
-
-  const startEditing = (record: AlergiaRecord) => {
-    ensurePatientOption(record);
-    setEditingId(record.alergiaId ?? null);
-    setShowForm(true);
-    setFeedback(null);
-    setForm({
-      pacienteId: record.pacienteId ? String(record.pacienteId) : '',
-      tipo: record.tipo ?? '',
-      desencadenante: record.desencadenante ?? '',
-      severidad: record.severidad ?? '',
-      reaccion: record.reaccion ?? '',
-      tratamiento: record.tratamiento ?? '',
-      fechadiagnostico: extractDatePortion(record.fechadiagnostico) || '',
-      estado: record.estado ?? 'Activa',
-      observaciones: record.observaciones ?? '',
-    });
-  };
-
   const handleSubmit = async () => {
-    setFeedback(null);
-    const hasValidPatient =
-      patientOptions.some((person) => String(person.pacienteId) === form.pacienteId) ||
-      (editingId !== null && Boolean(form.pacienteId));
-    if (!form.pacienteId || !form.tipo.trim() || !hasValidPatient) {
-      setFeedback({
-        type: 'error',
-        message: 'Selecciona una persona válida y completa el tipo de alergia.',
-      });
+    if (!form.pacienteId || !form.tipo.trim()) {
+      Alert.alert('Faltan datos', 'Paciente y tipo de alergia son obligatorios');
       return;
     }
+
     setIsSubmitting(true);
     try {
-      const sanitizedDate = extractDatePortion(form.fechadiagnostico);
-      const payload = {
-        pacienteId: Number(form.pacienteId),
-        tipo: form.tipo.trim(),
-        desencadenante: form.desencadenante.trim() || undefined,
-        severidad: form.severidad.trim() || undefined,
-        reaccion: form.reaccion.trim() || undefined,
-        tratamiento: form.tratamiento.trim() || undefined,
-        estado: form.estado.trim() || undefined,
-        observaciones: form.observaciones.trim() || undefined,
-        fechadiagnostico: sanitizedDate || undefined,
-        creadopor: user?.username ?? undefined,
-      };
-      if (!payload.pacienteId || Number.isNaN(payload.pacienteId)) {
-        throw new Error('Paciente ID debe ser un número válido.');
-      }
-      const endpoint = editingId ? `${API_URL}/alergia/${editingId}` : `${API_URL}/alergia`;
-      const method = editingId ? 'PATCH' : 'POST';
-      const response = await fetch(endpoint, {
-        method,
-        headers,
-        body: JSON.stringify(payload),
+      const offlineResult = await submitJsonWithOfflineFallback({
+        token,
+        path: '/alergia',
+        method: 'POST',
+        description: 'registrar alergia',
+        body: {
+          pacienteId: Number(form.pacienteId),
+          tipo: form.tipo.trim(),
+          desencadenante: form.desencadenante.trim() || undefined,
+          severidad: form.severidad.trim() || undefined,
+          reaccion: form.reaccion.trim() || undefined,
+          tratamiento: form.tratamiento.trim() || undefined,
+          fechadiagnostico: form.fechadiagnostico || undefined,
+          estado: form.estado.trim() || 'Activa',
+          observaciones: form.observaciones.trim() || undefined,
+          creadopor: user?.username ?? undefined,
+        },
       });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(body?.message ?? 'No se pudo guardar la alergia');
+
+      if (offlineResult.status === 'queued') {
+        Alert.alert(
+          'Alergia en cola',
+          'No habia conexion. La alergia quedo guardada localmente y se sincronizara al volver la red.',
+        );
+      } else {
+        Alert.alert('Alergia guardada', 'La alergia fue registrada correctamente');
       }
-      setFeedback({
-        type: 'success',
-        message: editingId ? 'Alergia actualizada correctamente.' : 'Alergia registrada correctamente.',
-      });
+
       resetForm();
-      setShowForm(false);
-      fetchRecords();
+      if (isCreateMode) {
+        navigation.goBack();
+      } else {
+        fetchRecords();
+      }
     } catch (error) {
-      setFeedback({ type: 'error', message: formatErrorMessage(error) });
+      Alert.alert('Error', error instanceof Error ? error.message : 'Fallo la peticion');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchRecords} />}
-    >
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Alergias Registradas</Text>
-          <Text style={styles.subtitle}>Revisa tu historial antes de crear nuevas entradas.</Text>
-        </View>
-      </View>
+  const renderForm = () => (
+    <View style={styles.formCard}>
+      <Text style={styles.formTitle}>Nueva alergia</Text>
+      <Text style={styles.formSubtitle}>
+        Registra el tipo, la reaccion y el manejo recomendado para que quede visible en el historial.
+      </Text>
 
-      <FeedbackBanner feedback={feedback} />
-
-      {loading ? (
-        <View style={styles.stateBox}>
-          <ActivityIndicator color="#1d4ed8" />
-          <Text style={styles.stateText}>Cargando alergias...</Text>
+      <Text style={styles.label}>Paciente</Text>
+      {loadingPatients ? (
+        <View style={styles.loadingCard}>
+          <ActivityIndicator color="#29B6FF" />
+          <Text style={styles.loadingText}>Cargando pacientes...</Text>
         </View>
-      ) : records.length === 0 ? (
-        <View style={styles.stateBox}>
-          <Text style={styles.stateTitle}>Sin registros</Text>
-          <Text style={styles.stateText}>
-            Aún no se han documentado alergias para este paciente.
+      ) : patientOptions.length === 0 ? (
+        <View style={styles.emptyCard}>
+          <Text style={styles.emptyTitle}>No hay pacientes vinculados</Text>
+          <Text style={styles.emptyText}>
+            Primero agrega una persona desde Gestionar Expediente.
           </Text>
         </View>
       ) : (
-        records.map((item) => (
-          <View key={item.alergiaId ?? `${item.tipo}-${item.pacienteId}-${item.creadoen}`} style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View>
-                <Text style={styles.cardTitle}>{item.tipo}</Text>
-                <Text style={styles.cardSubtitle}>
-                  Paciente #{item.pacienteId} · Diagnosticada {formatDate(item.fechadiagnostico)}
-                </Text>
-              </View>
-              <View style={styles.cardHeaderActions}>
-                <View style={[styles.badge, item.estado?.toLowerCase() === 'inactiva' ? styles.badgeMuted : styles.badgeActive]}>
-                  <Text style={styles.badgeText}>{item.estado ?? 'Activa'}</Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.editChip}
-                  onPress={() => startEditing(item)}
-                >
-                  <Text style={styles.editChipText}>Editar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <View style={styles.cardBody}>
-              <Text style={styles.cardDetail}>
-                Severidad: <Text style={styles.bold}>{item.severidad ?? 'Sin dato'}</Text>
-              </Text>
-              <Text style={styles.cardDetail}>
-                Desencadenante: <Text style={styles.bold}>{item.desencadenante ?? 'Sin definir'}</Text>
-              </Text>
-              {item.reaccion ? (
-                <Text style={styles.cardDetail}>Reacción: {item.reaccion}</Text>
-              ) : null}
-              {item.tratamiento ? (
-                <Text style={styles.cardDetail}>Tratamiento: {item.tratamiento}</Text>
-              ) : null}
-              {item.observaciones ? (
-                <Text style={styles.cardDetail}>Notas: {item.observaciones}</Text>
-              ) : null}
-            </View>
-          </View>
-        ))
-      )}
-
-      {showForm && (
-        <View style={styles.formCard}>
-          <Text style={styles.formTitle}>Nueva Alergia</Text>
-          {editingId && (
-            <View style={styles.editBanner}>
-              <Text style={styles.editBannerText}>Editando alergia #{editingId}</Text>
-              <TouchableOpacity onPress={cancelEditing}>
-                <Text style={styles.editBannerAction}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          <Text style={styles.selectLabel}>Persona registrada</Text>
-          {loadingPatients ? (
-            <View style={styles.stateBox}>
-              <ActivityIndicator color="#1d4ed8" />
-              <Text style={styles.stateText}>Cargando personas...</Text>
-            </View>
-          ) : patientOptions.length === 0 ? (
-            <View style={styles.emptySelect}>
-              <Text style={styles.emptySelectText}>
-                No tienes personas registradas. Primero agrégalas desde Gestionar Expediente.
-              </Text>
-              <TouchableOpacity style={styles.refreshSmallBtn} onPress={fetchPatients}>
-                <Text style={styles.refreshSmallText}>Reintentar</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.pickerWrapper}>
-              <Picker
-                selectedValue={form.pacienteId}
-                onValueChange={(value) => handleChange('pacienteId', String(value))}
-              >
-                {patientOptions.map((person) => (
-                  <Picker.Item
-                    key={person.pacienteId}
-                    label={
-                      person.parentesco
-                        ? `${person.displayName} · ${person.parentesco}`
-                        : person.displayName
-                    }
-                    value={String(person.pacienteId)}
-                  />
-                ))}
-              </Picker>
-            </View>
-          )}
-          <Text style={styles.inputLabel}>Tipo de alergia</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Tipo de alergia"
-            value={form.tipo}
-            onChangeText={(text) => handleChange('tipo', text)}
-          />
-          <Text style={styles.inputLabel}>Desencadenante</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Desencadenante"
-            value={form.desencadenante}
-            onChangeText={(text) => handleChange('desencadenante', text)}
-          />
-          <Text style={styles.inputLabel}>Severidad</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Severidad (leve, moderada...)"
-            value={form.severidad}
-            onChangeText={(text) => handleChange('severidad', text)}
-          />
-          <Text style={styles.inputLabel}>Reacción típica</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Reacción típica"
-            value={form.reaccion}
-            onChangeText={(text) => handleChange('reaccion', text)}
-          />
-          <Text style={styles.inputLabel}>Tratamiento recomendado</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Tratamiento recomendado"
-            value={form.tratamiento}
-            onChangeText={(text) => handleChange('tratamiento', text)}
-          />
-          <Text style={styles.inputLabel}>Fecha diagnóstico</Text>
-          <View style={styles.dateRow}>
-            <TouchableOpacity style={styles.dateButton} onPress={openDatePicker}>
-              <Text style={styles.dateButtonText}>{formatInputDate(form.fechadiagnostico)}</Text>
-            </TouchableOpacity>
-            {form.fechadiagnostico ? (
-              <TouchableOpacity
-                style={styles.clearDateBtn}
-                onPress={() => handleChange('fechadiagnostico', '')}
-              >
-                <Text style={styles.clearDateText}>Limpiar</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
-          {Platform.OS === 'ios' && showIOSDatePicker && (
-            <View style={styles.iosPickerWrapper}>
-              <DateTimePicker
-                mode="date"
-                display="spinner"
-                value={getCurrentDateValue()}
-                onChange={(_, selectedDate) => {
-                  if (selectedDate) {
-                    handleDateConfirm(selectedDate);
-                  }
-                }}
-              />
-              <TouchableOpacity
-                onPress={() => setShowIOSDatePicker(false)}
-                style={styles.iosPickerDoneBtn}
-              >
-                <Text style={styles.iosPickerDoneText}>Listo</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          <Text style={styles.inputLabel}>Estado</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Estado (Activa, Inactiva...)"
-            value={form.estado}
-            onChangeText={(text) => handleChange('estado', text)}
-          />
-          <Text style={styles.inputLabel}>Observaciones</Text>
-          <TextInput
-            style={[styles.input, styles.multiline]}
-            placeholder="Observaciones"
-            value={form.observaciones}
-            onChangeText={(text) => handleChange('observaciones', text)}
-            multiline
-            numberOfLines={3}
-          />
-          <TouchableOpacity
-            style={[styles.saveBtn, isSubmitting && styles.saveBtnDisabled]}
-            onPress={handleSubmit}
-            disabled={isSubmitting}
+        <View style={styles.pickerWrapper}>
+          <Picker
+            selectedValue={form.pacienteId}
+            onValueChange={(value) => handleChange('pacienteId', String(value))}
+            dropdownIconColor="#F4F8FF"
+            style={styles.picker}
           >
-            {isSubmitting ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.saveBtnText}>Guardar Alergia</Text>
-            )}
-          </TouchableOpacity>
+            <Picker.Item label="Selecciona un paciente" value="" color={pickerItemColor} />
+            {patientOptions.map((patient) => (
+              <Picker.Item
+                key={patient.pacienteId}
+                label={patient.displayName}
+                value={String(patient.pacienteId)}
+                color={pickerItemColor}
+              />
+            ))}
+          </Picker>
         </View>
       )}
-      <TouchableOpacity style={styles.fab} onPress={() => setShowForm((prev) => !prev)}>
-        <Text style={styles.fabText}>{showForm ? '×' : '+'}</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Tipo de alergia"
+        placeholderTextColor="#9FB3C8"
+        value={form.tipo}
+        onChangeText={(value) => handleChange('tipo', value)}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Desencadenante"
+        placeholderTextColor="#9FB3C8"
+        value={form.desencadenante}
+        onChangeText={(value) => handleChange('desencadenante', value)}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Severidad"
+        placeholderTextColor="#9FB3C8"
+        value={form.severidad}
+        onChangeText={(value) => handleChange('severidad', value)}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Reaccion tipica"
+        placeholderTextColor="#9FB3C8"
+        value={form.reaccion}
+        onChangeText={(value) => handleChange('reaccion', value)}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Tratamiento recomendado"
+        placeholderTextColor="#9FB3C8"
+        value={form.tratamiento}
+        onChangeText={(value) => handleChange('tratamiento', value)}
+      />
+
+      <Text style={styles.label}>Fecha diagnostico</Text>
+      <TouchableOpacity style={styles.dateButton} onPress={openDatePicker}>
+        <Text style={styles.dateButtonText}>{formatDisplayDate(form.fechadiagnostico)}</Text>
       </TouchableOpacity>
-    </ScrollView>
+
+      {Platform.OS === 'ios' && showIOSDatePicker ? (
+        <View style={styles.iosPickerCard}>
+          <DateTimePicker
+            mode="date"
+            display="spinner"
+            value={parseDateForPicker(form.fechadiagnostico)}
+            onChange={(_, selected) => {
+              if (selected) handleChange('fechadiagnostico', toDateOnlyString(selected));
+            }}
+          />
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => setShowIOSDatePicker(false)}
+          >
+            <Text style={styles.secondaryButtonText}>Listo</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
+      <TextInput
+        style={styles.input}
+        placeholder="Estado"
+        placeholderTextColor="#9FB3C8"
+        value={form.estado}
+        onChangeText={(value) => handleChange('estado', value)}
+      />
+      <TextInput
+        style={[styles.input, styles.multiline]}
+        placeholder="Observaciones"
+        placeholderTextColor="#9FB3C8"
+        value={form.observaciones}
+        multiline
+        onChangeText={(value) => handleChange('observaciones', value)}
+      />
+
+      <View style={styles.formActions}>
+        <TouchableOpacity
+          style={styles.cancelButton}
+          onPress={() => {
+            resetForm();
+            if (isCreateMode) {
+              navigation.goBack();
+            }
+          }}
+        >
+          <Text style={styles.cancelButtonText}>Cancelar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.primaryButton, isSubmitting ? styles.primaryButtonDisabled : null]}
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color="#F4F8FF" />
+          ) : (
+            <Text style={styles.primaryButtonText}>Guardar</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  if (isCreateMode) {
+    return (
+      <ScrollView contentContainerStyle={styles.container} style={styles.screen}>
+        <View style={styles.heroCard}>
+          <Text style={styles.eyebrow}>Riesgos y reacciones</Text>
+          <Text style={styles.title}>Nueva alergia</Text>
+          <Text style={styles.subtitle}>
+            Registra el tipo, la reaccion y el manejo recomendado para que quede visible en el historial clinico.
+          </Text>
+        </View>
+        {renderForm()}
+      </ScrollView>
+    );
+  }
+
+  return (
+    <View style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.heroCard}>
+          <Text style={styles.eyebrow}>Riesgos y reacciones</Text>
+          <Text style={styles.title}>Alergias</Text>
+          <Text style={styles.subtitle}>
+            Consulta el resumen por persona, detecta alergias activas y filtra el historial cuando lo necesites.
+          </Text>
+        </View>
+
+        <View style={styles.metricsRow}>
+          <View style={styles.metricCard}>
+            <Text style={styles.metricValue}>{metrics.total}</Text>
+            <Text style={styles.metricLabel}>Registros</Text>
+          </View>
+          <View style={styles.metricCard}>
+            <Text style={styles.metricValue}>{metrics.patients}</Text>
+            <Text style={styles.metricLabel}>Pacientes</Text>
+          </View>
+          <View style={styles.metricCard}>
+            <Text style={styles.metricValue}>{metrics.active}</Text>
+            <Text style={styles.metricLabel}>Activas</Text>
+          </View>
+          <View style={styles.metricCard}>
+            <Text style={styles.metricValue}>{metrics.severe}</Text>
+            <Text style={styles.metricLabel}>Severas</Text>
+          </View>
+        </View>
+
+        <View style={styles.filterCard}>
+          <Text style={styles.label}>Filtrar por paciente</Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={selectedPatientId}
+              onValueChange={(value) => setSelectedPatientId(String(value))}
+              enabled={!loadingPatients}
+              dropdownIconColor="#F4F8FF"
+              style={styles.picker}
+            >
+              <Picker.Item
+                label={loadingPatients ? 'Cargando pacientes...' : 'Todos los pacientes'}
+                value=""
+                color={pickerItemColor}
+              />
+              {patientOptions.map((patient) => (
+                <Picker.Item
+                  key={patient.pacienteId}
+                  label={patient.displayName}
+                  value={String(patient.pacienteId)}
+                  color={pickerItemColor}
+                />
+              ))}
+            </Picker>
+          </View>
+          <Text style={styles.filterHint}>
+            {selectedPatientId
+              ? `Mostrando alergias de ${patientNameById[Number(selectedPatientId)] ?? 'paciente'}`
+              : 'Mostrando el historial alergico completo'}
+          </Text>
+        </View>
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Personas y alergias</Text>
+          <Text style={styles.sectionSubtitle}>{`${visibleSummaries.length} perfiles`}</Text>
+        </View>
+
+        {loadingRecords ? (
+          <View style={styles.loadingCard}>
+            <ActivityIndicator color="#29B6FF" />
+            <Text style={styles.loadingText}>Cargando resumen...</Text>
+          </View>
+        ) : visibleSummaries.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyTitle}>Todavia no hay alergias registradas</Text>
+            <Text style={styles.emptyText}>
+              Usa el boton flotante para registrar la primera alergia de un paciente.
+            </Text>
+          </View>
+        ) : (
+          visibleSummaries.map((summary) => (
+            <TouchableOpacity
+              key={summary.pacienteId}
+              style={[
+                styles.summaryCard,
+                Number(selectedPatientId) === summary.pacienteId ? styles.summaryCardActive : null,
+              ]}
+              onPress={() =>
+                setSelectedPatientId((current) =>
+                  Number(current) === summary.pacienteId ? '' : String(summary.pacienteId),
+                )
+              }
+              activeOpacity={0.9}
+            >
+              <View style={styles.summaryHeader}>
+                <View style={styles.summaryHeaderBody}>
+                  <Text style={styles.summaryName}>{summary.patientName}</Text>
+                  <Text style={styles.summaryMeta}>
+                    {summary.latestDate ? `Ultima: ${formatRecordDate(summary.latestDate)}` : 'Sin fecha reciente'}
+                  </Text>
+                </View>
+                <View style={styles.summaryCountBadge}>
+                  <Text style={styles.summaryCountValue}>{summary.total}</Text>
+                  <Text style={styles.summaryCountLabel}>alergias</Text>
+                </View>
+              </View>
+              <Text style={styles.summaryPrimary}>{`${summary.activeCount} activas`}</Text>
+              <Text style={styles.summarySecondary}>
+                {summary.tipos.length > 0
+                  ? summary.tipos.slice(0, 3).join(' Ã¢â‚¬Â¢ ')
+                  : 'Sin tipos registrados'}
+              </Text>
+              {summary.tipos.length > 0 ? (
+                <View style={styles.chipRow}>
+                  {summary.tipos.slice(0, 4).map((tipo) => (
+                    <View key={`${summary.pacienteId}-${tipo}`} style={styles.chip}>
+                      <Text style={styles.chipText}>{tipo}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+              <Text style={styles.summaryAction}>
+                {Number(selectedPatientId) === summary.pacienteId
+                  ? 'Toca para volver a ver todos'
+                  : 'Toca para filtrar este historial'}
+              </Text>
+            </TouchableOpacity>
+          ))
+        )}
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Historial de alergias</Text>
+          <Text style={styles.sectionSubtitle}>{`${filteredRecords.length} registros`}</Text>
+        </View>
+
+        {loadingRecords ? (
+          <View style={styles.loadingCard}>
+            <ActivityIndicator color="#29B6FF" />
+            <Text style={styles.loadingText}>Cargando historial...</Text>
+          </View>
+        ) : filteredRecords.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyTitle}>No hay alergias para este filtro</Text>
+            <Text style={styles.emptyText}>
+              Cambia el paciente seleccionado o registra una nueva alergia.
+            </Text>
+          </View>
+        ) : (
+          filteredRecords.map((record) => {
+            const statusColors = getStatusColors(record.estado);
+            const severityColors = getSeverityColors(record.severidad);
+            return (
+              <View key={record.alergiaId} style={styles.recordCard}>
+                <View style={styles.recordTopRow}>
+                  <View style={styles.datePill}>
+                    <Text style={styles.datePillText}>{formatRecordDate(record.fechadiagnostico)}</Text>
+                  </View>
+                  <View style={styles.statusRow}>
+                    <View
+                      style={[
+                        styles.statusPill,
+                        {
+                          backgroundColor: severityColors.backgroundColor,
+                          borderColor: severityColors.borderColor,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.statusPillText, { color: severityColors.color }]}>
+                        {normalizeText(record.severidad) ?? 'Sin severidad'}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.statusPill,
+                        {
+                          backgroundColor: statusColors.backgroundColor,
+                          borderColor: statusColors.borderColor,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.statusPillText, { color: statusColors.color }]}>
+                        {normalizeText(record.estado) ?? 'Activa'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                <Text style={styles.recordTitle}>{normalizeText(record.tipo) ?? 'Alergia'}</Text>
+                {!selectedPatientId ? (
+                  <Text style={styles.recordPatient}>
+                    {patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`}
+                  </Text>
+                ) : null}
+                <Text style={styles.recordText}>
+                  Desencadenante: {normalizeText(record.desencadenante) ?? 'Sin dato'}
+                </Text>
+                <Text style={styles.recordText}>
+                  Reaccion: {normalizeText(record.reaccion) ?? 'Sin dato'}
+                </Text>
+                <Text style={styles.recordText}>
+                  Tratamiento: {normalizeText(record.tratamiento) ?? 'Sin dato'}
+                </Text>
+                {normalizeText(record.observaciones) ? (
+                  <Text style={styles.recordText}>Notas: {normalizeText(record.observaciones)}</Text>
+                ) : null}
+              </View>
+            );
+          })
+        )}
+      </ScrollView>
+
+      <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('AlergiaCreate')}>
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
-  content: {
-    padding: 20,
-    paddingBottom: 40,
-    gap: 16,
+  container: {
+    padding: 24,
+    paddingBottom: 120,
+    backgroundColor: '#071120',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: 12,
+  heroCard: {
+    borderRadius: 28,
+    padding: 22,
+    marginBottom: 18,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
+  },
+  eyebrow: {
+    color: '#29B6FF',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 8,
   },
   title: {
-    color: '#f8fafc',
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#F4F8FF',
   },
   subtitle: {
-    color: '#cbd5f5',
-    fontSize: 13,
-    marginTop: 4,
+    marginTop: 10,
+    color: '#C9D7E8',
+    fontSize: 15,
+    lineHeight: 22,
   },
-  feedbackBox: {
-    borderRadius: 12,
-    padding: 12,
+  metricsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 18,
+    marginHorizontal: -5,
+  },
+  metricCard: {
+    width: '50%',
+    paddingHorizontal: 5,
+    marginBottom: 10,
+  },
+  metricValue: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#F4F8FF',
+  },
+  metricLabel: {
+    marginTop: 6,
+    color: '#C9D7E8',
+    fontSize: 13,
+  },
+  filterCard: {
+    backgroundColor: '#071120',
+    borderRadius: 22,
+    padding: 18,
     borderWidth: 1,
+    borderColor: '#132238',
+    marginBottom: 18,
   },
-  feedbackSuccess: {
-    backgroundColor: '#dcfce7',
-    borderColor: '#22c55e',
+  label: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#F4F8FF',
+    marginBottom: 8,
   },
-  feedbackError: {
-    backgroundColor: '#fee2e2',
-    borderColor: '#ef4444',
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#071120',
   },
-  feedbackText: {
+  picker: {
+    color: '#F4F8FF',
+  },
+  filterHint: {
+    marginTop: 10,
+    color: '#9FB3C8',
     fontSize: 13,
-    fontWeight: '600',
   },
-  feedbackTextSuccess: {
-    color: '#166534',
+  sectionHeader: {
+    marginBottom: 12,
   },
-  feedbackTextError: {
-    color: '#b91c1c',
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#F4F8FF',
   },
-  stateBox: {
-    backgroundColor: '#1e293b',
+  sectionSubtitle: {
+    marginTop: 4,
+    color: '#9FB3C8',
+  },
+  loadingCard: {
     borderRadius: 20,
+    padding: 22,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#C9D7E8',
+  },
+  emptyCard: {
+    borderRadius: 22,
     padding: 20,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    color: '#F4F8FF',
+    fontWeight: '800',
+    fontSize: 16,
+    marginBottom: 6,
+  },
+  emptyText: {
+    color: '#9FB3C8',
+    lineHeight: 20,
+  },
+  summaryCard: {
+    borderRadius: 22,
+    padding: 18,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
+    marginBottom: 12,
+  },
+  summaryCardActive: {
+    borderColor: '#29B6FF',
+    backgroundColor: '#29B6FF18',
+  },
+  summaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  summaryHeaderBody: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  summaryName: {
+    color: '#F4F8FF',
+    fontSize: 17,
+    fontWeight: '900',
+  },
+  summaryMeta: {
+    marginTop: 4,
+    color: '#9FB3C8',
+  },
+  summaryCountBadge: {
+    minWidth: 74,
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: '#182A44',
+    borderWidth: 1,
+    borderColor: '#29B6FF',
     alignItems: 'center',
   },
-  stateTitle: {
-    color: '#f8fafc',
+  summaryCountValue: {
+    color: '#29B6FF',
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  summaryCountLabel: {
+    color: '#C9D7E8',
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  summaryPrimary: {
+    color: '#F4F8FF',
+    fontSize: 15,
     fontWeight: '700',
-    fontSize: 16,
+  },
+  summarySecondary: {
+    marginTop: 6,
+    color: '#9FB3C8',
+    lineHeight: 20,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 12,
     marginBottom: 4,
   },
-  stateText: {
-    color: '#cbd5f5',
-    textAlign: 'center',
+  chip: {
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#27496D',
+    marginRight: 8,
+    marginBottom: 8,
   },
-  card: {
-    backgroundColor: '#1e293b',
-    borderRadius: 20,
-    padding: 16,
-    gap: 10,
+  chipText: {
+    color: '#C9D7E8',
+    fontSize: 12,
+    fontWeight: '700',
   },
-  cardHeader: {
+  summaryAction: {
+    marginTop: 8,
+    color: '#29B6FF',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  recordCard: {
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 12,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
+  },
+  recordTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: 12,
+    marginBottom: 12,
   },
-  cardHeaderActions: {
+  datePill: {
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    backgroundColor: '#29B6FF18',
+  },
+  datePillText: {
+    color: '#29B6FF',
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  statusRow: {
     alignItems: 'flex-end',
-    gap: 8,
   },
-  cardTitle: {
-    color: '#f8fafc',
+  statusPill: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+  },
+  statusPillText: {
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  recordTitle: {
+    color: '#F4F8FF',
     fontSize: 18,
+    fontWeight: '900',
+    marginBottom: 6,
+  },
+  recordPatient: {
+    color: '#29B6FF',
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  recordText: {
+    color: '#C9D7E8',
+    marginBottom: 5,
+    lineHeight: 20,
+  },
+  formCard: {
+    backgroundColor: '#071120',
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#132238',
+    marginTop: 10,
+  },
+  formTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#F4F8FF',
+  },
+  formSubtitle: {
+    marginTop: 6,
+    marginBottom: 14,
+    color: '#9FB3C8',
+    lineHeight: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
+    fontSize: 15,
+    backgroundColor: '#071120',
+    color: '#F4F8FF',
+  },
+  multiline: {
+    minHeight: 96,
+    textAlignVertical: 'top',
+  },
+  dateButton: {
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 14,
+    paddingVertical: 15,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+    backgroundColor: '#071120',
+  },
+  dateButtonText: {
+    color: '#F4F8FF',
+    textAlign: 'center',
+    fontSize: 15,
     fontWeight: '700',
   },
-  cardSubtitle: {
-    color: '#cbd5f5',
-    fontSize: 12,
+  iosPickerCard: {
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#071120',
+    marginBottom: 12,
+  },
+  secondaryButton: {
+    alignSelf: 'flex-end',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  secondaryButtonText: {
+    color: '#29B6FF',
+    fontWeight: '800',
+  },
+  formActions: {
+    flexDirection: 'row',
     marginTop: 4,
   },
-  badge: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  badgeActive: {
-    backgroundColor: '#bbf7d0',
-  },
-  badgeMuted: {
-    backgroundColor: '#fed7aa',
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  editChip: {
-    borderWidth: 1,
-    borderColor: '#2563eb',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  editChipText: {
-    color: '#2563eb',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  cardBody: {
-    gap: 4,
-  },
-  cardDetail: {
-    color: '#e2e8f0',
-    fontSize: 13,
-  },
-  bold: {
-    fontWeight: '700',
-  },
-  primaryBtn: {
-    backgroundColor: '#2563eb',
-    borderRadius: 16,
-    paddingVertical: 14,
+  cancelButton: {
+    flex: 1,
+    borderRadius: 14,
+    paddingVertical: 15,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#9FB3C8',
+    backgroundColor: '#071120',
+    marginRight: 6,
   },
-  primaryBtnText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 15,
+  cancelButtonText: {
+    color: '#C9D7E8',
+    fontWeight: '800',
+  },
+  primaryButton: {
+    flex: 1,
+    backgroundColor: '#29B6FF',
+    borderRadius: 14,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginLeft: 6,
+  },
+  primaryButtonDisabled: {
+    opacity: 0.7,
+  },
+  primaryButtonText: {
+    color: '#F4F8FF',
+    fontWeight: '900',
+    fontSize: 16,
   },
   fab: {
     position: 'absolute',
     right: 24,
     bottom: 24,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: '#2563eb',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#29B6FF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 7,
+    shadowColor: '#000000',
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
   },
   fabText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 30,
-    lineHeight: 32,
-    fontWeight: '700',
-  },
-  formCard: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 18,
-    gap: 12,
-  },
-  editBanner: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#dbeafe',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  editBannerText: {
-    color: '#1d4ed8',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  editBannerAction: {
-    color: '#1d4ed8',
-    fontWeight: '700',
-    textDecorationLine: 'underline',
-  },
-  selectLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#0f172a',
-  },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: '#cbd5f5',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  inputLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#0f172a',
-  },
-  emptySelect: {
-    borderWidth: 1,
-    borderColor: '#f97316',
-    borderRadius: 12,
-    padding: 12,
-    backgroundColor: '#fff7ed',
-    gap: 8,
-  },
-  emptySelectText: {
-    color: '#9a3412',
-    fontSize: 13,
-  },
-  refreshSmallBtn: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#f97316',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  refreshSmallText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  formTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#cbd5f5',
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 15,
-    color: '#0f172a',
-  },
-  multiline: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  dateButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#cbd5f5',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    backgroundColor: '#f1f5f9',
-  },
-  dateButtonText: {
-    color: '#0f172a',
-    fontSize: 15,
-  },
-  clearDateBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: '#fee2e2',
-  },
-  clearDateText: {
-    color: '#b91c1c',
-    fontWeight: '700',
-  },
-  iosPickerWrapper: {
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#cbd5f5',
-    borderRadius: 16,
-    backgroundColor: '#f8fafc',
-    overflow: 'hidden',
-  },
-  iosPickerDoneBtn: {
-    borderTopWidth: 1,
-    borderTopColor: '#cbd5f5',
-    paddingVertical: 10,
-    alignItems: 'center',
-    backgroundColor: '#e0f2fe',
-  },
-  iosPickerDoneText: {
-    color: '#0f172a',
-    fontWeight: '700',
-  },
-  saveBtn: {
-    backgroundColor: '#0f172a',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  saveBtnDisabled: {
-    opacity: 0.7,
-  },
-  saveBtnText: {
-    color: '#f8fafc',
-    fontWeight: '700',
-    fontSize: 16,
+    lineHeight: 30,
+    fontWeight: '800',
   },
 });

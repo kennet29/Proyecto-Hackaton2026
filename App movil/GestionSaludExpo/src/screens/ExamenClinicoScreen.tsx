@@ -4,6 +4,7 @@ import {
   Alert,
   Image,
   Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,16 +12,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import * as Print from 'expo-print';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
-
-type LinkedPatient = {
-  pacienteId: number;
-  displayName: string;
-};
+import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 
 type ConsultationOption = {
   consultaId: number;
@@ -33,8 +31,6 @@ type ConsultationOption = {
 type ExamPhoto = {
   id: string;
   uri: string;
-  base64: string;
-  mimeType: string;
   fileName: string;
 };
 
@@ -54,22 +50,67 @@ type PdfState = {
   pageCount: number;
 };
 
+type DatePickerField = 'exam-date' | 'result-date';
+
 const todayString = () => new Date().toISOString().slice(0, 10);
 
-const formatDate = (value?: string | null) => {
-  if (!value) {
-    return 'Sin fecha';
+const toDateOnlyString = (input?: Date | string | null): string => {
+  if (!input) return '';
+  if (input instanceof Date) {
+    if (Number.isNaN(input.getTime())) return '';
+    return [
+      input.getFullYear(),
+      String(input.getMonth() + 1).padStart(2, '0'),
+      String(input.getDate()).padStart(2, '0'),
+    ].join('-');
   }
+  const match = String(input).trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+  const parsed = new Date(input);
+  return Number.isNaN(parsed.getTime()) ? '' : toDateOnlyString(parsed);
+};
+
+const parseDateForPicker = (value?: string | null) => {
+  const normalized = toDateOnlyString(value);
+  const parts = normalized.split('-').map(Number);
+  if (parts.length === 3 && parts.every((part) => !Number.isNaN(part))) {
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+  return new Date();
+};
+
+const formatDisplayDate = (value?: string | null) => {
+  if (!value) return 'Selecciona fecha';
+  return parseDateForPicker(value).toLocaleDateString('es-NI', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};
+
+const formatRecordDate = (value?: string | null) => {
+  if (!value) return 'Sin fecha';
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
+  if (Number.isNaN(parsed.getTime())) return String(value);
   return parsed.toLocaleDateString('es-NI', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   });
 };
+
+const normalizeText = (value: unknown) => {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  return text ? text : null;
+};
+
+const escapeHtmlAttribute = (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 
 const buildPdfFileName = (name: string, examDate: string) => {
   const safeName = (name || 'examen')
@@ -90,7 +131,7 @@ const buildPdfHtml = (photos: ExamPhoto[], examName: string) => {
             <h1>${examName || 'Examen clinico'}</h1>
             <p>Hoja ${index + 1} de ${photos.length}</p>
           </header>
-          <img src="data:${photo.mimeType};base64,${photo.base64}" alt="Hoja del examen ${index + 1}" />
+          <img src="${escapeHtmlAttribute(photo.uri)}" alt="Hoja del examen ${index + 1}" />
         </section>
       `,
     )
@@ -104,8 +145,8 @@ const buildPdfHtml = (photos: ExamPhoto[], examName: string) => {
           body {
             margin: 0;
             font-family: Arial, sans-serif;
-            color: #0f172a;
-            background: #ffffff;
+            color: #071120;
+            background: #F4F8FF;
           }
           .page {
             page-break-after: always;
@@ -119,7 +160,7 @@ const buildPdfHtml = (photos: ExamPhoto[], examName: string) => {
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
-            border-bottom: 2px solid #dbeafe;
+            border-bottom: 2px solid #C9D7E8;
             padding-bottom: 8px;
           }
           h1 {
@@ -129,7 +170,7 @@ const buildPdfHtml = (photos: ExamPhoto[], examName: string) => {
           p {
             margin: 0;
             font-size: 12px;
-            color: #475569;
+            color: #9FB3C8;
           }
           img {
             width: 100%;
@@ -146,6 +187,11 @@ const buildPdfHtml = (photos: ExamPhoto[], examName: string) => {
 
 export function ExamenClinicoScreen() {
   const { token, user } = useAuth();
+  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
+  const defaultPacienteId = useMemo(
+    () => (user?.pacienteId ? String(user.pacienteId) : ''),
+    [user?.pacienteId],
+  );
   const authHeaders = useMemo<Record<string, string>>(() => {
     const base: Record<string, string> = {};
     if (token) {
@@ -155,7 +201,7 @@ export function ExamenClinicoScreen() {
   }, [token]);
 
   const [form, setForm] = useState({
-    pacienteId: '',
+    pacienteId: defaultPacienteId,
     consultaId: '',
     nombreExamen: '',
     tipoExamen: 'Laboratorio',
@@ -173,8 +219,10 @@ export function ExamenClinicoScreen() {
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [loadingConsultations, setLoadingConsultations] = useState(false);
   const [loadingExams, setLoadingExams] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [activeIOSDatePicker, setActiveIOSDatePicker] = useState<DatePickerField | null>(null);
   const [screenError, setScreenError] = useState<string | null>(null);
 
   const selectedPatientId = Number(form.pacienteId);
@@ -184,78 +232,61 @@ export function ExamenClinicoScreen() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const resetPdf = () => setPdfState(null);
+  const resetPdf = useCallback(() => setPdfState(null), []);
+
+  const resetDraft = useCallback(() => {
+    setForm((prev) => ({
+      pacienteId: prev.pacienteId,
+      consultaId: '',
+      nombreExamen: '',
+      tipoExamen: 'Laboratorio',
+      laboratorio: '',
+      fechaExamen: todayString(),
+      fechaResultado: todayString(),
+      resultadoTexto: '',
+      observaciones: '',
+    }));
+    setPhotos([]);
+    setPdfState(null);
+    setActiveIOSDatePicker(null);
+  }, []);
 
   const fetchPatients = useCallback(async () => {
     if (!token) {
       setPatientOptions([]);
+      setLoadingPatients(false);
       return;
     }
 
     setLoadingPatients(true);
-    setScreenError(null);
     try {
-      const response = await fetch(`${API_URL}/usuario-paciente/mis-pacientes`, {
-        headers: authHeaders,
-      });
-      const relations = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(relations?.message ?? 'No se pudieron cargar las personas');
+      let normalized = await fetchLinkedPatients(authHeaders, { forceRefresh: true });
+      if (normalized.length === 0 && user?.pacienteId) {
+        normalized = [
+          {
+            pacienteId: Number(user.pacienteId),
+            displayName: user?.username?.split('@')[0] || `Paciente #${user.pacienteId}`,
+          },
+        ];
       }
 
-      const items: (LinkedPatient | null)[] = Array.isArray(relations)
-        ? await Promise.all(
-            relations.map(async (relation: any) => {
-              const rawId =
-                relation?.pacienteId ??
-                relation?.pacienteid ??
-                relation?.id ??
-                relation?.paciente?.pacienteId;
-              const pacienteId = Number(rawId);
-              if (!Number.isFinite(pacienteId)) {
-                return null;
-              }
-
-              let displayName =
-                relation?.displayName ??
-                relation?.nombrePaciente ??
-                relation?.paciente?.displayName ??
-                `Paciente #${pacienteId}`;
-
-              try {
-                const patientResponse = await fetch(`${API_URL}/paciente/${pacienteId}`, {
-                  headers: authHeaders,
-                });
-                const patient = await patientResponse.json().catch(() => null);
-                if (patientResponse.ok && patient) {
-                  const nombres = patient?.nombres ?? '';
-                  const apellidos = patient?.apellidos ?? '';
-                  const combined = `${nombres} ${apellidos}`.trim();
-                  if (combined) {
-                    displayName = combined;
-                  }
-                }
-              } catch {
-                // Ignorar errores individuales para no bloquear el picker.
-              }
-
-              return { pacienteId, displayName };
-            }),
-          )
-        : [];
-
-      setPatientOptions(items.filter((item): item is LinkedPatient => Boolean(item)));
+      setPatientOptions(normalized);
+      setForm((prev) => {
+        if (prev.pacienteId || normalized.length === 0) return prev;
+        return { ...prev, pacienteId: String(normalized[0].pacienteId) };
+      });
     } catch (error) {
       setScreenError(error instanceof Error ? error.message : 'No se pudieron cargar las personas');
       setPatientOptions([]);
     } finally {
       setLoadingPatients(false);
     }
-  }, [authHeaders, token]);
+  }, [authHeaders, token, user?.pacienteId, user?.username]);
 
   const fetchConsultations = useCallback(async () => {
-    if (!hasValidPatient) {
+    if (!token || !hasValidPatient) {
       setConsultations([]);
+      setLoadingConsultations(false);
       return;
     }
 
@@ -298,11 +329,12 @@ export function ExamenClinicoScreen() {
     } finally {
       setLoadingConsultations(false);
     }
-  }, [authHeaders, hasValidPatient, selectedPatientId]);
+  }, [authHeaders, hasValidPatient, selectedPatientId, token]);
 
   const fetchExams = useCallback(async () => {
-    if (!hasValidPatient) {
+    if (!token || !hasValidPatient) {
       setRecentExams([]);
+      setLoadingExams(false);
       return;
     }
 
@@ -317,47 +349,139 @@ export function ExamenClinicoScreen() {
       }
 
       const mapped = Array.isArray(payload)
-        ? payload.map((item: any) => ({
-            examenclinicoId: Number(item?.examenclinicoId ?? item?.examenclinicoid),
-            nombreExamen: String(item?.nombreExamen ?? item?.nombreexamen ?? 'Examen'),
-            tipoExamen: item?.tipoExamen ?? item?.tipoexamen ?? null,
-            fechaExamen: String(item?.fechaExamen ?? item?.fechaexamen ?? ''),
-            laboratorio: item?.laboratorio ?? null,
-            tieneArchivoPdf: Boolean(item?.tieneArchivoPdf ?? item?.mimeArchivoPdf),
-            consultaId: item?.consultaId ?? item?.consultaid ?? null,
-          }))
+        ? payload
+            .map((item: any) => ({
+              examenclinicoId: Number(item?.examenclinicoId ?? item?.examenclinicoid),
+              nombreExamen: String(item?.nombreExamen ?? item?.nombreexamen ?? 'Examen'),
+              tipoExamen: item?.tipoExamen ?? item?.tipoexamen ?? null,
+              fechaExamen: String(item?.fechaExamen ?? item?.fechaexamen ?? ''),
+              laboratorio: item?.laboratorio ?? null,
+              tieneArchivoPdf: Boolean(item?.tieneArchivoPdf ?? item?.mimeArchivoPdf),
+              consultaId: item?.consultaId ?? item?.consultaid ?? null,
+            }))
+            .filter((item) => Number.isFinite(item.examenclinicoId))
+            .sort(
+              (a, b) => new Date(b.fechaExamen).getTime() - new Date(a.fechaExamen).getTime(),
+            )
         : [];
 
-      setRecentExams(mapped.slice(0, 8));
+      setRecentExams(mapped);
     } catch (error) {
       setScreenError(error instanceof Error ? error.message : 'No se pudieron cargar los examenes');
       setRecentExams([]);
     } finally {
       setLoadingExams(false);
     }
-  }, [authHeaders, hasValidPatient, selectedPatientId]);
+  }, [authHeaders, hasValidPatient, selectedPatientId, token]);
 
   useEffect(() => {
-    fetchPatients();
+    void fetchPatients();
   }, [fetchPatients]);
 
   useEffect(() => {
-    fetchConsultations();
-    fetchExams();
+    void fetchConsultations();
+    void fetchExams();
   }, [fetchConsultations, fetchExams]);
 
-  const appendPhoto = (asset: ImagePicker.ImagePickerAsset) => {
-    if (!asset.base64) {
-      throw new Error('No se pudo leer la foto tomada. Intenta de nuevo.');
+  const refreshData = useCallback(async () => {
+    setRefreshing(true);
+    setScreenError(null);
+    try {
+      await fetchPatients();
+      if (hasValidPatient) {
+        await Promise.all([fetchConsultations(), fetchExams()]);
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchConsultations, fetchExams, fetchPatients, hasValidPatient]);
+
+  const patientNameById = useMemo(() => {
+    const map: Record<number, string> = {};
+    patientOptions.forEach((patient) => {
+      map[patient.pacienteId] = patient.displayName;
+    });
+    return map;
+  }, [patientOptions]);
+
+  const selectedPatientName = useMemo(() => {
+    if (!hasValidPatient) return 'sin paciente seleccionado';
+    return patientNameById[selectedPatientId] ?? `Paciente #${selectedPatientId}`;
+  }, [hasValidPatient, patientNameById, selectedPatientId]);
+
+  const metrics = useMemo(
+    () => ({
+      total: recentExams.length,
+      withPdf: recentExams.filter((exam) => exam.tieneArchivoPdf).length,
+      linked: recentExams.filter((exam) => Number(exam.consultaId) > 0).length,
+      draftPages: pdfState?.pageCount ?? photos.length,
+    }),
+    [pdfState?.pageCount, photos.length, recentExams],
+  );
+
+  const setDateFieldValue = useCallback((field: DatePickerField, value: string) => {
+    if (field === 'exam-date') {
+      handleChange('fechaExamen', value);
+      return;
+    }
+    handleChange('fechaResultado', value);
+  }, []);
+
+  const getDateFieldValue = (field: DatePickerField) =>
+    field === 'exam-date' ? form.fechaExamen : form.fechaResultado;
+
+  const showDatePicker = (field: DatePickerField) => {
+    if (Platform.OS === 'android') {
+      DateTimePickerAndroid.open({
+        value: parseDateForPicker(getDateFieldValue(field)),
+        mode: 'date',
+        is24Hour: true,
+        onChange: (event, selected) => {
+          if (event.type === 'set' && selected) {
+            setDateFieldValue(field, toDateOnlyString(selected));
+          }
+        },
+      });
+      return;
     }
 
+    setActiveIOSDatePicker(field);
+  };
+
+  const renderIOSDatePicker = () => {
+    if (Platform.OS !== 'ios' || !activeIOSDatePicker) {
+      return null;
+    }
+
+    return (
+      <View style={styles.iosPickerCard}>
+        <DateTimePicker
+          value={parseDateForPicker(getDateFieldValue(activeIOSDatePicker))}
+          mode="date"
+          display="spinner"
+          locale="es-NI"
+          onChange={(_, selected) => {
+            if (selected) {
+              setDateFieldValue(activeIOSDatePicker, toDateOnlyString(selected));
+            }
+          }}
+        />
+        <TouchableOpacity
+          style={styles.iosDoneButton}
+          onPress={() => setActiveIOSDatePicker(null)}
+        >
+          <Text style={styles.iosDoneButtonText}>Listo</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const appendPhoto = (asset: ImagePicker.ImagePickerAsset) => {
     setPhotos((prev) => [
       ...prev,
       {
         id: `${Date.now()}-${prev.length}`,
         uri: asset.uri,
-        base64: asset.base64!,
-        mimeType: asset.mimeType ?? 'image/jpeg',
         fileName: asset.fileName ?? `hoja-examen-${prev.length + 1}.jpg`,
       },
     ]);
@@ -380,8 +504,7 @@ export function ExamenClinicoScreen() {
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: 'images',
         allowsEditing: false,
-        quality: 0.7,
-        base64: true,
+        quality: 0.45,
       });
 
       if (result.canceled || !result.assets?.length) {
@@ -405,8 +528,7 @@ export function ExamenClinicoScreen() {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: 'images',
         allowsEditing: false,
-        quality: 0.7,
-        base64: true,
+        quality: 0.45,
       });
 
       if (result.canceled || !result.assets?.length) {
@@ -431,6 +553,7 @@ export function ExamenClinicoScreen() {
 
     setGeneratingPdf(true);
     try {
+      // Evita duplicar imagenes grandes en memoria al construir el HTML del PDF.
       const result = await Print.printToFileAsync({
         html: buildPdfHtml(photos, form.nombreExamen || 'Examen clinico'),
         base64: true,
@@ -459,6 +582,7 @@ export function ExamenClinicoScreen() {
     }
 
     setSubmitting(true);
+    setScreenError(null);
     try {
       let currentPdf = pdfState;
       if (!currentPdf && photos.length) {
@@ -501,20 +625,8 @@ export function ExamenClinicoScreen() {
           : 'El resultado del examen quedo registrado.',
       );
 
-      setForm({
-        pacienteId: form.pacienteId,
-        consultaId: '',
-        nombreExamen: '',
-        tipoExamen: 'Laboratorio',
-        laboratorio: '',
-        fechaExamen: todayString(),
-        fechaResultado: todayString(),
-        resultadoTexto: '',
-        observaciones: '',
-      });
-      setPhotos([]);
-      setPdfState(null);
-      fetchExams();
+      resetDraft();
+      await fetchExams();
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo guardar el examen');
     } finally {
@@ -523,260 +635,480 @@ export function ExamenClinicoScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Examenes Clinicos</Text>
-      <Text style={styles.subtitle}>
-        Registra resultados, vincula el examen a una consulta y genera un PDF desde fotos de la hoja.
-      </Text>
-
-      <Text style={styles.sectionTitle}>Datos del examen</Text>
-      <Text style={styles.label}>Paciente</Text>
-      <View style={styles.pickerWrapper}>
-        <Picker
-          selectedValue={form.pacienteId}
-          onValueChange={(value) => {
-            handleChange('pacienteId', String(value));
-            handleChange('consultaId', '');
-          }}
-          enabled={!loadingPatients}
-        >
-          <Picker.Item
-            label={loadingPatients ? 'Cargando personas...' : 'Selecciona una persona'}
-            value=""
-          />
-          {patientOptions.map((patient) => (
-            <Picker.Item
-              key={patient.pacienteId}
-              label={patient.displayName}
-              value={String(patient.pacienteId)}
-            />
-          ))}
-        </Picker>
-      </View>
-
-      <Text style={styles.label}>Consulta medica vinculada</Text>
-      <View style={styles.pickerWrapper}>
-        <Picker
-          selectedValue={form.consultaId}
-          onValueChange={(value) => handleChange('consultaId', String(value))}
-          enabled={hasValidPatient && !loadingConsultations}
-        >
-          <Picker.Item
-            label={
-              !hasValidPatient
-                ? 'Selecciona primero una persona'
-                : loadingConsultations
-                  ? 'Cargando consultas...'
-                  : 'Sin consulta especifica'
-            }
-            value=""
-          />
-          {consultations.map((consulta) => (
-            <Picker.Item
-              key={consulta.consultaId}
-              label={`#${consulta.consultaId} · ${formatDate(consulta.fechaconsulta)} · ${consulta.motivo}`}
-              value={String(consulta.consultaId)}
-            />
-          ))}
-        </Picker>
-      </View>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Nombre del examen"
-        placeholderTextColor="#94a3b8"
-        value={form.nombreExamen}
-        onChangeText={(value) => handleChange('nombreExamen', value)}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Tipo de examen"
-        placeholderTextColor="#94a3b8"
-        value={form.tipoExamen}
-        onChangeText={(value) => handleChange('tipoExamen', value)}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Laboratorio o centro"
-        placeholderTextColor="#94a3b8"
-        value={form.laboratorio}
-        onChangeText={(value) => handleChange('laboratorio', value)}
-      />
-      <View style={styles.row}>
-        <TextInput
-          style={[styles.input, styles.halfInput]}
-          placeholder="Fecha examen YYYY-MM-DD"
-          placeholderTextColor="#94a3b8"
-          value={form.fechaExamen}
-          onChangeText={(value) => handleChange('fechaExamen', value)}
-        />
-        <TextInput
-          style={[styles.input, styles.halfInput]}
-          placeholder="Fecha resultado YYYY-MM-DD"
-          placeholderTextColor="#94a3b8"
-          value={form.fechaResultado}
-          onChangeText={(value) => handleChange('fechaResultado', value)}
-        />
-      </View>
-      <TextInput
-        style={[styles.input, styles.multiline]}
-        placeholder="Resultado en texto"
-        placeholderTextColor="#94a3b8"
-        value={form.resultadoTexto}
-        multiline
-        onChangeText={(value) => handleChange('resultadoTexto', value)}
-      />
-      <TextInput
-        style={[styles.input, styles.multiline]}
-        placeholder="Observaciones"
-        placeholderTextColor="#94a3b8"
-        value={form.observaciones}
-        multiline
-        onChangeText={(value) => handleChange('observaciones', value)}
-      />
-
-      <Text style={styles.sectionTitle}>Hoja del examen</Text>
-      <Text style={styles.helperText}>
-        Toma una o varias fotos. Luego el sistema las une en un PDF para adjuntarlo al examen.
-      </Text>
-      <View style={styles.actionRow}>
-        <TouchableOpacity style={styles.secondaryBtn} onPress={handleTakePhoto}>
-          <Text style={styles.secondaryBtnText}>Tomar foto</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.secondaryBtn} onPress={handlePickFromLibrary}>
-          <Text style={styles.secondaryBtnText}>Galeria</Text>
-        </TouchableOpacity>
-      </View>
-
-      {photos.length ? (
-        <View style={styles.photoGrid}>
-          {photos.map((photo, index) => (
-            <View key={photo.id} style={styles.photoCard}>
-              <Image source={{ uri: photo.uri }} style={styles.photoPreview} />
-              <Text style={styles.photoLabel}>Hoja {index + 1}</Text>
-              <TouchableOpacity style={styles.removePhotoBtn} onPress={() => removePhoto(photo.id)}>
-                <Text style={styles.removePhotoBtnText}>Quitar</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-      ) : (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>Aun no has agregado fotos del examen.</Text>
-        </View>
-      )}
-
-      <TouchableOpacity
-        style={[styles.primaryBtn, !photos.length && styles.primaryBtnDisabled]}
-        onPress={() =>
-          generatePdf().catch((error) =>
-            Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo generar el PDF'),
-          )
+    <View style={styles.screen}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={() => void refreshData()} tintColor="#38F28E" />
         }
-        disabled={!photos.length || generatingPdf}
       >
-        <Text style={styles.primaryBtnText}>
-          {generatingPdf ? 'Generando PDF...' : 'Convertir fotos a PDF'}
-        </Text>
-      </TouchableOpacity>
-
-      {pdfState ? (
-        <View style={styles.pdfCard}>
-          <Text style={styles.pdfTitle}>PDF listo</Text>
-          <Text style={styles.pdfMeta}>{pdfState.fileName}</Text>
-          <Text style={styles.pdfMeta}>{pdfState.pageCount} pagina(s) generadas</Text>
-        </View>
-      ) : null}
-
-      <TouchableOpacity
-        style={[styles.saveBtn, submitting && styles.primaryBtnDisabled]}
-        onPress={handleSubmit}
-        disabled={submitting}
-      >
-        <Text style={styles.saveBtnText}>{submitting ? 'Guardando...' : 'Guardar examen'}</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.sectionTitle}>Examenes recientes</Text>
-      {screenError ? <Text style={styles.errorText}>{screenError}</Text> : null}
-      {loadingExams ? (
-        <ActivityIndicator color="#38bdf8" style={styles.loader} />
-      ) : recentExams.length ? (
-        recentExams.map((exam) => (
-          <View key={exam.examenclinicoId} style={styles.examCard}>
-            <Text style={styles.examTitle}>{exam.nombreExamen}</Text>
-            <Text style={styles.examMeta}>
-              {formatDate(exam.fechaExamen)}
-              {exam.laboratorio ? ` · ${exam.laboratorio}` : ''}
-            </Text>
-            <Text style={styles.examMeta}>
-              {exam.consultaId ? `Consulta #${exam.consultaId}` : 'Sin consulta vinculada'}
-              {exam.tieneArchivoPdf ? ' · PDF adjunto' : ' · Solo texto'}
-            </Text>
-          </View>
-        ))
-      ) : (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>
+        <View style={styles.heroCard}>
+          <Text style={styles.eyebrow}>EXPEDIENTE CLINICO</Text>
+          <Text style={styles.title}>Examenes clinicos</Text>
+          <Text style={styles.subtitle}>
+            Registra resultados, genera PDF desde fotos y revisa el historial por paciente con la
+            misma estructura que el resto del expediente.
+          </Text>
+          <Text style={styles.heroHint}>
             {hasValidPatient
-              ? 'No hay examenes registrados para esta persona.'
-              : 'Selecciona una persona para ver sus examenes.'}
+              ? `Paciente activo: ${selectedPatientName}`
+              : 'Selecciona un paciente para cargar consultas e historial.'}
           </Text>
         </View>
-      )}
-    </ScrollView>
+
+        {screenError ? (
+          <View style={styles.errorCard}>
+            <Text style={styles.errorTitle}>No se pudo completar la carga</Text>
+            <Text style={styles.errorText}>{screenError}</Text>
+          </View>
+        ) : null}
+
+        <View style={styles.metricsRow}>
+          <View style={styles.metricCard}>
+            <Text style={styles.metricValue}>{metrics.total}</Text>
+            <Text style={styles.metricLabel}>Examenes</Text>
+          </View>
+          <View style={styles.metricCard}>
+            <Text style={styles.metricValue}>{metrics.withPdf}</Text>
+            <Text style={styles.metricLabel}>Con PDF</Text>
+          </View>
+          <View style={styles.metricCard}>
+            <Text style={styles.metricValue}>{metrics.linked}</Text>
+            <Text style={styles.metricLabel}>Con consulta</Text>
+          </View>
+          <View style={styles.metricCard}>
+            <Text style={styles.metricValue}>{metrics.draftPages}</Text>
+            <Text style={styles.metricLabel}>Hojas cargadas</Text>
+          </View>
+        </View>
+
+        <View style={styles.formCard}>
+          <Text style={styles.formTitle}>Registrar examen</Text>
+          <Text style={styles.formIntro}>
+            Completa el resultado, vincula la consulta si aplica y adjunta la hoja escaneada o
+            fotografiada.
+          </Text>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Paciente</Text>
+            <View style={styles.pickerWrapper}>
+              <Picker
+                style={styles.picker}
+                selectedValue={form.pacienteId}
+                onValueChange={(value) => {
+                  handleChange('pacienteId', String(value));
+                  handleChange('consultaId', '');
+                }}
+                enabled={!loadingPatients}
+                dropdownIconColor="#F4F8FF"
+              >
+                <Picker.Item
+                  label={loadingPatients ? 'Cargando pacientes...' : 'Selecciona un paciente'}
+                  value=""
+                  color={pickerItemColor}
+                />
+                {patientOptions.map((patient) => (
+                  <Picker.Item
+                    key={patient.pacienteId}
+                    label={patient.displayName}
+                    value={String(patient.pacienteId)}
+                    color={pickerItemColor}
+                  />
+                ))}
+              </Picker>
+            </View>
+            <Text style={styles.fieldHint}>{`Trabajando con ${selectedPatientName}`}</Text>
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Consulta medica relacionada</Text>
+            <View style={styles.pickerWrapper}>
+              <Picker
+                style={styles.picker}
+                selectedValue={form.consultaId}
+                onValueChange={(value) => handleChange('consultaId', String(value))}
+                enabled={hasValidPatient && !loadingConsultations}
+                dropdownIconColor="#F4F8FF"
+              >
+                <Picker.Item
+                  label={
+                    !hasValidPatient
+                      ? 'Selecciona primero un paciente'
+                      : loadingConsultations
+                        ? 'Cargando consultas...'
+                        : 'Sin consulta especifica'
+                  }
+                  value=""
+                  color={pickerItemColor}
+                />
+                {consultations.map((consulta) => (
+                  <Picker.Item
+                    key={consulta.consultaId}
+                    label={`#${consulta.consultaId} | ${formatRecordDate(consulta.fechaconsulta)} | ${consulta.motivo}`}
+                    value={String(consulta.consultaId)}
+                    color={pickerItemColor}
+                  />
+                ))}
+              </Picker>
+            </View>
+            <Text style={styles.fieldHint}>Opcional. Vinculalo si este examen pertenece a una consulta concreta.</Text>
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Nombre del examen o estudio</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ej. Hemograma completo, Rayos X de torax"
+              placeholderTextColor="#9FB3C8"
+              value={form.nombreExamen}
+              onChangeText={(value) => handleChange('nombreExamen', value)}
+            />
+          </View>
+
+          <View style={styles.row}>
+            <View style={styles.halfInput}>
+              <Text style={styles.label}>Tipo de examen</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Ej. Laboratorio, imagen, cardiologia"
+                placeholderTextColor="#9FB3C8"
+                value={form.tipoExamen}
+                onChangeText={(value) => handleChange('tipoExamen', value)}
+              />
+            </View>
+            <View style={styles.halfInput}>
+              <Text style={styles.label}>Laboratorio o centro</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Nombre del laboratorio o clinica"
+                placeholderTextColor="#9FB3C8"
+                value={form.laboratorio}
+                onChangeText={(value) => handleChange('laboratorio', value)}
+              />
+            </View>
+          </View>
+
+          <View style={styles.row}>
+            <View style={styles.fieldColumn}>
+              <Text style={styles.label}>Fecha de toma del examen</Text>
+              <TouchableOpacity style={styles.dateButton} onPress={() => showDatePicker('exam-date')}>
+                <Text style={styles.dateButtonText}>{formatDisplayDate(form.fechaExamen)}</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.fieldColumn}>
+              <Text style={styles.label}>Fecha de entrega del resultado</Text>
+              <TouchableOpacity style={styles.dateButton} onPress={() => showDatePicker('result-date')}>
+                <Text style={styles.dateButtonText}>{formatDisplayDate(form.fechaResultado)}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {renderIOSDatePicker()}
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Resumen del resultado</Text>
+            <TextInput
+              style={[styles.input, styles.multiline]}
+              placeholder="Escribe los hallazgos principales o el resultado mas importante"
+              placeholderTextColor="#9FB3C8"
+              value={form.resultadoTexto}
+              multiline
+              onChangeText={(value) => handleChange('resultadoTexto', value)}
+            />
+          </View>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Observaciones clinicas</Text>
+            <TextInput
+              style={[styles.input, styles.multiline]}
+              placeholder="Notas adicionales, contexto medico o indicaciones"
+              placeholderTextColor="#9FB3C8"
+              value={form.observaciones}
+              multiline
+              onChangeText={(value) => handleChange('observaciones', value)}
+            />
+          </View>
+
+          <View style={styles.uploadCard}>
+            <Text style={styles.sectionTitle}>Documento o foto del examen</Text>
+            <Text style={styles.helperText}>
+              Toma una o varias fotos. El sistema las unira en un PDF antes de guardarlas con el
+              registro.
+            </Text>
+
+            <View style={styles.actionRow}>
+              <TouchableOpacity style={styles.actionButton} onPress={handleTakePhoto}>
+                <Text style={styles.actionButtonText}>Tomar foto</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton} onPress={handlePickFromLibrary}>
+                <Text style={styles.actionButtonText}>Galeria</Text>
+              </TouchableOpacity>
+            </View>
+
+            {photos.length ? (
+              <View style={styles.photoGrid}>
+                {photos.map((photo, index) => (
+                  <View key={photo.id} style={styles.photoCard}>
+                    <Image source={{ uri: photo.uri }} style={styles.photoPreview} />
+                    <Text style={styles.photoLabel}>{`Hoja ${index + 1}`}</Text>
+                    <TouchableOpacity
+                      style={styles.removePhotoButton}
+                      onPress={() => removePhoto(photo.id)}
+                    >
+                      <Text style={styles.removePhotoButtonText}>Quitar</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyTitle}>No hay hojas adjuntas</Text>
+                <Text style={styles.emptyText}>
+                  Agrega fotos del examen para convertirlas en PDF y dejar evidencia en el
+                  expediente.
+                </Text>
+              </View>
+            )}
+
+            {pdfState ? (
+              <View style={styles.pdfCard}>
+                <Text style={styles.pdfTitle}>PDF listo</Text>
+                <Text style={styles.pdfMeta}>{pdfState.fileName}</Text>
+                <Text style={styles.pdfMeta}>{`${pdfState.pageCount} pagina(s) generadas`}</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.formActions}>
+              <TouchableOpacity style={styles.cancelButton} onPress={resetDraft}>
+                <Text style={styles.cancelButtonText}>Limpiar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.secondaryButton, !photos.length && styles.disabledButton]}
+                onPress={() =>
+                  generatePdf().catch((error) =>
+                    Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo generar el PDF'),
+                  )
+                }
+                disabled={!photos.length || generatingPdf}
+              >
+                <Text style={styles.secondaryButtonText}>
+                  {generatingPdf ? 'Generando...' : 'Generar PDF'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.primaryButton, submitting && styles.disabledButton]}
+              onPress={handleSubmit}
+              disabled={submitting}
+            >
+              <Text style={styles.primaryButtonText}>
+                {submitting ? 'Guardando...' : 'Guardar examen'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Historial de examenes</Text>
+          <Text style={styles.sectionSubtitle}>
+            {hasValidPatient
+              ? `${recentExams.length} registros de ${selectedPatientName}`
+              : 'Selecciona un paciente para ver historial.'}
+          </Text>
+        </View>
+
+        {loadingExams ? (
+          <View style={styles.loadingCard}>
+            <ActivityIndicator color="#38F28E" />
+            <Text style={styles.loadingText}>Cargando historial...</Text>
+          </View>
+        ) : recentExams.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyTitle}>No hay examenes para este paciente</Text>
+            <Text style={styles.emptyText}>
+              {hasValidPatient
+                ? 'Todavia no se han registrado examenes clinicos en este expediente.'
+                : 'Selecciona un paciente para cargar consultas y examenes.'}
+            </Text>
+          </View>
+        ) : (
+          recentExams.map((exam) => (
+            <View key={exam.examenclinicoId} style={styles.recordCard}>
+              <View style={styles.recordTopRow}>
+                <View style={styles.datePill}>
+                  <Text style={styles.datePillText}>{formatRecordDate(exam.fechaExamen)}</Text>
+                </View>
+                <View
+                  style={[
+                    styles.statusPill,
+                    exam.tieneArchivoPdf ? styles.statusPillSuccess : styles.statusPillPending,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusPillText,
+                      exam.tieneArchivoPdf ? styles.statusTextSuccess : styles.statusTextPending,
+                    ]}
+                  >
+                    {exam.tieneArchivoPdf ? 'PDF adjunto' : 'Solo texto'}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.recordTitle}>{exam.nombreExamen}</Text>
+              <Text style={styles.recordPatient}>{selectedPatientName}</Text>
+              <Text style={styles.recordText}>
+                Tipo: {normalizeText(exam.tipoExamen) ?? 'Sin especificar'}
+              </Text>
+              <Text style={styles.recordText}>
+                Laboratorio: {normalizeText(exam.laboratorio) ?? 'Sin dato'}
+              </Text>
+              <Text style={styles.recordText}>
+                {exam.consultaId ? `Consulta vinculada: #${exam.consultaId}` : 'Sin consulta vinculada'}
+              </Text>
+            </View>
+          ))
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#071120',
+  },
   container: {
     padding: 24,
-    backgroundColor: '#0f172a',
+    paddingBottom: 48,
+    backgroundColor: '#071120',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#f8fafc',
-  },
-  subtitle: {
-    marginTop: 8,
+  heroCard: {
+    borderRadius: 28,
+    padding: 22,
     marginBottom: 18,
-    color: '#cbd5e1',
-    lineHeight: 20,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
   },
-  sectionTitle: {
-    fontSize: 18,
+  eyebrow: {
+    color: '#29B6FF',
+    fontSize: 12,
     fontWeight: '800',
-    color: '#f8fafc',
-    marginTop: 6,
-    marginBottom: 10,
-  },
-  label: {
-    color: '#f8fafc',
-    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
     marginBottom: 8,
   },
-  helperText: {
-    color: '#cbd5e1',
-    marginBottom: 12,
-    lineHeight: 19,
+  title: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#F4F8FF',
+  },
+  subtitle: {
+    marginTop: 10,
+    color: '#C9D7E8',
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  heroHint: {
+    marginTop: 12,
+    color: '#9FB3C8',
+    fontSize: 13,
+  },
+  errorCard: {
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 18,
+    backgroundColor: '#FF4D7318',
+    borderWidth: 1,
+    borderColor: '#FF4D73',
+  },
+  errorTitle: {
+    color: '#FF4D73',
+    fontWeight: '800',
+    fontSize: 16,
+    marginBottom: 6,
+  },
+  errorText: {
+    color: '#FF4D73',
+    lineHeight: 20,
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 18,
+    marginHorizontal: -5,
+  },
+  metricCard: {
+    width: '50%',
+    paddingHorizontal: 5,
+    marginBottom: 10,
+  },
+  metricValue: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#F4F8FF',
+  },
+  metricLabel: {
+    marginTop: 6,
+    color: '#C9D7E8',
+    fontSize: 13,
+  },
+  formCard: {
+    backgroundColor: '#071120',
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#132238',
+    marginBottom: 18,
+  },
+  formTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#F4F8FF',
+    marginBottom: 8,
+  },
+  formIntro: {
+    color: '#C9D7E8',
+    lineHeight: 20,
+    marginBottom: 14,
+  },
+  fieldGroup: {
+    marginBottom: 4,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#F4F8FF',
+    marginBottom: 8,
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 14,
-    marginBottom: 12,
     overflow: 'hidden',
-    backgroundColor: '#0b1220',
+    backgroundColor: '#071120',
+    marginBottom: 10,
+  },
+  picker: {
+    color: '#F4F8FF',
+  },
+  fieldHint: {
+    color: '#9FB3C8',
+    fontSize: 13,
+    marginBottom: 12,
+    lineHeight: 18,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
-    fontSize: 16,
-    backgroundColor: '#0b1220',
-    color: '#f8fafc',
+    fontSize: 15,
+    backgroundColor: '#071120',
+    color: '#F4F8FF',
   },
   row: {
     flexDirection: 'row',
@@ -785,144 +1117,283 @@ const styles = StyleSheet.create({
   halfInput: {
     flex: 1,
   },
+  fieldColumn: {
+    flex: 1,
+  },
+  dateButton: {
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 14,
+    paddingVertical: 15,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+    backgroundColor: '#071120',
+  },
+  dateButtonText: {
+    color: '#F4F8FF',
+    textAlign: 'center',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  iosPickerCard: {
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#071120',
+    marginBottom: 12,
+  },
+  iosDoneButton: {
+    alignSelf: 'flex-end',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  iosDoneButtonText: {
+    color: '#29B6FF',
+    fontWeight: '800',
+  },
   multiline: {
     minHeight: 100,
     textAlignVertical: 'top',
   },
+  uploadCard: {
+    borderRadius: 20,
+    padding: 16,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
+    marginTop: 4,
+  },
+  sectionHeader: {
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#F4F8FF',
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    color: '#9FB3C8',
+  },
+  helperText: {
+    color: '#C9D7E8',
+    marginBottom: 14,
+    lineHeight: 20,
+  },
   actionRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  secondaryBtn: {
+  actionButton: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#38bdf8',
     borderRadius: 14,
     paddingVertical: 14,
-    backgroundColor: '#082f49',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#29B6FF18',
+    backgroundColor: '#29B6FF18',
   },
-  secondaryBtnText: {
-    color: '#bae6fd',
-    textAlign: 'center',
-    fontWeight: '700',
+  actionButtonText: {
+    color: '#29B6FF',
+    fontWeight: '800',
   },
   photoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   photoCard: {
     width: '47%',
-    backgroundColor: '#111827',
+    backgroundColor: '#071120',
     borderRadius: 16,
     padding: 10,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#132238',
   },
   photoPreview: {
     width: '100%',
     height: 150,
     borderRadius: 12,
-    backgroundColor: '#020617',
+    backgroundColor: '#000000',
     marginBottom: 8,
   },
   photoLabel: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontWeight: '700',
     marginBottom: 8,
   },
-  removePhotoBtn: {
-    backgroundColor: '#7f1d1d',
+  removePhotoButton: {
     borderRadius: 10,
     paddingVertical: 8,
-  },
-  removePhotoBtnText: {
-    color: '#fecaca',
-    textAlign: 'center',
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  emptyState: {
+    backgroundColor: '#FF4D7318',
     borderWidth: 1,
-    borderColor: '#1e293b',
-    borderRadius: 16,
-    padding: 16,
-    backgroundColor: '#0b1220',
-    marginBottom: 12,
+    borderColor: '#FF4D73',
   },
-  emptyStateText: {
-    color: '#94a3b8',
-    lineHeight: 19,
-  },
-  primaryBtn: {
-    backgroundColor: '#2563eb',
-    paddingVertical: 16,
-    borderRadius: 14,
-    marginBottom: 12,
-  },
-  primaryBtnDisabled: {
-    opacity: 0.6,
-  },
-  primaryBtnText: {
-    color: '#ffffff',
+  removePhotoButtonText: {
+    color: '#FF4D73',
     textAlign: 'center',
     fontWeight: '800',
-    fontSize: 15,
+    fontSize: 12,
   },
   pdfCard: {
-    backgroundColor: '#052e16',
+    backgroundColor: '#38F28E18',
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#166534',
-    marginBottom: 12,
+    borderColor: '#38F28E',
+    marginBottom: 14,
   },
   pdfTitle: {
-    color: '#dcfce7',
+    color: '#38F28E',
     fontWeight: '800',
     fontSize: 16,
     marginBottom: 6,
   },
   pdfMeta: {
-    color: '#bbf7d0',
+    color: '#38F28E',
   },
-  saveBtn: {
-    backgroundColor: '#ea580c',
-    paddingVertical: 16,
+  formActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
+  cancelButton: {
+    flex: 1,
     borderRadius: 14,
-    marginBottom: 18,
-  },
-  saveBtnText: {
-    color: '#ffffff',
-    textAlign: 'center',
-    fontWeight: '800',
-    fontSize: 16,
-  },
-  examCard: {
-    backgroundColor: '#111827',
-    borderRadius: 16,
-    padding: 14,
+    paddingVertical: 15,
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#1e293b',
-    marginBottom: 12,
+    borderColor: '#9FB3C8',
+    backgroundColor: '#071120',
   },
-  examTitle: {
-    color: '#f8fafc',
+  cancelButtonText: {
+    color: '#C9D7E8',
+    fontWeight: '800',
+  },
+  secondaryButton: {
+    flex: 1,
+    borderRadius: 14,
+    paddingVertical: 15,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#29B6FF18',
+    backgroundColor: '#29B6FF18',
+  },
+  secondaryButtonText: {
+    color: '#29B6FF',
+    fontWeight: '800',
+  },
+  primaryButton: {
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    backgroundColor: '#38F28E',
+  },
+  primaryButtonText: {
+    color: '#F4F8FF',
+    fontWeight: '900',
+    fontSize: 16,
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  loadingCard: {
+    borderRadius: 20,
+    padding: 22,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#C9D7E8',
+  },
+  emptyCard: {
+    borderRadius: 22,
+    padding: 20,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    color: '#F4F8FF',
     fontWeight: '800',
     fontSize: 16,
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  examMeta: {
-    color: '#cbd5e1',
-    lineHeight: 19,
+  emptyText: {
+    color: '#9FB3C8',
+    lineHeight: 20,
   },
-  errorText: {
-    color: '#fca5a5',
+  recordCard: {
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 12,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
+  },
+  recordTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  loader: {
-    marginVertical: 12,
+  datePill: {
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    backgroundColor: '#29B6FF18',
+  },
+  datePillText: {
+    color: '#29B6FF',
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  statusPill: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+  },
+  statusPillSuccess: {
+    backgroundColor: '#38F28E18',
+    borderColor: '#38F28E',
+  },
+  statusPillPending: {
+    backgroundColor: '#182A44',
+    borderColor: '#29B6FF',
+  },
+  statusPillText: {
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  statusTextSuccess: {
+    color: '#38F28E',
+  },
+  statusTextPending: {
+    color: '#29B6FF',
+  },
+  recordTitle: {
+    color: '#F4F8FF',
+    fontSize: 18,
+    fontWeight: '900',
+    marginBottom: 6,
+  },
+  recordPatient: {
+    color: '#29B6FF',
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  recordText: {
+    color: '#C9D7E8',
+    marginBottom: 5,
+    lineHeight: 20,
   },
 });

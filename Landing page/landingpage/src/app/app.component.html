@@ -1,0 +1,408 @@
+<main class="page-shell" [class.dark-mode]="isDarkMode">
+  <aside class="floating-social-bar" aria-label="Social links">
+    <a class="floating-social-link" *ngFor="let social of footerSocials | slice:0:4" href="#contacto" [attr.aria-label]="social.label">
+      <svg [ngSwitch]="social.short" viewBox="0 0 24 24" aria-hidden="true">
+        <path *ngSwitchCase="'f'" d="M13.5 21v-8.1h2.7l.4-3.2h-3.1V7.6c0-.9.3-1.5 1.6-1.5h1.7V3.2c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.4H8v3.2h2.5V21h3z"/>
+        <path *ngSwitchCase="'t'" d="M21 6.5c-.7.3-1.4.5-2.2.6.8-.5 1.4-1.2 1.7-2.1-.7.4-1.6.8-2.4.9A3.7 3.7 0 0 0 11.8 9c0 .3 0 .6.1.8-3.1-.2-5.8-1.7-7.7-4-.3.5-.5 1.2-.5 1.8 0 1.3.6 2.4 1.7 3-.6 0-1.2-.2-1.7-.5 0 1.8 1.3 3.4 3.1 3.7-.3.1-.7.1-1 .1-.3 0-.5 0-.8-.1.5 1.6 2 2.7 3.8 2.7A7.5 7.5 0 0 1 3 18c-.3 0-.7 0-1-.1a10.5 10.5 0 0 0 5.7 1.7c6.8 0 10.6-5.7 10.6-10.6v-.5c.7-.5 1.3-1.1 1.8-1.9z"/>
+        <path *ngSwitchCase="'g+'" d="M12.2 10.2v3h5c-.2 1.3-1.5 3.8-5 3.8-3 0-5.4-2.5-5.4-5.6s2.4-5.6 5.4-5.6c1.7 0 2.9.7 3.6 1.4l2.4-2.3A8.9 8.9 0 0 0 12.2 2C7 2 2.8 6.3 2.8 11.5S7 21 12.2 21c7 0 8.7-4.9 8.7-7.4 0-.5 0-.9-.1-1.2h-8.6z"/>
+        <path *ngSwitchCase="'g+'" d="M21.5 10.2h-1.7V8.5h-1.7v1.7h-1.7V12h1.7v1.7h1.7V12h1.7z"/>
+        <path *ngSwitchCase="'yt'" d="M21.8 7.2a2.8 2.8 0 0 0-2-2C18 4.7 12 4.7 12 4.7s-6 0-7.8.5a2.8 2.8 0 0 0-2 2A29 29 0 0 0 1.7 12c0 1.6.2 3.2.5 4.8a2.8 2.8 0 0 0 2 2c1.8.5 7.8.5 7.8.5s6 0 7.8-.5a2.8 2.8 0 0 0 2-2c.3-1.6.5-3.2.5-4.8 0-1.6-.2-3.2-.5-4.8zM9.9 15.1V8.9l5.4 3.1-5.4 3.1z"/>
+      </svg>
+    </a>
+  </aside>
+
+  <header class="hero" id="inicio">
+    <nav class="topbar">
+      <a class="brand" href="#inicio">{{ title }}</a>
+      <button
+        class="menu-toggle"
+        type="button"
+        (click)="toggleMobileMenu()"
+        [attr.aria-expanded]="isMobileMenuOpen"
+        aria-controls="topbar-nav"
+        aria-label="Abrir o cerrar menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="topbar-panel" id="topbar-nav" [class.open]="isMobileMenuOpen">
+        <div class="topbar-links">
+          <a *ngFor="let section of navSections" [href]="'#' + section.id" (click)="closeMobileMenu()">{{ section.label }}</a>
+        </div>
+        <div class="topbar-actions">
+          <a class="trial-link" href="#contacto" (click)="closeMobileMenu()">Lorem ipsum</a>
+          <button
+            class="theme-toggle"
+            type="button"
+            (click)="toggleTheme($event)"
+            [attr.aria-label]="isDarkMode ? 'Activar modo claro' : 'Activar modo oscuro'"
+            [attr.title]="isDarkMode ? 'Activar modo claro' : 'Activar modo oscuro'">
+            <span class="theme-toggle-track">
+              <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 4.8V2m0 20v-2.8M6.9 6.9 5 5m14 14-1.9-1.9M4.8 12H2m20 0h-2.8M6.9 17.1 5 19m14-14-1.9 1.9M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/>
+              </svg>
+              <span class="theme-toggle-thumb"></span>
+              <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 15.4A8.5 8.5 0 0 1 8.6 4a8.5 8.5 0 1 0 11.3 11.4z"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="hero-stage">
+      <div class="hero-layout">
+        <div class="hero-copy">
+          <p class="eyebrow">Lorem ipsum dolor</p>
+          <p class="hero-badge">Sit amet consectetur adipiscing elit sed do eiusmod tempor</p>
+          <h1>Lorem ipsum dolor sit amet consectetur elit.</h1>
+          <p class="hero-text">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+            incididunt ut labore et dolore magna aliqua.
+          </p>
+          <div class="hero-actions">
+            <a class="primary-action" href="#contacto">Lorem ipsum</a>
+            <a class="secondary-action" href="#precios">Dolor sit</a>
+          </div>
+          <div class="hero-proof">
+            <span class="proof-pill" *ngFor="let signal of heroSignals">{{ signal }}</span>
+          </div>
+          <div class="hero-stat-strip">
+            <article class="hero-stat-card" *ngFor="let stat of heroStats">
+              <strong>{{ stat.value }}</strong>
+              <span>{{ stat.label }}</span>
+            </article>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-hidden="true">
+          <div class="neon-path neon-path-a"></div>
+          <div class="neon-path neon-path-b"></div>
+          <div class="neon-path neon-path-c"></div>
+          <div class="persona-shape"></div>
+
+          <div class="preview-stack">
+            <article class="preview-shell preview-main">
+              <div class="preview-topbar"></div>
+              <div class="preview-screen">
+                <div class="preview-copy">
+                  <span>Campana principal</span>
+                  <strong>Lorem ipsum dolor sit</strong>
+                  <div class="preview-cta"></div>
+                </div>
+                <div class="preview-art"></div>
+              </div>
+            </article>
+
+            <article class="preview-shell preview-note">
+              <span>Lorem ipsum</span>
+              <strong>Dolor sit amet consectetur</strong>
+            </article>
+
+            <article class="preview-shell preview-metric">
+              <span>Lorem ipsum</span>
+              <strong>+42%</strong>
+              <p>Lorem ipsum dolor sit amet consectetur adipiscing elit</p>
+            </article>
+
+            <article class="preview-shell preview-mini">
+              <span>Lorem score</span>
+              <strong>87/100</strong>
+            </article>
+          </div>
+
+          <span class="orbit-chip chip-a">ROI</span>
+          <span class="orbit-chip chip-b">UX</span>
+          <span class="orbit-chip chip-c">Leads</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="content-section about-section" id="sobre-nosotros">
+    <div class="section-heading">
+      <p class="eyebrow">Lorem ipsum</p>
+      <h2>Lorem ipsum dolor sit amet consectetur adipiscing elit.</h2>
+    </div>
+    <div class="story-layout">
+      <div class="story-copy">
+        <div class="two-column">
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+            incididunt ut labore.
+          </p>
+          <p>
+            Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
+            ex ea commodo consequat.
+          </p>
+        </div>
+      </div>
+
+      <aside class="story-panel">
+        <p class="story-panel-label">Lorem ipsum</p>
+        <h3>Dolor sit amet consectetur adipiscing elit sed do.</h3>
+        <div class="story-panel-grid">
+          <span *ngFor="let signal of heroSignals">{{ signal }}</span>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="content-section" id="servicios">
+    <div class="section-heading">
+      <p class="eyebrow">Lorem ipsum</p>
+      <h2>Dolor sit amet consectetur adipiscing elit.</h2>
+    </div>
+    <div class="card-grid two-up">
+      <article class="info-card accent-green">
+        <p class="card-kicker">01 / Lorem</p>
+        <h3>Lorem ipsum</h3>
+        <p>Dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor.</p>
+      </article>
+      <article class="info-card accent-blue">
+        <p class="card-kicker">02 / Ipsum</p>
+        <h3>Dolor sit</h3>
+        <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="content-section" id="caracteristicas">
+    <div class="section-heading">
+      <p class="eyebrow">Lorem ipsum</p>
+      <h2>Consectetur adipiscing elit sed do eiusmod tempor.</h2>
+    </div>
+    <div class="card-grid three-up">
+      <article class="info-card accent-green" *ngFor="let feature of features; let index = index" [class.accent-blue]="index === 1" [class.accent-rose]="index === 2">
+        <p class="card-kicker">Lorem {{ index + 1 }}</p>
+        <h3>{{ feature.title }}</h3>
+        <p>{{ feature.description }}</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="content-section app-download-section" id="app-movil">
+    <div class="section-heading">
+      <p class="eyebrow">Lorem ipsum</p>
+      <h2>Lorem ipsum dolor sit amet in voluptate velit esse.</h2>
+    </div>
+    <div class="download-layout">
+      <div class="download-copy">
+        <p class="download-intro">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+          incididunt ut labore et dolore magna aliqua.
+        </p>
+        <div class="download-pill-row">
+          <span class="download-pill" *ngFor="let benefit of mobileBenefits">{{ benefit }}</span>
+        </div>
+        <div class="download-actions">
+          <a class="primary-action solid-action" href="#contacto">Lorem ipsum</a>
+          <a class="secondary-action" href="#mapa">Dolor sit</a>
+        </div>
+      </div>
+
+      <div class="download-visual">
+        <div class="phone-card">
+          <div class="phone-3d">
+            <div class="phone-face phone-front">
+              <div class="phone-head">
+                <span class="phone-brand-mini">NICAPRIME</span>
+                <div class="phone-head-icons">
+                  <span class="head-glyph">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 18a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm-5.7-3.2a1.3 1.3 0 0 0 .2 1.8 1.3 1.3 0 0 0 1.8-.2A4.8 4.8 0 0 1 12 14.8c1.4 0 2.8.6 3.7 1.7a1.3 1.3 0 0 0 2-.1 1.3 1.3 0 0 0-.1-1.8A7.4 7.4 0 0 0 12 12.2a7.4 7.4 0 0 0-5.7 2.6Zm-2.8-3a1.3 1.3 0 1 0 1.9 1.8A9.8 9.8 0 0 1 12 10.8c2.5 0 4.9 1 6.6 2.8a1.3 1.3 0 1 0 1.9-1.8A12.4 12.4 0 0 0 12 8.2c-3.2 0-6.2 1.3-8.5 3.6Z"/>
+                    </svg>
+                  </span>
+                  <span class="head-glyph signal-bars"></span>
+                  <span class="head-glyph battery-bar"></span>
+                </div>
+              </div>
+
+              <div class="phone-search">
+                <span class="search-badge">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="#4285F4" d="M21 12.2c0-.7-.1-1.3-.2-1.9H12v3.6h5.1c-.2 1.1-.9 2.2-1.9 2.8V19h3.1c1.8-1.7 2.8-4.1 2.8-6.8Z"/>
+                    <path fill="#34A853" d="M12 21c2.5 0 4.5-.8 6-2.2l-2.9-2.3c-.8.5-1.8.9-3.1.9-2.3 0-4.4-1.6-5.1-3.8H3.8v2.4A9 9 0 0 0 12 21Z"/>
+                    <path fill="#FBBC05" d="M6.9 13.6A5.4 5.4 0 0 1 6.6 12c0-.6.1-1.1.3-1.6V8H3.8A9 9 0 0 0 3 12c0 1.4.3 2.8.8 4l3.1-2.4Z"/>
+                    <path fill="#EA4335" d="M12 6.6c1.4 0 2.6.5 3.5 1.3l2.6-2.6A9 9 0 0 0 3.8 8l3.1 2.4C7.6 8.2 9.7 6.6 12 6.6Z"/>
+                  </svg>
+                </span>
+                <span class="search-text">Buscar...</span>
+              </div>
+
+              <div class="phone-date">
+                <strong>{{ currentNicaraguaTime }}</strong>
+                <span>{{ currentNicaraguaDate }}</span>
+              </div>
+
+              <div class="phone-download-panel">
+                <p class="phone-panel-kicker">APP MOVIL</p>
+                <h4>Descarga NICAPRIME</h4>
+                <p>Accede rapido, seguro y desde cualquier lugar.</p>
+              </div>
+              <div class="front-camera"></div>
+            </div>
+            <div class="phone-face phone-back"></div>
+            <div class="phone-face phone-top"></div>
+            <div class="phone-face phone-bottom">
+              <div class="bottom-elements">
+                <span class="headphone"></span>
+                <span class="microphone"></span>
+                <span class="charge"></span>
+                <span class="speaker"></span>
+              </div>
+            </div>
+            <div class="phone-face phone-left"></div>
+            <div class="phone-face phone-right"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content-section map-section" id="mapa">
+    <div class="section-heading">
+      <p class="eyebrow">Lorem ipsum</p>
+      <h2>Dolor sit amet consectetur adipisicing elit sed do.</h2>
+    </div>
+    <div class="map-layout">
+      <article class="map-card map-frame">
+        <div class="map-toolbar">
+          <span class="map-pill">Lorem ipsum</span>
+          <span class="map-pill muted">Dolor sit amet</span>
+        </div>
+
+        <div id="demo-map" class="live-map" aria-label="Mapa interactivo de demostracion"></div>
+      </article>
+
+      <aside class="map-card map-sidebar">
+        <p class="card-kicker">Lorem ipsum</p>
+        <h3>Dolor sit amet consectetur adipiscing elit.</h3>
+        <p>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
+          ut labore et dolore magna aliqua.
+        </p>
+
+        <div class="map-legend">
+          <button class="legend-item" type="button" *ngFor="let point of mapPoints" (click)="focusMapPoint(point)">
+            <span class="legend-dot"></span>
+            <div>
+              <strong>{{ point.name }}</strong>
+              <p>{{ point.status }}</p>
+            </div>
+          </button>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="content-section pricing-section" id="precios">
+    <div class="section-heading">
+      <p class="eyebrow">Lorem ipsum</p>
+      <h2>Dolor sit amet consectetur adipiscing elit sed do.</h2>
+    </div>
+    <div class="card-grid three-up">
+      <article class="price-card" *ngFor="let plan of pricing; let index = index" [class.accent-green]="index === 0" [class.accent-blue]="index === 1" [class.accent-rose]="index === 2">
+        <span class="price-marker">Lorem {{ index + 1 }}</span>
+        <p class="plan-name">{{ plan.name }}</p>
+        <h3>{{ plan.price }}</h3>
+        <p>{{ plan.detail }}</p>
+        <ul>
+          <li *ngFor="let bullet of plan.bullets">{{ bullet }}</li>
+        </ul>
+        <a href="#contacto">Lorem ipsum</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="content-section contact-strip" id="contacto">
+    <div>
+      <p class="eyebrow">Lorem ipsum</p>
+      <h2>Dolor sit amet consectetur adipiscing elit.</h2>
+    </div>
+    <a class="primary-action" href="mailto:lorem@ipsum.com">lorem@ipsum.com</a>
+  </section>
+
+  <section class="content-section" id="faq">
+    <div class="section-heading">
+      <p class="eyebrow">Lorem ipsum</p>
+      <h2>Dolor sit amet consectetur adipiscing elit sed do.</h2>
+    </div>
+    <div class="faq-list">
+      <article class="faq-item" *ngFor="let item of faq; let index = index" [class.accent-green]="index === 0" [class.accent-blue]="index === 1" [class.accent-rose]="index === 2">
+        <p class="card-kicker">Lorem {{ index + 1 }}</p>
+        <h3>{{ item.question }}</h3>
+        <p>{{ item.answer }}</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="content-section" id="blog">
+    <div class="section-heading">
+      <p class="eyebrow">Lorem ipsum</p>
+      <h2>Dolor sit amet consectetur adipiscing elit.</h2>
+    </div>
+    <div class="card-grid two-up">
+      <article class="info-card accent-blue article-card">
+        <p class="card-kicker">Lorem ipsum</p>
+        <h3>Dolor sit amet</h3>
+        <ul>
+          <li *ngFor="let article of articles">{{ article }}</li>
+        </ul>
+      </article>
+      <article class="info-card accent-rose category-card">
+        <p class="card-kicker">Lorem ipsum</p>
+        <h3>Consectetur elit</h3>
+        <div class="category-cloud">
+          <span>Lorem ipsum</span>
+          <span>Dolor sit</span>
+          <span>Amet elit</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <footer class="page-footer">
+    <div class="footer-social-band">
+      <div class="footer-social-wrap">
+        <a class="footer-social-link" *ngFor="let social of footerSocials" href="#contacto" [attr.aria-label]="social.label">
+          <svg [ngSwitch]="social.short" viewBox="0 0 24 24" aria-hidden="true">
+            <path *ngSwitchCase="'f'" d="M13.5 21v-8.1h2.7l.4-3.2h-3.1V7.6c0-.9.3-1.5 1.6-1.5h1.7V3.2c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.4H8v3.2h2.5V21h3z"/>
+            <path *ngSwitchCase="'t'" d="M21 6.5c-.7.3-1.4.5-2.2.6.8-.5 1.4-1.2 1.7-2.1-.7.4-1.6.8-2.4.9A3.7 3.7 0 0 0 11.8 9c0 .3 0 .6.1.8-3.1-.2-5.8-1.7-7.7-4-.3.5-.5 1.2-.5 1.8 0 1.3.6 2.4 1.7 3-.6 0-1.2-.2-1.7-.5 0 1.8 1.3 3.4 3.1 3.7-.3.1-.7.1-1 .1-.3 0-.5 0-.8-.1.5 1.6 2 2.7 3.8 2.7A7.5 7.5 0 0 1 3 18c-.3 0-.7 0-1-.1a10.5 10.5 0 0 0 5.7 1.7c6.8 0 10.6-5.7 10.6-10.6v-.5c.7-.5 1.3-1.1 1.8-1.9z"/>
+            <path *ngSwitchCase="'g+'" d="M12.2 10.2v3h5c-.2 1.3-1.5 3.8-5 3.8-3 0-5.4-2.5-5.4-5.6s2.4-5.6 5.4-5.6c1.7 0 2.9.7 3.6 1.4l2.4-2.3A8.9 8.9 0 0 0 12.2 2C7 2 2.8 6.3 2.8 11.5S7 21 12.2 21c7 0 8.7-4.9 8.7-7.4 0-.5 0-.9-.1-1.2h-8.6z"/>
+            <path *ngSwitchCase="'g+'" d="M21.5 10.2h-1.7V8.5h-1.7v1.7h-1.7V12h1.7v1.7h1.7V12h1.7z"/>
+            <path *ngSwitchCase="'yt'" d="M21.8 7.2a2.8 2.8 0 0 0-2-2C18 4.7 12 4.7 12 4.7s-6 0-7.8.5a2.8 2.8 0 0 0-2 2A29 29 0 0 0 1.7 12c0 1.6.2 3.2.5 4.8a2.8 2.8 0 0 0 2 2c1.8.5 7.8.5 7.8.5s6 0 7.8-.5a2.8 2.8 0 0 0 2-2c.3-1.6.5-3.2.5-4.8 0-1.6-.2-3.2-.5-4.8zM9.9 15.1V8.9l5.4 3.1-5.4 3.1z"/>
+            <path *ngSwitchCase="'ig'" d="M12 7.3A4.7 4.7 0 1 0 12 16.7 4.7 4.7 0 0 0 12 7.3zm0 7.7A3 3 0 1 1 12 9a3 3 0 0 1 0 6zm6-7.9a1.1 1.1 0 1 1-2.3 0 1.1 1.1 0 0 1 2.3 0zm3.1 1.1c-.1-1.3-.4-2.4-1.4-3.4s-2.1-1.3-3.4-1.4C15 3.3 9 3.3 7.7 3.4c-1.3.1-2.4.4-3.4 1.4S3 6.9 2.9 8.2a49 49 0 0 0 0 7.6c.1 1.3.4 2.4 1.4 3.4s2.1 1.3 3.4 1.4a49 49 0 0 0 7.6 0c1.3-.1 2.4-.4 3.4-1.4s1.3-2.1 1.4-3.4a49 49 0 0 0 0-7.6zM18.7 17c-.3.8-.9 1.4-1.7 1.7-1.2.5-4 .4-5 .4s-3.8.1-5-.4A2.8 2.8 0 0 1 5.3 17c-.5-1.2-.4-4-.4-5s-.1-3.8.4-5c.3-.8.9-1.4 1.7-1.7 1.2-.5 4-.4 5-.4s3.8-.1 5 .4c.8.3 1.4.9 1.7 1.7.5 1.2.4 4 .4 5s.1 3.8-.4 5z"/>
+            <path *ngSwitchCase="'in'" d="M6.4 8.8H3.2V21h3.2V8.8zM4.8 7.3c1 0 1.8-.8 1.8-1.8S5.8 3.7 4.8 3.7 3 4.5 3 5.5s.8 1.8 1.8 1.8zM21 21v-6.6c0-3.5-1.9-5.1-4.4-5.1-2 0-2.9 1.1-3.4 1.9v-1.6H10c0 1 .1 11.4 0 12.4h3.2v-6.9c0-.4 0-.7.1-1 .3-.7 1-1.5 2.2-1.5 1.6 0 2.3 1.2 2.3 3V21H21z"/>
+            <path *ngSwitchCase="'vk'" d="M12.8 17.5h1.4s.4 0 .7-.2c.3-.2.3-.6.3-.6s0-1.8.8-2c.8-.3 1.7 1.8 2.8 2.5.8.5 1.4.4 1.4.4H23s1.4-.1.7-1.2c-.1-.1-.6-1.3-2.8-3.3-2.3-2.1-2-1.8.8-5.4 1.7-2.2 2.4-3.6 2.2-4.2-.2-.5-1.1-.4-1.1-.4h-3.1s-.2 0-.4.1c-.2.1-.3.4-.3.4s-.5 1.4-1.3 2.6c-1.7 2.6-2.4 2.8-2.6 2.7-.6-.4-.4-1.6-.4-2.5 0-2.7.4-3.8-.8-4.1-.4-.1-.8-.2-2-.2-1.6 0-3 .1-3.8.5-.5.3-.8.8-.6.9.2 0 .8.1 1.1.6.4.6.4 1.9.4 1.9s.2 3.2-.4 3.6c-.4.3-.9-.3-2.7-2.7C5.8 4.9 5.3 3.5 5.3 3.5s-.1-.2-.3-.4a1.5 1.5 0 0 0-.5-.2H1.6S1.2 3 .9 3.2c-.2.2 0 .8 0 .8s2.3 5.4 4.9 8.1c2.4 2.5 5.2 2.4 5.2 2.4h1.2s.4 0 .6.2c.2.2.2.5.2.5s0 1.5.7 1.7z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="footer-main">
+      <div class="footer-main-wrap">
+        <div class="footer-columns">
+          <section class="footer-column" *ngFor="let section of footerSections">
+            <h3>{{ section.title }}</h3>
+            <a *ngFor="let link of section.links" href="#contacto">{{ link }}</a>
+          </section>
+
+          <section class="footer-newsletter">
+            <h3>Lorem ipsum dolor</h3>
+            <form class="newsletter-form">
+              <input type="email" placeholder="Lorem ipsum dolor sit amet" aria-label="Lorem ipsum" />
+              <button type="submit">Lorem ipsum</button>
+            </form>
+          </section>
+        </div>
+
+        <div class="footer-bottom">
+          <p>Lorem ipsum dolor sit amet 2026. Consectetur adipiscing elit.</p>
+          <a class="footer-to-top" href="#inicio" aria-label="Volver arriba">^</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</main>

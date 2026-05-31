@@ -7,7 +7,9 @@ import { obtenerTema } from '../data/educacion';
 type Props = NativeStackScreenProps<RootStackParamList, 'EducacionTema'>;
 
 export function EducacionTemaScreen({ route, navigation }: Props) {
-  const tema = obtenerTema(route.params.nivelId, route.params.temaId);
+  const nivelId = route.params?.nivelId;
+  const temaId = route.params?.temaId;
+  const tema = nivelId && temaId ? obtenerTema(nivelId, temaId) : null;
 
   if (!tema) {
     return (
@@ -30,7 +32,7 @@ export function EducacionTemaScreen({ route, navigation }: Props) {
         <Text style={styles.sectionTitle}>actividades</Text>
         {tema.actividades.map((actividad) => (
           <Text key={actividad} style={styles.sectionText}>
-            • {actividad}
+            â€¢ {actividad}
           </Text>
         ))}
       </View>
@@ -39,7 +41,7 @@ export function EducacionTemaScreen({ route, navigation }: Props) {
         <Text style={styles.sectionTitle}>recursos visuales</Text>
         {tema.recursosVisuales.map((recurso) => (
           <Text key={recurso} style={styles.sectionText}>
-            • {recurso}
+            â€¢ {recurso}
           </Text>
         ))}
       </View>
@@ -48,7 +50,7 @@ export function EducacionTemaScreen({ route, navigation }: Props) {
         <Text style={styles.sectionTitle}>formatos recomendados</Text>
         {tema.formato.map((fmt) => (
           <Text key={fmt} style={styles.sectionText}>
-            • {fmt}
+            â€¢ {fmt}
           </Text>
         ))}
       </View>
@@ -58,7 +60,7 @@ export function EducacionTemaScreen({ route, navigation }: Props) {
           <Text style={styles.sectionTitle}>recordatorios / recompensas</Text>
           {tema.recordatorios.map((rec) => (
             <Text key={rec} style={[styles.sectionText, styles.highlight]}>
-              • {rec}
+              â€¢ {rec}
             </Text>
           ))}
         </View>
@@ -70,46 +72,46 @@ export function EducacionTemaScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   content: {
     padding: 20,
     paddingBottom: 40,
   },
   label: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontWeight: '700',
   },
   title: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 26,
     fontWeight: '900',
     marginVertical: 8,
   },
   description: {
-    color: '#cbd5f5',
+    color: '#C9D7E8',
     lineHeight: 22,
   },
   section: {
     marginTop: 20,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 16,
   },
   sectionTitle: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     fontWeight: '800',
     marginBottom: 8,
   },
   sectionText: {
-    color: '#cbd5f5',
+    color: '#C9D7E8',
     marginBottom: 6,
   },
   highlight: {
-    color: '#fcd34d',
+    color: '#FF4D73',
   },
   errorText: {
-    color: '#f87171',
+    color: '#FF4D73',
     fontSize: 18,
     textAlign: 'center',
   },
@@ -118,12 +120,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderRadius: 30,
     borderWidth: 1,
-    borderColor: '#f87171',
+    borderColor: '#FF4D73',
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
   backBtnText: {
-    color: '#f87171',
+    color: '#FF4D73',
     fontWeight: '700',
   },
 });

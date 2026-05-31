@@ -155,6 +155,7 @@ const FeedbackBanner = ({ feedback }: { feedback: FeedbackState }) => {
 
 export function EmbarazoScreen() {
   const { token, user } = useAuth();
+  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
   const patientHeaders = useMemo(() => buildHeaders(token, false), [token]);
   const jsonHeaders = useMemo(() => buildHeaders(token, true), [token]);
   const defaultPacienteId = useMemo(() => (user?.pacienteId ? String(user.pacienteId) : ''), [user?.pacienteId]);
@@ -362,7 +363,7 @@ export function EmbarazoScreen() {
         <Text style={styles.label}>Paciente</Text>
         {loadingPatients ? (
           <View style={styles.inlineState}>
-            <ActivityIndicator color="#2563eb" />
+            <ActivityIndicator color="#29B6FF" />
             <Text style={styles.inlineStateText}>Cargando pacientes...</Text>
           </View>
         ) : patientOptions.length === 0 ? (
@@ -374,7 +375,7 @@ export function EmbarazoScreen() {
               onValueChange={(value) => handleChange('pacienteId', String(value))}
             >
               {patientOptions.map((patient) => (
-                <Picker.Item key={patient.pacienteId} label={patient.displayName} value={String(patient.pacienteId)} />
+                <Picker.Item key={patient.pacienteId} label={patient.displayName} value={String(patient.pacienteId)} color={pickerItemColor} />
               ))}
             </Picker>
           </View>
@@ -383,7 +384,7 @@ export function EmbarazoScreen() {
 
       {loading ? (
         <View style={styles.stateBox}>
-          <ActivityIndicator color="#2563eb" />
+          <ActivityIndicator color="#29B6FF" />
           <Text style={styles.stateText}>Cargando historial...</Text>
         </View>
       ) : filteredRecords.length === 0 ? (
@@ -494,7 +495,7 @@ export function EmbarazoScreen() {
             disabled={isSubmitting}
             onPress={() => void handleSubmit()}
           >
-            {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Guardar seguimiento</Text>}
+            {isSubmitting ? <ActivityIndicator color="#F4F8FF" /> : <Text style={styles.primaryBtnText}>Guardar seguimiento</Text>}
           </TouchableOpacity>
         </View>
       ) : null}
@@ -509,7 +510,7 @@ export function EmbarazoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   content: {
     padding: 20,
@@ -520,12 +521,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   title: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 22,
     fontWeight: '800',
   },
   subtitle: {
-    color: '#cbd5f5',
+    color: '#C9D7E8',
     fontSize: 13,
   },
   feedbackBox: {
@@ -534,30 +535,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   feedbackSuccess: {
-    backgroundColor: '#dcfce7',
-    borderColor: '#22c55e',
+    backgroundColor: '#38F28E18',
+    borderColor: '#38F28E',
   },
   feedbackError: {
-    backgroundColor: '#fee2e2',
-    borderColor: '#ef4444',
+    backgroundColor: '#FF4D7318',
+    borderColor: '#FF4D73',
   },
   feedbackText: {
     fontSize: 13,
     fontWeight: '600',
   },
   feedbackTextSuccess: {
-    color: '#166534',
+    color: '#38F28E',
   },
   feedbackTextError: {
-    color: '#b91c1c',
+    color: '#FF4D73',
   },
   filterCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 16,
   },
   label: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     fontSize: 13,
     fontWeight: '700',
     marginBottom: 8,
@@ -565,12 +566,12 @@ const styles = StyleSheet.create({
   pickerWrapper: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     overflow: 'hidden',
-    backgroundColor: '#0b1220',
+    backgroundColor: '#0D1B2A',
   },
   emptySelectText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     fontSize: 13,
   },
   inlineState: {
@@ -579,61 +580,61 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   inlineStateText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
   },
   stateBox: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 20,
     alignItems: 'center',
   },
   stateTitle: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 4,
   },
   stateText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     textAlign: 'center',
   },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 16,
     gap: 6,
   },
   cardTitle: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 17,
     fontWeight: '700',
   },
   cardSubtitle: {
-    color: '#f9a8d4',
+    color: '#FF4D73',
     fontSize: 12,
   },
   cardText: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     fontSize: 13,
   },
   formCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F8FF',
     borderRadius: 20,
     padding: 18,
     gap: 12,
   },
   formTitle: {
-    color: '#0f172a',
+    color: '#071120',
     fontSize: 18,
     fontWeight: '700',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#cbd5f5',
+    borderColor: '#C9D7E8',
     borderRadius: 12,
     padding: 12,
     fontSize: 15,
-    color: '#0f172a',
+    color: '#071120',
   },
   multiline: {
     minHeight: 84,
@@ -641,41 +642,41 @@ const styles = StyleSheet.create({
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#cbd5f5',
+    borderColor: '#C9D7E8',
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 14,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F4F8FF',
   },
   dateButtonText: {
-    color: '#0f172a',
+    color: '#071120',
     fontSize: 15,
   },
   iosPickerWrapper: {
     borderWidth: 1,
-    borderColor: '#cbd5f5',
+    borderColor: '#C9D7E8',
     borderRadius: 16,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F4F8FF',
     overflow: 'hidden',
   },
   iosPickerDoneBtn: {
     alignItems: 'center',
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#cbd5f5',
+    borderTopColor: '#C9D7E8',
   },
   iosPickerDoneText: {
-    color: '#0f172a',
+    color: '#071120',
     fontWeight: '700',
   },
   primaryBtn: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 15,
     fontWeight: '700',
   },
@@ -689,12 +690,12 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#ec4899',
+    backgroundColor: '#FF4D73',
     alignItems: 'center',
     justifyContent: 'center',
   },
   fabText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 30,
     lineHeight: 32,
     fontWeight: '700',

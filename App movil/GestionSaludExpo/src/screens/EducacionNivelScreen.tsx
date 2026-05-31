@@ -7,7 +7,22 @@ import { obtenerNivel } from '../data/educacion';
 type Props = NativeStackScreenProps<RootStackParamList, 'EducacionNivel'>;
 
 export function EducacionNivelScreen({ route, navigation }: Props) {
-  const nivel = useMemo(() => obtenerNivel(route.params.nivelId), [route.params.nivelId]);
+  const nivelId = route.params?.nivelId;
+  const nivel = useMemo(
+    () => (nivelId ? obtenerNivel(nivelId) : null),
+    [nivelId],
+  );
+
+  if (!nivel) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.errorText}>No se pudo abrir este nivel educativo.</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Text style={styles.backBtnText}>Volver</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -15,7 +30,7 @@ export function EducacionNivelScreen({ route, navigation }: Props) {
       <Text style={styles.subtitle}>{nivel.enfoque}</Text>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Cómo lo explicamos</Text>
+        <Text style={styles.sectionTitle}>CÃƒÆ’Ã‚Â³mo lo explicamos</Text>
         <View style={styles.tagRow}>
           {nivel.comoMostrar.map((item) => (
             <View key={item} style={styles.tag}>
@@ -53,27 +68,27 @@ export function EducacionNivelScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     padding: 20,
   },
   title: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 24,
     fontWeight: '900',
     marginBottom: 6,
   },
   subtitle: {
-    color: '#cbd5f5',
+    color: '#C9D7E8',
     marginBottom: 16,
   },
   section: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 16,
     marginBottom: 18,
   },
   sectionTitle: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     fontWeight: '800',
     marginBottom: 10,
   },
@@ -83,42 +98,61 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tag: {
-    backgroundColor: '#2563eb22',
+    backgroundColor: '#29B6FF22',
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   tagText: {
-    color: '#93c5fd',
+    color: '#29B6FF',
     fontSize: 12,
   },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 18,
     marginBottom: 14,
   },
   cardTitle: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 6,
   },
   cardDescription: {
-    color: '#cbd5f5',
+    color: '#C9D7E8',
     marginBottom: 10,
   },
   smallTag: {
-    backgroundColor: '#fbbf2422',
+    backgroundColor: '#FF4D7322',
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   smallTagText: {
-    color: '#fde68a',
+    color: '#FF4D73',
     fontSize: 11,
   },
   listContent: {
     paddingBottom: 30,
+  },
+  errorText: {
+    color: '#FF4D73',
+    fontSize: 18,
+    textAlign: 'center',
+    marginTop: 24,
+  },
+  backBtn: {
+    marginTop: 16,
+    alignSelf: 'center',
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: '#FF4D73',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  backBtnText: {
+    color: '#FF4D73',
+    fontWeight: '700',
   },
 });

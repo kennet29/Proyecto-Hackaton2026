@@ -11,7 +11,7 @@ export function EducacionScreen({ navigation }: Props) {
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Elige Un Nivel</Text>
       <Text style={styles.subtitle}>
-        contenido educativo diseñado para niños, adolescentes y adultos
+        contenido educativo diseÃƒÂ±ado para niÃƒÂ±os, adolescentes y adultos
       </Text>
 
       <FlatList
@@ -42,36 +42,36 @@ export function EducacionScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     padding: 20,
   },
   title: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 24,
     fontWeight: '900',
     marginBottom: 6,
   },
   subtitle: {
-    color: '#cbd5f5',
+    color: '#C9D7E8',
     marginBottom: 16,
   },
   listContent: {
     paddingBottom: 30,
   },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 22,
     padding: 18,
     marginBottom: 16,
   },
   cardLabel: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     fontSize: 20,
     fontWeight: '800',
     marginBottom: 6,
   },
   cardDescription: {
-    color: '#cbd5f5',
+    color: '#C9D7E8',
     lineHeight: 20,
     marginBottom: 10,
   },
@@ -81,13 +81,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tag: {
-    backgroundColor: '#2563eb22',
+    backgroundColor: '#29B6FF22',
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   tagText: {
-    color: '#93c5fd',
+    color: '#29B6FF',
     fontSize: 12,
   },
 });

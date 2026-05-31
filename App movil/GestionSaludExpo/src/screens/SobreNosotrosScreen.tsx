@@ -35,44 +35,44 @@ export function SobreNosotrosScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 24,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     gap: 14,
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
     marginBottom: 12,
-    color: '#f8fafc',
+    color: '#F4F8FF',
   },
   subtitle: {
     fontSize: 20,
     fontWeight: '800',
     marginTop: 24,
     marginBottom: 8,
-    color: '#e2e8f0',
+    color: '#F4F8FF',
   },
   paragraph: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#cbd5e1',
+    color: '#C9D7E8',
   },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     padding: 18,
     borderRadius: 18,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 4,
-    color: '#f8fafc',
+    color: '#F4F8FF',
   },
   cardText: {
     fontSize: 15,
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     lineHeight: 22,
   },
 });

@@ -116,6 +116,18 @@ export class Medicacion {
   modificadoen?: Date;
 
   /**
+   * Archivo adjunto asociado a la receta fisica.
+   */
+  @Column({
+    name: "evidenciafotografica",
+    type: "varbinary",
+    length: "max",
+    nullable: true,
+    select: false,
+  })
+  archivoReceta?: Buffer | null;
+
+  /**
    * Campo de datos asociado a `campoprueba01`.
    */
   @Column({
@@ -124,7 +136,7 @@ export class Medicacion {
     length: 200,
     nullable: true,
   })
-  campoprueba01?: string;
+  nombreArchivoReceta?: string | null;
 
   /**
    * Campo de datos asociado a `campoprueba02`.
@@ -135,7 +147,7 @@ export class Medicacion {
     length: 200,
     nullable: true,
   })
-  campoprueba02?: string;
+  mimeArchivoReceta?: string | null;
 
   /**
    * Campo de datos asociado a `campoprueba03`.
@@ -146,7 +158,7 @@ export class Medicacion {
     length: 200,
     nullable: true,
   })
-  campoprueba03?: string;
+  campoprueba03?: string | null;
 
   /**
    * Campo de datos asociado a `campoprueba04`.
@@ -157,7 +169,7 @@ export class Medicacion {
     length: 200,
     nullable: true,
   })
-  campoprueba04?: string;
+  campoprueba04?: string | null;
 
   /**
    * Campo de datos asociado a `campoprueba05`.
@@ -168,5 +180,5 @@ export class Medicacion {
     length: 200,
     nullable: true,
   })
-  campoprueba05?: string;
+  campoprueba05?: string | null;
 }

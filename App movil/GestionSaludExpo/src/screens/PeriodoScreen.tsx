@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -56,7 +57,10 @@ const today = () => new Date().toISOString().slice(0, 10);
 const PERIODO_EXTRA_PASSWORD =
   process.env.EXPO_PUBLIC_PERIODO_EXTRA_PASSWORD?.trim() || 'Periodo2026!';
 
-const normalizeSexo = (value?: string | null) => value?.trim().toUpperCase() ?? '';
+const normalizeSexo = (value?: string | null) => {
+  if (value === null || value === undefined) return '';
+  return String(value).trim().toUpperCase();
+};
 
 const formatDate = (value?: string | null) => {
   if (!value) return 'Sin fecha';
@@ -76,6 +80,7 @@ const formatEnum = (value?: string | null) => {
 
 export function PeriodoScreen() {
   const { token, user } = useAuth();
+  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [modulePassword, setModulePassword] = useState('');
@@ -231,12 +236,12 @@ export function PeriodoScreen() {
     }
 
     if (!modulePassword.trim()) {
-      Alert.alert('Clave requerida', 'Ingresa la contraseña adicional del modulo.');
+      Alert.alert('Clave requerida', 'Ingresa la contraseÃƒÂ±a adicional del modulo.');
       return;
     }
 
     if (modulePassword.trim() !== PERIODO_EXTRA_PASSWORD) {
-      Alert.alert('Clave incorrecta', 'La contraseña adicional del modulo no coincide.');
+      Alert.alert('Clave incorrecta', 'La contraseÃƒÂ±a adicional del modulo no coincide.');
       return;
     }
 
@@ -254,7 +259,7 @@ export function PeriodoScreen() {
     }
 
     if (!isUnlocked) {
-      Alert.alert('Acceso protegido', 'Desbloquea el modulo con la contraseña adicional.');
+      Alert.alert('Acceso protegido', 'Desbloquea el modulo con la contraseÃƒÂ±a adicional.');
       return;
     }
 
@@ -324,7 +329,7 @@ export function PeriodoScreen() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={() => loadData(selectedPatientId, true)}
-          tintColor="#fff"
+          tintColor="#F4F8FF"
         />
       }
     >
@@ -360,13 +365,13 @@ export function PeriodoScreen() {
         ) : (
           <>
             <Text style={styles.helperText}>
-              Se encontro al menos una paciente femenina. Ingresa la contraseña adicional para continuar.
+              Se encontro al menos una paciente femenina. Ingresa la contraseÃƒÂ±a adicional para continuar.
             </Text>
             <TextInput
               style={styles.input}
               value={modulePassword}
               onChangeText={setModulePassword}
-              placeholder="Contraseña adicional del modulo"
+              placeholder="ContraseÃƒÂ±a adicional del modulo"
               secureTextEntry
               autoCapitalize="none"
             />
@@ -383,7 +388,7 @@ export function PeriodoScreen() {
         <Text style={styles.sectionTitle}>Paciente</Text>
         {loadingPatients ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color="#ec4899" />
+            <ActivityIndicator color="#FF4D73" />
             <Text style={styles.loadingText}>Cargando pacientes...</Text>
           </View>
         ) : patients.length === 0 ? (
@@ -401,10 +406,11 @@ export function PeriodoScreen() {
                   key={patient.pacienteId}
                   label={
                     patient.parentesco
-                      ? `${patient.displayName} · ${patient.parentesco}`
+                      ? `${patient.displayName} Ã‚Â· ${patient.parentesco}`
                       : patient.displayName
                   }
                   value={String(patient.pacienteId)}
+                  color={pickerItemColor}
                 />
               ))}
             </Picker>
@@ -448,17 +454,17 @@ export function PeriodoScreen() {
         <View style={styles.row}>
           <View style={[styles.pickerWrapper, styles.halfInput]}>
             <Picker selectedValue={form.flujo} onValueChange={(value) => handleChange('flujo', String(value))}>
-              <Picker.Item label="Flujo leve" value="leve" />
-              <Picker.Item label="Flujo moderado" value="moderado" />
-              <Picker.Item label="Flujo abundante" value="abundante" />
+              <Picker.Item label="Flujo leve" value="leve" color={pickerItemColor} />
+              <Picker.Item label="Flujo moderado" value="moderado" color={pickerItemColor} />
+              <Picker.Item label="Flujo abundante" value="abundante" color={pickerItemColor} />
             </Picker>
           </View>
           <View style={[styles.pickerWrapper, styles.halfInput]}>
             <Picker selectedValue={form.dolor} onValueChange={(value) => handleChange('dolor', String(value))}>
-              <Picker.Item label="Dolor leve" value="leve" />
-              <Picker.Item label="Dolor moderado" value="moderado" />
-              <Picker.Item label="Dolor intenso" value="intenso" />
-              <Picker.Item label="Sin dolor" value="sin_dolor" />
+              <Picker.Item label="Dolor leve" value="leve" color={pickerItemColor} />
+              <Picker.Item label="Dolor moderado" value="moderado" color={pickerItemColor} />
+              <Picker.Item label="Dolor intenso" value="intenso" color={pickerItemColor} />
+              <Picker.Item label="Sin dolor" value="sin_dolor" color={pickerItemColor} />
             </Picker>
           </View>
         </View>
@@ -481,7 +487,7 @@ export function PeriodoScreen() {
           onPress={handleSubmit}
           disabled={submitting || !form.pacienteId}
         >
-          {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Guardar periodo</Text>}
+          {submitting ? <ActivityIndicator color="#F4F8FF" /> : <Text style={styles.primaryBtnText}>Guardar periodo</Text>}
         </TouchableOpacity>
       </View>
 
@@ -489,7 +495,7 @@ export function PeriodoScreen() {
         <Text style={styles.sectionTitle}>Resumen</Text>
         {loadingData ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color="#ec4899" />
+            <ActivityIndicator color="#FF4D73" />
             <Text style={styles.loadingText}>Cargando historial...</Text>
           </View>
         ) : !selectedPatientId ? (
@@ -540,10 +546,10 @@ export function PeriodoScreen() {
                 {formatDate(item.fechaInicio)} {item.fechaFin ? `- ${formatDate(item.fechaFin)}` : ''}
               </Text>
               <Text style={styles.itemText}>
-                Flujo: {formatEnum(item.flujo)} · Dolor: {formatEnum(item.dolor)}
+                Flujo: {formatEnum(item.flujo)} Ã‚Â· Dolor: {formatEnum(item.dolor)}
               </Text>
               <Text style={styles.itemText}>
-                Duracion: {item.duracionDias ?? 'N/D'} dias · Ciclo: {item.cicloDias ?? 'N/D'} dias
+                Duracion: {item.duracionDias ?? 'N/D'} dias Ã‚Â· Ciclo: {item.cicloDias ?? 'N/D'} dias
               </Text>
               {item.sintomas?.length ? (
                 <Text style={styles.itemText}>Sintomas: {item.sintomas.join(', ')}</Text>
@@ -563,50 +569,50 @@ export function PeriodoScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     gap: 16,
   },
   hero: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#ec4899',
+    borderColor: '#FF4D73',
   },
   heroTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 24,
     fontWeight: '800',
     marginBottom: 6,
   },
   heroText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     fontSize: 14,
     lineHeight: 20,
   },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 16,
     gap: 12,
   },
   sectionTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 18,
     fontWeight: '700',
   },
   pickerWrapper: {
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F4F8FF',
   },
   input: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F4F8FF',
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#0f172a',
+    color: '#071120',
   },
   textArea: {
     minHeight: 92,
@@ -619,13 +625,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   primaryBtn: {
-    backgroundColor: '#ec4899',
+    backgroundColor: '#FF4D73',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 15,
     fontWeight: '700',
   },
@@ -637,65 +643,65 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     marginTop: 8,
   },
   emptyText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     lineHeight: 20,
   },
   errorText: {
-    color: '#fca5a5',
+    color: '#FF4D73',
     lineHeight: 20,
   },
   successText: {
-    color: '#bbf7d0',
+    color: '#38F28E',
     lineHeight: 20,
   },
   helperText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     lineHeight: 20,
   },
   metricText: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     fontSize: 14,
   },
   highlightBox: {
-    backgroundColor: '#831843',
+    backgroundColor: '#FF4D7318',
     borderRadius: 14,
     padding: 14,
     gap: 4,
   },
   highlightTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontWeight: '700',
   },
   highlightText: {
-    color: '#fce7f3',
+    color: '#FF4D73',
   },
   listItem: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 14,
     padding: 12,
     gap: 4,
   },
   itemTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontWeight: '700',
   },
   itemText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
   },
   secondaryBtn: {
     borderWidth: 1,
-    borderColor: '#64748b',
+    borderColor: '#9FB3C8',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   secondaryBtnText: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     fontSize: 15,
     fontWeight: '700',
   },

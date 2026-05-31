@@ -228,44 +228,44 @@ export function PacienteResumenScreen({ navigation }: Props) {
             {
               label: 'Consultas',
               value: summary.overview.totalConsultas,
-              color: '#0ea5e9',
-              soft: '#e0f2fe',
+              color: '#29B6FF',
+              soft: '#29B6FF18',
               icon: 'document-text-outline' as const,
             },
             {
               label: 'Citas',
               value: summary.overview.citasPendientes,
-              color: '#f97316',
-              soft: '#ffedd5',
+              color: '#FF4D73',
+              soft: '#FF4D7322',
               icon: 'calendar-outline' as const,
             },
             {
               label: 'Medicacion',
               value: summary.overview.medicacionesActivas,
-              color: '#22c55e',
-              soft: '#dcfce7',
+              color: '#38F28E',
+              soft: '#38F28E18',
               icon: 'pill' as const,
               iconFamily: 'material' as const,
             },
             {
               label: 'Examenes',
               value: summary.overview.examenesClinicos,
-              color: '#8b5cf6',
-              soft: '#ede9fe',
+              color: '#29B6FF',
+              soft: '#29B6FF18',
               icon: 'flask-outline' as const,
             },
             {
               label: 'Alergias',
               value: summary.overview.alergiasActivas,
-              color: '#ef4444',
-              soft: '#fee2e2',
+              color: '#FF4D73',
+              soft: '#FF4D7318',
               icon: 'warning-outline' as const,
             },
             {
               label: 'Seguimientos',
               value: summary.overview.seguimientosActivos,
-              color: '#14b8a6',
-              soft: '#ccfbf1',
+              color: '#38F28E',
+              soft: '#38F28E22',
               icon: 'pulse-outline' as const,
             },
           ]
@@ -281,18 +281,18 @@ export function PacienteResumenScreen({ navigation }: Props) {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={() => fetchSummary(selectedPatientId, true)}
-          tintColor="#111827"
+          tintColor="#071120"
         />
       }
     >
       <View style={styles.headerCard}>
         <View style={styles.headerIconBadge}>
-          <Ionicons name="medkit-outline" size={24} color="#102a43" />
+          <Ionicons name="medkit-outline" size={24} color="#182A44" />
         </View>
         <Text style={styles.kicker}>RESUMEN CLINICO</Text>
         <Text style={styles.title}>Vista integral del expediente</Text>
         <Text style={styles.subtitle}>
-          Carga una sola fuente clínica, prioriza alertas y conserva una copia local para consulta rápida.
+          Carga una sola fuente clÃƒÂ­nica, prioriza alertas y conserva una copia local para consulta rÃƒÂ¡pida.
         </Text>
 
         <View style={styles.selectorCard}>
@@ -324,7 +324,7 @@ export function PacienteResumenScreen({ navigation }: Props) {
 
       {(loadingPatients || loadingSummary) && !refreshing ? (
         <View style={styles.loadingCard}>
-          <ActivityIndicator size="large" color="#111827" />
+          <ActivityIndicator size="large" color="#071120" />
           <Text style={styles.loadingText}>Cargando resumen del paciente...</Text>
         </View>
       ) : null}
@@ -337,7 +337,7 @@ export function PacienteResumenScreen({ navigation }: Props) {
                 <Text style={styles.profileName}>{patientName}</Text>
                 <Text style={styles.profileMeta}>
                   ID #{summary.patient.pacienteId}
-                  {summary.patient.edadAproximada !== null ? ` · ${summary.patient.edadAproximada} años` : ''}
+                  {summary.patient.edadAproximada !== null ? ` Ã‚Â· ${summary.patient.edadAproximada} aÃƒÂ±os` : ''}
                 </Text>
               </View>
               <TouchableOpacity
@@ -352,10 +352,10 @@ export function PacienteResumenScreen({ navigation }: Props) {
               <Ionicons
                 name={dataSource === 'cache' ? 'cloud-offline-outline' : 'cloud-done-outline'}
                 size={16}
-                color={dataSource === 'cache' ? '#b45309' : '#166534'}
+                color={dataSource === 'cache' ? '#FF4D73' : '#38F28E'}
               />
               <Text style={styles.syncBadgeText}>
-                {dataSource === 'cache' ? 'Copia local' : 'Datos sincronizados'} · {formatDateTime(summary.generatedAt)}
+                {dataSource === 'cache' ? 'Copia local' : 'Datos sincronizados'} Ã‚Â· {formatDateTime(summary.generatedAt)}
               </Text>
             </View>
 
@@ -429,7 +429,7 @@ export function PacienteResumenScreen({ navigation }: Props) {
               <Text style={styles.infoLabel}>Proxima cita</Text>
               <Text style={styles.infoValue}>
                 {summary.upcoming.nextAppointment
-                  ? `${formatDateTime(summary.upcoming.nextAppointment.fecha)} · ${
+                  ? `${formatDateTime(summary.upcoming.nextAppointment.fecha)} Ã‚Â· ${
                       summary.upcoming.nextAppointment.especialidad || 'Sin especialidad'
                     }`
                   : 'Sin cita pendiente'}
@@ -451,7 +451,7 @@ export function PacienteResumenScreen({ navigation }: Props) {
                   <View style={styles.recordMain}>
                     <Text style={styles.recordTitle}>{item.nombre}</Text>
                     <Text style={styles.recordDetail}>
-                      {item.dosis || 'Sin dosis'} · {item.viaAdministracion || 'Sin via'}
+                      {item.dosis || 'Sin dosis'} Ã‚Â· {item.viaAdministracion || 'Sin via'}
                     </Text>
                     <Text style={styles.recordSub}>{item.indicaciones || 'Sin indicaciones'}</Text>
                   </View>
@@ -487,7 +487,7 @@ export function PacienteResumenScreen({ navigation }: Props) {
             ) : (
               summary.carePointers.map((item, index) => (
                 <View key={`${item}-${index}`} style={styles.pointerRow}>
-                  <Ionicons name="checkmark-circle-outline" size={18} color="#0f766e" />
+                  <Ionicons name="checkmark-circle-outline" size={18} color="#38F28E" />
                   <Text style={styles.pointerText}>{item}</Text>
                 </View>
               ))
@@ -502,14 +502,14 @@ export function PacienteResumenScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f4efe6',
+    backgroundColor: '#182A44',
   },
   content: {
     padding: 18,
     paddingBottom: 34,
   },
   headerCard: {
-    backgroundColor: '#102a43',
+    backgroundColor: '#182A44',
     borderRadius: 28,
     padding: 22,
     marginBottom: 16,
@@ -518,73 +518,73 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 16,
-    backgroundColor: '#f0f4f8',
+    backgroundColor: '#F4F8FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
   kicker: {
-    color: '#9fb3c8',
+    color: '#9FB3C8',
     fontSize: 11,
     letterSpacing: 1.2,
     marginBottom: 6,
   },
   title: {
-    color: '#f0f4f8',
+    color: '#F4F8FF',
     fontSize: 28,
     fontWeight: '800',
   },
   subtitle: {
-    color: '#bcccdc',
+    color: '#C9D7E8',
     fontSize: 14,
     lineHeight: 20,
     marginTop: 8,
   },
   selectorCard: {
     marginTop: 18,
-    backgroundColor: '#243b53',
+    backgroundColor: '#27496D',
     borderRadius: 20,
     padding: 14,
   },
   selectorLabel: {
-    color: '#d9e2ec',
+    color: '#C9D7E8',
     fontSize: 13,
     fontWeight: '700',
     marginBottom: 8,
   },
   pickerShell: {
-    backgroundColor: '#0b1220',
+    backgroundColor: '#0D1B2A',
     borderRadius: 16,
     overflow: 'hidden',
   },
   picker: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
   },
   errorText: {
-    color: '#b91c1c',
+    color: '#FF4D73',
     marginBottom: 12,
     fontWeight: '600',
   },
   loadingCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F8FF',
     borderRadius: 24,
     padding: 22,
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#eadfce',
+    borderColor: '#182A44',
   },
   loadingText: {
-    color: '#475569',
+    color: '#9FB3C8',
     marginTop: 10,
   },
   profileCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F8FF',
     borderRadius: 28,
     padding: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#eadfce',
+    borderColor: '#182A44',
   },
   profileTop: {
     flexDirection: 'row',
@@ -599,18 +599,18 @@ const styles = StyleSheet.create({
     paddingRight: 4,
   },
   profileName: {
-    color: '#111827',
+    color: '#071120',
     fontSize: 26,
     fontWeight: '800',
     flexShrink: 1,
   },
   profileMeta: {
-    color: '#64748b',
+    color: '#9FB3C8',
     marginTop: 4,
     flexShrink: 1,
   },
   manageButton: {
-    backgroundColor: '#111827',
+    backgroundColor: '#071120',
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 999,
@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   manageButtonText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontWeight: '700',
     fontSize: 12,
   },
@@ -626,9 +626,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F4F8FF',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#F4F8FF',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   syncBadgeText: {
-    color: '#334155',
+    color: '#27496D',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -647,15 +647,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: '#F4F8FF',
     paddingBottom: 8,
   },
   infoLabel: {
-    color: '#64748b',
+    color: '#9FB3C8',
     fontSize: 13,
   },
   infoValue: {
-    color: '#111827',
+    color: '#071120',
     fontSize: 13,
     fontWeight: '700',
     maxWidth: '58%',
@@ -669,12 +669,12 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     width: '48%',
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F8FF',
     borderRadius: 22,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#eadfce',
+    borderColor: '#182A44',
   },
   metricTop: {
     marginBottom: 10,
@@ -687,31 +687,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   metricValue: {
-    color: '#111827',
+    color: '#071120',
     fontSize: 30,
     fontWeight: '800',
   },
   metricLabel: {
-    color: '#64748b',
+    color: '#9FB3C8',
     fontSize: 13,
     marginTop: 4,
   },
   sectionCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F8FF',
     borderRadius: 26,
     padding: 18,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#eadfce',
+    borderColor: '#182A44',
   },
   sectionTitle: {
-    color: '#111827',
+    color: '#071120',
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 12,
   },
   emptyCopy: {
-    color: '#64748b',
+    color: '#9FB3C8',
     fontSize: 14,
   },
   alertRow: {
@@ -727,31 +727,31 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   alertHigh: {
-    backgroundColor: '#dc2626',
+    backgroundColor: '#FF4D73',
   },
   alertMedium: {
-    backgroundColor: '#f59e0b',
+    backgroundColor: '#FF4D73',
   },
   alertInfo: {
-    backgroundColor: '#0ea5e9',
+    backgroundColor: '#29B6FF',
   },
   alertContent: {
     flex: 1,
   },
   alertTitle: {
-    color: '#111827',
+    color: '#071120',
     fontSize: 15,
     fontWeight: '700',
   },
   alertDetail: {
-    color: '#64748b',
+    color: '#9FB3C8',
     marginTop: 4,
     fontSize: 13,
   },
   recordRow: {
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: '#F4F8FF',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
@@ -761,22 +761,22 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   recordTitle: {
-    color: '#111827',
+    color: '#071120',
     fontSize: 15,
     fontWeight: '700',
   },
   recordDetail: {
-    color: '#475569',
+    color: '#9FB3C8',
     marginTop: 4,
     fontSize: 13,
   },
   recordSub: {
-    color: '#64748b',
+    color: '#9FB3C8',
     marginTop: 4,
     fontSize: 12,
   },
   recordDate: {
-    color: '#8b5e34',
+    color: '#FF4D73',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -785,13 +785,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: '#F4F8FF',
   },
   timelineMarker: {
     width: 10,
     height: 10,
     borderRadius: 99,
-    backgroundColor: '#111827',
+    backgroundColor: '#071120',
     marginTop: 6,
     marginRight: 12,
   },
@@ -800,24 +800,24 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   timelineType: {
-    color: '#8b5e34',
+    color: '#FF4D73',
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
   timelineTitle: {
-    color: '#111827',
+    color: '#071120',
     fontSize: 15,
     fontWeight: '700',
     marginTop: 2,
   },
   timelineDetail: {
-    color: '#64748b',
+    color: '#9FB3C8',
     marginTop: 4,
     fontSize: 12,
   },
   timelineDate: {
-    color: '#6b7280',
+    color: '#9FB3C8',
     fontSize: 11,
     maxWidth: 88,
     textAlign: 'right',
@@ -830,7 +830,7 @@ const styles = StyleSheet.create({
   },
   pointerText: {
     flex: 1,
-    color: '#334155',
+    color: '#27496D',
     fontSize: 13,
     lineHeight: 18,
   },

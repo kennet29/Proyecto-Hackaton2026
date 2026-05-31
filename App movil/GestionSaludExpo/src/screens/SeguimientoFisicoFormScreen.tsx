@@ -303,7 +303,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
         <Text style={styles.sectionTitle}>Paciente</Text>
         {loadingPatients ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color="#38bdf8" />
+            <ActivityIndicator color="#29B6FF" />
             <Text style={styles.loadingText}>Cargando pacientes...</Text>
           </View>
         ) : patients.length === 0 ? (
@@ -339,7 +339,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
         </Text>
         {loadingHistory ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color="#38bdf8" />
+            <ActivityIndicator color="#29B6FF" />
             <Text style={styles.loadingText}>Cargando registros recientes...</Text>
           </View>
         ) : templateRecords.length ? (
@@ -353,13 +353,13 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
               >
                 <Text style={styles.templateTitle}>{formatDate(record.fecha)}</Text>
                 <Text style={styles.templateText}>
-                  Peso: {formatNumber(record.peso, ' kg')} · Minutos: {formatNumber(record.minutosEjercicio, ' min')}
+                  Peso: {formatNumber(record.peso, ' kg')} Â· Minutos: {formatNumber(record.minutosEjercicio, ' min')}
                 </Text>
                 <Text style={styles.templateText}>
-                  Pasos: {formatNumber(record.pasos)} · Calorias: {formatNumber(record.caloriasQuemadas)}
+                  Pasos: {formatNumber(record.pasos)} Â· Calorias: {formatNumber(record.caloriasQuemadas)}
                 </Text>
                 <Text style={styles.templateText}>
-                  Distancia: {formatNumber(record.distanciaKm, ' km')} · Intensidad: {record.intensidad ?? 'N/D'}
+                  Distancia: {formatNumber(record.distanciaKm, ' km')} Â· Intensidad: {record.intensidad ?? 'N/D'}
                 </Text>
                 {record.tipoEjercicio ? (
                   <Text style={styles.templateText}>Actividad: {record.tipoEjercicio}</Text>
@@ -481,7 +481,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           disabled={submitting || !form.pacienteId}
         >
           {submitting ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color="#F4F8FF" />
           ) : (
             <Text style={styles.primaryBtnText}>Guardar seguimiento</Text>
           )}
@@ -495,55 +495,55 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     paddingBottom: 40,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     gap: 16,
   },
   hero: {
-    backgroundColor: '#082f49',
+    backgroundColor: '#29B6FF18',
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#38bdf8',
+    borderColor: '#29B6FF',
   },
   heroTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 24,
     fontWeight: '800',
     marginBottom: 6,
   },
   heroText: {
-    color: '#dbeafe',
+    color: '#C9D7E8',
     fontSize: 14,
     lineHeight: 20,
   },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 16,
     gap: 12,
   },
   sectionTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 18,
     fontWeight: '700',
   },
   sectionText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     fontSize: 13,
     lineHeight: 18,
   },
   pickerWrapper: {
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F4F8FF',
   },
   input: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F4F8FF',
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#0f172a',
+    color: '#071120',
   },
   textArea: {
     minHeight: 92,
@@ -558,18 +558,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fieldLabel: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     fontSize: 13,
     fontWeight: '700',
   },
   primaryBtn: {
-    backgroundColor: '#0284c7',
+    backgroundColor: '#29B6FF',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 15,
     fontWeight: '700',
   },
@@ -581,39 +581,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     marginTop: 8,
   },
   emptyText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     lineHeight: 20,
   },
   errorText: {
-    color: '#fca5a5',
+    color: '#FF4D73',
     lineHeight: 20,
   },
   templateCard: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 14,
     padding: 12,
     gap: 4,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   templateCardActive: {
-    borderColor: '#38bdf8',
-    backgroundColor: '#082f49',
+    borderColor: '#29B6FF',
+    backgroundColor: '#29B6FF18',
   },
   templateTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontWeight: '700',
   },
   templateText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     fontSize: 13,
   },
   templateAction: {
-    color: '#38bdf8',
+    color: '#29B6FF',
     fontWeight: '700',
     marginTop: 6,
   },

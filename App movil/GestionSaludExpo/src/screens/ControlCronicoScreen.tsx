@@ -43,14 +43,20 @@ type ControlCronicoRecord = {
   medico?: string | null;
 };
 
-type FormState = {
-  pacienteId: string;
-  condicioncronicaId: string;
-  fechacontrol: string;
+type MeasurementRow = {
+  id: string;
   indicador: string;
   valor: string;
   unidad: string;
   resultado: string;
+  expanded: boolean;
+};
+
+type FormState = {
+  pacienteId: string;
+  condicioncronicaId: string;
+  fechacontrol: string;
+  horacontrol: string;
   conclusiones: string;
   proximocontrol: string;
   medico: string;
@@ -89,6 +95,25 @@ const toDateOnlyString = (value?: Date | string | null): string => {
   return Number.isNaN(parsed.getTime()) ? '' : toDateOnlyString(parsed);
 };
 
+const normalizeTimeString = (value?: string | null): string => {
+  if (!value) {
+    return '';
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return '';
+  }
+  const match = trimmed.match(/(\d{2}):(\d{2})/);
+  if (match) {
+    return `${match[1]}:${match[2]}`;
+  }
+  const parsed = new Date(trimmed);
+  if (!Number.isNaN(parsed.getTime())) {
+    return `${String(parsed.getHours()).padStart(2, '0')}:${String(parsed.getMinutes()).padStart(2, '0')}`;
+  }
+  return '';
+};
+
 const parseDateForPicker = (value?: string | null) => {
   const normalized = toDateOnlyString(value);
   const parts = normalized.split('-').map(Number);
@@ -96,6 +121,19 @@ const parseDateForPicker = (value?: string | null) => {
     return new Date(parts[0]!, (parts[1] ?? 1) - 1, parts[2]!);
   }
   return new Date();
+};
+
+const parseTimeForPicker = (value?: string | null) => {
+  const normalized = normalizeTimeString(value);
+  const base = new Date();
+  base.setSeconds(0, 0);
+  const parts = normalized.split(':').map(Number);
+  if (parts.length === 2 && parts.every((part) => !Number.isNaN(part))) {
+    base.setHours(parts[0]!, parts[1]!, 0, 0);
+    return base;
+  }
+  base.setHours(8, 0, 0, 0);
+  return base;
 };
 
 const formatDisplayDate = (value?: string | null) => {
@@ -106,6 +144,34 @@ const formatDisplayDate = (value?: string | null) => {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+  });
+};
+
+const formatDisplayTime = (value?: string | null) => {
+  const normalized = normalizeTimeString(value);
+  if (!normalized) {
+    return 'Selecciona hora';
+  }
+  return parseTimeForPicker(normalized).toLocaleTimeString('es-NI', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const formatRecordDateTime = (value?: string | null) => {
+  if (!value) {
+    return 'Sin fecha';
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return String(value);
+  }
+  return parsed.toLocaleString('es-NI', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 };
 
@@ -126,6 +192,23 @@ const formatErrorMessage = (error: unknown) => {
   }
   return 'No se pudo completar la accion.';
 };
+
+const composeDateTime = (dateValue?: string, timeValue?: string) => {
+  const normalizedTime = normalizeTimeString(timeValue);
+  if (!dateValue || !normalizedTime) {
+    return '';
+  }
+  return `${dateValue}T${normalizedTime}:00`;
+};
+
+const createMeasurementRow = (): MeasurementRow => ({
+  id: `measurement-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  indicador: '',
+  valor: '',
+  unidad: '',
+  resultado: '',
+  expanded: true,
+});
 
 const normalizeCondicion = (item: Record<string, unknown>): CondicionRecord | null => {
   const condicioncronicaId = Number(item.condicioncronicaId ?? item.condicioncronicaid ?? item.id ?? 0);
@@ -155,7 +238,12 @@ const normalizeControl = (item: Record<string, unknown>): ControlCronicoRecord |
   const controlcronicoId = Number(item.controlcronicoId ?? item.controlcronicoid ?? item.id ?? 0);
   const condicioncronicaId = Number(item.condicioncronicaId ?? item.condicioncronicaid ?? 0);
 
-  if (!Number.isFinite(controlcronicoId) || controlcronicoId <= 0 || !Number.isFinite(condicioncronicaId) || condicioncronicaId <= 0) {
+  if (
+    !Number.isFinite(controlcronicoId) ||
+    controlcronicoId <= 0 ||
+    !Number.isFinite(condicioncronicaId) ||
+    condicioncronicaId <= 0
+  ) {
     return null;
   }
 
@@ -170,7 +258,12 @@ const normalizeControl = (item: Record<string, unknown>): ControlCronicoRecord |
   return {
     controlcronicoId,
     condicioncronicaId,
-    fechacontrol: toDateOnlyString(item.fechacontrol as string | null | undefined) || null,
+    fechacontrol:
+      typeof item.fechacontrol === 'string'
+        ? item.fechacontrol
+        : item.fechacontrol instanceof Date
+          ? item.fechacontrol.toISOString()
+          : null,
     indicador: typeof item.indicador === 'string' ? item.indicador : null,
     valor,
     unidad: typeof item.unidad === 'string' ? item.unidad : null,
@@ -198,7 +291,9 @@ const FeedbackBanner = ({ feedback }: { feedback: FeedbackState }) => {
   const isSuccess = feedback.type === 'success';
   return (
     <View style={[styles.feedbackBox, isSuccess ? styles.feedbackSuccess : styles.feedbackError]}>
-      <Text style={[styles.feedbackText, isSuccess ? styles.feedbackTextSuccess : styles.feedbackTextError]}>
+      <Text
+        style={[styles.feedbackText, isSuccess ? styles.feedbackTextSuccess : styles.feedbackTextError]}
+      >
         {feedback.message}
       </Text>
     </View>
@@ -216,10 +311,7 @@ export function ControlCronicoScreen() {
       pacienteId: defaultPacienteId,
       condicioncronicaId: '',
       fechacontrol: '',
-      indicador: '',
-      valor: '',
-      unidad: '',
-      resultado: '',
+      horacontrol: '08:00',
       conclusiones: '',
       proximocontrol: '',
       medico: '',
@@ -238,7 +330,9 @@ export function ControlCronicoScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [form, setForm] = useState<FormState>(buildInitialForm);
+  const [measurements, setMeasurements] = useState<MeasurementRow[]>([createMeasurementRow()]);
   const [showIOSControlPicker, setShowIOSControlPicker] = useState(false);
+  const [showIOSControlTimePicker, setShowIOSControlTimePicker] = useState(false);
   const [showIOSProximoPicker, setShowIOSProximoPicker] = useState(false);
 
   useEffect(() => {
@@ -276,10 +370,16 @@ export function ControlCronicoScreen() {
       const tiposBody = await tiposResponse.json().catch(() => null);
 
       if (!condicionesResponse.ok) {
-        throw new Error((condicionesBody as { message?: string } | null)?.message ?? 'No se pudieron cargar las condiciones cronicas.');
+        throw new Error(
+          (condicionesBody as { message?: string } | null)?.message ??
+            'No se pudieron cargar las condiciones cronicas.',
+        );
       }
       if (!tiposResponse.ok) {
-        throw new Error((tiposBody as { message?: string } | null)?.message ?? 'No se pudieron cargar los tipos de condicion.');
+        throw new Error(
+          (tiposBody as { message?: string } | null)?.message ??
+            'No se pudieron cargar los tipos de condicion.',
+        );
       }
 
       const condicionesItems = Array.isArray(condicionesBody)
@@ -307,7 +407,9 @@ export function ControlCronicoScreen() {
       const response = await fetch(`${API_URL}/controlcronico`, { headers: requestHeaders });
       const body = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error((body as { message?: string } | null)?.message ?? 'No se pudo cargar el historial.');
+        throw new Error(
+          (body as { message?: string } | null)?.message ?? 'No se pudo cargar el historial.',
+        );
       }
       const items = Array.isArray(body)
         ? body
@@ -353,7 +455,10 @@ export function ControlCronicoScreen() {
     const currentId = Number(form.condicioncronicaId);
     const exists = patientCondiciones.some((item) => item.condicioncronicaId === currentId);
     if (!exists) {
-      setForm((prev) => ({ ...prev, condicioncronicaId: String(patientCondiciones[0]!.condicioncronicaId) }));
+      setForm((prev) => ({
+        ...prev,
+        condicioncronicaId: String(patientCondiciones[0]!.condicioncronicaId),
+      }));
     }
   }, [form.condicioncronicaId, patientCondiciones]);
 
@@ -370,8 +475,55 @@ export function ControlCronicoScreen() {
       }));
   }, [condiciones, patientCondiciones, records]);
 
+  const selectedPatientName = useMemo(() => {
+    const pacienteId = Number(form.pacienteId);
+    if (!Number.isFinite(pacienteId) || pacienteId <= 0) {
+      return 'Paciente';
+    }
+    return (
+      patientOptions.find((patient) => patient.pacienteId === pacienteId)?.displayName ??
+      `Paciente #${pacienteId}`
+    );
+  }, [form.pacienteId, patientOptions]);
+
+  const upcomingControlsCount = useMemo(() => {
+    const today = toDateOnlyString(new Date());
+    return filteredRecords.filter((record) => {
+      if (!record.proximocontrol) {
+        return false;
+      }
+      return record.proximocontrol >= today;
+    }).length;
+  }, [filteredRecords]);
+
   const handleChange = (key: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleMeasurementChange = (
+    id: string,
+    key: keyof Omit<MeasurementRow, 'id' | 'expanded'>,
+    value: string,
+  ) => {
+    setMeasurements((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [key]: value } : item)),
+    );
+  };
+
+  const toggleMeasurementExpanded = (id: string) => {
+    setMeasurements((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, expanded: !item.expanded } : item,
+      ),
+    );
+  };
+
+  const addMeasurement = () => {
+    setMeasurements((prev) => [...prev, createMeasurementRow()]);
+  };
+
+  const removeMeasurement = (id: string) => {
+    setMeasurements((prev) => (prev.length === 1 ? prev : prev.filter((item) => item.id !== id)));
   };
 
   const resetForm = () => {
@@ -381,6 +533,7 @@ export function ControlCronicoScreen() {
       condicioncronicaId:
         patientCondiciones.length > 0 ? String(patientCondiciones[0]!.condicioncronicaId) : '',
     }));
+    setMeasurements([createMeasurementRow()]);
   };
 
   const handleDateConfirm = (key: 'fechacontrol' | 'proximocontrol', value: Date) => {
@@ -391,6 +544,14 @@ export function ControlCronicoScreen() {
       } else {
         setShowIOSProximoPicker(false);
       }
+    }
+  };
+
+  const handleTimeConfirm = (value: Date) => {
+    const formatted = `${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`;
+    handleChange('horacontrol', formatted);
+    if (Platform.OS === 'ios') {
+      setShowIOSControlTimePicker(false);
     }
   };
 
@@ -416,59 +577,121 @@ export function ControlCronicoScreen() {
     }
   };
 
-  const handleSubmit = async () => {
-    setFeedback(null);
-
-    const condicioncronicaId = Number(form.condicioncronicaId);
-    if (!Number.isFinite(condicioncronicaId) || condicioncronicaId <= 0 || !form.fechacontrol) {
-      setFeedback({
-        type: 'error',
-        message: 'Condicion cronica y fecha de control son obligatorios.',
+  const openTimePicker = () => {
+    if (Platform.OS === 'android') {
+      DateTimePickerAndroid.open({
+        value: parseTimeForPicker(form.horacontrol),
+        mode: 'time',
+        is24Hour: true,
+        onChange: (event, selectedDate) => {
+          if (event.type === 'set' && selectedDate) {
+            handleTimeConfirm(selectedDate);
+          }
+        },
       });
       return;
     }
 
-    const valor =
-      form.valor.trim() === ''
-        ? undefined
-        : Number.isFinite(Number(form.valor))
-          ? Number(form.valor)
-          : NaN;
+    setShowIOSControlTimePicker(true);
+  };
 
-    if (Number.isNaN(valor)) {
+  const handleSubmit = async () => {
+    setFeedback(null);
+
+    const condicioncronicaId = Number(form.condicioncronicaId);
+    const fechacontrol = composeDateTime(form.fechacontrol, form.horacontrol);
+
+    if (!Number.isFinite(condicioncronicaId) || condicioncronicaId <= 0 || !fechacontrol) {
       setFeedback({
         type: 'error',
-        message: 'El valor debe ser numerico.',
+        message: 'Condicion cronica, fecha y hora de control son obligatorios.',
+      });
+      return;
+    }
+
+    const validMeasurements = measurements
+      .map((measurement) => {
+        const trimmedIndicator = measurement.indicador.trim();
+        const trimmedUnit = measurement.unidad.trim();
+        const trimmedResult = measurement.resultado.trim();
+        const rawValue = measurement.valor.trim();
+        const value =
+          rawValue === ''
+            ? undefined
+            : Number.isFinite(Number(rawValue))
+              ? Number(rawValue)
+              : NaN;
+
+        return {
+          indicador: trimmedIndicator || undefined,
+          valor: value,
+          unidad: trimmedUnit || undefined,
+          resultado: trimmedResult || undefined,
+        };
+      })
+      .filter(
+        (measurement) =>
+          measurement.indicador !== undefined ||
+          measurement.valor !== undefined ||
+          measurement.unidad !== undefined ||
+          measurement.resultado !== undefined,
+      );
+
+    if (validMeasurements.length === 0) {
+      setFeedback({
+        type: 'error',
+        message: 'Agrega al menos una medicion con indicador, valor, unidad o resultado.',
+      });
+      return;
+    }
+
+    if (validMeasurements.some((measurement) => Number.isNaN(measurement.valor))) {
+      setFeedback({
+        type: 'error',
+        message: 'Todos los valores numericos deben ser validos.',
       });
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const payload = {
-        condicioncronicaId,
-        fechacontrol: form.fechacontrol,
-        indicador: form.indicador.trim() || undefined,
-        valor,
-        unidad: form.unidad.trim() || undefined,
-        resultado: form.resultado.trim() || undefined,
-        conclusiones: form.conclusiones.trim() || undefined,
-        proximocontrol: form.proximocontrol || undefined,
-        medico: form.medico.trim() || undefined,
-        creadopor: user?.username ?? undefined,
-      };
+      await Promise.all(
+        validMeasurements.map(async (measurement) => {
+          const payload = {
+            condicioncronicaId,
+            fechacontrol,
+            indicador: measurement.indicador,
+            valor: measurement.valor,
+            unidad: measurement.unidad,
+            resultado: measurement.resultado,
+            conclusiones: form.conclusiones.trim() || undefined,
+            proximocontrol: form.proximocontrol || undefined,
+            medico: form.medico.trim() || undefined,
+            creadopor: user?.username ?? undefined,
+          };
 
-      const response = await fetch(`${API_URL}/controlcronico`, {
-        method: 'POST',
-        headers: jsonHeaders,
-        body: JSON.stringify(payload),
+          const response = await fetch(`${API_URL}/controlcronico`, {
+            method: 'POST',
+            headers: jsonHeaders,
+            body: JSON.stringify(payload),
+          });
+          const body = await response.json().catch(() => null);
+          if (!response.ok) {
+            throw new Error(
+              (body as { message?: string } | null)?.message ??
+                'No se pudo registrar el control cronico.',
+            );
+          }
+        }),
+      );
+
+      setFeedback({
+        type: 'success',
+        message:
+          validMeasurements.length === 1
+            ? 'Control cronico registrado correctamente.'
+            : `${validMeasurements.length} mediciones fueron registradas correctamente.`,
       });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error((body as { message?: string } | null)?.message ?? 'No se pudo registrar el control cronico.');
-      }
-
-      setFeedback({ type: 'success', message: 'Control cronico registrado correctamente.' });
       resetForm();
       setShowForm(false);
       await fetchRecords();
@@ -485,18 +708,38 @@ export function ControlCronicoScreen() {
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void fetchRecords()} />}
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>Control Cronico</Text>
-        <Text style={styles.subtitle}>Registra mediciones y seguimiento sobre condiciones cronicas existentes.</Text>
+      <View style={styles.heroCard}>
+        <Text style={styles.kicker}>SEGUIMIENTO CRONICO</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>Control cronico</Text>
+          <Text style={styles.subtitle}>
+            Registra mediciones, revisa el estado del paciente y deja programado el proximo control.
+          </Text>
+        </View>
       </View>
 
       <FeedbackBanner feedback={feedback} />
+
+      <View style={styles.metricsRow}>
+        <View style={styles.metricCard}>
+          <Text style={styles.metricValue}>{patientCondiciones.length}</Text>
+          <Text style={styles.metricLabel}>Condiciones activas</Text>
+        </View>
+        <View style={styles.metricCard}>
+          <Text style={styles.metricValue}>{filteredRecords.length}</Text>
+          <Text style={styles.metricLabel}>Controles registrados</Text>
+        </View>
+        <View style={styles.metricCard}>
+          <Text style={styles.metricValue}>{upcomingControlsCount}</Text>
+          <Text style={styles.metricLabel}>Proximos controles</Text>
+        </View>
+      </View>
 
       <View style={styles.filterCard}>
         <Text style={styles.label}>Paciente</Text>
         {loadingPatients ? (
           <View style={styles.inlineState}>
-            <ActivityIndicator color="#2563eb" />
+            <ActivityIndicator color="#29B6FF" />
             <Text style={styles.inlineStateText}>Cargando pacientes...</Text>
           </View>
         ) : patientOptions.length === 0 ? (
@@ -504,42 +747,106 @@ export function ControlCronicoScreen() {
         ) : (
           <View style={styles.pickerWrapper}>
             <Picker
+              style={styles.picker}
               selectedValue={form.pacienteId}
               onValueChange={(value) => handleChange('pacienteId', String(value))}
+              dropdownIconColor="#F4F8FF"
             >
               {patientOptions.map((patient) => (
-                <Picker.Item key={patient.pacienteId} label={patient.displayName} value={String(patient.pacienteId)} />
+                <Picker.Item
+                  key={patient.pacienteId}
+                  label={patient.displayName}
+                  value={String(patient.pacienteId)}
+                />
               ))}
             </Picker>
           </View>
         )}
+        <Text style={styles.filterHint}>{selectedPatientName}</Text>
+      </View>
+
+      <View style={styles.summaryCard}>
+        <Text style={styles.sectionTitle}>Condiciones del paciente</Text>
+        <Text style={styles.sectionSubtitle}>
+          {patientCondiciones.length === 0
+            ? 'Este paciente no tiene condiciones cronicas disponibles para seguimiento.'
+            : 'Estas son las condiciones sobre las que puedes registrar controles.'}
+        </Text>
+
+        {patientCondiciones.length === 0 ? (
+          <Text style={styles.emptySelectText}>
+            Primero registra una condicion cronica para este paciente.
+          </Text>
+        ) : (
+          patientCondiciones.map((item) => (
+            <View key={item.condicioncronicaId} style={styles.conditionBadgeRow}>
+              <View>
+                <Text style={styles.conditionBadgeTitle}>
+                  {tiposMap[item.tipocondicionId] ?? `Condicion #${item.tipocondicionId}`}
+                </Text>
+                <Text style={styles.conditionBadgeMeta}>{item.estado || 'Estado sin definir'}</Text>
+              </View>
+              <View style={styles.conditionStatusPill}>
+                <Text style={styles.conditionStatusText}>{item.estado || 'Activa'}</Text>
+              </View>
+            </View>
+          ))
+        )}
+      </View>
+
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Historial de controles</Text>
+        <Text style={styles.sectionSubtitle}>
+          {filteredRecords.length === 1
+            ? '1 control registrado'
+            : `${filteredRecords.length} controles registrados`}
+        </Text>
       </View>
 
       {loading ? (
         <View style={styles.stateBox}>
-          <ActivityIndicator color="#2563eb" />
+          <ActivityIndicator color="#29B6FF" />
           <Text style={styles.stateText}>Cargando historial...</Text>
         </View>
       ) : filteredRecords.length === 0 ? (
         <View style={styles.stateBox}>
           <Text style={styles.stateTitle}>Sin registros</Text>
-          <Text style={styles.stateText}>No hay controles cronicos para el paciente seleccionado.</Text>
+          <Text style={styles.stateText}>
+            No hay controles cronicos para el paciente seleccionado.
+          </Text>
         </View>
       ) : (
         filteredRecords.map((record) => {
           const tipoNombre = record.condicion ? tiposMap[record.condicion.tipocondicionId] : null;
           return (
             <View key={record.controlcronicoId} style={styles.card}>
-              <Text style={styles.cardTitle}>{tipoNombre ?? `Condicion #${record.condicioncronicaId}`}</Text>
-              <Text style={styles.cardSubtitle}>Control: {formatRecordDate(record.fechacontrol)}</Text>
+              <View style={styles.cardTopRow}>
+                <View style={styles.cardTopCopy}>
+                  <Text style={styles.cardTitle}>
+                    {tipoNombre ?? `Condicion #${record.condicioncronicaId}`}
+                  </Text>
+                  <Text style={styles.cardSubtitle}>
+                    Control: {formatRecordDateTime(record.fechacontrol)}
+                  </Text>
+                </View>
+                <View style={styles.resultPill}>
+                  <Text style={styles.resultPillText}>{record.resultado || 'Sin resultado'}</Text>
+                </View>
+              </View>
               <Text style={styles.cardText}>Indicador: {record.indicador || 'Sin dato'}</Text>
               <Text style={styles.cardText}>
-                Valor: {record.valor !== null && record.valor !== undefined ? `${record.valor}${record.unidad ? ` ${record.unidad}` : ''}` : 'Sin dato'}
+                Valor:{' '}
+                {record.valor !== null && record.valor !== undefined
+                  ? `${record.valor}${record.unidad ? ` ${record.unidad}` : ''}`
+                  : 'Sin dato'}
               </Text>
-              <Text style={styles.cardText}>Resultado: {record.resultado || 'Sin dato'}</Text>
-              <Text style={styles.cardText}>Proximo control: {formatRecordDate(record.proximocontrol)}</Text>
+              <Text style={styles.cardText}>
+                Proximo control: {formatRecordDate(record.proximocontrol)}
+              </Text>
               <Text style={styles.cardText}>Medico: {record.medico || 'Sin dato'}</Text>
-              {record.conclusiones ? <Text style={styles.cardText}>Conclusiones: {record.conclusiones}</Text> : null}
+              {record.conclusiones ? (
+                <Text style={styles.cardText}>Conclusiones: {record.conclusiones}</Text>
+              ) : null}
             </View>
           );
         })
@@ -548,15 +855,22 @@ export function ControlCronicoScreen() {
       {showForm ? (
         <View style={styles.formCard}>
           <Text style={styles.formTitle}>Nuevo control</Text>
+          <Text style={styles.formSubtitle}>
+            Puedes agregar varias mediciones en el mismo control. Se guardan como registros separados con la misma fecha y hora.
+          </Text>
 
           <Text style={styles.label}>Condicion cronica</Text>
           {patientCondiciones.length === 0 ? (
-            <Text style={styles.emptySelectText}>Primero registra una condicion cronica para este paciente.</Text>
+            <Text style={styles.emptySelectText}>
+              Primero registra una condicion cronica para este paciente.
+            </Text>
           ) : (
             <View style={styles.pickerWrapper}>
               <Picker
+                style={styles.picker}
                 selectedValue={form.condicioncronicaId}
                 onValueChange={(value) => handleChange('condicioncronicaId', String(value))}
+                dropdownIconColor="#F4F8FF"
               >
                 {patientCondiciones.map((item) => (
                   <Picker.Item
@@ -569,7 +883,7 @@ export function ControlCronicoScreen() {
             </View>
           )}
 
-          <Text style={styles.label}>Fecha de control</Text>
+          <Text style={styles.label}>Fecha del control</Text>
           <TouchableOpacity style={styles.dateButton} onPress={() => openDatePicker('fechacontrol')}>
             <Text style={styles.dateButtonText}>{formatDisplayDate(form.fechacontrol)}</Text>
           </TouchableOpacity>
@@ -585,49 +899,130 @@ export function ControlCronicoScreen() {
                   }
                 }}
               />
-              <TouchableOpacity style={styles.iosPickerDoneBtn} onPress={() => setShowIOSControlPicker(false)}>
+              <TouchableOpacity
+                style={styles.iosPickerDoneBtn}
+                onPress={() => setShowIOSControlPicker(false)}
+              >
                 <Text style={styles.iosPickerDoneText}>Listo</Text>
               </TouchableOpacity>
             </View>
           ) : null}
 
-          <Text style={styles.label}>Indicador</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ej. Glucosa, presion arterial"
-            value={form.indicador}
-            onChangeText={(value) => handleChange('indicador', value)}
-          />
+          <Text style={styles.label}>Hora del control</Text>
+          <TouchableOpacity style={styles.dateButton} onPress={openTimePicker}>
+            <Text style={styles.dateButtonText}>{formatDisplayTime(form.horacontrol)}</Text>
+          </TouchableOpacity>
+          {Platform.OS === 'ios' && showIOSControlTimePicker ? (
+            <View style={styles.iosPickerWrapper}>
+              <DateTimePicker
+                mode="time"
+                display="spinner"
+                value={parseTimeForPicker(form.horacontrol)}
+                onChange={(_, selectedDate) => {
+                  if (selectedDate) {
+                    handleTimeConfirm(selectedDate);
+                  }
+                }}
+              />
+              <TouchableOpacity
+                style={styles.iosPickerDoneBtn}
+                onPress={() => setShowIOSControlTimePicker(false)}
+              >
+                <Text style={styles.iosPickerDoneText}>Listo</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
 
-          <Text style={styles.label}>Valor</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ej. 120"
-            value={form.valor}
-            onChangeText={(value) => handleChange('valor', value)}
-            keyboardType="decimal-pad"
-          />
+          <View style={styles.measurementsHeader}>
+            <View>
+              <Text style={styles.formTitle}>Mediciones</Text>
+              <Text style={styles.sectionSubtitle}>
+                {measurements.length === 1
+                  ? '1 medicion en este control'
+                  : `${measurements.length} mediciones en este control`}
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.addMeasurementBtn} onPress={addMeasurement}>
+              <Text style={styles.addMeasurementText}>+ Agregar valor</Text>
+            </TouchableOpacity>
+          </View>
 
-          <Text style={styles.label}>Unidad</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="mg/dL, mmHg..."
-            value={form.unidad}
-            onChangeText={(value) => handleChange('unidad', value)}
-          />
+          {measurements.map((measurement, index) => (
+            <View key={measurement.id} style={styles.measurementCard}>
+              <View style={styles.measurementTopRow}>
+                <TouchableOpacity
+                  style={styles.measurementToggle}
+                  onPress={() => toggleMeasurementExpanded(measurement.id)}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.measurementToggleCopy}>
+                    <Text style={styles.measurementTitle}>Medicion {index + 1}</Text>
+                    <Text style={styles.measurementSummary}>
+                      {measurement.indicador || 'Sin indicador'} Ãƒâ€šÃ‚Â· {measurement.valor || 'Sin valor'}{' '}
+                      {measurement.unidad || ''} {measurement.resultado ? `Ãƒâ€šÃ‚Â· ${measurement.resultado}` : ''}
+                    </Text>
+                  </View>
+                  <Text style={styles.measurementToggleIcon}>
+                    {measurement.expanded ? '-' : '+'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.removeMeasurementBtn, measurements.length === 1 && styles.disabledBtn]}
+                  onPress={() => removeMeasurement(measurement.id)}
+                  disabled={measurements.length === 1}
+                >
+                  <Text style={styles.removeMeasurementText}>Quitar</Text>
+                </TouchableOpacity>
+              </View>
 
-          <Text style={styles.label}>Resultado</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Controlado, alto, estable..."
-            value={form.resultado}
-            onChangeText={(value) => handleChange('resultado', value)}
-          />
+              {measurement.expanded ? (
+                <>
+                  <Text style={styles.label}>Indicador</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Ej. Glucosa, presion arterial"
+                    placeholderTextColor="#9FB3C8"
+                    value={measurement.indicador}
+                    onChangeText={(value) => handleMeasurementChange(measurement.id, 'indicador', value)}
+                  />
 
-          <Text style={styles.label}>Conclusiones</Text>
+                  <Text style={styles.label}>Valor</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Ej. 120"
+                    placeholderTextColor="#9FB3C8"
+                    value={measurement.valor}
+                    onChangeText={(value) => handleMeasurementChange(measurement.id, 'valor', value)}
+                    keyboardType="decimal-pad"
+                  />
+
+                  <Text style={styles.label}>Unidad</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="mg/dL, mmHg..."
+                    placeholderTextColor="#9FB3C8"
+                    value={measurement.unidad}
+                    onChangeText={(value) => handleMeasurementChange(measurement.id, 'unidad', value)}
+                  />
+
+                  <Text style={styles.label}>Resultado</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Controlado, alto, estable..."
+                    placeholderTextColor="#9FB3C8"
+                    value={measurement.resultado}
+                    onChangeText={(value) => handleMeasurementChange(measurement.id, 'resultado', value)}
+                  />
+                </>
+              ) : null}
+            </View>
+          ))}
+
+          <Text style={styles.label}>Conclusiones generales</Text>
           <TextInput
             style={[styles.input, styles.multiline]}
             placeholder="Resumen clinico"
+            placeholderTextColor="#9FB3C8"
             value={form.conclusiones}
             onChangeText={(value) => handleChange('conclusiones', value)}
             multiline
@@ -650,7 +1045,10 @@ export function ControlCronicoScreen() {
                   }
                 }}
               />
-              <TouchableOpacity style={styles.iosPickerDoneBtn} onPress={() => setShowIOSProximoPicker(false)}>
+              <TouchableOpacity
+                style={styles.iosPickerDoneBtn}
+                onPress={() => setShowIOSProximoPicker(false)}
+              >
                 <Text style={styles.iosPickerDoneText}>Listo</Text>
               </TouchableOpacity>
             </View>
@@ -660,6 +1058,7 @@ export function ControlCronicoScreen() {
           <TextInput
             style={styles.input}
             placeholder="Responsable del control"
+            placeholderTextColor="#9FB3C8"
             value={form.medico}
             onChangeText={(value) => handleChange('medico', value)}
           />
@@ -669,7 +1068,11 @@ export function ControlCronicoScreen() {
             disabled={isSubmitting || patientCondiciones.length === 0}
             onPress={() => void handleSubmit()}
           >
-            {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Guardar control</Text>}
+            {isSubmitting ? (
+              <ActivityIndicator color="#F4F8FF" />
+            ) : (
+              <Text style={styles.primaryBtnText}>Guardar control</Text>
+            )}
           </TouchableOpacity>
         </View>
       ) : null}
@@ -684,68 +1087,166 @@ export function ControlCronicoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   content: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: 24,
+    paddingBottom: 110,
     gap: 16,
+  },
+  heroCard: {
+    backgroundColor: '#182A44',
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#1B3355',
+  },
+  kicker: {
+    color: '#29B6FF',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    marginBottom: 8,
   },
   header: {
     gap: 4,
   },
   title: {
-    color: '#f8fafc',
-    fontSize: 22,
+    color: '#F4F8FF',
+    fontSize: 28,
     fontWeight: '800',
   },
   subtitle: {
-    color: '#cbd5f5',
-    fontSize: 13,
+    color: '#C9D7E8',
+    fontSize: 14,
+    lineHeight: 20,
   },
   feedbackBox: {
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 12,
     borderWidth: 1,
   },
   feedbackSuccess: {
-    backgroundColor: '#dcfce7',
-    borderColor: '#22c55e',
+    backgroundColor: '#38F28E18',
+    borderColor: '#38F28E',
   },
   feedbackError: {
-    backgroundColor: '#fee2e2',
-    borderColor: '#ef4444',
+    backgroundColor: '#FF4D7318',
+    borderColor: '#FF4D73',
   },
   feedbackText: {
     fontSize: 13,
     fontWeight: '600',
   },
   feedbackTextSuccess: {
-    color: '#166534',
+    color: '#38F28E',
   },
   feedbackTextError: {
-    color: '#b91c1c',
+    color: '#FF4D73',
   },
-  filterCard: {
-    backgroundColor: '#1e293b',
+  metricsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  metricCard: {
+    flex: 1,
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 16,
+    borderWidth: 1,
+    borderColor: '#27496D',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metricValue: {
+    color: '#F4F8FF',
+    fontSize: 22,
+    fontWeight: '800',
+  },
+  metricLabel: {
+    color: '#29B6FF',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  filterCard: {
+    backgroundColor: '#132238',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#27496D',
   },
   label: {
-    color: '#e2e8f0',
-    fontSize: 13,
+    color: '#F4F8FF',
+    fontSize: 14,
     fontWeight: '700',
     marginBottom: 8,
   },
   pickerWrapper: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     overflow: 'hidden',
-    backgroundColor: '#0b1220',
+    backgroundColor: '#0D1B2A',
+  },
+  picker: {
+    color: '#F4F8FF',
+  },
+  filterHint: {
+    marginTop: 10,
+    color: '#29B6FF',
+  },
+  summaryCard: {
+    backgroundColor: '#132238',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#27496D',
+    gap: 12,
+  },
+  sectionHeader: {
+    gap: 2,
+  },
+  sectionTitle: {
+    color: '#F4F8FF',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  sectionSubtitle: {
+    color: '#C9D7E8',
+    fontSize: 13,
+  },
+  conditionBadgeRow: {
+    backgroundColor: '#0D1B2A',
+    borderRadius: 14,
+    padding: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  conditionBadgeTitle: {
+    color: '#F4F8FF',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  conditionBadgeMeta: {
+    color: '#C9D7E8',
+    marginTop: 2,
+    fontSize: 12,
+  },
+  conditionStatusPill: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    backgroundColor: '#38F28E18',
+  },
+  conditionStatusText: {
+    color: '#38F28E',
+    fontWeight: '800',
+    fontSize: 11,
   },
   emptySelectText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     fontSize: 13,
   },
   inlineState: {
@@ -754,61 +1255,163 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   inlineStateText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
   },
   stateBox: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 20,
     alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#27496D',
   },
   stateTitle: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 4,
   },
   stateText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     textAlign: 'center',
   },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 16,
     gap: 6,
+    borderWidth: 1,
+    borderColor: '#27496D',
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  cardTopCopy: {
+    flex: 1,
   },
   cardTitle: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 17,
     fontWeight: '700',
   },
   cardSubtitle: {
-    color: '#86efac',
+    color: '#38F28E',
     fontSize: 12,
   },
+  resultPill: {
+    backgroundColor: '#0D1B2A',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  resultPillText: {
+    color: '#29B6FF',
+    fontSize: 11,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
   cardText: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     fontSize: 13,
   },
   formCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#132238',
     borderRadius: 20,
     padding: 18,
     gap: 12,
+    borderWidth: 1,
+    borderColor: '#27496D',
   },
   formTitle: {
-    color: '#0f172a',
+    color: '#F4F8FF',
     fontSize: 18,
+    fontWeight: '800',
+  },
+  formSubtitle: {
+    color: '#29B6FF',
+    lineHeight: 19,
+  },
+  measurementsHeader: {
+    marginTop: 4,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  addMeasurementBtn: {
+    backgroundColor: '#0D1B2A',
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#27496D',
+  },
+  addMeasurementText: {
+    color: '#29B6FF',
     fontWeight: '700',
+  },
+  measurementCard: {
+    backgroundColor: '#0D1B2A',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#27496D',
+  },
+  measurementTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  measurementToggle: {
+    flex: 1,
+    gap: 4,
+  },
+  measurementToggleCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  measurementTitle: {
+    color: '#F4F8FF',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  measurementSummary: {
+    color: '#C9D7E8',
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  measurementToggleIcon: {
+    color: '#29B6FF',
+    fontSize: 22,
+    fontWeight: '700',
+    width: 20,
+    textAlign: 'center',
+  },
+  removeMeasurementBtn: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#182A44',
+  },
+  removeMeasurementText: {
+    color: '#C9D7E8',
+    fontWeight: '700',
+    fontSize: 12,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#cbd5f5',
+    borderColor: '#27496D',
     borderRadius: 12,
-    padding: 12,
+    padding: 14,
     fontSize: 15,
-    color: '#0f172a',
+    color: '#F4F8FF',
+    backgroundColor: '#0D1B2A',
+    marginBottom: 12,
   },
   multiline: {
     minHeight: 84,
@@ -816,41 +1419,44 @@ const styles = StyleSheet.create({
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#cbd5f5',
+    borderColor: '#27496D',
     borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 14,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#0D1B2A',
+    marginBottom: 12,
   },
   dateButtonText: {
-    color: '#0f172a',
+    color: '#F4F8FF',
     fontSize: 15,
+    textAlign: 'center',
   },
   iosPickerWrapper: {
     borderWidth: 1,
-    borderColor: '#cbd5f5',
+    borderColor: '#27496D',
     borderRadius: 16,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#0D1B2A',
     overflow: 'hidden',
+    marginBottom: 12,
   },
   iosPickerDoneBtn: {
     alignItems: 'center',
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#cbd5f5',
+    borderTopColor: '#27496D',
   },
   iosPickerDoneText: {
-    color: '#0f172a',
+    color: '#29B6FF',
     fontWeight: '700',
   },
   primaryBtn: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#38F28E',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 15,
     fontWeight: '700',
   },
@@ -864,12 +1470,17 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#16a34a',
+    backgroundColor: '#38F28E',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 7,
   },
   fabText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 30,
     lineHeight: 32,
     fontWeight: '700',

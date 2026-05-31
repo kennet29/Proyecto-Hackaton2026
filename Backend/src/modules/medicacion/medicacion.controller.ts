@@ -48,6 +48,16 @@ export class MedicacionController {
   }
 
   /**
+   * Get receta.
+   * @param id Identificador del registro objetivo.
+   * @returns Archivo adjunto asociado a la medicación.
+   */
+  @Get(":id/receta")
+  getReceta(@Param("id") id: string) {
+    return this.medicacionservice.getReceta(id);
+  }
+
+  /**
    * Update.
    * @param id Identificador del registro objetivo.
    * @param payload Datos validados que recibe la operación.

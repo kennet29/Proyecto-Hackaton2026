@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
+import { appColors, colorAlpha } from '../theme/colors';
 
 type MenuTabKey = 'inicio' | 'medico' | 'bienestar' | 'gestion';
 
@@ -66,7 +67,7 @@ const homeOptions: OptionItem[] = [
     label: 'Gestionar Expediente',
     description: 'Organiza personas vinculadas, accesos y el control central del expediente.',
     icon: 'file-tray-full-outline',
-    accent: '#38bdf8',
+    accent: appColors.info,
     navigateTo: 'ExpedienteGestion',
   },
   {
@@ -74,7 +75,7 @@ const homeOptions: OptionItem[] = [
     label: 'Seccion Medica',
     description: 'Reune consultas, citas, vacunas, medicacion y seguimiento clinico.',
     icon: 'medkit-outline',
-    accent: '#a78bfa',
+    accent: appColors.info,
     actionTab: 'medico',
   },
   {
@@ -82,7 +83,7 @@ const homeOptions: OptionItem[] = [
     label: 'Habitos, Ejercicio y Peso',
     description: 'Agrupa habitos, peso, ejercicio, salud mental y control diario.',
     icon: 'fitness-outline',
-    accent: '#2dd4bf',
+    accent: appColors.success,
     actionTab: 'bienestar',
   },
   {
@@ -90,7 +91,7 @@ const homeOptions: OptionItem[] = [
     label: 'Gestion y Soporte',
     description: 'Incluye pacientes, documentos, educacion, recordatorios y soporte.',
     icon: 'layers-outline',
-    accent: '#facc15',
+    accent: appColors.accent,
     actionTab: 'gestion',
   },
 ];
@@ -101,7 +102,7 @@ const medicalOptions: OptionItem[] = [
     label: 'Resumen Del Paciente',
     description: 'Visualiza indicadores, alertas y progreso',
     icon: 'person-circle-outline',
-    accent: '#f472b6',
+    accent: appColors.accent,
     navigateTo: 'PacienteResumen',
   },
   {
@@ -109,7 +110,7 @@ const medicalOptions: OptionItem[] = [
     label: 'Consultas Medicas',
     description: 'Revisa y registra consultas medicas',
     icon: 'medkit-outline',
-    accent: '#a78bfa',
+    accent: appColors.info,
     navigateTo: 'ConsultaList',
   },
   {
@@ -117,7 +118,7 @@ const medicalOptions: OptionItem[] = [
     label: 'Citas Programadas',
     description: 'Agenda y seguimiento de citas',
     icon: 'calendar-outline',
-    accent: '#fb7185',
+    accent: appColors.accent,
     navigateTo: 'CitaForm',
   },
   {
@@ -125,7 +126,7 @@ const medicalOptions: OptionItem[] = [
     label: 'Vacunas',
     description: 'Registro de dosis, lotes y proximas fechas',
     icon: 'shield-checkmark-outline',
-    accent: '#60a5fa',
+    accent: appColors.info,
     navigateTo: 'VacunaForm',
   },
   {
@@ -133,7 +134,7 @@ const medicalOptions: OptionItem[] = [
     label: 'Medicacion',
     description: 'Dosis, duracion, vias y seguimiento',
     icon: 'flask-outline',
-    accent: '#f97316',
+    accent: appColors.accent,
     navigateTo: 'MedicacionForm',
   },
   {
@@ -141,7 +142,7 @@ const medicalOptions: OptionItem[] = [
     label: 'Enfermedades Cronicas',
     description: 'Condiciones, metas y monitoreo prolongado',
     icon: 'pulse-outline',
-    accent: '#22c55e',
+    accent: appColors.success,
     navigateTo: 'CondicionCronicaForm',
   },
   {
@@ -149,7 +150,7 @@ const medicalOptions: OptionItem[] = [
     label: 'Control Cronico',
     description: 'Registra mediciones y seguimiento de condiciones ya abiertas',
     icon: 'stats-chart-outline',
-    accent: '#16a34a',
+    accent: appColors.success,
     navigateTo: 'ControlCronico',
   },
   {
@@ -157,7 +158,7 @@ const medicalOptions: OptionItem[] = [
     label: 'Operaciones',
     description: 'Consulta cirugias, resultados y seguimiento',
     icon: 'bandage-outline',
-    accent: '#a855f7',
+    accent: appColors.info,
     navigateTo: 'OperacionForm',
   },
   {
@@ -165,7 +166,7 @@ const medicalOptions: OptionItem[] = [
     label: 'Lesiones',
     description: 'Registra lesiones y recuperacion',
     icon: 'body-outline',
-    accent: '#14b8a6',
+    accent: appColors.success,
     navigateTo: 'LesionForm',
   },
   {
@@ -173,7 +174,7 @@ const medicalOptions: OptionItem[] = [
     label: 'Alergias',
     description: 'Consulta reacciones y antecedentes',
     icon: 'warning-outline',
-    accent: '#fbbf24',
+    accent: appColors.accent,
     navigateTo: 'Alergia',
   },
   {
@@ -181,7 +182,7 @@ const medicalOptions: OptionItem[] = [
     label: 'Registro Dental',
     description: 'Procedimientos y piezas tratadas',
     icon: 'color-wand-outline',
-    accent: '#fb923c',
+    accent: appColors.accent,
     navigateTo: 'RegistroDentalForm',
   },
   {
@@ -189,7 +190,7 @@ const medicalOptions: OptionItem[] = [
     label: 'Embarazo',
     description: 'Seguimiento de inicio, controles y fecha probable de parto',
     icon: 'flower-outline',
-    accent: '#ec4899',
+    accent: appColors.accent,
     navigateTo: 'Embarazo',
   },
   {
@@ -197,7 +198,7 @@ const medicalOptions: OptionItem[] = [
     label: 'Desparasitacion',
     description: 'Registro de producto, dosis y proxima aplicacion',
     icon: 'leaf-outline',
-    accent: '#38bdf8',
+    accent: appColors.info,
     navigateTo: 'Desparasitacion',
   },
   {
@@ -205,7 +206,7 @@ const medicalOptions: OptionItem[] = [
     label: 'Examenes Clinicos',
     description: 'Resultados, fotos de hojas y PDF asociado a la consulta',
     icon: 'document-text-outline',
-    accent: '#38bdf8',
+    accent: appColors.info,
     navigateTo: 'ExamenClinico',
   },
   {
@@ -213,7 +214,7 @@ const medicalOptions: OptionItem[] = [
     label: 'Seguimiento De Caso',
     description: 'Evolucion despues de operacion, lesion o emergencia',
     icon: 'clipboard-outline',
-    accent: '#22c55e',
+    accent: appColors.success,
     navigateTo: 'SeguimientoPostevento',
   },
 ];
@@ -224,7 +225,7 @@ const wellnessOptions: OptionItem[] = [
     label: 'Habitos',
     description: 'Actividad fisica, sueno, alimentacion y riesgos',
     icon: 'walk-outline',
-    accent: '#2dd4bf',
+    accent: appColors.success,
     navigateTo: 'Habitos',
   },
   {
@@ -232,7 +233,7 @@ const wellnessOptions: OptionItem[] = [
     label: 'Seguimiento Fisico',
     description: 'Peso, ejercicio, pasos y progreso diario',
     icon: 'barbell-outline',
-    accent: '#38bdf8',
+    accent: appColors.info,
     navigateTo: 'SeguimientoFisico',
   },
   {
@@ -240,7 +241,7 @@ const wellnessOptions: OptionItem[] = [
     label: 'Salud Mental',
     description: 'Registro diario, alertas y bienestar',
     icon: 'heart-outline',
-    accent: '#22c55e',
+    accent: appColors.success,
     navigateTo: 'SaludMental',
   },
   {
@@ -248,7 +249,7 @@ const wellnessOptions: OptionItem[] = [
     label: 'Periodo',
     description: 'Control de ciclo, sintomas y prediccion',
     icon: 'moon-outline',
-    accent: '#ec4899',
+    accent: appColors.accent,
     navigateTo: 'Periodo',
   },
 ];
@@ -259,7 +260,7 @@ const managementOptions: OptionItem[] = [
     label: 'Pacientes',
     description: 'Registra o actualiza perfiles',
     icon: 'people-outline',
-    accent: '#34d399',
+    accent: '#38F28E',
     navigateTo: 'PacienteForm',
   },
   {
@@ -267,7 +268,7 @@ const managementOptions: OptionItem[] = [
     label: 'Documentos Clinicos',
     description: 'Adjunta estudios y reportes al expediente',
     icon: 'documents-outline',
-    accent: '#c084fc',
+    accent: '#29B6FF',
     navigateTo: 'DocumentoForm',
   },
   {
@@ -275,7 +276,7 @@ const managementOptions: OptionItem[] = [
     label: 'Recordatorios',
     description: 'Configura alertas y canales',
     icon: 'notifications-outline',
-    accent: '#f472b6',
+    accent: '#FF4D73',
     navigateTo: 'RecordatorioForm',
   },
   {
@@ -283,7 +284,7 @@ const managementOptions: OptionItem[] = [
     label: 'Ver Recordatorios',
     description: 'Consulta el cronograma completo',
     icon: 'timer-outline',
-    accent: '#38bdf8',
+    accent: '#29B6FF',
     navigateTo: 'RecordatorioList',
   },
   {
@@ -291,7 +292,7 @@ const managementOptions: OptionItem[] = [
     label: 'Educacion Saludable',
     description: 'Revisa guias, niveles y contenido educativo',
     icon: 'book-outline',
-    accent: '#facc15',
+    accent: '#FF4D73',
     navigateTo: 'Educacion',
   },
   {
@@ -299,7 +300,7 @@ const managementOptions: OptionItem[] = [
     label: 'Contacto y Soporte',
     description: 'Canales de ayuda y soporte general',
     icon: 'chatbubbles-outline',
-    accent: '#34d399',
+    accent: '#38F28E',
     navigateTo: 'Contacto',
   },
   {
@@ -307,7 +308,7 @@ const managementOptions: OptionItem[] = [
     label: 'Sobre Nosotros',
     description: 'Conoce la mision del proyecto',
     icon: 'information-circle-outline',
-    accent: '#94a3b8',
+    accent: '#9FB3C8',
     navigateTo: 'SobreNosotros',
   },
 ];
@@ -384,24 +385,24 @@ export function MenuPrincipalScreen({ navigation }: Props) {
         <View style={styles.heroCard}>
           <View style={styles.heroTopRow}>
             <View style={styles.heroBadge}>
-              <Ionicons name={activeMeta.icon} size={16} color="#38bdf8" />
+              <Ionicons name={activeMeta.icon} size={16} color="#29B6FF" />
               <Text style={styles.heroBadgeText}>{activeMeta.label}</Text>
             </View>
             <TouchableOpacity
               style={styles.logoutButton}
               onPress={() =>
-                Alert.alert('Cerrar sesion', '¿Deseas salir de esta cuenta?', [
+                Alert.alert('Cerrar sesion', 'Â¿Deseas salir de esta cuenta?', [
                   { text: 'Cancelar', style: 'cancel' },
                   { text: 'Salir', style: 'destructive', onPress: () => void handleLogout() },
                 ])
               }
             >
-              <Ionicons name="log-out-outline" size={18} color="#f8fafc" />
+              <Ionicons name="log-out-outline" size={18} color="#F4F8FF" />
             </TouchableOpacity>
           </View>
           <Text style={styles.pageTitle}>{activeMeta.title}</Text>
           <Text style={styles.userLabel}>
-            Sesion activa: {user?.username ?? 'usuario'}{user?.role ? ` · ${user.role}` : ''}
+            Sesion activa: {user?.username ?? 'usuario'}{user?.role ? ` Â· ${user.role}` : ''}
           </Text>
           <Text style={styles.pageSubtitle}>{activeMeta.subtitle}</Text>
         </View>
@@ -423,7 +424,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                 <Text style={styles.cardLabel}>{item.label}</Text>
                 <Text style={styles.cardDescription}>{item.description}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#cbd5f5" />
+                <Ionicons name="chevron-forward" size={18} color={appColors.textSoft} />
             </TouchableOpacity>
           )}
           contentContainerStyle={styles.listContent}
@@ -454,7 +455,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                   <Ionicons
                     name={tab.icon}
                     size={22}
-                    color={isActive ? '#1d4ed8' : '#0f172a'}
+                    color={isActive ? appColors.info : appColors.background}
                   />
                 </View>
                 <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>{tab.label}</Text>
@@ -470,22 +471,22 @@ export function MenuPrincipalScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: appColors.background,
   },
   container: {
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 10,
     paddingBottom: 12,
-    backgroundColor: '#0f172a',
+    backgroundColor: appColors.background,
   },
   heroCard: {
-    backgroundColor: '#111c34',
+    backgroundColor: appColors.surfaceStrong,
     borderRadius: 24,
     padding: 18,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#1e3a5f',
+    borderColor: appColors.borderStrong,
   },
   heroTopRow: {
     flexDirection: 'row',
@@ -497,14 +498,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#0b1220',
+    backgroundColor: appColors.backgroundMuted,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginBottom: 12,
   },
   heroBadgeText: {
-    color: '#dbeafe',
+    color: appColors.textSoft,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -512,25 +513,25 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#16263f',
+    backgroundColor: appColors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#29466b',
+    borderColor: appColors.border,
   },
   pageTitle: {
-    color: '#f8fafc',
+    color: appColors.text,
     fontSize: 24,
     fontWeight: '800',
   },
   userLabel: {
-    color: '#93c5fd',
+    color: appColors.info,
     fontSize: 12,
     fontWeight: '700',
     marginTop: 8,
   },
   pageSubtitle: {
-    color: '#cbd5f5',
+    color: appColors.textSoft,
     fontSize: 14,
     marginTop: 6,
     lineHeight: 21,
@@ -542,7 +543,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: appColors.surface,
     padding: 18,
     borderRadius: 18,
     marginBottom: 14,
@@ -562,13 +563,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardLabel: {
-    color: '#e2e8f0',
+    color: appColors.text,
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 2,
   },
   cardDescription: {
-    color: '#cbd5f5',
+    color: appColors.textSoft,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -579,12 +580,12 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#fff7fb',
+    backgroundColor: appColors.surfaceStrong,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#fecdd3',
-    shadowColor: '#020617',
+    borderColor: appColors.borderStrong,
+    shadowColor: appColors.overlay,
     shadowOpacity: 0.24,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
@@ -606,7 +607,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
     borderBottomLeftRadius: 10,
-    backgroundColor: '#fb334b',
+    backgroundColor: appColors.accent,
     transform: [{ rotate: '22deg' }],
   },
   assistantIconHead: {
@@ -614,7 +615,7 @@ const styles = StyleSheet.create({
     height: 23,
     marginTop: 4,
     borderRadius: 11,
-    backgroundColor: '#fb334b',
+    backgroundColor: appColors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -622,7 +623,7 @@ const styles = StyleSheet.create({
     width: 23,
     height: 18,
     borderRadius: 8,
-    backgroundColor: '#21162d',
+    backgroundColor: appColors.background,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
@@ -631,14 +632,14 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#f8fafc',
+    backgroundColor: appColors.text,
   },
   assistantIconMouth: {
     width: 4,
     height: 2,
     borderBottomLeftRadius: 3,
     borderBottomRightRadius: 3,
-    backgroundColor: '#f8fafc',
+    backgroundColor: appColors.text,
     marginTop: 4,
   },
   assistantIconEarLeft: {
@@ -648,7 +649,7 @@ const styles = StyleSheet.create({
     width: 3,
     height: 9,
     borderRadius: 2,
-    backgroundColor: '#21162d',
+    backgroundColor: appColors.background,
   },
   assistantIconEarRight: {
     position: 'absolute',
@@ -657,7 +658,7 @@ const styles = StyleSheet.create({
     width: 3,
     height: 9,
     borderRadius: 2,
-    backgroundColor: '#21162d',
+    backgroundColor: appColors.background,
   },
   assistantIconBody: {
     width: 14,
@@ -667,7 +668,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 6,
     borderBottomLeftRadius: 9,
     borderBottomRightRadius: 9,
-    backgroundColor: '#fb334b',
+    backgroundColor: appColors.accent,
   },
   assistantIconFootLeft: {
     position: 'absolute',
@@ -676,7 +677,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 5,
     borderRadius: 4,
-    backgroundColor: '#fb334b',
+    backgroundColor: appColors.accent,
     transform: [{ rotate: '22deg' }],
   },
   assistantIconFootRight: {
@@ -686,13 +687,13 @@ const styles = StyleSheet.create({
     width: 8,
     height: 5,
     borderRadius: 4,
-    backgroundColor: '#fb334b',
+    backgroundColor: appColors.accent,
     transform: [{ rotate: '-22deg' }],
   },
   navbar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#e0f2fe',
+    backgroundColor: appColors.surfaceStrong,
     borderRadius: 28,
     paddingHorizontal: 10,
     paddingVertical: 10,
@@ -708,23 +709,23 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#fff',
+    backgroundColor: appColors.text,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: appColors.overlay,
     shadowOpacity: 0.08,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
   },
   iconCircleActive: {
-    backgroundColor: '#bfdbfe',
+    backgroundColor: colorAlpha(appColors.info, '30'),
   },
   navLabel: {
-    color: '#334155',
+    color: appColors.textMuted,
     fontSize: 11,
     fontWeight: '700',
   },
   navLabelActive: {
-    color: '#1d4ed8',
+    color: appColors.info,
   },
 });

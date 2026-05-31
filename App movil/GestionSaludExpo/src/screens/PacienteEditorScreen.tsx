@@ -17,6 +17,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
+import { invalidateLinkedPatientsCache } from '../utils/linkedPatients';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PacienteEditor'>;
 
@@ -215,6 +216,8 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         }
       }
 
+      invalidateLinkedPatientsCache(headers);
+
       Alert.alert(
         isEditing ? 'Paciente actualizado' : 'Paciente registrado',
         isEditing
@@ -232,7 +235,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
   if (loading) {
     return (
       <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" color="#2563eb" />
+        <ActivityIndicator size="large" color="#29B6FF" />
         <Text style={styles.loadingText}>Cargando paciente...</Text>
       </View>
     );
@@ -313,7 +316,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         <Switch
           value={form.esPrincipal}
           onValueChange={(value) => handleChange('esPrincipal', value)}
-          thumbColor={form.esPrincipal ? '#2563eb' : undefined}
+          thumbColor={form.esPrincipal ? '#29B6FF' : undefined}
         />
       </View>
 
@@ -329,85 +332,85 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   loadingScreen: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
   },
   loadingText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     marginTop: 10,
   },
   container: {
     padding: 24,
     paddingBottom: 36,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   title: {
     fontSize: 26,
     fontWeight: '800',
     marginBottom: 6,
-    color: '#f8fafc',
+    color: '#F4F8FF',
   },
   subtitle: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     marginBottom: 18,
   },
   label: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#f8fafc',
+    color: '#F4F8FF',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
     fontSize: 16,
-    backgroundColor: '#0b1220',
-    color: '#f8fafc',
+    backgroundColor: '#0D1B2A',
+    color: '#F4F8FF',
   },
   pickerShell: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 14,
     marginBottom: 12,
     overflow: 'hidden',
-    backgroundColor: '#0b1220',
+    backgroundColor: '#0D1B2A',
   },
   dateField: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
-    backgroundColor: '#0b1220',
+    backgroundColor: '#0D1B2A',
   },
   dateValue: {
     fontSize: 16,
-    color: '#f8fafc',
+    color: '#F4F8FF',
   },
   datePlaceholder: {
     fontSize: 16,
-    color: '#94a3b8',
+    color: '#9FB3C8',
   },
   primaryBtn: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#29B6FF',
     paddingVertical: 16,
     borderRadius: 14,
     marginTop: 8,
   },
   btnText: {
-    color: '#fff',
+    color: '#F4F8FF',
     textAlign: 'center',
     fontWeight: '700',
     fontSize: 16,
   },
   switchRow: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -416,10 +419,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
-    backgroundColor: '#0b1220',
+    backgroundColor: '#0D1B2A',
   },
   switchLabel: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 15,
     fontWeight: '700',
     flex: 1,

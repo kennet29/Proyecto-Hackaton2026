@@ -248,6 +248,8 @@ const parseTimeForPicker = (value?: string) => {
 
 export function CitaFormScreen() {
 
+  const pickerItemColor = Platform.OS === "android" ? "#071120" : "#F4F8FF";
+
   const [form, setForm] = useState({
 
     pacienteId: "",
@@ -582,7 +584,7 @@ export function CitaFormScreen() {
 
         marked: true,
 
-        dotColor: "#f97316",
+        dotColor: "#FF4D73",
 
       };
 
@@ -596,11 +598,11 @@ export function CitaFormScreen() {
 
         selected: true,
 
-        selectedColor: "#2563eb",
+        selectedColor: "#29B6FF",
 
-        selectedTextColor: "#fff",
+        selectedTextColor: "#F4F8FF",
 
-        dotColor: marks[selectedDate]?.dotColor ?? "#22d3ee",
+        dotColor: marks[selectedDate]?.dotColor ?? "#29B6FF",
 
         marked: marks[selectedDate]?.marked ?? undefined,
 
@@ -812,7 +814,7 @@ export function CitaFormScreen() {
 
       }
 
-      Alert.alert("Cita creada", "La cita quedó registrada");
+      Alert.alert("Cita creada", "La cita quedÃ³ registrada");
 
       setForm({ pacienteId: "", fecha: "", especialidad: "", motivo: "" });
 
@@ -826,7 +828,7 @@ export function CitaFormScreen() {
 
     } catch (error) {
 
-      Alert.alert("Error", error instanceof Error ? error.message : "Falló la petición");
+      Alert.alert("Error", error instanceof Error ? error.message : "FallÃ³ la peticiÃ³n");
 
     } finally {
 
@@ -854,7 +856,7 @@ export function CitaFormScreen() {
 
           <View style={styles.loadingBox}>
 
-            <ActivityIndicator color="#2563eb" />
+            <ActivityIndicator color="#29B6FF" />
 
             <Text style={styles.loadingText}>Cargando agenda...</Text>
 
@@ -876,13 +878,13 @@ export function CitaFormScreen() {
 
             theme={{
 
-              todayTextColor: "#2563eb",
+              todayTextColor: "#29B6FF",
 
-              arrowColor: "#2563eb",
+              arrowColor: "#29B6FF",
 
-              selectedDayBackgroundColor: "#2563eb",
+              selectedDayBackgroundColor: "#29B6FF",
 
-              selectedDayTextColor: "#fff",
+              selectedDayTextColor: "#F4F8FF",
 
               textDayFontFamily: "System",
 
@@ -912,7 +914,7 @@ export function CitaFormScreen() {
 
           <View style={styles.loadingBox}>
 
-            <ActivityIndicator color="#2563eb" />
+            <ActivityIndicator color="#29B6FF" />
 
             <Text style={styles.loadingText}>Cargando personas...</Text>
 
@@ -924,7 +926,7 @@ export function CitaFormScreen() {
 
             <Text style={styles.emptyText}>
 
-              No hay personas vinculadas. Regístralas desde Gestionar Expediente.
+              No hay personas vinculadas. RegÃ­stralas desde Gestionar Expediente.
 
             </Text>
 
@@ -972,7 +974,7 @@ export function CitaFormScreen() {
 
         {appointmentsForSelectedDay.length === 0 ? (
 
-          <Text style={styles.emptyText}>No hay citas para este día.</Text>
+          <Text style={styles.emptyText}>No hay citas para este dÃ­a.</Text>
 
         ) : (
 
@@ -1038,7 +1040,7 @@ export function CitaFormScreen() {
 
             <View style={styles.loadingBox}>
 
-              <ActivityIndicator color="#2563eb" />
+              <ActivityIndicator color="#29B6FF" />
 
               <Text style={styles.loadingText}>Cargando personas...</Text>
 
@@ -1074,13 +1076,15 @@ export function CitaFormScreen() {
 
                       person.parentesco
 
-                        ? `${person.displayName} · ${person.parentesco}`
+                        ? `${person.displayName} Â· ${person.parentesco}`
 
                         : person.displayName
 
                     }
 
                     value={String(person.pacienteId)}
+
+                    color={pickerItemColor}
 
                   />
 
@@ -1234,7 +1238,7 @@ export function CitaFormScreen() {
 
             {isSubmitting ? (
 
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color="#F4F8FF" />
 
             ) : (
 
@@ -1249,7 +1253,7 @@ export function CitaFormScreen() {
       )}
 
       <TouchableOpacity style={styles.fab} onPress={() => setShowForm((prev) => !prev)}>
-        <Text style={styles.fabText}>{showForm ? "×" : "+"}</Text>
+        <Text style={styles.fabText}>{showForm ? "Ã—" : "+"}</Text>
       </TouchableOpacity>
     </ScrollView>
 
@@ -1265,7 +1269,7 @@ const styles = StyleSheet.create({
 
     padding: 20,
 
-    backgroundColor: "#0f172a",
+    backgroundColor: "#071120",
 
     gap: 16,
 
@@ -1277,7 +1281,7 @@ const styles = StyleSheet.create({
 
     fontWeight: "700",
 
-    color: "#f8fafc",
+    color: "#F4F8FF",
 
   },
 
@@ -1285,11 +1289,11 @@ const styles = StyleSheet.create({
 
     borderRadius: 20,
 
-    backgroundColor: "#1e293b",
+    backgroundColor: "#132238",
 
     padding: 12,
 
-    shadowColor: "#000",
+    shadowColor: "#000000",
 
     shadowOpacity: 0.05,
 
@@ -1317,13 +1321,13 @@ const styles = StyleSheet.create({
 
     marginTop: 8,
 
-    color: "#cbd5e1",
+    color: "#C9D7E8",
 
   },
 
   errorText: {
 
-    color: "#fca5a5",
+    color: "#FF4D73",
 
     marginTop: 8,
 
@@ -1335,7 +1339,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 20,
 
-    backgroundColor: "#1e293b",
+    backgroundColor: "#132238",
 
     padding: 16,
 
@@ -1349,7 +1353,7 @@ const styles = StyleSheet.create({
 
     fontWeight: "700",
 
-    color: "#f8fafc",
+    color: "#F4F8FF",
 
     textTransform: "capitalize",
 
@@ -1357,7 +1361,7 @@ const styles = StyleSheet.create({
 
   emptyText: {
 
-    color: "#cbd5e1",
+    color: "#C9D7E8",
 
   },
 
@@ -1365,7 +1369,7 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#334155",
+    borderColor: "#27496D",
 
     borderRadius: 14,
 
@@ -1391,13 +1395,13 @@ const styles = StyleSheet.create({
 
     fontWeight: "700",
 
-    color: "#2563eb",
+    color: "#29B6FF",
 
   },
 
   statusBadge: {
 
-    backgroundColor: "#dbeafe",
+    backgroundColor: "#C9D7E8",
 
     paddingHorizontal: 10,
 
@@ -1409,7 +1413,7 @@ const styles = StyleSheet.create({
 
   statusBadgeText: {
 
-    color: "#1d4ed8",
+    color: "#29B6FF",
 
     fontWeight: "700",
 
@@ -1423,19 +1427,19 @@ const styles = StyleSheet.create({
 
     fontWeight: "700",
 
-    color: "#0f172a",
+    color: "#071120",
 
   },
 
   appointmentDetail: {
 
-    color: "#475569",
+    color: "#9FB3C8",
 
   },
 
   toggleBtn: {
 
-    backgroundColor: "#0ea5e9",
+    backgroundColor: "#29B6FF",
 
     borderRadius: 14,
 
@@ -1447,7 +1451,7 @@ const styles = StyleSheet.create({
 
   toggleBtnText: {
 
-    color: "#fff",
+    color: "#F4F8FF",
 
     fontWeight: "700",
 
@@ -1461,17 +1465,17 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: "#0ea5e9",
+    backgroundColor: "#29B6FF",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
+    shadowColor: "#000000",
     shadowOpacity: 0.18,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
     elevation: 7,
   },
   fabText: {
-    color: "#fff",
+    color: "#F4F8FF",
     fontSize: 30,
     lineHeight: 32,
     fontWeight: "700",
@@ -1481,7 +1485,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 20,
 
-    backgroundColor: "#1e293b",
+    backgroundColor: "#132238",
 
     padding: 16,
 
@@ -1501,7 +1505,7 @@ const styles = StyleSheet.create({
 
   patientChip: {
 
-    backgroundColor: "#082f49",
+    backgroundColor: "#29B6FF18",
 
     borderRadius: 12,
 
@@ -1513,7 +1517,7 @@ const styles = StyleSheet.create({
 
   patientChipTitle: {
 
-    color: "#f8fafc",
+    color: "#F4F8FF",
 
     fontWeight: "700",
 
@@ -1521,7 +1525,7 @@ const styles = StyleSheet.create({
 
   patientChipSubtitle: {
 
-    color: "#cbd5e1",
+    color: "#C9D7E8",
 
     fontSize: 12,
 
@@ -1531,9 +1535,9 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#334155",
+    borderColor: "#27496D",
 
-    backgroundColor: "#1e293b",
+    backgroundColor: "#132238",
 
     borderRadius: 12,
 
@@ -1547,7 +1551,7 @@ const styles = StyleSheet.create({
 
     alignSelf: "flex-start",
 
-    backgroundColor: "#f97316",
+    backgroundColor: "#FF4D73",
 
     borderRadius: 999,
 
@@ -1559,7 +1563,7 @@ const styles = StyleSheet.create({
 
   refreshBtnText: {
 
-    color: "#fff",
+    color: "#F4F8FF",
 
     fontWeight: "700",
 
@@ -1567,7 +1571,7 @@ const styles = StyleSheet.create({
 
   formCard: {
 
-    backgroundColor: "#1e293b",
+    backgroundColor: "#132238",
 
     borderRadius: 20,
 
@@ -1583,7 +1587,7 @@ const styles = StyleSheet.create({
 
     fontWeight: "700",
 
-    color: "#f8fafc",
+    color: "#F4F8FF",
 
   },
 
@@ -1591,7 +1595,7 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#334155",
+    borderColor: "#27496D",
 
     borderRadius: 12,
 
@@ -1605,7 +1609,7 @@ const styles = StyleSheet.create({
 
     fontWeight: "600",
 
-    color: "#f8fafc",
+    color: "#F4F8FF",
 
   },
 
@@ -1623,7 +1627,7 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#334155",
+    borderColor: "#27496D",
 
     borderRadius: 12,
 
@@ -1631,13 +1635,13 @@ const styles = StyleSheet.create({
 
     paddingHorizontal: 14,
 
-    backgroundColor: "#0b1220",
+    backgroundColor: "#0D1B2A",
 
   },
 
   dateButtonText: {
 
-    color: "#f8fafc",
+    color: "#F4F8FF",
 
     fontSize: 15,
 
@@ -1649,11 +1653,11 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#334155",
+    borderColor: "#27496D",
 
     borderRadius: 16,
 
-    backgroundColor: "#0b1220",
+    backgroundColor: "#0D1B2A",
 
     overflow: "hidden",
 
@@ -1663,19 +1667,19 @@ const styles = StyleSheet.create({
 
     borderTopWidth: 1,
 
-    borderTopColor: "#334155",
+    borderTopColor: "#27496D",
 
     paddingVertical: 10,
 
     alignItems: "center",
 
-    backgroundColor: "#172554",
+    backgroundColor: "#182A44",
 
   },
 
   iosPickerDoneText: {
 
-    color: "#bfdbfe",
+    color: "#29B6FF30",
 
     fontWeight: "700",
 
@@ -1685,7 +1689,7 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#334155",
+    borderColor: "#27496D",
 
     borderRadius: 12,
 
@@ -1697,7 +1701,7 @@ const styles = StyleSheet.create({
 
   primaryBtn: {
 
-    backgroundColor: "#22c55e",
+    backgroundColor: "#38F28E",
 
     paddingVertical: 16,
 
@@ -1717,7 +1721,7 @@ const styles = StyleSheet.create({
 
   btnText: {
 
-    color: "#fff",
+    color: "#F4F8FF",
 
     fontWeight: "600",
 

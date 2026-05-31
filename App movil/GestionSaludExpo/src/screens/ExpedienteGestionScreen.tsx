@@ -14,6 +14,10 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
+import {
+  fetchLinkedPatients as fetchLinkedPatientsList,
+  invalidateLinkedPatientsCache,
+} from '../utils/linkedPatients';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ExpedienteGestion'>;
 
@@ -44,7 +48,7 @@ const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => 
       <Ionicons
         name={isSuccess ? 'checkmark-circle-outline' : 'alert-circle-outline'}
         size={18}
-        color={isSuccess ? '#bbf7d0' : '#fecaca'}
+        color={isSuccess ? '#38F28E' : '#FF4D73'}
       />
       <Text style={styles.feedbackText}>{feedback.message}</Text>
     </View>
@@ -122,34 +126,36 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
       if (!response.ok) {
         throw new Error(relationsBody?.message ?? 'No se pudieron consultar tus personas registradas.');
       }
-
       const relations: any[] = Array.isArray(relationsBody) ? relationsBody : [];
-      const enriched = await Promise.all(
-        relations.map(async (relation) => {
-          const patientResponse = await fetch(`${API_URL}/paciente/${relation.pacienteId}`, {
-            headers: authHeaders(),
-          });
-          const patientBody = await patientResponse.json().catch(() => null);
-          const nombre = patientBody?.nombres ?? '';
-          const apellido = patientBody?.apellidos ?? '';
+      const linkedItems = await fetchLinkedPatientsList(authHeaders(), { forceRefresh: true });
+      const linkedItemsById = new Map(linkedItems.map((item) => [item.pacienteId, item]));
 
-          return {
-            relationId:
-              relation.id ??
-              relation.usuariopacienteid ??
-              relation.usuarioPacienteId ??
-              relation.pacienteId,
-            pacienteId: relation.pacienteId,
-            parentesco: relation.parentesco ?? null,
-            esPrincipal: Boolean(relation.esPrincipal),
-            notas: relation.notas ?? null,
-            nombreCompleto: `${nombre} ${apellido}`.trim() || `Paciente #${relation.pacienteId}`,
-            contacto: patientBody?.telefono ?? patientBody?.email ?? null,
-          } as LinkedPerson;
-        }),
+      setLinkedPatients(
+        relations
+          .map((relation) => {
+            const pacienteId = Number(relation?.pacienteId);
+            if (!Number.isFinite(pacienteId) || pacienteId <= 0) {
+              return null;
+            }
+
+            const linkedItem = linkedItemsById.get(pacienteId);
+
+            return {
+              relationId:
+                relation.id ??
+                relation.usuariopacienteid ??
+                relation.usuarioPacienteId ??
+                relation.pacienteId,
+              pacienteId,
+              parentesco: relation.parentesco ?? linkedItem?.parentesco ?? null,
+              esPrincipal: Boolean(relation.esPrincipal),
+              notas: relation.notas ?? null,
+              nombreCompleto: linkedItem?.displayName ?? `Paciente #${pacienteId}`,
+              contacto: linkedItem?.contacto ?? null,
+            } as LinkedPerson;
+          })
+          .filter((item): item is LinkedPerson => Boolean(item)),
       );
-
-      setLinkedPatients(enriched);
     } catch (error) {
       setPatientFeedback({ type: 'error', message: formatErrorMessage(error) });
     } finally {
@@ -229,6 +235,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
       setPatientFeedback({ type: 'success', message: 'Persona registrada correctamente.' });
       resetPersonForm();
       setShowPersonForm(false);
+      invalidateLinkedPatientsCache(authHeaders());
       fetchLinkedPatients();
     } catch (error) {
       setPatientFeedback({ type: 'error', message: formatErrorMessage(error) });
@@ -242,7 +249,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
       <View style={styles.heroCard}>
         <View style={styles.heroTopRow}>
           <View style={styles.heroBadge}>
-            <Ionicons name="folder-open-outline" size={16} color="#38bdf8" />
+            <Ionicons name="folder-open-outline" size={16} color="#29B6FF" />
             <Text style={styles.heroBadgeText}>Expediente</Text>
           </View>
         </View>
@@ -256,17 +263,17 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
           <StatCard
             label="Personas"
             value={String(linkedPatients.length)}
-            accent="#38bdf8"
+            accent="#29B6FF"
           />
           <StatCard
             label="Principal"
             value={principalCount > 0 ? String(principalCount) : '0'}
-            accent="#34d399"
+            accent="#38F28E"
           />
           <StatCard
             label="Usuario"
             value={displayName.slice(0, 10) || 'Paciente'}
-            accent="#facc15"
+            accent="#FF4D73"
           />
         </View>
       </View>
@@ -289,7 +296,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
             <Ionicons
               name={showPersonForm ? 'close-outline' : 'add-outline'}
               size={18}
-              color="#0f172a"
+              color="#071120"
             />
             <Text style={styles.primaryActionText}>
               {showPersonForm ? 'Cerrar' : 'Nueva persona'}
@@ -301,13 +308,13 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
 
         {loadingPatients ? (
           <View style={styles.stateCard}>
-            <ActivityIndicator color="#38bdf8" />
+            <ActivityIndicator color="#29B6FF" />
             <Text style={styles.stateTitle}>Cargando personas</Text>
             <Text style={styles.stateText}>Estamos consultando tus vinculos registrados.</Text>
           </View>
         ) : linkedPatients.length === 0 ? (
           <View style={styles.stateCard}>
-            <Ionicons name="people-outline" size={28} color="#38bdf8" />
+            <Ionicons name="people-outline" size={28} color="#29B6FF" />
             <Text style={styles.stateTitle}>Aun no tienes personas vinculadas</Text>
             <Text style={styles.stateText}>
               Crea la primera persona para comenzar a llenar el expediente familiar o personal.
@@ -319,7 +326,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               <View key={`${person.relationId}-${person.pacienteId}`} style={styles.personCard}>
                 <View style={styles.personMainRow}>
                   <View style={styles.personAvatar}>
-                    <Ionicons name="person-outline" size={20} color="#38bdf8" />
+                    <Ionicons name="person-outline" size={20} color="#29B6FF" />
                   </View>
                   <View style={styles.personCopy}>
                     <View style={styles.personTitleRow}>
@@ -356,21 +363,21 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               <TextInput
                 style={styles.input}
                 placeholder="Nombres"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#9FB3C8"
                 value={personForm.nombres}
                 onChangeText={(text) => handlePersonInput('nombres', text)}
               />
               <TextInput
                 style={styles.input}
                 placeholder="Apellidos"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#9FB3C8"
                 value={personForm.apellidos}
                 onChangeText={(text) => handlePersonInput('apellidos', text)}
               />
               <TextInput
                 style={styles.input}
                 placeholder="Telefono"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#9FB3C8"
                 keyboardType="phone-pad"
                 value={personForm.telefono}
                 onChangeText={(text) => handlePersonInput('telefono', text)}
@@ -378,7 +385,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               <TextInput
                 style={styles.input}
                 placeholder="Correo electronico"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#9FB3C8"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={personForm.email}
@@ -387,14 +394,14 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               <TextInput
                 style={styles.input}
                 placeholder="Parentesco o rol"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#9FB3C8"
                 value={personForm.parentesco}
                 onChangeText={(text) => handlePersonInput('parentesco', text)}
               />
               <TextInput
                 style={[styles.input, styles.multilineInput]}
                 placeholder="Notas"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#9FB3C8"
                 multiline
                 textAlignVertical="top"
                 value={personForm.notas}
@@ -410,8 +417,8 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               <Switch
                 value={personForm.esPrincipal}
                 onValueChange={(value) => handlePersonInput('esPrincipal', value)}
-                thumbColor={personForm.esPrincipal ? '#38bdf8' : undefined}
-                trackColor={{ false: '#334155', true: '#1e3a5f' }}
+                thumbColor={personForm.esPrincipal ? '#29B6FF' : undefined}
+                trackColor={{ false: '#27496D', true: '#1B3355' }}
               />
             </View>
 
@@ -421,10 +428,10 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               disabled={submittingPerson}
             >
               {submittingPerson ? (
-                <ActivityIndicator color="#0f172a" />
+                <ActivityIndicator color="#071120" />
               ) : (
                 <>
-                  <Ionicons name="save-outline" size={18} color="#0f172a" />
+                  <Ionicons name="save-outline" size={18} color="#071120" />
                   <Text style={styles.submitBtnText}>Guardar persona</Text>
                 </>
               )}
@@ -439,7 +446,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f4f1ea',
+    backgroundColor: '#182A44',
   },
   content: {
     padding: 20,
@@ -447,11 +454,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   heroCard: {
-    backgroundColor: '#fffaf3',
+    backgroundColor: '#182A44',
     borderRadius: 30,
     padding: 22,
     borderWidth: 1,
-    borderColor: '#d9ccb8',
+    borderColor: '#C9D7E8',
     gap: 14,
   },
   heroTopRow: {
@@ -465,24 +472,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#efe4d4',
+    backgroundColor: '#182A44',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   heroBadgeText: {
-    color: '#5f4a34',
+    color: '#FF4D73',
     fontSize: 12,
     fontWeight: '800',
   },
   heroTitle: {
-    color: '#1f2937',
+    color: '#132238',
     fontSize: 26,
     fontWeight: '800',
     lineHeight: 32,
   },
   heroSubtitle: {
-    color: '#6b7280',
+    color: '#9FB3C8',
     fontSize: 14,
     lineHeight: 21,
   },
@@ -511,16 +518,16 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statLabel: {
-    color: '#6b7280',
+    color: '#9FB3C8',
     fontSize: 12,
     fontWeight: '700',
   },
   panelCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F8FF',
     borderRadius: 28,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#e5ddd1',
+    borderColor: '#C9D7E8',
     gap: 14,
   },
   panelHeaderRow: {
@@ -530,12 +537,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   panelTitle: {
-    color: '#111827',
+    color: '#071120',
     fontSize: 20,
     fontWeight: '800',
   },
   panelHelper: {
-    color: '#6b7280',
+    color: '#9FB3C8',
     fontSize: 13,
     lineHeight: 19,
   },
@@ -544,13 +551,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#0f766e',
+    backgroundColor: '#38F28E',
     borderRadius: 999,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   primaryActionText: {
-    color: '#f0fdfa',
+    color: '#071120',
     fontWeight: '800',
     fontSize: 13,
   },
@@ -562,35 +569,35 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   feedbackSuccess: {
-    backgroundColor: '#166534',
+    backgroundColor: '#38F28E',
   },
   feedbackError: {
-    backgroundColor: '#7f1d1d',
+    backgroundColor: '#FF4D73',
   },
   feedbackText: {
     flex: 1,
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '600',
   },
   stateCard: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F4F8FF',
     borderRadius: 22,
     padding: 20,
     alignItems: 'center',
     gap: 8,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#F4F8FF',
   },
   stateTitle: {
-    color: '#0f172a',
+    color: '#071120',
     fontSize: 16,
     fontWeight: '800',
     textAlign: 'center',
   },
   stateText: {
-    color: '#64748b',
+    color: '#9FB3C8',
     fontSize: 13,
     lineHeight: 19,
     textAlign: 'center',
@@ -599,11 +606,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   personCard: {
-    backgroundColor: '#fbfdff',
+    backgroundColor: '#F4F8FF',
     borderRadius: 22,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#dbe5f0',
+    borderColor: '#C9D7E8',
     gap: 12,
   },
   personMainRow: {
@@ -616,7 +623,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#dbeafe',
+    backgroundColor: '#C9D7E8',
   },
   personCopy: {
     flex: 1,
@@ -629,50 +636,50 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   personName: {
-    color: '#111827',
+    color: '#071120',
     fontSize: 16,
     fontWeight: '800',
     flexShrink: 1,
   },
   personBadge: {
-    backgroundColor: '#dcfce7',
+    backgroundColor: '#38F28E18',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   personBadgeText: {
-    color: '#065f46',
+    color: '#38F28E',
     fontSize: 11,
     fontWeight: '800',
   },
   personMeta: {
-    color: '#64748b',
+    color: '#9FB3C8',
     fontSize: 13,
   },
   personContact: {
-    color: '#334155',
+    color: '#27496D',
     fontSize: 13,
   },
   personNotes: {
-    color: '#64748b',
+    color: '#9FB3C8',
     fontSize: 12,
     lineHeight: 17,
   },
   formCard: {
-    backgroundColor: '#fffaf3',
+    backgroundColor: '#182A44',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#eadfce',
+    borderColor: '#182A44',
     padding: 16,
     gap: 14,
   },
   formTitle: {
-    color: '#111827',
+    color: '#F4F8FF',
     fontSize: 18,
     fontWeight: '800',
   },
   formSubtitle: {
-    color: '#6b7280',
+    color: '#C9D7E8',
     fontSize: 13,
     lineHeight: 19,
   },
@@ -680,13 +687,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F8FF',
     borderWidth: 1,
-    borderColor: '#d7dde5',
+    borderColor: '#C9D7E8',
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 13,
-    color: '#111827',
+    color: '#071120',
     fontSize: 15,
   },
   multilineInput: {
@@ -697,19 +704,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F8FF',
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#e5ddd1',
+    borderColor: '#C9D7E8',
   },
   switchTitle: {
-    color: '#111827',
+    color: '#071120',
     fontSize: 14,
     fontWeight: '700',
   },
   switchHelper: {
-    color: '#6b7280',
+    color: '#9FB3C8',
     fontSize: 12,
     marginTop: 2,
     maxWidth: 240,
@@ -719,7 +726,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#fed7aa',
+    backgroundColor: '#FF4D7322',
     borderRadius: 16,
     paddingVertical: 14,
   },
@@ -727,7 +734,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   submitBtnText: {
-    color: '#7c2d12',
+    color: '#FF4D73',
     fontSize: 15,
     fontWeight: '800',
   },

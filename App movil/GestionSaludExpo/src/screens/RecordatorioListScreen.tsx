@@ -64,7 +64,7 @@ export function RecordatorioListScreen() {
         keyExtractor={(item) => item.recordatoriocitaid.toString()}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#fff" />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#F4F8FF" />}
         ListEmptyComponent={
           !loading ? <Text style={styles.empty}>Aun no tienes recordatorios registrados</Text> : null
         }
@@ -80,45 +80,45 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   header: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#fff',
+    color: '#F4F8FF',
     marginBottom: 12,
   },
   listContent: {
     paddingBottom: 60,
   },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
   },
   title: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontWeight: '700',
     marginBottom: 4,
   },
   text: {
-    color: '#cbd5f5',
+    color: '#C9D7E8',
     marginBottom: 2,
   },
   empty: {
-    color: '#cbd5f5',
+    color: '#C9D7E8',
     textAlign: 'center',
     marginTop: 40,
   },
   reloadBtn: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#29B6FF',
     paddingVertical: 12,
     borderRadius: 10,
     marginTop: 12,
   },
   reloadText: {
-    color: '#fff',
+    color: '#F4F8FF',
     textAlign: 'center',
     fontWeight: '700',
   },

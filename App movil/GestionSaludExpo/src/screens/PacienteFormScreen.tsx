@@ -12,7 +12,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
-import { API_URL } from '../config/api';
+import { fetchLinkedPatients as fetchLinkedPatientsList } from '../utils/linkedPatients';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PacienteForm'>;
 
@@ -50,66 +50,17 @@ export function PacienteFormScreen({ navigation }: Props) {
     setLoadingPatients(true);
     setPatientLoadError(null);
     try {
-      const response = await fetch(`${API_URL}/usuario-paciente/mis-pacientes`, {
-        headers: authHeaders,
-      });
-      const relationsBody = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(relationsBody?.message ?? 'No se pudieron consultar tus personas registradas.');
-      }
-
-      const relations: any[] = Array.isArray(relationsBody) ? relationsBody : [];
-      const enriched = await Promise.all(
-        relations.map(async (relation) => {
-          const pacienteId = Number(
-            relation?.pacienteId ??
-              relation?.pacienteid ??
-              relation?.id ??
-              relation?.paciente?.pacienteId,
-          );
-          if (!Number.isFinite(pacienteId)) {
-            return null;
-          }
-
-          let nombreCompleto =
-            relation?.displayName ??
-            relation?.nombrePaciente ??
-            relation?.paciente?.displayName ??
-            `Paciente #${pacienteId}`;
-          let sexo = relation?.sexo ?? relation?.paciente?.sexo ?? null;
-          let contacto = relation?.telefono ?? relation?.email ?? null;
-
-          try {
-            const patientResponse = await fetch(`${API_URL}/paciente/${pacienteId}`, {
-              headers: authHeaders,
-            });
-            const patientBody = await patientResponse.json().catch(() => null);
-            if (patientBody && patientResponse.ok) {
-              const nombre = patientBody?.nombres ?? '';
-              const apellido = patientBody?.apellidos ?? '';
-              nombreCompleto = `${nombre} ${apellido}`.trim() || nombreCompleto;
-              sexo = patientBody?.sexo ?? sexo;
-              contacto = patientBody?.telefono ?? patientBody?.email ?? contacto;
-            }
-          } catch {
-            // Se mantiene el dato de la relacion si el detalle del paciente falla.
-          }
-
-          return {
-            relationId:
-              relation?.id ??
-              relation?.usuariopacienteid ??
-              relation?.usuarioPacienteId ??
-              pacienteId,
-            pacienteId,
-            nombreCompleto,
-            sexo,
-            contacto,
-            parentesco: relation?.parentesco ?? null,
-          } as LinkedPatient;
-        }),
+      const items = await fetchLinkedPatientsList(authHeaders, { forceRefresh: true });
+      setLinkedPatients(
+        items.map((item) => ({
+          relationId: item.pacienteId,
+          pacienteId: item.pacienteId,
+          nombreCompleto: item.displayName,
+          sexo: item.sexo ?? null,
+          contacto: item.contacto ?? null,
+          parentesco: item.parentesco ?? null,
+        })),
       );
-      setLinkedPatients(enriched.filter((item): item is LinkedPatient => Boolean(item)));
     } catch (error) {
       setPatientLoadError(
         error instanceof Error ? error.message : 'No se pudieron cargar las personas del usuario.',
@@ -139,7 +90,7 @@ export function PacienteFormScreen({ navigation }: Props) {
             onPress={() => navigation.navigate('PacienteEditor')}
             accessibilityLabel="Crear paciente"
           >
-            <Ionicons name="add" size={28} color="#fff" />
+            <Ionicons name="add" size={28} color="#F4F8FF" />
           </TouchableOpacity>
         </View>
 
@@ -154,7 +105,7 @@ export function PacienteFormScreen({ navigation }: Props) {
 
         {loadingPatients ? (
           <View style={styles.loadingCard}>
-            <ActivityIndicator size="large" color="#2563eb" />
+            <ActivityIndicator size="large" color="#29B6FF" />
             <Text style={styles.loadingText}>Cargando pacientes...</Text>
           </View>
         ) : null}
@@ -174,13 +125,13 @@ export function PacienteFormScreen({ navigation }: Props) {
           >
             <View style={styles.patientCardHeader}>
               <View style={styles.patientIcon}>
-                <Ionicons name="person-outline" size={22} color="#2563eb" />
+                <Ionicons name="person-outline" size={22} color="#29B6FF" />
               </View>
               <View style={styles.patientMain}>
                 <Text style={styles.patientName}>{patient.nombreCompleto}</Text>
                 <Text style={styles.patientId}>ID #{patient.pacienteId}</Text>
               </View>
-              <Ionicons name="create-outline" size={22} color="#2563eb" />
+              <Ionicons name="create-outline" size={22} color="#29B6FF" />
             </View>
             {patient.sexo ? <Text style={styles.patientMeta}>Genero: {patient.sexo}</Text> : null}
             {patient.parentesco ? <Text style={styles.patientMeta}>Parentesco: {patient.parentesco}</Text> : null}
@@ -195,12 +146,12 @@ export function PacienteFormScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   container: {
     padding: 24,
     paddingBottom: 36,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   header: {
     flexDirection: 'row',
@@ -211,10 +162,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#F4F8FF',
   },
   subtitle: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     marginTop: 4,
     maxWidth: 240,
   },
@@ -222,7 +173,7 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 18,
-    backgroundColor: '#2563eb',
+    backgroundColor: '#29B6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -235,48 +186,48 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#F4F8FF',
   },
   linkText: {
-    color: '#7dd3fc',
+    color: '#29B6FF',
     fontWeight: '800',
   },
   errorText: {
-    color: '#fca5a5',
+    color: '#FF4D73',
     marginBottom: 12,
   },
   loadingCard: {
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: '#1e293b',
+    borderColor: '#27496D',
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 18,
     alignItems: 'center',
   },
   loadingText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     marginTop: 10,
   },
   emptyCard: {
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: '#1e293b',
+    borderColor: '#27496D',
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 18,
   },
   emptyTitle: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontWeight: '800',
     fontSize: 16,
     marginBottom: 4,
   },
   emptyText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
   },
   patientCard: {
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: '#1e293b',
+    borderColor: '#27496D',
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 14,
     marginBottom: 10,
@@ -290,7 +241,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 14,
-    backgroundColor: '#082f49',
+    backgroundColor: '#29B6FF18',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -301,14 +252,14 @@ const styles = StyleSheet.create({
   patientName: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#F4F8FF',
   },
   patientId: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     marginTop: 2,
   },
   patientMeta: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     marginBottom: 2,
   },
 });

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -52,7 +52,7 @@ const formatErrorMessage = (error: unknown): string => {
     }
     return error.message;
   }
-  return 'Ocurrió un error inesperado. Intenta nuevamente.';
+  return 'OcurriÃ³ un error inesperado. Intenta nuevamente.';
 };
 
 export function RegistroScreen({ navigation }: Props) {
@@ -108,7 +108,7 @@ export function RegistroScreen({ navigation }: Props) {
   const handleRegisterFingerprint = async () => {
     try {
       if (!biometricAvailable) {
-        Alert.alert('Biometría No Disponible', 'Configura tu huella en este dispositivo antes de continuar.');
+        Alert.alert('BiometrÃ­a No Disponible', 'Configura tu huella en este dispositivo antes de continuar.');
         return;
       }
       const auth = await LocalAuthentication.authenticateAsync({
@@ -116,16 +116,16 @@ export function RegistroScreen({ navigation }: Props) {
         disableDeviceFallback: true,
       });
       if (!auth.success) {
-        Alert.alert('Huella Cancelada', 'No se guardó ninguna huella.');
+        Alert.alert('Huella Cancelada', 'No se guardÃ³ ninguna huella.');
         return;
       }
       const template = generateFingerprintTemplate();
       setFingerprintTemplate(template);
       setFingerprintStatus('saved');
-      Alert.alert('Huella Registrada', 'Se enviará junto con tu registro.');
+      Alert.alert('Huella Registrada', 'Se enviarÃ¡ junto con tu registro.');
     } catch (error) {
       Alert.alert(
-        'Error biométrico',
+        'Error biomÃ©trico',
         error instanceof Error ? error.message : 'No se pudo registrar la huella. Intenta nuevamente.',
       );
     }
@@ -147,9 +147,9 @@ export function RegistroScreen({ navigation }: Props) {
       return;
     }
     if (password !== confirmPassword) {
-      const message = 'La contraseña y su confirmación no coinciden.';
+      const message = 'La contraseÃ±a y su confirmaciÃ³n no coinciden.';
       setFeedback({ type: 'error', message });
-      Alert.alert('Validación', message);
+      Alert.alert('ValidaciÃ³n', message);
       return;
     }
 
@@ -170,14 +170,14 @@ export function RegistroScreen({ navigation }: Props) {
       if (!response.ok) {
         throw new Error(body?.message ?? 'No se pudo crear la cuenta');
       }
-      let successMessage = body?.message ?? 'Cuenta creada correctamente. Ya puedes iniciar sesión.';
+      let successMessage = body?.message ?? 'Cuenta creada correctamente. Ya puedes iniciar sesiÃ³n.';
       if (fingerprintTemplate) {
         try {
           await saveFingerprintTemplate(username, fingerprintTemplate);
         } catch (storageError) {
           console.warn('No se pudo guardar la huella localmente', storageError);
           successMessage =
-            'Cuenta creada, pero no pudimos guardar la huella en este dispositivo. Podrás registrarla nuevamente desde este mismo teléfono.';
+            'Cuenta creada, pero no pudimos guardar la huella en este dispositivo. PodrÃ¡s registrarla nuevamente desde este mismo telÃ©fono.';
         }
       }
       setFeedback({ type: 'success', message: successMessage });
@@ -197,12 +197,12 @@ export function RegistroScreen({ navigation }: Props) {
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
         <Text style={styles.title}>Crear Cuenta</Text>
-        <Text style={styles.subtitle}>Completa tus datos para registrarte en Gestión Salud.</Text>
+        <Text style={styles.subtitle}>Completa tus datos para registrarte en GestiÃ³n Salud.</Text>
         <FeedbackBanner feedback={feedback} />
         {bootstrapMode ? (
           <View style={styles.bootstrapNotice}>
             <Text style={styles.bootstrapNoticeText}>
-              Estás creando el primer usuario del sistema. Esta cuenta recibirá acceso administrador inicial.
+              EstÃ¡s creando el primer usuario del sistema. Esta cuenta recibirÃ¡ acceso administrador inicial.
             </Text>
           </View>
         ) : null}
@@ -211,17 +211,17 @@ export function RegistroScreen({ navigation }: Props) {
         <TextInput
           style={styles.input}
           placeholder="Ej: Andrea Lopez"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor="#9FB3C8"
           autoCapitalize="words"
           value={fullName}
           onChangeText={(text) => setFullName(sanitizeText(text))}
         />
 
-        <Text style={styles.label}>Correo Electrónico</Text>
+        <Text style={styles.label}>Correo ElectrÃ³nico</Text>
         <TextInput
           style={styles.input}
           placeholder="tu@email.com"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor="#9FB3C8"
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
@@ -233,28 +233,28 @@ export function RegistroScreen({ navigation }: Props) {
         <TextInput
           style={styles.input}
           placeholder="usuario.demo"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor="#9FB3C8"
           autoCapitalize="none"
           autoCorrect={false}
           value={username}
           onChangeText={(text) => setUsername(sanitizeUsername(text))}
         />
 
-        <Text style={styles.label}>Contraseña</Text>
+        <Text style={styles.label}>ContraseÃ±a</Text>
         <TextInput
           style={styles.input}
-          placeholder="Mínimo 8 caracteres"
-          placeholderTextColor="#94a3b8"
+          placeholder="MÃ­nimo 8 caracteres"
+          placeholderTextColor="#9FB3C8"
           secureTextEntry
           value={password}
           onChangeText={(text) => setPassword(sanitizePassword(text))}
         />
 
-        <Text style={styles.label}>Confirmar Contraseña</Text>
+        <Text style={styles.label}>Confirmar ContraseÃ±a</Text>
         <TextInput
           style={styles.input}
-          placeholder="Repite la contraseña"
-          placeholderTextColor="#94a3b8"
+          placeholder="Repite la contraseÃ±a"
+          placeholderTextColor="#9FB3C8"
           secureTextEntry
           value={confirmPassword}
           onChangeText={(text) => setConfirmPassword(sanitizePassword(text))}
@@ -264,7 +264,7 @@ export function RegistroScreen({ navigation }: Props) {
           <View style={styles.fingerprintBox}>
             <Text style={styles.label}>Huella Digital</Text>
             <Text style={styles.fingerprintHint}>
-              Registra tu huella para iniciar sesión desde este dispositivo sin contraseña.
+              Registra tu huella para iniciar sesiÃ³n desde este dispositivo sin contraseÃ±a.
             </Text>
             <TouchableOpacity
               style={[styles.fingerprintBtn, fingerprintStatus === 'saved' && styles.fingerprintBtnActive]}
@@ -280,7 +280,7 @@ export function RegistroScreen({ navigation }: Props) {
           </View>
         ) : (
           <Text style={styles.fingerprintWarning}>
-            Configura la huella en tu teléfono para habilitar esta opción.
+            Configura la huella en tu telÃ©fono para habilitar esta opciÃ³n.
           </Text>
         )}
 
@@ -291,7 +291,7 @@ export function RegistroScreen({ navigation }: Props) {
           accessibilityLabel="Crear cuenta"
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color="#F4F8FF" />
           ) : (
             <Text style={styles.primaryLabel}>Registrarme</Text>
           )}
@@ -310,13 +310,13 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F8FF',
     borderRadius: 20,
     padding: 24,
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOpacity: 0.15,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 12 },
@@ -325,12 +325,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: '700',
-    color: '#0f172a',
+    color: '#071120',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#475569',
+    color: '#9FB3C8',
     marginBottom: 20,
   },
   feedbackBox: {
@@ -340,88 +340,88 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   feedbackSuccess: {
-    backgroundColor: '#dcfce7',
-    borderColor: '#22c55e',
+    backgroundColor: '#38F28E18',
+    borderColor: '#38F28E',
   },
   feedbackError: {
-    backgroundColor: '#fee2e2',
-    borderColor: '#ef4444',
+    backgroundColor: '#FF4D7318',
+    borderColor: '#FF4D73',
   },
   feedbackText: {
     fontSize: 13,
     fontWeight: '600',
   },
   feedbackTextSuccess: {
-    color: '#166534',
+    color: '#38F28E',
   },
   feedbackTextError: {
-    color: '#b91c1c',
+    color: '#FF4D73',
   },
   bootstrapNotice: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#F4F8FF',
     borderWidth: 1,
-    borderColor: '#93c5fd',
+    borderColor: '#29B6FF',
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
   },
   bootstrapNoticeText: {
-    color: '#1d4ed8',
+    color: '#29B6FF',
     fontSize: 12,
     fontWeight: '600',
   },
   label: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#475569',
+    color: '#9FB3C8',
     marginBottom: 6,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#cbd5f5',
+    borderColor: '#C9D7E8',
     borderRadius: 12,
     padding: 12,
     marginBottom: 14,
     fontSize: 15,
-    color: '#0f172a',
+    color: '#071120',
   },
   fingerprintBox: {
     borderWidth: 1,
-    borderColor: '#cbd5f5',
+    borderColor: '#C9D7E8',
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F4F8FF',
   },
   fingerprintHint: {
     fontSize: 12,
-    color: '#475569',
+    color: '#9FB3C8',
     marginBottom: 10,
   },
   fingerprintBtn: {
     borderWidth: 1,
-    borderColor: '#2563eb',
+    borderColor: '#29B6FF',
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
   },
   fingerprintBtnActive: {
-    backgroundColor: '#2563eb10',
+    backgroundColor: '#29B6FF18',
   },
   fingerprintBtnText: {
-    color: '#2563eb',
+    color: '#29B6FF',
     fontWeight: '600',
   },
   fingerprintBtnTextActive: {
-    color: '#1e40af',
+    color: '#29B6FF',
   },
   fingerprintWarning: {
     fontSize: 12,
-    color: '#f97316',
+    color: '#FF4D73',
     marginBottom: 12,
   },
   primaryBtn: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#29B6FF',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   primaryLabel: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontWeight: '700',
     fontSize: 16,
   },
@@ -437,11 +437,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#64748b',
+    borderColor: '#9FB3C8',
     alignItems: 'center',
   },
   secondaryLabel: {
-    color: '#0f172a',
+    color: '#071120',
     fontWeight: '600',
     fontSize: 14,
   },

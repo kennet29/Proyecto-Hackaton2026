@@ -46,7 +46,7 @@ const ensureAndroidChannel = async () => {
     name: 'Recordatorios',
     importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 250, 250, 250],
-    lightColor: '#0f172a',
+    lightColor: '#071120',
     sound: 'default',
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
   });

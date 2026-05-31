@@ -47,7 +47,7 @@ export function DocumentoFormScreen() {
       Alert.alert('Documento Guardado', 'Se adjunto al expediente');
       setForm({ pacienteId: '', tipoDocumentoId: '', entidadOrigen: 'general', notas: '', url: '' });
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Falló la petición');
+      Alert.alert('Error', error instanceof Error ? error.message : 'FallÃ³ la peticiÃ³n');
     }
   };
 
@@ -97,36 +97,36 @@ export function DocumentoFormScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 24,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   title: {
     fontSize: 24,
     fontWeight: '800',
     marginBottom: 16,
-    color: '#f8fafc',
+    color: '#F4F8FF',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
     fontSize: 16,
-    backgroundColor: '#0b1220',
-    color: '#f8fafc',
+    backgroundColor: '#0D1B2A',
+    color: '#F4F8FF',
   },
   multiline: {
     height: 120,
     textAlignVertical: 'top',
   },
   primaryBtn: {
-    backgroundColor: '#ef4444',
+    backgroundColor: '#FF4D73',
     paddingVertical: 16,
     borderRadius: 14,
     marginTop: 8,
   },
   btnText: {
-    color: '#fff',
+    color: '#F4F8FF',
     textAlign: 'center',
     fontWeight: '800',
     fontSize: 16,

@@ -66,7 +66,7 @@ const buildEntryMeta = (entry: FollowUpEntry) => {
   if (entry.nivelDolor !== null) {
     markers.push(`Dolor ${entry.nivelDolor}/10`);
   }
-  return markers.join(' · ');
+  return markers.join(' Ã‚Â· ');
 };
 
 export function SeguimientoPosteventoScreen() {
@@ -534,7 +534,7 @@ export function SeguimientoPosteventoScreen() {
               {currentEventOptions.map((event) => (
                 <Picker.Item
                   key={event.id}
-                  label={`#${event.id} · ${formatDate(event.date)} · ${event.title}`}
+                  label={`#${event.id} Ã‚Â· ${formatDate(event.date)} Ã‚Â· ${event.title}`}
                   value={String(event.id)}
                 />
               ))}
@@ -546,7 +546,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={styles.input}
         placeholder="Titulo del seguimiento"
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor="#9FB3C8"
         value={form.tituloEvento}
         onChangeText={(value) => handleChange('tituloEvento', value)}
       />
@@ -555,14 +555,14 @@ export function SeguimientoPosteventoScreen() {
         <TextInput
           style={[styles.input, styles.halfInput]}
           placeholder="Fecha evento YYYY-MM-DD"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor="#9FB3C8"
           value={form.fechaEvento}
           onChangeText={(value) => handleChange('fechaEvento', value)}
         />
         <TextInput
           style={[styles.input, styles.halfInput]}
           placeholder="Fecha seguimiento YYYY-MM-DD"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor="#9FB3C8"
           value={form.fechaSeguimiento}
           onChangeText={(value) => handleChange('fechaSeguimiento', value)}
         />
@@ -580,7 +580,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={styles.input}
         placeholder="Nivel de dolor 0-10"
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor="#9FB3C8"
         keyboardType="numeric"
         value={form.nivelDolor}
         onChangeText={(value) => handleChange('nivelDolor', value)}
@@ -588,7 +588,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={[styles.input, styles.multiline]}
         placeholder="Evolucion general"
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor="#9FB3C8"
         value={form.evolucion}
         multiline
         onChangeText={(value) => handleChange('evolucion', value)}
@@ -596,7 +596,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={[styles.input, styles.multiline]}
         placeholder="Sintomas o cambios observados"
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor="#9FB3C8"
         value={form.sintomas}
         multiline
         onChangeText={(value) => handleChange('sintomas', value)}
@@ -604,7 +604,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={[styles.input, styles.multiline]}
         placeholder="Medicacion actual"
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor="#9FB3C8"
         value={form.medicacionActual}
         multiline
         onChangeText={(value) => handleChange('medicacionActual', value)}
@@ -612,7 +612,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={[styles.input, styles.multiline]}
         placeholder="Cuidados en casa"
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor="#9FB3C8"
         value={form.cuidadosHogar}
         multiline
         onChangeText={(value) => handleChange('cuidadosHogar', value)}
@@ -620,7 +620,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={[styles.input, styles.multiline]}
         placeholder="Notas adicionales"
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor="#9FB3C8"
         value={form.notas}
         multiline
         onChangeText={(value) => handleChange('notas', value)}
@@ -628,7 +628,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={styles.input}
         placeholder="Proximo control YYYY-MM-DD"
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor="#9FB3C8"
         value={form.proximoControl}
         onChangeText={(value) => handleChange('proximoControl', value)}
       />
@@ -664,13 +664,13 @@ export function SeguimientoPosteventoScreen() {
       <Text style={styles.sectionTitle}>Historial reciente</Text>
       {screenError ? <Text style={styles.errorText}>{screenError}</Text> : null}
       {loadingEntries ? (
-        <ActivityIndicator color="#38bdf8" style={styles.loader} />
+        <ActivityIndicator color="#29B6FF" style={styles.loader} />
       ) : recentEntries.length ? (
         recentEntries.map((entry) => (
           <View key={entry.seguimientoPosteventoId} style={styles.entryCard}>
             <Text style={styles.entryTitle}>{entry.tituloEvento}</Text>
             <Text style={styles.entryMeta}>
-              {entry.tipoEvento} · evento {formatDate(entry.fechaEvento)} · seguimiento {formatDate(entry.fechaSeguimiento)}
+              {entry.tipoEvento} Ã‚Â· evento {formatDate(entry.fechaEvento)} Ã‚Â· seguimiento {formatDate(entry.fechaSeguimiento)}
             </Text>
             <Text style={styles.entryMeta}>{entry.estado}</Text>
             {buildEntryMeta(entry) ? <Text style={styles.entryHighlights}>{buildEntryMeta(entry)}</Text> : null}
@@ -693,48 +693,48 @@ export function SeguimientoPosteventoScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 24,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#F4F8FF',
   },
   subtitle: {
     marginTop: 8,
     marginBottom: 18,
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     lineHeight: 20,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#F4F8FF',
     marginTop: 8,
     marginBottom: 10,
   },
   label: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontWeight: '700',
     marginBottom: 8,
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 14,
     marginBottom: 12,
     overflow: 'hidden',
-    backgroundColor: '#0b1220',
+    backgroundColor: '#0D1B2A',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
     fontSize: 16,
-    backgroundColor: '#0b1220',
-    color: '#f8fafc',
+    backgroundColor: '#0D1B2A',
+    color: '#F4F8FF',
   },
   row: {
     flexDirection: 'row',
@@ -756,33 +756,33 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: '#111827',
+    borderColor: '#27496D',
+    backgroundColor: '#071120',
     paddingVertical: 14,
     paddingHorizontal: 12,
   },
   toggleChipActive: {
-    borderColor: '#38bdf8',
-    backgroundColor: '#082f49',
+    borderColor: '#29B6FF',
+    backgroundColor: '#29B6FF18',
   },
   toggleChipWarn: {
-    borderColor: '#f97316',
-    backgroundColor: '#431407',
+    borderColor: '#FF4D73',
+    backgroundColor: '#FF4D7318',
   },
   toggleChipText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     textAlign: 'center',
     fontWeight: '700',
     fontSize: 13,
   },
   toggleChipTextActive: {
-    color: '#bae6fd',
+    color: '#29B6FF',
   },
   toggleChipTextWarn: {
-    color: '#fdba74',
+    color: '#FF4D73',
   },
   saveBtn: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#29B6FF',
     paddingVertical: 16,
     borderRadius: 14,
     marginBottom: 18,
@@ -791,53 +791,53 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   saveBtnText: {
-    color: '#ffffff',
+    color: '#F4F8FF',
     textAlign: 'center',
     fontWeight: '800',
     fontSize: 16,
   },
   entryCard: {
-    backgroundColor: '#111827',
+    backgroundColor: '#071120',
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#132238',
     marginBottom: 12,
   },
   entryTitle: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontWeight: '800',
     fontSize: 16,
     marginBottom: 4,
   },
   entryMeta: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     lineHeight: 19,
     marginBottom: 4,
   },
   entryHighlights: {
-    color: '#93c5fd',
+    color: '#29B6FF',
     marginBottom: 6,
     fontWeight: '700',
   },
   entryNotes: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     lineHeight: 19,
   },
   emptyState: {
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#132238',
     borderRadius: 16,
     padding: 16,
-    backgroundColor: '#0b1220',
+    backgroundColor: '#0D1B2A',
     marginBottom: 12,
   },
   emptyStateText: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
     lineHeight: 19,
   },
   errorText: {
-    color: '#fca5a5',
+    color: '#FF4D73',
     marginBottom: 12,
   },
   loader: {

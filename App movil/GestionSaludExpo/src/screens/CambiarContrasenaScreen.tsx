@@ -12,7 +12,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
 
   const onSubmit = () => {
     if (!email || !newPassword) {
-      Alert.alert('Faltan Datos', 'correo y nueva contraseña son requeridos');
+      Alert.alert('Faltan Datos', 'correo y nueva contraseÃ±a son requeridos');
       return;
     }
     Alert.alert('Solicitud Enviada', 'Revisa tu correo para confirmar el cambio');
@@ -21,27 +21,27 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>cambiar contraseña</Text>
+      <Text style={styles.title}>cambiar contraseÃ±a</Text>
       <TextInput
         style={styles.input}
         placeholder="Correo"
         keyboardType="email-address"
         autoCapitalize="none"
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor="#9FB3C8"
         value={email}
         onChangeText={setEmail}
       />
       <TextInput
         style={styles.input}
         placeholder="Codigo (Opcional)"
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor="#9FB3C8"
         value={code}
         onChangeText={setCode}
       />
       <TextInput
         style={styles.input}
-        placeholder="nueva contraseña"
-        placeholderTextColor="#94a3b8"
+        placeholder="nueva contraseÃ±a"
+        placeholderTextColor="#9FB3C8"
         secureTextEntry
         value={newPassword}
         onChangeText={setNewPassword}
@@ -57,31 +57,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F8FF',
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
     marginVertical: 18,
-    color: '#0f172a',
+    color: '#071120',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#cbd5f5',
+    borderColor: '#C9D7E8',
     borderRadius: 12,
     padding: 14,
     marginBottom: 14,
     fontSize: 16,
-    color: '#0f172a',
+    color: '#071120',
   },
   primaryBtn: {
-    backgroundColor: '#0ea5e9',
+    backgroundColor: '#29B6FF',
     paddingVertical: 15,
     borderRadius: 12,
     marginTop: 8,
   },
   btnText: {
-    color: '#fff',
+    color: '#F4F8FF',
     textAlign: 'center',
     fontWeight: '600',
     fontSize: 16,

@@ -3,6 +3,7 @@ import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
+import { appColors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NanoConsejero'>;
 
@@ -38,7 +39,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
             <Text style={styles.title}>Nano</Text>
           </View>
           <Pressable style={styles.closeButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="close" size={20} color="#dbeafe" />
+            <Ionicons name="close" size={20} color={appColors.textSoft} />
           </Pressable>
         </View>
 
@@ -57,7 +58,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.infoCard}>
-          <Ionicons name="sparkles-outline" size={20} color="#38bdf8" />
+          <Ionicons name="sparkles-outline" size={20} color={appColors.info} />
           <Text style={styles.infoText}>
             Puedes usar este espacio luego para recomendaciones de comidas, rutinas y metas.
           </Text>
@@ -70,14 +71,14 @@ export function NanoConsejeroScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: appColors.background,
   },
   container: {
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 18,
     paddingBottom: 24,
-    backgroundColor: '#0f172a',
+    backgroundColor: appColors.background,
   },
   headerRow: {
     flexDirection: 'row',
@@ -85,14 +86,14 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   eyebrow: {
-    color: '#38bdf8',
+    color: appColors.info,
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
   },
   title: {
-    color: '#f8fafc',
+    color: appColors.text,
     fontSize: 32,
     fontWeight: '800',
     marginTop: 6,
@@ -101,27 +102,27 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#16233c',
+    backgroundColor: appColors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#223555',
+    borderColor: appColors.border,
   },
   speechBubble: {
     marginTop: 24,
-    backgroundColor: '#eff6ff',
+    backgroundColor: appColors.surfaceStrong,
     borderRadius: 26,
     paddingHorizontal: 22,
     paddingVertical: 20,
   },
   speechTitle: {
-    color: '#e11d48',
+    color: appColors.accent,
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 6,
   },
   speechText: {
-    color: '#334155',
+    color: appColors.textSoft,
     fontSize: 18,
     lineHeight: 28,
     fontWeight: '500',
@@ -131,9 +132,9 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: 22,
     borderRadius: 34,
-    backgroundColor: '#111c34',
+    backgroundColor: appColors.surfaceStrong,
     borderWidth: 1,
-    borderColor: '#223555',
+    borderColor: appColors.border,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -144,7 +145,7 @@ const styles = StyleSheet.create({
     width: 190,
     height: 28,
     borderRadius: 999,
-    backgroundColor: '#193d60',
+    backgroundColor: appColors.borderStrong,
   },
   robotWrap: {
     position: 'relative',
@@ -156,12 +157,12 @@ const styles = StyleSheet.create({
     width: 142,
     height: 142,
     borderRadius: 71,
-    backgroundColor: '#fff7fb',
+    backgroundColor: appColors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#fecdd3',
-    shadowColor: '#020617',
+    borderColor: appColors.borderStrong,
+    shadowColor: appColors.overlay,
     shadowOpacity: 0.18,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
@@ -182,7 +183,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
     borderBottomLeftRadius: 10,
-    backgroundColor: '#fb334b',
+    backgroundColor: appColors.accent,
     transform: [{ rotate: '22deg' }],
   },
   robotHead: {
@@ -190,7 +191,7 @@ const styles = StyleSheet.create({
     height: 23,
     marginTop: 4,
     borderRadius: 11,
-    backgroundColor: '#fb334b',
+    backgroundColor: appColors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -198,7 +199,7 @@ const styles = StyleSheet.create({
     width: 23,
     height: 18,
     borderRadius: 8,
-    backgroundColor: '#21162d',
+    backgroundColor: appColors.background,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
@@ -207,14 +208,14 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#f8fafc',
+    backgroundColor: appColors.text,
   },
   robotMouth: {
     width: 4,
     height: 2,
     borderBottomLeftRadius: 3,
     borderBottomRightRadius: 3,
-    backgroundColor: '#f8fafc',
+    backgroundColor: appColors.text,
     marginTop: 4,
   },
   robotEarLeft: {
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
     width: 3,
     height: 9,
     borderRadius: 2,
-    backgroundColor: '#21162d',
+    backgroundColor: appColors.background,
   },
   robotEarRight: {
     position: 'absolute',
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
     width: 3,
     height: 9,
     borderRadius: 2,
-    backgroundColor: '#21162d',
+    backgroundColor: appColors.background,
   },
   robotBody: {
     width: 14,
@@ -243,7 +244,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 6,
     borderBottomLeftRadius: 9,
     borderBottomRightRadius: 9,
-    backgroundColor: '#fb334b',
+    backgroundColor: appColors.accent,
   },
   robotFootLeft: {
     position: 'absolute',
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 5,
     borderRadius: 4,
-    backgroundColor: '#fb334b',
+    backgroundColor: appColors.accent,
     transform: [{ rotate: '22deg' }],
   },
   robotFootRight: {
@@ -262,15 +263,15 @@ const styles = StyleSheet.create({
     width: 8,
     height: 5,
     borderRadius: 4,
-    backgroundColor: '#fb334b',
+    backgroundColor: appColors.accent,
     transform: [{ rotate: '-22deg' }],
   },
   infoCard: {
     marginTop: 18,
     borderRadius: 22,
-    backgroundColor: '#111c34',
+    backgroundColor: appColors.surfaceStrong,
     borderWidth: 1,
-    borderColor: '#223555',
+    borderColor: appColors.border,
     paddingHorizontal: 18,
     paddingVertical: 16,
     flexDirection: 'row',
@@ -279,7 +280,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     flex: 1,
-    color: '#cbd5f5',
+    color: appColors.textSoft,
     fontSize: 14,
     lineHeight: 21,
   },

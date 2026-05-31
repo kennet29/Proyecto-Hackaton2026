@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   RefreshControl,
   ScrollView,
@@ -12,11 +13,14 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import { Calendar, type DateData } from 'react-native-calendars';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
+import type { RootStackParamList } from '../navigation/types';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
-
-type FeedbackState = { type: 'success' | 'error'; message: string } | null;
+import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 
 type DesparasitacionRecord = {
   desparasitacionId: number;
@@ -38,25 +42,28 @@ type FormState = {
   observaciones: string;
 };
 
-const buildHeaders = (token?: string | null, withJson = false): Record<string, string> => {
-  const headers: Record<string, string> = {};
-  if (withJson) {
-    headers['Content-Type'] = 'application/json';
-  }
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  return headers;
+type DesparasitacionScreenProps = {
+  mode?: 'list' | 'create';
+};
+
+type CalendarMarks = {
+  [date: string]: {
+    selected?: boolean;
+    selectedColor?: string;
+    selectedTextColor?: string;
+    marked?: boolean;
+    dots?: Array<{ key: string; color: string }>;
+  };
+};
+
+type DayEntry = DesparasitacionRecord & {
+  dayType: 'aplicacion' | 'proxima';
 };
 
 const toDateOnlyString = (value?: Date | string | null): string => {
-  if (!value) {
-    return '';
-  }
+  if (!value) return '';
   if (value instanceof Date) {
-    if (Number.isNaN(value.getTime())) {
-      return '';
-    }
+    if (Number.isNaN(value.getTime())) return '';
     return [
       value.getFullYear(),
       String(value.getMonth() + 1).padStart(2, '0'),
@@ -64,9 +71,7 @@ const toDateOnlyString = (value?: Date | string | null): string => {
     ].join('-');
   }
   const match = String(value).trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (match) {
-    return `${match[1]}-${match[2]}-${match[3]}`;
-  }
+  if (match) return `${match[1]}-${match[2]}-${match[3]}`;
   const parsed = new Date(String(value));
   return Number.isNaN(parsed.getTime()) ? '' : toDateOnlyString(parsed);
 };
@@ -75,15 +80,13 @@ const parseDateForPicker = (value?: string | null) => {
   const normalized = toDateOnlyString(value);
   const parts = normalized.split('-').map(Number);
   if (parts.length === 3 && parts.every((part: number) => !Number.isNaN(part))) {
-    return new Date(parts[0]!, (parts[1] ?? 1) - 1, parts[2]!);
+    return new Date(parts[0], (parts[1] ?? 1) - 1, parts[2]);
   }
   return new Date();
 };
 
 const formatDisplayDate = (value?: string | null) => {
-  if (!value) {
-    return 'Selecciona una fecha';
-  }
+  if (!value) return 'Selecciona una fecha';
   return parseDateForPicker(value).toLocaleDateString('es-NI', {
     year: 'numeric',
     month: 'long',
@@ -92,9 +95,7 @@ const formatDisplayDate = (value?: string | null) => {
 };
 
 const formatRecordDate = (value?: string | null) => {
-  if (!value) {
-    return 'Sin fecha';
-  }
+  if (!value) return 'Sin fecha';
   return parseDateForPicker(value).toLocaleDateString('es-NI', {
     year: 'numeric',
     month: 'short',
@@ -102,18 +103,22 @@ const formatRecordDate = (value?: string | null) => {
   });
 };
 
-const formatErrorMessage = (error: unknown) => {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return 'No se pudo completar la accion.';
+const normalizeText = (value: unknown) => {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  return text ? text : null;
 };
 
 const normalizeRecord = (item: Record<string, unknown>): DesparasitacionRecord | null => {
   const desparasitacionId = Number(item.desparasitacionId ?? item.desparasitacionid ?? item.id ?? 0);
   const pacienteId = Number(item.pacienteId ?? item.pacienteid ?? 0);
 
-  if (!Number.isFinite(desparasitacionId) || desparasitacionId <= 0 || !Number.isFinite(pacienteId) || pacienteId <= 0) {
+  if (
+    !Number.isFinite(desparasitacionId) ||
+    desparasitacionId <= 0 ||
+    !Number.isFinite(pacienteId) ||
+    pacienteId <= 0
+  ) {
     return null;
   }
 
@@ -121,35 +126,23 @@ const normalizeRecord = (item: Record<string, unknown>): DesparasitacionRecord |
     desparasitacionId,
     pacienteId,
     fecha: toDateOnlyString(item.fecha as string | null | undefined) || null,
-    producto: typeof item.producto === 'string' ? item.producto : null,
-    dosis: typeof item.dosis === 'string' ? item.dosis : null,
+    producto: normalizeText(item.producto),
+    dosis: normalizeText(item.dosis),
     proximafecha: toDateOnlyString(item.proximafecha as string | null | undefined) || null,
-    observaciones: typeof item.observaciones === 'string' ? item.observaciones : null,
-    creadoen: typeof item.creadoen === 'string' ? item.creadoen : null,
+    observaciones: normalizeText(item.observaciones),
+    creadoen: normalizeText(item.creadoen),
   };
 };
 
-const FeedbackBanner = ({ feedback }: { feedback: FeedbackState }) => {
-  if (!feedback) {
-    return null;
-  }
-
-  const isSuccess = feedback.type === 'success';
-  return (
-    <View style={[styles.feedbackBox, isSuccess ? styles.feedbackSuccess : styles.feedbackError]}>
-      <Text style={[styles.feedbackText, isSuccess ? styles.feedbackTextSuccess : styles.feedbackTextError]}>
-        {feedback.message}
-      </Text>
-    </View>
-  );
-};
-
-export function DesparasitacionScreen() {
+export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenProps) {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const isCreateMode = mode === 'create';
+  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
   const { token, user } = useAuth();
-  const patientHeaders = useMemo(() => buildHeaders(token, false), [token]);
-  const jsonHeaders = useMemo(() => buildHeaders(token, true), [token]);
-
-  const defaultPacienteId = useMemo(() => (user?.pacienteId ? String(user.pacienteId) : ''), [user?.pacienteId]);
+  const defaultPacienteId = useMemo(
+    () => (user?.pacienteId ? String(user.pacienteId) : ''),
+    [user?.pacienteId],
+  );
 
   const buildInitialForm = useCallback(
     (): FormState => ({
@@ -163,14 +156,22 @@ export function DesparasitacionScreen() {
     [defaultPacienteId],
   );
 
+  const authHeaders = useMemo<Record<string, string>>(() => {
+    const base: Record<string, string> = {};
+    if (token) {
+      base.Authorization = `Bearer ${token}`;
+    }
+    return base;
+  }, [token]);
+
   const [patientOptions, setPatientOptions] = useState<LinkedPatient[]>([]);
   const [records, setRecords] = useState<DesparasitacionRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingPatients, setLoadingPatients] = useState(false);
-  const [showForm, setShowForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
+  const [selectedPatientId, setSelectedPatientId] = useState('');
+  const [selectedDate, setSelectedDate] = useState(toDateOnlyString(new Date()));
   const [form, setForm] = useState<FormState>(buildInitialForm);
   const [showIOSFechaPicker, setShowIOSFechaPicker] = useState(false);
   const [showIOSProximaPicker, setShowIOSProximaPicker] = useState(false);
@@ -184,63 +185,169 @@ export function DesparasitacionScreen() {
       setPatientOptions([]);
       return;
     }
-
     setLoadingPatients(true);
     try {
-      const items = await fetchLinkedPatients(patientHeaders);
-      setPatientOptions(items);
-      if (!form.pacienteId && items.length > 0) {
-        setForm((prev) => ({ ...prev, pacienteId: String(items[0]!.pacienteId) }));
+      let normalized = await fetchLinkedPatients(authHeaders, { forceRefresh: true });
+      if (normalized.length === 0 && user?.pacienteId) {
+        normalized = [
+          {
+            pacienteId: Number(user.pacienteId),
+            displayName: user?.username?.split('@')[0] || `Paciente #${user.pacienteId}`,
+          },
+        ];
       }
+      setPatientOptions(normalized);
+      setForm((prev) =>
+        prev.pacienteId || normalized.length === 0
+          ? prev
+          : { ...prev, pacienteId: String(normalized[0].pacienteId) },
+      );
     } catch (error) {
-      setFeedback({ type: 'error', message: formatErrorMessage(error) });
+      Alert.alert('Error', error instanceof Error ? error.message : 'Fallo al cargar pacientes');
     } finally {
       setLoadingPatients(false);
     }
-  }, [form.pacienteId, patientHeaders, token]);
+  }, [authHeaders, token, user?.pacienteId, user?.username]);
 
   const fetchRecords = useCallback(async () => {
-    setRefreshing(true);
+    if (!token) {
+      setRecords([]);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     try {
-      const response = await fetch(`${API_URL}/desparasitacion`, { headers: patientHeaders });
+      const response = await fetch(`${API_URL}/desparasitacion`, { headers: authHeaders });
       const body = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error((body as { message?: string } | null)?.message ?? 'No se pudo cargar el historial.');
+        throw new Error(body?.message ?? 'No se pudo cargar el historial');
       }
       const items = Array.isArray(body)
         ? body
             .map((item) => normalizeRecord((item ?? {}) as Record<string, unknown>))
             .filter((item): item is DesparasitacionRecord => Boolean(item))
+            .sort(
+              (a, b) =>
+                new Date(b.fecha ?? b.proximafecha ?? 0).getTime() -
+                new Date(a.fecha ?? a.proximafecha ?? 0).getTime(),
+            )
         : [];
       setRecords(items);
     } catch (error) {
-      setFeedback({ type: 'error', message: formatErrorMessage(error) });
+      Alert.alert('Error', error instanceof Error ? error.message : 'Fallo al cargar el historial');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [patientHeaders]);
+  }, [authHeaders, token]);
 
   useEffect(() => {
     void fetchPatients();
     void fetchRecords();
   }, [fetchPatients, fetchRecords]);
 
-  const filteredRecords = useMemo(() => {
-    const pacienteId = Number(form.pacienteId);
+  const patientNameById = useMemo(() => {
+    const map: Record<number, string> = {};
+    patientOptions.forEach((patient) => {
+      map[patient.pacienteId] = patient.displayName;
+    });
+    return map;
+  }, [patientOptions]);
+
+  const visibleRecords = useMemo(() => {
+    const pacienteId = Number(selectedPatientId);
     if (!Number.isFinite(pacienteId) || pacienteId <= 0) {
       return records;
     }
     return records.filter((record) => record.pacienteId === pacienteId);
-  }, [form.pacienteId, records]);
+  }, [records, selectedPatientId]);
+
+  const metrics = useMemo(() => {
+    const upcomingCount = visibleRecords.filter((record) => {
+      const nextDate = toDateOnlyString(record.proximafecha);
+      return nextDate && nextDate >= toDateOnlyString(new Date());
+    }).length;
+
+    return {
+      total: visibleRecords.length,
+      patients: new Set(visibleRecords.map((record) => record.pacienteId)).size,
+      withNextDate: visibleRecords.filter((record) => Boolean(record.proximafecha)).length,
+      upcomingCount,
+    };
+  }, [visibleRecords]);
+
+  const nextUpcomingRecord = useMemo(() => {
+    return visibleRecords
+      .filter((record) => Boolean(toDateOnlyString(record.proximafecha)))
+      .sort(
+        (a, b) =>
+          new Date(a.proximafecha ?? 0).getTime() - new Date(b.proximafecha ?? 0).getTime(),
+      )[0] ?? null;
+  }, [visibleRecords]);
+
+  const markedDates = useMemo<CalendarMarks>(() => {
+    const marks: CalendarMarks = {};
+
+    visibleRecords.forEach((record) => {
+      const applicationDate = toDateOnlyString(record.fecha);
+      if (applicationDate) {
+        const existing = marks[applicationDate] ?? {};
+        const dots = existing.dots ?? [];
+        if (!dots.some((dot) => dot.key === `app-${record.desparasitacionId}`)) {
+          dots.push({ key: `app-${record.desparasitacionId}`, color: '#38F28E' });
+        }
+        marks[applicationDate] = { ...existing, marked: true, dots };
+      }
+
+      const nextDate = toDateOnlyString(record.proximafecha);
+      if (nextDate) {
+        const existing = marks[nextDate] ?? {};
+        const dots = existing.dots ?? [];
+        if (!dots.some((dot) => dot.key === `next-${record.desparasitacionId}`)) {
+          dots.push({ key: `next-${record.desparasitacionId}`, color: '#FF4D73' });
+        }
+        marks[nextDate] = { ...existing, marked: true, dots };
+      }
+    });
+
+    if (selectedDate) {
+      marks[selectedDate] = {
+        ...(marks[selectedDate] ?? {}),
+        selected: true,
+        selectedColor: '#29B6FF',
+        selectedTextColor: '#F4F8FF',
+        marked: marks[selectedDate]?.marked ?? false,
+      };
+    }
+
+    return marks;
+  }, [selectedDate, visibleRecords]);
+
+  const dayEntries = useMemo<DayEntry[]>(() => {
+    if (!selectedDate) return [];
+    const entries: DayEntry[] = [];
+
+    visibleRecords.forEach((record) => {
+      if (toDateOnlyString(record.fecha) === selectedDate) {
+        entries.push({ ...record, dayType: 'aplicacion' });
+      }
+      if (toDateOnlyString(record.proximafecha) === selectedDate) {
+        entries.push({ ...record, dayType: 'proxima' });
+      }
+    });
+
+    return entries.sort((a, b) => a.desparasitacionId - b.desparasitacionId);
+  }, [selectedDate, visibleRecords]);
 
   const handleChange = (key: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setForm(buildInitialForm());
-  };
+    setShowIOSFechaPicker(false);
+    setShowIOSProximaPicker(false);
+  }, [buildInitialForm]);
 
   const handleDateConfirm = (key: 'fecha' | 'proximafecha', value: Date) => {
     handleChange(key, toDateOnlyString(value));
@@ -259,9 +366,9 @@ export function DesparasitacionScreen() {
         value: parseDateForPicker(form[key]),
         mode: 'date',
         is24Hour: true,
-        onChange: (event, selectedDate) => {
-          if (event.type === 'set' && selectedDate) {
-            handleDateConfirm(key, selectedDate);
+        onChange: (event, selectedDateValue) => {
+          if (event.type === 'set' && selectedDateValue) {
+            handleDateConfirm(key, selectedDateValue);
           }
         },
       });
@@ -276,390 +383,738 @@ export function DesparasitacionScreen() {
   };
 
   const handleSubmit = async () => {
-    setFeedback(null);
-
     const pacienteId = Number(form.pacienteId);
     if (!Number.isFinite(pacienteId) || pacienteId <= 0 || !form.fecha || !form.producto.trim()) {
-      setFeedback({
-        type: 'error',
-        message: 'Paciente, fecha y producto son obligatorios.',
-      });
+      Alert.alert('Faltan datos', 'Paciente, fecha y producto son obligatorios');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const payload = {
-        pacienteId,
-        fecha: form.fecha,
-        producto: form.producto.trim(),
-        dosis: form.dosis.trim() || undefined,
-        proximafecha: form.proximafecha || undefined,
-        observaciones: form.observaciones.trim() || undefined,
-        creadopor: user?.username ?? undefined,
-      };
-
-      const response = await fetch(`${API_URL}/desparasitacion`, {
+      const offlineResult = await submitJsonWithOfflineFallback({
+        token,
+        path: '/desparasitacion',
         method: 'POST',
-        headers: jsonHeaders,
-        body: JSON.stringify(payload),
+        description: 'registrar desparasitacion',
+        body: {
+          pacienteId,
+          fecha: form.fecha,
+          producto: form.producto.trim(),
+          dosis: form.dosis.trim() || undefined,
+          proximafecha: form.proximafecha || undefined,
+          observaciones: form.observaciones.trim() || undefined,
+          creadopor: user?.username ?? undefined,
+        },
       });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error((body as { message?: string } | null)?.message ?? 'No se pudo registrar la desparasitacion.');
+
+      if (offlineResult.status === 'queued') {
+        Alert.alert(
+          'Control en cola',
+          'No habia conexion. El control de desparasitacion quedo guardado y se sincronizara al volver la red.',
+        );
+      } else {
+        Alert.alert('Control guardado', 'La desparasitacion fue registrada correctamente');
       }
 
-      setFeedback({ type: 'success', message: 'Desparasitacion registrada correctamente.' });
       resetForm();
-      setShowForm(false);
-      await fetchRecords();
+      if (isCreateMode && navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        void fetchRecords();
+      }
     } catch (error) {
-      setFeedback({ type: 'error', message: formatErrorMessage(error) });
+      Alert.alert('Error', error instanceof Error ? error.message : 'Fallo la peticion');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void fetchRecords()} />}
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>Desparasitacion</Text>
-        <Text style={styles.subtitle}>Consulta el historial y registra nuevos controles.</Text>
-      </View>
+    <View style={styles.screen}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={
+          !isCreateMode ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true);
+                void fetchRecords();
+              }}
+            />
+          ) : undefined
+        }
+      >
+        <View style={styles.heroCard}>
+          <Text style={styles.eyebrow}>CONTROL PREVENTIVO</Text>
+          <Text style={styles.title}>
+            {isCreateMode ? 'Nuevo control de desparasitacion' : 'Desparasitacion'}
+          </Text>
+          <Text style={styles.subtitle}>
+            {isCreateMode
+              ? 'Registra la aplicacion, la dosis y deja programada la siguiente fecha si ya esta definida.'
+              : 'Consulta aplicaciones pasadas, proximas fechas y el calendario preventivo por persona.'}
+          </Text>
+        </View>
 
-      <FeedbackBanner feedback={feedback} />
+        {isCreateMode ? (
+          <View style={styles.formCard}>
+            <Text style={styles.formTitle}>Registrar control</Text>
 
-      <View style={styles.filterCard}>
-        <Text style={styles.label}>Paciente</Text>
-        {loadingPatients ? (
-          <View style={styles.inlineState}>
-            <ActivityIndicator color="#2563eb" />
-            <Text style={styles.inlineStateText}>Cargando pacientes...</Text>
-          </View>
-        ) : patientOptions.length === 0 ? (
-          <Text style={styles.emptySelectText}>No hay pacientes vinculados disponibles.</Text>
-        ) : (
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={form.pacienteId}
-              onValueChange={(value) => handleChange('pacienteId', String(value))}
+            <Text style={styles.label}>Paciente</Text>
+            <View style={styles.pickerWrapper}>
+              <Picker
+                style={styles.picker}
+                selectedValue={form.pacienteId}
+                onValueChange={(value) => handleChange('pacienteId', String(value))}
+                enabled={!loadingPatients}
+                dropdownIconColor="#F4F8FF"
+              >
+                <Picker.Item
+                  label={loadingPatients ? 'Cargando pacientes...' : 'Selecciona un paciente'}
+                  value=""
+                  color={pickerItemColor}
+                />
+                {patientOptions.map((patient) => (
+                  <Picker.Item
+                    key={patient.pacienteId}
+                    label={patient.displayName}
+                    value={String(patient.pacienteId)}
+                    color={pickerItemColor}
+                  />
+                ))}
+              </Picker>
+            </View>
+
+            <Text style={styles.label}>Fecha de aplicacion</Text>
+            <TouchableOpacity style={styles.dateButton} onPress={() => openDatePicker('fecha')}>
+              <Text style={styles.dateButtonText}>{formatDisplayDate(form.fecha)}</Text>
+            </TouchableOpacity>
+            {Platform.OS === 'ios' && showIOSFechaPicker ? (
+              <View style={styles.iosPickerCard}>
+                <DateTimePicker
+                  mode="date"
+                  display="spinner"
+                  locale="es-NI"
+                  value={parseDateForPicker(form.fecha)}
+                  onChange={(_, selectedDateValue) => {
+                    if (selectedDateValue) {
+                      handleDateConfirm('fecha', selectedDateValue);
+                    }
+                  }}
+                />
+                <TouchableOpacity
+                  style={styles.secondaryButton}
+                  onPress={() => setShowIOSFechaPicker(false)}
+                >
+                  <Text style={styles.secondaryButtonText}>Listo</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+
+            <TextInput
+              style={styles.input}
+              placeholder="Producto utilizado"
+              placeholderTextColor="#9FB3C8"
+              value={form.producto}
+              onChangeText={(value) => handleChange('producto', value)}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Dosis"
+              placeholderTextColor="#9FB3C8"
+              value={form.dosis}
+              onChangeText={(value) => handleChange('dosis', value)}
+            />
+
+            <Text style={styles.label}>Proxima fecha</Text>
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={() => openDatePicker('proximafecha')}
             >
-              {patientOptions.map((patient) => (
-                <Picker.Item key={patient.pacienteId} label={patient.displayName} value={String(patient.pacienteId)} />
-              ))}
-            </Picker>
+              <Text style={styles.dateButtonText}>{formatDisplayDate(form.proximafecha)}</Text>
+            </TouchableOpacity>
+            {Platform.OS === 'ios' && showIOSProximaPicker ? (
+              <View style={styles.iosPickerCard}>
+                <DateTimePicker
+                  mode="date"
+                  display="spinner"
+                  locale="es-NI"
+                  value={parseDateForPicker(form.proximafecha)}
+                  onChange={(_, selectedDateValue) => {
+                    if (selectedDateValue) {
+                      handleDateConfirm('proximafecha', selectedDateValue);
+                    }
+                  }}
+                />
+                <TouchableOpacity
+                  style={styles.secondaryButton}
+                  onPress={() => setShowIOSProximaPicker(false)}
+                >
+                  <Text style={styles.secondaryButtonText}>Listo</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+
+            <TextInput
+              style={[styles.input, styles.multiline]}
+              placeholder="Observaciones"
+              placeholderTextColor="#9FB3C8"
+              value={form.observaciones}
+              onChangeText={(value) => handleChange('observaciones', value)}
+              multiline
+            />
+
+            <View style={styles.formActions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => {
+                  resetForm();
+                  if (navigation.canGoBack()) navigation.goBack();
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.primaryButton, isSubmitting ? styles.disabledButton : null]}
+                disabled={isSubmitting}
+                onPress={handleSubmit}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="#F4F8FF" />
+                ) : (
+                  <Text style={styles.primaryButtonText}>Guardar</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
+        ) : (
+          <>
+            <View style={styles.metricsRow}>
+              <View style={styles.metricCard}>
+                <Text style={styles.metricValue}>{metrics.total}</Text>
+                <Text style={styles.metricLabel}>Controles</Text>
+              </View>
+              <View style={styles.metricCard}>
+                <Text style={styles.metricValue}>{metrics.patients}</Text>
+                <Text style={styles.metricLabel}>Pacientes</Text>
+              </View>
+              <View style={styles.metricCard}>
+                <Text style={styles.metricValue}>{metrics.withNextDate}</Text>
+                <Text style={styles.metricLabel}>Con proxima fecha</Text>
+              </View>
+              <View style={styles.metricCard}>
+                <Text style={styles.metricValue}>{metrics.upcomingCount}</Text>
+                <Text style={styles.metricLabel}>Pendientes</Text>
+              </View>
+            </View>
+
+            <View style={styles.filterCard}>
+              <Text style={styles.label}>Filtrar por paciente</Text>
+              <View style={styles.pickerWrapper}>
+                <Picker
+                  style={styles.picker}
+                  selectedValue={selectedPatientId}
+                  onValueChange={(value) => setSelectedPatientId(String(value))}
+                  enabled={!loadingPatients}
+                  dropdownIconColor="#F4F8FF"
+                >
+                  <Picker.Item
+                    label={loadingPatients ? 'Cargando pacientes...' : 'Todos los pacientes'}
+                    value=""
+                    color={pickerItemColor}
+                  />
+                  {patientOptions.map((patient) => (
+                    <Picker.Item
+                      key={patient.pacienteId}
+                      label={patient.displayName}
+                      value={String(patient.pacienteId)}
+                      color={pickerItemColor}
+                    />
+                  ))}
+                </Picker>
+              </View>
+
+              {nextUpcomingRecord ? (
+                <View style={styles.highlightCard}>
+                  <Text style={styles.highlightLabel}>Proximo control sugerido</Text>
+                  <Text style={styles.highlightTitle}>
+                    {nextUpcomingRecord.producto ?? 'Producto sin nombre'}
+                  </Text>
+                  <Text style={styles.highlightText}>
+                    {`${patientNameById[nextUpcomingRecord.pacienteId] ?? `Paciente #${nextUpcomingRecord.pacienteId}`} | ${formatRecordDate(nextUpcomingRecord.proximafecha)}`}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Calendario preventivo</Text>
+              <Text style={styles.sectionSubtitle}>
+                Verde: aplicacion realizada. Amarillo: siguiente fecha.
+              </Text>
+            </View>
+
+            {loading ? (
+              <View style={styles.loadingCard}>
+                <ActivityIndicator color="#29B6FF" />
+                <Text style={styles.loadingText}>Cargando calendario...</Text>
+              </View>
+            ) : (
+              <View style={styles.calendarCard}>
+                <Calendar
+                  current={selectedDate}
+                  markedDates={markedDates}
+                  markingType="multi-dot"
+                  onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
+                  theme={{
+                    calendarBackground: '#071120',
+                    dayTextColor: '#F4F8FF',
+                    monthTextColor: '#F4F8FF',
+                    arrowColor: '#29B6FF',
+                    textDisabledColor: '#9FB3C8',
+                    todayTextColor: '#29B6FF',
+                    textSectionTitleColor: '#9FB3C8',
+                    selectedDayBackgroundColor: '#29B6FF',
+                    selectedDayTextColor: '#F4F8FF',
+                  }}
+                />
+              </View>
+            )}
+
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Actividad del dia</Text>
+              <Text style={styles.sectionSubtitle}>{formatDisplayDate(selectedDate)}</Text>
+            </View>
+
+            {loading ? null : dayEntries.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyTitle}>No hay eventos en esta fecha</Text>
+                <Text style={styles.emptyText}>
+                  Selecciona otro dia del calendario para revisar aplicaciones o proximas fechas.
+                </Text>
+              </View>
+            ) : (
+              dayEntries.map((entry) => (
+                <View key={`${entry.desparasitacionId}-${entry.dayType}`} style={styles.dayCard}>
+                  <View style={styles.recordTopRow}>
+                    <Text style={styles.recordTitle}>
+                      {entry.producto ?? 'Producto no definido'}
+                    </Text>
+                    <View
+                      style={[
+                        styles.badge,
+                        entry.dayType === 'aplicacion' ? styles.badgeSuccess : styles.badgeWarning,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.badgeText,
+                          entry.dayType === 'aplicacion'
+                            ? styles.badgeTextSuccess
+                            : styles.badgeTextWarning,
+                        ]}
+                      >
+                        {entry.dayType === 'aplicacion' ? 'Aplicacion' : 'Proxima fecha'}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={styles.recordText}>
+                    Paciente: {patientNameById[entry.pacienteId] ?? `Paciente #${entry.pacienteId}`}
+                  </Text>
+                  <Text style={styles.recordText}>
+                    Dosis: {entry.dosis ?? 'Sin dato'}
+                  </Text>
+                  {entry.observaciones ? (
+                    <Text style={styles.recordText}>Observaciones: {entry.observaciones}</Text>
+                  ) : null}
+                </View>
+              ))
+            )}
+
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Historial completo</Text>
+              <Text style={styles.sectionSubtitle}>{`${visibleRecords.length} registros`}</Text>
+            </View>
+
+            {loading ? null : visibleRecords.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyTitle}>Sin registros</Text>
+                <Text style={styles.emptyText}>
+                  Todavia no hay controles de desparasitacion para este paciente.
+                </Text>
+              </View>
+            ) : (
+              visibleRecords.map((record) => (
+                <View key={record.desparasitacionId} style={styles.recordCard}>
+                  <Text style={styles.recordTitle}>
+                    {record.producto ?? 'Producto no definido'}
+                  </Text>
+                  <Text style={styles.recordText}>
+                    Paciente: {patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`}
+                  </Text>
+                  <Text style={styles.recordText}>
+                    Aplicado: {formatRecordDate(record.fecha)}
+                  </Text>
+                  <Text style={styles.recordText}>
+                    Dosis: {record.dosis ?? 'Sin dato'}
+                  </Text>
+                  <Text style={styles.recordText}>
+                    Proxima fecha: {formatRecordDate(record.proximafecha)}
+                  </Text>
+                  {record.observaciones ? (
+                    <Text style={styles.recordText}>Observaciones: {record.observaciones}</Text>
+                  ) : null}
+                </View>
+              ))
+            )}
+          </>
         )}
-      </View>
+      </ScrollView>
 
-      {loading ? (
-        <View style={styles.stateBox}>
-          <ActivityIndicator color="#2563eb" />
-          <Text style={styles.stateText}>Cargando historial...</Text>
-        </View>
-      ) : filteredRecords.length === 0 ? (
-        <View style={styles.stateBox}>
-          <Text style={styles.stateTitle}>Sin registros</Text>
-          <Text style={styles.stateText}>Todavia no hay controles de desparasitacion para este paciente.</Text>
-        </View>
-      ) : (
-        filteredRecords.map((record) => (
-          <View key={record.desparasitacionId} style={styles.card}>
-            <Text style={styles.cardTitle}>{record.producto ?? 'Producto no definido'}</Text>
-            <Text style={styles.cardSubtitle}>Aplicado el {formatRecordDate(record.fecha)}</Text>
-            <Text style={styles.cardText}>Dosis: {record.dosis || 'Sin dato'}</Text>
-            <Text style={styles.cardText}>Proxima fecha: {formatRecordDate(record.proximafecha)}</Text>
-            {record.observaciones ? <Text style={styles.cardText}>Observaciones: {record.observaciones}</Text> : null}
-          </View>
-        ))
-      )}
-
-      {showForm ? (
-        <View style={styles.formCard}>
-          <Text style={styles.formTitle}>Nuevo control</Text>
-
-          <Text style={styles.label}>Fecha</Text>
-          <TouchableOpacity style={styles.dateButton} onPress={() => openDatePicker('fecha')}>
-            <Text style={styles.dateButtonText}>{formatDisplayDate(form.fecha)}</Text>
-          </TouchableOpacity>
-          {Platform.OS === 'ios' && showIOSFechaPicker ? (
-            <View style={styles.iosPickerWrapper}>
-              <DateTimePicker
-                mode="date"
-                display="spinner"
-                value={parseDateForPicker(form.fecha)}
-                onChange={(_, selectedDate) => {
-                  if (selectedDate) {
-                    handleDateConfirm('fecha', selectedDate);
-                  }
-                }}
-              />
-              <TouchableOpacity style={styles.iosPickerDoneBtn} onPress={() => setShowIOSFechaPicker(false)}>
-                <Text style={styles.iosPickerDoneText}>Listo</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
-
-          <Text style={styles.label}>Producto</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Producto utilizado"
-            value={form.producto}
-            onChangeText={(value) => handleChange('producto', value)}
-          />
-
-          <Text style={styles.label}>Dosis</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ej. 1 tableta"
-            value={form.dosis}
-            onChangeText={(value) => handleChange('dosis', value)}
-          />
-
-          <Text style={styles.label}>Proxima fecha</Text>
-          <TouchableOpacity style={styles.dateButton} onPress={() => openDatePicker('proximafecha')}>
-            <Text style={styles.dateButtonText}>{formatDisplayDate(form.proximafecha)}</Text>
-          </TouchableOpacity>
-          {Platform.OS === 'ios' && showIOSProximaPicker ? (
-            <View style={styles.iosPickerWrapper}>
-              <DateTimePicker
-                mode="date"
-                display="spinner"
-                value={parseDateForPicker(form.proximafecha)}
-                onChange={(_, selectedDate) => {
-                  if (selectedDate) {
-                    handleDateConfirm('proximafecha', selectedDate);
-                  }
-                }}
-              />
-              <TouchableOpacity style={styles.iosPickerDoneBtn} onPress={() => setShowIOSProximaPicker(false)}>
-                <Text style={styles.iosPickerDoneText}>Listo</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
-
-          <Text style={styles.label}>Observaciones</Text>
-          <TextInput
-            style={[styles.input, styles.multiline]}
-            placeholder="Notas adicionales"
-            value={form.observaciones}
-            onChangeText={(value) => handleChange('observaciones', value)}
-            multiline
-            numberOfLines={3}
-          />
-
-          <TouchableOpacity
-            style={[styles.primaryBtn, isSubmitting && styles.disabledBtn]}
-            disabled={isSubmitting}
-            onPress={() => void handleSubmit()}
-          >
-            {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Guardar control</Text>}
-          </TouchableOpacity>
-        </View>
+      {!isCreateMode ? (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('DesparasitacionCreate')}
+        >
+          <Text style={styles.fabText}>+</Text>
+        </TouchableOpacity>
       ) : null}
-
-      <TouchableOpacity style={styles.fab} onPress={() => setShowForm((prev) => !prev)}>
-        <Text style={styles.fabText}>{showForm ? 'x' : '+'}</Text>
-      </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
-  content: {
-    padding: 20,
-    paddingBottom: 40,
-    gap: 16,
+  container: {
+    padding: 24,
+    paddingBottom: 120,
+    backgroundColor: '#071120',
   },
-  header: {
-    gap: 4,
+  heroCard: {
+    borderRadius: 28,
+    padding: 22,
+    marginBottom: 18,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
+  },
+  eyebrow: {
+    color: '#29B6FF',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 8,
   },
   title: {
-    color: '#f8fafc',
-    fontSize: 22,
-    fontWeight: '800',
+    color: '#F4F8FF',
+    fontSize: 28,
+    fontWeight: '900',
   },
   subtitle: {
-    color: '#cbd5f5',
+    marginTop: 10,
+    color: '#C9D7E8',
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 18,
+    marginHorizontal: -5,
+  },
+  metricCard: {
+    width: '50%',
+    paddingHorizontal: 5,
+    marginBottom: 10,
+  },
+  metricValue: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#F4F8FF',
+  },
+  metricLabel: {
+    marginTop: 6,
+    color: '#C9D7E8',
     fontSize: 13,
-  },
-  feedbackBox: {
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-  },
-  feedbackSuccess: {
-    backgroundColor: '#dcfce7',
-    borderColor: '#22c55e',
-  },
-  feedbackError: {
-    backgroundColor: '#fee2e2',
-    borderColor: '#ef4444',
-  },
-  feedbackText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  feedbackTextSuccess: {
-    color: '#166534',
-  },
-  feedbackTextError: {
-    color: '#b91c1c',
   },
   filterCard: {
-    backgroundColor: '#1e293b',
-    borderRadius: 18,
-    padding: 16,
+    backgroundColor: '#071120',
+    borderRadius: 22,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#132238',
+    marginBottom: 18,
   },
   label: {
-    color: '#e2e8f0',
-    fontSize: 13,
-    fontWeight: '700',
+    color: '#F4F8FF',
+    fontSize: 14,
+    fontWeight: '800',
     marginBottom: 8,
   },
   pickerWrapper: {
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     overflow: 'hidden',
-    backgroundColor: '#0b1220',
+    backgroundColor: '#071120',
   },
-  emptySelectText: {
-    color: '#cbd5e1',
-    fontSize: 13,
+  picker: {
+    color: '#F4F8FF',
   },
-  inlineState: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  inlineStateText: {
-    color: '#cbd5e1',
-  },
-  stateBox: {
-    backgroundColor: '#1e293b',
+  highlightCard: {
+    marginTop: 14,
     borderRadius: 18,
-    padding: 20,
-    alignItems: 'center',
+    padding: 14,
+    backgroundColor: '#29B6FF18',
+    borderWidth: 1,
+    borderColor: '#29B6FF',
   },
-  stateTitle: {
-    color: '#f8fafc',
+  highlightLabel: {
+    color: '#29B6FF',
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    marginBottom: 6,
+  },
+  highlightTitle: {
+    color: '#F4F8FF',
     fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 4,
+    fontWeight: '800',
   },
-  stateText: {
-    color: '#cbd5e1',
-    textAlign: 'center',
+  highlightText: {
+    marginTop: 4,
+    color: '#C9D7E8',
+    lineHeight: 20,
   },
-  card: {
-    backgroundColor: '#1e293b',
-    borderRadius: 18,
-    padding: 16,
-    gap: 6,
+  sectionHeader: {
+    marginBottom: 12,
   },
-  cardTitle: {
-    color: '#f8fafc',
-    fontSize: 17,
-    fontWeight: '700',
+  sectionTitle: {
+    color: '#F4F8FF',
+    fontSize: 20,
+    fontWeight: '900',
   },
-  cardSubtitle: {
-    color: '#93c5fd',
+  sectionSubtitle: {
+    marginTop: 4,
+    color: '#9FB3C8',
+  },
+  loadingCard: {
+    borderRadius: 20,
+    padding: 22,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#C9D7E8',
+  },
+  calendarCard: {
+    borderRadius: 22,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#132238',
+    marginBottom: 18,
+    backgroundColor: '#071120',
+  },
+  emptyCard: {
+    borderRadius: 22,
+    padding: 20,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    color: '#F4F8FF',
+    fontWeight: '800',
+    fontSize: 16,
+    marginBottom: 6,
+  },
+  emptyText: {
+    color: '#9FB3C8',
+    lineHeight: 20,
+  },
+  dayCard: {
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 12,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
+  },
+  recordCard: {
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 12,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
+  },
+  recordTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  recordTitle: {
+    color: '#F4F8FF',
+    fontSize: 18,
+    fontWeight: '900',
+    flex: 1,
+    paddingRight: 10,
+  },
+  recordText: {
+    color: '#C9D7E8',
+    marginBottom: 5,
+    lineHeight: 20,
+  },
+  badge: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+  },
+  badgeSuccess: {
+    backgroundColor: '#38F28E18',
+    borderColor: '#38F28E',
+  },
+  badgeWarning: {
+    backgroundColor: '#FF4D7318',
+    borderColor: '#FF4D73',
+  },
+  badgeText: {
+    fontWeight: '800',
     fontSize: 12,
   },
-  cardText: {
-    color: '#e2e8f0',
-    fontSize: 13,
+  badgeTextSuccess: {
+    color: '#38F28E',
+  },
+  badgeTextWarning: {
+    color: '#FF4D73',
   },
   formCard: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
+    backgroundColor: '#071120',
+    borderRadius: 24,
     padding: 18,
-    gap: 12,
+    borderWidth: 1,
+    borderColor: '#132238',
+    marginTop: 10,
   },
   formTitle: {
-    color: '#0f172a',
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#F4F8FF',
+    marginBottom: 12,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#cbd5f5',
-    borderRadius: 12,
-    padding: 12,
+    borderColor: '#27496D',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
     fontSize: 15,
-    color: '#0f172a',
+    backgroundColor: '#071120',
+    color: '#F4F8FF',
   },
   multiline: {
-    minHeight: 84,
+    minHeight: 96,
     textAlignVertical: 'top',
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#cbd5f5',
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderColor: '#27496D',
+    borderRadius: 14,
+    paddingVertical: 15,
     paddingHorizontal: 14,
-    backgroundColor: '#f8fafc',
+    marginBottom: 12,
+    backgroundColor: '#071120',
   },
   dateButtonText: {
-    color: '#0f172a',
+    color: '#F4F8FF',
+    textAlign: 'center',
     fontSize: 15,
+    fontWeight: '700',
   },
-  iosPickerWrapper: {
+  iosPickerCard: {
     borderWidth: 1,
-    borderColor: '#cbd5f5',
-    borderRadius: 16,
-    backgroundColor: '#f8fafc',
+    borderColor: '#27496D',
+    borderRadius: 14,
     overflow: 'hidden',
+    backgroundColor: '#071120',
+    marginBottom: 12,
   },
-  iosPickerDoneBtn: {
+  secondaryButton: {
+    alignSelf: 'flex-end',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  secondaryButtonText: {
+    color: '#29B6FF',
+    fontWeight: '800',
+  },
+  formActions: {
+    flexDirection: 'row',
+    marginTop: 4,
+  },
+  cancelButton: {
+    flex: 1,
+    borderRadius: 14,
+    paddingVertical: 15,
     alignItems: 'center',
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#cbd5f5',
+    borderWidth: 1,
+    borderColor: '#9FB3C8',
+    backgroundColor: '#071120',
+    marginRight: 6,
   },
-  iosPickerDoneText: {
-    color: '#0f172a',
-    fontWeight: '700',
+  cancelButtonText: {
+    color: '#C9D7E8',
+    fontWeight: '800',
   },
-  primaryBtn: {
-    backgroundColor: '#0f172a',
-    borderRadius: 12,
-    paddingVertical: 14,
+  primaryButton: {
+    flex: 1,
+    backgroundColor: '#29B6FF',
+    borderRadius: 14,
+    paddingVertical: 15,
     alignItems: 'center',
+    marginLeft: 6,
   },
-  primaryBtnText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
+  primaryButtonText: {
+    color: '#F4F8FF',
+    fontWeight: '900',
+    fontSize: 16,
   },
-  disabledBtn: {
+  disabledButton: {
     opacity: 0.7,
   },
   fab: {
     position: 'absolute',
     right: 24,
     bottom: 24,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: '#2563eb',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#29B6FF',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
   },
   fabText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 30,
-    lineHeight: 32,
-    fontWeight: '700',
+    lineHeight: 30,
+    fontWeight: '800',
   },
 });

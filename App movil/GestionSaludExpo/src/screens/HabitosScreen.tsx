@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -50,19 +51,20 @@ const formatDate = (value?: string | null) => {
 const getImpactAccent = (value?: string | null) => {
   const normalized = (value ?? '').toLowerCase();
   if (normalized.includes('alto') || normalized.includes('severo') || normalized.includes('riesgo')) {
-    return '#ef4444';
+    return '#FF4D73';
   }
   if (normalized.includes('medio') || normalized.includes('moderado')) {
-    return '#f59e0b';
+    return '#FF4D73';
   }
   if (normalized.includes('bajo') || normalized.includes('positivo') || normalized.includes('saludable')) {
-    return '#22c55e';
+    return '#38F28E';
   }
-  return '#38bdf8';
+  return '#29B6FF';
 };
 
 export function HabitosScreen(_: Props) {
   const { token, user } = useAuth();
+  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [types, setTypes] = useState<TipoHabito[]>([]);
   const [records, setRecords] = useState<Habito[]>([]);
@@ -238,7 +240,7 @@ export function HabitosScreen(_: Props) {
   if (loading) {
     return (
       <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" color="#14b8a6" />
+        <ActivityIndicator size="large" color="#38F28E" />
         <Text style={styles.loadingText}>Cargando habitos...</Text>
       </View>
     );
@@ -268,12 +270,13 @@ export function HabitosScreen(_: Props) {
             selectedValue={form.pacienteId}
             onValueChange={(value) => handleChange('pacienteId', String(value))}
           >
-            <Picker.Item label="Selecciona un paciente" value="" />
+            <Picker.Item label="Selecciona un paciente" value="" color={pickerItemColor} />
             {patients.map((patient) => (
               <Picker.Item
                 key={patient.pacienteId}
                 label={patient.displayName}
                 value={String(patient.pacienteId)}
+                color={pickerItemColor}
               />
             ))}
           </Picker>
@@ -285,12 +288,13 @@ export function HabitosScreen(_: Props) {
             selectedValue={form.tipohabitoId}
             onValueChange={(value) => handleChange('tipohabitoId', String(value))}
           >
-            <Picker.Item label="Selecciona un tipo" value="" />
+            <Picker.Item label="Selecciona un tipo" value="" color={pickerItemColor} />
             {types.map((type) => (
               <Picker.Item
                 key={type.tipohabitoId}
                 label={type.categoria ? `${type.nombre} (${type.categoria})` : type.nombre}
                 value={String(type.tipohabitoId)}
+                color={pickerItemColor}
               />
             ))}
           </Picker>
@@ -329,7 +333,7 @@ export function HabitosScreen(_: Props) {
           <TextInput
             style={styles.input}
             placeholder="Ej. actividad fisica, alimentacion, sueno"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor="#9FB3C8"
             value={form.categoria}
             onChangeText={(value) => handleChange('categoria', value)}
           />
@@ -340,7 +344,7 @@ export function HabitosScreen(_: Props) {
               <TextInput
                 style={styles.input}
                 placeholder="Ej. bajo, medio, alto"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#9FB3C8"
                 value={form.nivel}
                 onChangeText={(value) => handleChange('nivel', value)}
               />
@@ -350,7 +354,7 @@ export function HabitosScreen(_: Props) {
               <TextInput
                 style={styles.input}
                 placeholder="Ej. diario, semanal"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#9FB3C8"
                 value={form.frecuencia}
                 onChangeText={(value) => handleChange('frecuencia', value)}
               />
@@ -366,7 +370,7 @@ export function HabitosScreen(_: Props) {
               <TextInput
                 style={styles.input}
                 placeholder="Ej. 30"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#9FB3C8"
                 keyboardType="decimal-pad"
                 value={form.cantidad}
                 onChangeText={(value) => handleChange('cantidad', value)}
@@ -377,7 +381,7 @@ export function HabitosScreen(_: Props) {
               <TextInput
                 style={styles.input}
                 placeholder="Ej. min, veces, litros"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#9FB3C8"
                 value={form.unidad}
                 onChangeText={(value) => handleChange('unidad', value)}
               />
@@ -388,7 +392,7 @@ export function HabitosScreen(_: Props) {
           <TextInput
             style={styles.input}
             placeholder="YYYY-MM-DD"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor="#9FB3C8"
             value={form.inicio}
             onChangeText={(value) => handleChange('inicio', value)}
           />
@@ -400,7 +404,7 @@ export function HabitosScreen(_: Props) {
           <TextInput
             style={styles.input}
             placeholder="Ej. positivo, moderado, alto riesgo"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor="#9FB3C8"
             value={form.impactosalud}
             onChangeText={(value) => handleChange('impactosalud', value)}
           />
@@ -409,7 +413,7 @@ export function HabitosScreen(_: Props) {
           <TextInput
             style={[styles.input, styles.multiline]}
             placeholder="Agrega contexto, detonantes, cambios o recomendaciones"
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor="#9FB3C8"
             multiline
             textAlignVertical="top"
             value={form.observaciones}
@@ -538,15 +542,15 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   loadingText: {
     marginTop: 10,
-    color: '#cbd5e1',
+    color: '#C9D7E8',
   },
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   content: {
     padding: 20,
@@ -554,109 +558,109 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   header: {
-    backgroundColor: '#0f766e',
+    backgroundColor: '#38F28E',
     borderRadius: 24,
     padding: 20,
     gap: 8,
     borderWidth: 1,
-    borderColor: '#2dd4bf',
+    borderColor: '#38F28E',
   },
   headerBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#115e59',
+    backgroundColor: '#38F28E',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   headerBadgeText: {
-    color: '#ccfbf1',
+    color: '#38F28E',
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
   },
   title: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 28,
     fontWeight: '800',
   },
   subtitle: {
-    color: '#ccfbf1',
+    color: '#38F28E',
     lineHeight: 20,
   },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 22,
     padding: 18,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
   },
   sectionHeader: {
     gap: 4,
   },
   cardTitle: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 18,
     fontWeight: '800',
   },
   cardSubtitle: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontSize: 13,
     lineHeight: 18,
   },
   label: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontWeight: '700',
     fontSize: 13,
   },
   pickerShell: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#0b1220',
+    backgroundColor: '#0D1B2A',
   },
   contextBox: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     padding: 12,
     gap: 4,
   },
   contextText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     fontSize: 13,
   },
   warningText: {
-    color: '#fde68a',
-    backgroundColor: '#422006',
+    color: '#FF4D73',
+    backgroundColor: '#FF4D7318',
     borderRadius: 10,
     padding: 10,
     fontWeight: '600',
   },
   formSection: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     padding: 14,
     gap: 10,
   },
   formSectionTitle: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 15,
     fontWeight: '800',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 12,
     padding: 12,
     fontSize: 15,
-    color: '#f8fafc',
-    backgroundColor: '#0b1220',
+    color: '#F4F8FF',
+    backgroundColor: '#0D1B2A',
   },
   row: {
     flexDirection: 'row',
@@ -670,7 +674,7 @@ const styles = StyleSheet.create({
     minHeight: 92,
   },
   primaryBtn: {
-    backgroundColor: '#0f766e',
+    backgroundColor: '#38F28E',
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
@@ -679,7 +683,7 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
   primaryBtnText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 15,
     fontWeight: '800',
   },
@@ -689,51 +693,51 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     padding: 12,
     gap: 4,
   },
   metricLabel: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontSize: 12,
     fontWeight: '700',
   },
   metricValue: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 22,
     fontWeight: '800',
   },
   insightBox: {
-    backgroundColor: '#10232a',
+    backgroundColor: '#0D1B2A',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#155e75',
+    borderColor: '#29B6FF18',
     padding: 14,
     gap: 6,
   },
   insightTitle: {
-    color: '#e0f2fe',
+    color: '#29B6FF',
     fontSize: 14,
     fontWeight: '800',
   },
   insightText: {
-    color: '#bae6fd',
+    color: '#29B6FF',
     lineHeight: 19,
   },
   emptyText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
   },
   separator: {
     height: 12,
   },
   recordCard: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     padding: 14,
     gap: 10,
   },
@@ -748,12 +752,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   recordTitle: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontWeight: '800',
     fontSize: 16,
   },
   recordText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     fontSize: 13,
     lineHeight: 18,
   },
@@ -774,20 +778,20 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   metaChip: {
-    backgroundColor: '#111827',
+    backgroundColor: '#071120',
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#1f2937',
+    borderColor: '#132238',
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   metaChipText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     fontSize: 12,
     fontWeight: '700',
   },
   recordNote: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontSize: 13,
     lineHeight: 19,
   },

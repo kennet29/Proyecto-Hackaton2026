@@ -14,19 +14,26 @@ import { ContactoScreen } from './src/screens/ContactoScreen';
 import { PacienteFormScreen } from './src/screens/PacienteFormScreen';
 import { PacienteEditorScreen } from './src/screens/PacienteEditorScreen';
 import { ConsultaFormScreen } from './src/screens/ConsultaFormScreen';
+import { ConsultaCreateScreen } from './src/screens/ConsultaCreateScreen';
 import { ConsultaListScreen } from './src/screens/ConsultaListScreen';
 import { CitaFormScreen } from './src/screens/CitaFormScreen';
 import { VacunaFormScreen } from './src/screens/VacunaFormScreen';
 import { MedicacionFormScreen } from './src/screens/MedicacionFormScreen';
+import { MedicacionCreateScreen } from './src/screens/MedicacionCreateScreen';
 import { LesionFormScreen } from './src/screens/LesionFormScreen';
+import { LesionCreateScreen } from './src/screens/LesionCreateScreen';
 import { OperacionFormScreen } from './src/screens/OperacionFormScreen';
+import { OperacionCreateScreen } from './src/screens/OperacionCreateScreen';
 import { CondicionCronicaFormScreen } from './src/screens/CondicionCronicaFormScreen';
+import { CondicionCronicaCreateScreen } from './src/screens/CondicionCronicaCreateScreen';
 import { ControlCronicoScreen } from './src/screens/ControlCronicoScreen';
 import { DesparasitacionScreen } from './src/screens/DesparasitacionScreen';
+import { DesparasitacionCreateScreen } from './src/screens/DesparasitacionCreateScreen';
 import { DocumentoFormScreen } from './src/screens/DocumentoFormScreen';
 import { EmbarazoScreen } from './src/screens/EmbarazoScreen';
 import { RecordatorioFormScreen } from './src/screens/RecordatorioFormScreen';
 import { RegistroDentalFormScreen } from './src/screens/RegistroDentalFormScreen';
+import { RegistroDentalCreateScreen } from './src/screens/RegistroDentalCreateScreen';
 import { RecordatorioListScreen } from './src/screens/RecordatorioListScreen';
 import { PacienteResumenScreen } from './src/screens/PacienteResumenScreen';
 import { ExpedienteGestionScreen } from './src/screens/ExpedienteGestionScreen';
@@ -35,6 +42,7 @@ import { EducacionNivelScreen } from './src/screens/EducacionNivelScreen';
 import { EducacionTemaScreen } from './src/screens/EducacionTemaScreen';
 import { RegistroScreen } from './src/screens/RegistroScreen';
 import { AlergiaScreen } from './src/screens/AlergiaScreen';
+import { AlergiaCreateScreen } from './src/screens/AlergiaCreateScreen';
 import { HabitosScreen } from './src/screens/HabitosScreen';
 import { SeguimientoFisicoScreen } from './src/screens/SeguimientoFisicoScreen';
 import { SeguimientoFisicoFormScreen } from './src/screens/SeguimientoFisicoFormScreen';
@@ -45,12 +53,14 @@ import { ExamenClinicoScreen } from './src/screens/ExamenClinicoScreen';
 import { SeguimientoPosteventoScreen } from './src/screens/SeguimientoPosteventoScreen';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 import { useOfflineWriteSync } from './src/hooks/useOfflineWriteSync';
+import { AppErrorBoundary } from './src/components/AppErrorBoundary';
+import { appColors } from './src/theme/colors';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const sharedScreenOptions = {
-  headerStyle: { backgroundColor: '#0f172a' },
-  headerTintColor: '#fff',
+  headerStyle: { backgroundColor: appColors.background },
+  headerTintColor: appColors.text,
 };
 
 const PrivateNavigator = () => {
@@ -93,9 +103,14 @@ const PrivateNavigator = () => {
         options={{ title: 'Consultas Medicas' }}
       />
       <Stack.Screen
+        name="ConsultaCreate"
+        component={ConsultaCreateScreen}
+        options={{ title: 'Nueva Consulta' }}
+      />
+      <Stack.Screen
         name="ConsultaForm"
         component={ConsultaFormScreen}
-        options={{ title: 'Consultas' }}
+        options={{ title: 'Editar Consulta' }}
       />
       <Stack.Screen name="CitaForm" component={CitaFormScreen} options={{ title: 'Citas' }} />
       <Stack.Screen name="VacunaForm" component={VacunaFormScreen} options={{ title: 'Vacunas' }} />
@@ -105,9 +120,21 @@ const PrivateNavigator = () => {
         options={{ title: 'Medicacion' }}
       />
       <Stack.Screen
+        name="MedicacionCreate"
+        component={MedicacionCreateScreen}
+        options={({ route }) => ({
+          title: route.params?.medicacion?.medicacionId ? 'Editar Medicacion' : 'Nueva Medicacion',
+        })}
+      />
+      <Stack.Screen
         name="LesionForm"
         component={LesionFormScreen}
         options={{ title: 'Lesiones' }}
+      />
+      <Stack.Screen
+        name="LesionCreate"
+        component={LesionCreateScreen}
+        options={{ title: 'Nueva Lesion' }}
       />
       <Stack.Screen
         name="OperacionForm"
@@ -115,9 +142,19 @@ const PrivateNavigator = () => {
         options={{ title: 'Operaciones' }}
       />
       <Stack.Screen
+        name="OperacionCreate"
+        component={OperacionCreateScreen}
+        options={{ title: 'Nueva Operacion' }}
+      />
+      <Stack.Screen
         name="CondicionCronicaForm"
         component={CondicionCronicaFormScreen}
         options={{ title: 'Condiciones Cronicas' }}
+      />
+      <Stack.Screen
+        name="CondicionCronicaCreate"
+        component={CondicionCronicaCreateScreen}
+        options={{ title: 'Nueva Condicion Cronica' }}
       />
       <Stack.Screen
         name="ControlCronico"
@@ -128,6 +165,11 @@ const PrivateNavigator = () => {
         name="Desparasitacion"
         component={DesparasitacionScreen}
         options={{ title: 'Desparasitacion' }}
+      />
+      <Stack.Screen
+        name="DesparasitacionCreate"
+        component={DesparasitacionCreateScreen}
+        options={{ title: 'Nueva Desparasitacion' }}
       />
       <Stack.Screen name="Periodo" component={PeriodoScreen} options={{ title: 'Periodo' }} />
       <Stack.Screen
@@ -170,7 +212,17 @@ const PrivateNavigator = () => {
         component={RegistroDentalFormScreen}
         options={{ title: 'Registro Dental' }}
       />
+      <Stack.Screen
+        name="RegistroDentalCreate"
+        component={RegistroDentalCreateScreen}
+        options={{ title: 'Nuevo Registro Dental' }}
+      />
       <Stack.Screen name="Alergia" component={AlergiaScreen} options={{ title: 'Alergias' }} />
+      <Stack.Screen
+        name="AlergiaCreate"
+        component={AlergiaCreateScreen}
+        options={{ title: 'Nueva Alergia' }}
+      />
       <Stack.Screen name="Habitos" component={HabitosScreen} options={{ title: 'Habitos' }} />
       <Stack.Screen
         name="SeguimientoFisico"
@@ -235,7 +287,7 @@ const RootNavigator = () => {
   if (!isHydrated) {
     return (
       <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" color="#fff" />
+        <ActivityIndicator size="large" color={appColors.text} />
       </View>
     );
   }
@@ -246,8 +298,10 @@ const RootNavigator = () => {
 export default function App() {
   return (
     <AuthProvider>
-      <StatusBar style="light" />
-      <RootNavigator />
+      <AppErrorBoundary>
+        <StatusBar style="light" />
+        <RootNavigator />
+      </AppErrorBoundary>
     </AuthProvider>
   );
 }
@@ -257,6 +311,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: appColors.background,
   },
 });

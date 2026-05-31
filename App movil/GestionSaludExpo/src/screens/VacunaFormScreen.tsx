@@ -13,16 +13,13 @@ import {
 } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import { Calendar, DateData } from 'react-native-calendars';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
+import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 
-type LinkedPatient = {
-  pacienteId: number;
-  displayName: string;
-};
-
-type DateField = 'fecha' | 'proximaDosis';
+type PickerField = 'fecha' | 'proximaDosis' | 'notificationDate' | 'notificationTime';
 
 type VacunaRecord = {
   vacunaId: number;
@@ -32,6 +29,19 @@ type VacunaRecord = {
   lote?: string | null;
   proximadosis?: string | null;
   creadoen?: string | null;
+};
+
+type CalendarMarks = {
+  [date: string]: {
+    selected?: boolean;
+    selectedColor?: string;
+    selectedTextColor?: string;
+    marked?: boolean;
+    dots?: Array<{
+      key: string;
+      color: string;
+    }>;
+  };
 };
 
 const toDateOnlyString = (input?: Date | string | null): string => {
@@ -60,6 +70,32 @@ const toDateOnlyString = (input?: Date | string | null): string => {
   return '';
 };
 
+const parseDateForPicker = (value?: string) => {
+  if (value) {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+    const segments = value.split('-').map((segment) => Number(segment));
+    if (segments.length === 3 && segments.every((segment) => !Number.isNaN(segment))) {
+      return new Date(segments[0], segments[1] - 1, segments[2]);
+    }
+  }
+  return new Date();
+};
+
+const parseTimeForPicker = (value?: string) => {
+  const base = new Date();
+  base.setSeconds(0, 0);
+  const segments = value?.split(':').map((segment) => Number(segment)) ?? [];
+  if (segments.length === 2 && segments.every((segment) => !Number.isNaN(segment))) {
+    base.setHours(segments[0], segments[1], 0, 0);
+    return base;
+  }
+  base.setHours(8, 0, 0, 0);
+  return base;
+};
+
 const formatDisplayDate = (value?: string, fallbackLabel = 'Selecciona fecha') => {
   if (!value) {
     return fallbackLabel;
@@ -84,26 +120,33 @@ const formatDisplayDate = (value?: string, fallbackLabel = 'Selecciona fecha') =
   return value;
 };
 
-const parseDateForPicker = (value?: string) => {
-  if (value) {
-    const parsed = new Date(value);
-    if (!Number.isNaN(parsed.getTime())) {
-      return parsed;
-    }
-    const segments = value.split('-').map((segment) => Number(segment));
-    if (segments.length === 3 && segments.every((segment) => !Number.isNaN(segment))) {
-      return new Date(segments[0], segments[1] - 1, segments[2]);
-    }
+const formatDisplayTime = (value?: string) => {
+  if (!value) {
+    return 'Selecciona hora';
   }
-  return new Date();
+  return parseTimeForPicker(value).toLocaleTimeString('es-NI', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 };
 
-const formatRecordDate = (value?: string | null) => formatDisplayDate(value ?? undefined, 'Sin fecha registrada');
+const formatRecordDate = (value?: string | null) =>
+  formatDisplayDate(value ?? undefined, 'Sin fecha registrada');
 
 const formatNextDose = (value?: string | null) =>
-  value ? formatDisplayDate(value ?? undefined, 'Sin fecha programada') : 'Sin próxima dosis';
+  value ? formatDisplayDate(value ?? undefined, 'Sin fecha programada') : 'Sin proxima dosis';
+
+const composeDateTime = (dateValue?: string, timeValue?: string) => {
+  if (!dateValue || !timeValue) {
+    return '';
+  }
+  return `${dateValue}T${timeValue}`;
+};
+
+const todayString = () => toDateOnlyString(new Date());
 
 export function VacunaFormScreen() {
+  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
   const [form, setForm] = useState({
     pacienteId: '',
     nombre: '',
@@ -112,6 +155,11 @@ export function VacunaFormScreen() {
     proximaDosis: '',
   });
   const [filterPacienteId, setFilterPacienteId] = useState('');
+  const [notificationForm, setNotificationForm] = useState({
+    mensaje: 'Recordatorio de proxima dosis de vacuna',
+  });
+  const [notificationDate, setNotificationDate] = useState('');
+  const [notificationTime, setNotificationTime] = useState('08:00');
   const { token, user } = useAuth();
   const authHeaders = useMemo<Record<string, string>>(() => {
     const base: Record<string, string> = {};
@@ -120,23 +168,29 @@ export function VacunaFormScreen() {
     }
     return base;
   }, [token]);
-  const jsonHeaders = useMemo<Record<string, string>>(
-    () => ({ 'Content-Type': 'application/json', ...authHeaders }),
-    [authHeaders],
-  );
   const [patientOptions, setPatientOptions] = useState<LinkedPatient[]>([]);
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [patientError, setPatientError] = useState<string | null>(null);
   const [showIOSFechaPicker, setShowIOSFechaPicker] = useState(false);
   const [showIOSProximaPicker, setShowIOSProximaPicker] = useState(false);
+  const [showIOSNotificationDatePicker, setShowIOSNotificationDatePicker] = useState(false);
+  const [showIOSNotificationTimePicker, setShowIOSNotificationTimePicker] = useState(false);
   const [records, setRecords] = useState<VacunaRecord[]>([]);
   const [loadingRecords, setLoadingRecords] = useState(true);
   const [recordsError, setRecordsError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(todayString());
+  const [showDaySection, setShowDaySection] = useState(true);
+  const [showHistorySection, setShowHistorySection] = useState(false);
+  const [showNotificationForm, setShowNotificationForm] = useState(false);
 
   const handleChange = (key: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleNotificationChange = (key: keyof typeof notificationForm, value: string) => {
+    setNotificationForm((prev) => ({ ...prev, [key]: value }));
   };
 
   const fetchPatients = useCallback(async () => {
@@ -144,67 +198,22 @@ export function VacunaFormScreen() {
       setPatientOptions([]);
       return;
     }
+
     setLoadingPatients(true);
     setPatientError(null);
     try {
-      const response = await fetch(`${API_URL}/usuario-paciente/mis-pacientes`, {
-        headers: authHeaders,
-      });
-      const relations = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(relations?.message ?? 'No se pudieron cargar las personas');
-      }
-      const items: (LinkedPatient | null)[] = Array.isArray(relations)
-        ? await Promise.all(
-            relations.map(async (relation: any) => {
-              const rawId =
-                relation?.pacienteId ??
-                relation?.pacienteid ??
-                relation?.id ??
-                relation?.paciente?.pacienteId;
-              const pacienteId = Number(rawId);
-              if (!Number.isFinite(pacienteId)) {
-                return null;
-              }
-              let displayName =
-                relation?.displayName ??
-                relation?.nombrePaciente ??
-                relation?.paciente?.displayName ??
-                `Paciente #${pacienteId}`;
-              try {
-                const patientResponse = await fetch(`${API_URL}/paciente/${pacienteId}`, {
-                  headers: authHeaders,
-                });
-                const patient = await patientResponse.json().catch(() => null);
-                if (patient && patientResponse.ok) {
-                  const nombres = patient?.nombres ?? '';
-                  const apellidos = patient?.apellidos ?? '';
-                  const combined = `${nombres} ${apellidos}`.trim();
-                  if (combined) {
-                    displayName = combined;
-                  }
-                }
-              } catch {
-                // ignorar fallos individuales
-              }
-              return {
-                pacienteId,
-                displayName,
-              };
-            }),
-          )
-        : [];
-      setPatientOptions(items.filter((item): item is LinkedPatient => Boolean(item)));
+      const items = await fetchLinkedPatients(authHeaders, { forceRefresh: true });
+      setPatientOptions(items);
     } catch (error) {
-      setPatientError(error instanceof Error ? error.message : 'Falló al cargar personas');
+      setPatientError(error instanceof Error ? error.message : 'Fallo al cargar personas');
       setPatientOptions([]);
     } finally {
       setLoadingPatients(false);
     }
   }, [authHeaders, token]);
 
-  const mapRecords = (payload: any[]): VacunaRecord[] => {
-    return payload
+  const mapRecords = (payload: any[]): VacunaRecord[] =>
+    payload
       .map((item) => {
         const rawId = item?.pacienteId ?? item?.pacienteid;
         const pacienteId = Number(rawId);
@@ -222,7 +231,6 @@ export function VacunaFormScreen() {
         } as VacunaRecord;
       })
       .filter((item): item is VacunaRecord => Boolean(item));
-  };
 
   const fetchVaccines = useCallback(async () => {
     if (!token) {
@@ -231,6 +239,7 @@ export function VacunaFormScreen() {
       setRefreshing(false);
       return;
     }
+
     setLoadingRecords(true);
     setRecordsError(null);
     try {
@@ -264,6 +273,20 @@ export function VacunaFormScreen() {
     }
   }, [patientOptions, form.pacienteId]);
 
+  useEffect(() => {
+    if (form.proximaDosis && !notificationDate) {
+      setNotificationDate(form.proximaDosis);
+    }
+  }, [form.proximaDosis, notificationDate]);
+
+  useEffect(() => {
+    if (!form.proximaDosis) {
+      setShowNotificationForm(false);
+      setNotificationDate('');
+      setNotificationTime('08:00');
+    }
+  }, [form.proximaDosis]);
+
   const patientNameById = useMemo(() => {
     const map: Record<number, string> = {};
     patientOptions.forEach((patient) => {
@@ -281,26 +304,125 @@ export function VacunaFormScreen() {
     return records.filter((record) => record.pacienteId === activePatientId);
   }, [records, activePatientId]);
 
-  const showPicker = (field: DateField) => {
-    const baseDate = parseDateForPicker(form[field]);
+  const markedDates = useMemo<CalendarMarks>(() => {
+    const marks: CalendarMarks = {};
+
+    visibleRecords.forEach((record) => {
+      const applicationDate = toDateOnlyString(record.fechaaplicacion);
+      if (applicationDate) {
+        const existing = marks[applicationDate] ?? {};
+        const dots = existing.dots ?? [];
+        if (!dots.some((dot) => dot.key === `application-${record.vacunaId}`)) {
+          dots.push({ key: `application-${record.vacunaId}`, color: '#38F28E' });
+        }
+        marks[applicationDate] = {
+          ...existing,
+          marked: true,
+          dots,
+        };
+      }
+
+      const nextDoseDate = toDateOnlyString(record.proximadosis);
+      if (nextDoseDate) {
+        const existing = marks[nextDoseDate] ?? {};
+        const dots = existing.dots ?? [];
+        if (!dots.some((dot) => dot.key === `next-dose-${record.vacunaId}`)) {
+          dots.push({ key: `next-dose-${record.vacunaId}`, color: '#FF4D73' });
+        }
+        marks[nextDoseDate] = {
+          ...existing,
+          marked: true,
+          dots,
+        };
+      }
+    });
+
+    if (selectedDate) {
+      marks[selectedDate] = {
+        ...(marks[selectedDate] ?? {}),
+        selected: true,
+        selectedColor: '#29B6FF',
+        selectedTextColor: '#F4F8FF',
+        marked: marks[selectedDate]?.marked ?? false,
+      };
+    }
+
+    return marks;
+  }, [selectedDate, visibleRecords]);
+
+  const recordsForSelectedDay = useMemo(() => {
+    if (!selectedDate) {
+      return [] as Array<
+        VacunaRecord & {
+          dayType: 'aplicacion' | 'proxima';
+        }
+      >;
+    }
+
+    const entries: Array<
+      VacunaRecord & {
+        dayType: 'aplicacion' | 'proxima';
+      }
+    > = [];
+
+    visibleRecords.forEach((record) => {
+      if (toDateOnlyString(record.fechaaplicacion) === selectedDate) {
+        entries.push({ ...record, dayType: 'aplicacion' });
+      }
+      if (toDateOnlyString(record.proximadosis) === selectedDate) {
+        entries.push({ ...record, dayType: 'proxima' });
+      }
+    });
+
+    return entries;
+  }, [selectedDate, visibleRecords]);
+
+  const showPicker = (field: PickerField) => {
+    const isNotificationField = field === 'notificationDate' || field === 'notificationTime';
+    const isTimeField = field === 'notificationTime';
+    const currentDateValue = isNotificationField ? notificationDate : form[field];
+    const currentTimeValue = notificationTime;
+
     if (Platform.OS === 'android') {
+      if (!isTimeField) {
+        DateTimePickerAndroid.open({
+          value: parseDateForPicker(currentDateValue),
+          mode: 'date',
+          is24Hour: true,
+          onChange: (event, selected) => {
+            if (event.type !== 'set' || !selected) {
+              return;
+            }
+            const formatted = toDateOnlyString(selected);
+            if (field === 'notificationDate') {
+              setNotificationDate(formatted);
+            } else {
+              handleChange(field, formatted);
+            }
+          },
+        });
+        return;
+      }
+
       DateTimePickerAndroid.open({
-        value: baseDate,
-        mode: 'date',
+        value: parseTimeForPicker(currentTimeValue),
+        mode: 'time',
         is24Hour: true,
         onChange: (event, selected) => {
           if (event.type === 'set' && selected) {
-            handleChange(field, toDateOnlyString(selected));
+            setNotificationTime(
+              `${String(selected.getHours()).padStart(2, '0')}:${String(selected.getMinutes()).padStart(2, '0')}`,
+            );
           }
         },
       });
       return;
     }
-    if (field === 'fecha') {
-      setShowIOSFechaPicker(true);
-    } else {
-      setShowIOSProximaPicker(true);
-    }
+
+    if (field === 'fecha') setShowIOSFechaPicker(true);
+    if (field === 'proximaDosis') setShowIOSProximaPicker(true);
+    if (field === 'notificationDate') setShowIOSNotificationDatePicker(true);
+    if (field === 'notificationTime') setShowIOSNotificationTimePicker(true);
   };
 
   const handleRefresh = () => {
@@ -313,6 +435,7 @@ export function VacunaFormScreen() {
       Alert.alert('Faltan Datos', 'Paciente, nombre y fecha son requeridos');
       return;
     }
+
     try {
       const offlineResult = await submitJsonWithOfflineFallback({
         token,
@@ -328,64 +451,115 @@ export function VacunaFormScreen() {
           creadopor: user?.username ?? undefined,
         },
       });
+
       if (offlineResult.status === 'queued') {
         Alert.alert(
           'Vacuna en cola',
           'No habia conexion. La dosis quedo guardada en el dispositivo y se enviara automaticamente cuando vuelva la red.',
         );
       } else {
-        Alert.alert('Vacuna Registrada', 'El carnet fue actualizado');
+        Alert.alert('Vacuna registrada', 'El carnet fue actualizado.');
         fetchVaccines();
       }
-      setForm({ pacienteId: '', nombre: '', fecha: '', lote: '', proximaDosis: '' });
-      setShowForm(false);
-      return;
 
-      const response = await fetch(`${API_URL}/vacuna`, {
-        method: 'POST',
-        headers: jsonHeaders,
-        body: JSON.stringify({
-          pacienteId: Number(form.pacienteId),
-          nombre: form.nombre,
-          fechaaplicacion: form.fecha,
-          lote: form.lote || undefined,
-          proximadosis: form.proximaDosis || undefined,
-          creadopor: user?.username ?? undefined,
-        }),
-      });
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        throw new Error(body?.message ?? 'No se pudo registrar la vacuna');
-      }
-      Alert.alert('Vacuna Registrada', 'El carnet fue actualizado');
       setForm({ pacienteId: '', nombre: '', fecha: '', lote: '', proximaDosis: '' });
-      fetchVaccines();
+      setNotificationDate('');
+      setNotificationTime('08:00');
       setShowForm(false);
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Falló la petición');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Fallo la peticion');
     }
   };
 
-  const renderIOSPicker = (field: DateField) => {
-    const visible = field === 'fecha' ? showIOSFechaPicker : showIOSProximaPicker;
+  const handleCreateNotification = async () => {
+    const scheduledAt = composeDateTime(notificationDate, notificationTime);
+
+    if (!form.pacienteId || !scheduledAt || !notificationForm.mensaje.trim()) {
+      Alert.alert('Faltan datos', 'Paciente, fecha, hora y mensaje son obligatorios para la notificacion.');
+      return;
+    }
+
+    try {
+      const offlineResult = await submitJsonWithOfflineFallback({
+        token,
+        path: '/notificacion',
+        method: 'POST',
+        description: 'crear notificacion de vacuna',
+        body: {
+          pacienteId: Number(form.pacienteId),
+          tipo: 'vacuna_proxima_dosis',
+          mensaje: notificationForm.mensaje.trim(),
+          fechaprogramada: scheduledAt,
+          medio: 'push',
+          entidadorigen: 'vacuna',
+          creadopor: user?.username ?? undefined,
+        },
+      });
+
+      if (offlineResult.status === 'queued') {
+        Alert.alert(
+          'Notificacion en cola',
+          'No habia conexion. La notificacion quedo pendiente y se enviara cuando vuelva la red.',
+        );
+      } else {
+        Alert.alert('Notificacion creada', 'La notificacion push de la proxima dosis fue programada.');
+      }
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo crear la notificacion');
+    }
+  };
+
+  const renderIOSPicker = (field: PickerField) => {
+    const visible =
+      field === 'fecha'
+        ? showIOSFechaPicker
+        : field === 'proximaDosis'
+          ? showIOSProximaPicker
+          : field === 'notificationDate'
+            ? showIOSNotificationDatePicker
+            : showIOSNotificationTimePicker;
+
     if (Platform.OS !== 'ios' || !visible) {
       return null;
     }
+
+    const isTimeField = field === 'notificationTime';
+    const currentDateValue = field === 'notificationDate' ? notificationDate : form[field as 'fecha' | 'proximaDosis'];
+    const currentTimeValue = notificationTime;
+
     return (
       <View style={styles.iosPickerWrapper}>
         <DateTimePicker
-          mode="date"
+          mode={isTimeField ? 'time' : 'date'}
           display="spinner"
-          value={parseDateForPicker(form[field])}
+          locale="es-NI"
+          value={isTimeField ? parseTimeForPicker(currentTimeValue) : parseDateForPicker(currentDateValue)}
           onChange={(_, selected) => {
-            if (selected) {
-              handleChange(field, toDateOnlyString(selected));
+            if (!selected) {
+              return;
+            }
+            if (isTimeField) {
+              setNotificationTime(
+                `${String(selected.getHours()).padStart(2, '0')}:${String(selected.getMinutes()).padStart(2, '0')}`,
+              );
+              return;
+            }
+            const formatted = toDateOnlyString(selected);
+            if (field === 'notificationDate') {
+              setNotificationDate(formatted);
+            } else {
+              handleChange(field, formatted);
             }
           }}
         />
         <TouchableOpacity
           style={styles.iosPickerDoneBtn}
-          onPress={() => (field === 'fecha' ? setShowIOSFechaPicker(false) : setShowIOSProximaPicker(false))}
+          onPress={() => {
+            if (field === 'fecha') setShowIOSFechaPicker(false);
+            if (field === 'proximaDosis') setShowIOSProximaPicker(false);
+            if (field === 'notificationDate') setShowIOSNotificationDatePicker(false);
+            if (field === 'notificationTime') setShowIOSNotificationTimePicker(false);
+          }}
         >
           <Text style={styles.iosPickerDoneText}>Listo</Text>
         </TouchableOpacity>
@@ -393,107 +567,37 @@ export function VacunaFormScreen() {
     );
   };
 
+  const handleDayPress = (day: DateData) => {
+    setSelectedDate(day.dateString);
+  };
+
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>Vacunas registradas</Text>
-        <Text style={styles.subtitle}>Consulta el historial antes de registrar una nueva dosis.</Text>
-      </View>
+    <View style={styles.screen}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+      >
+        <View style={styles.heroCard}>
+          <Text style={styles.kicker}>VACUNAS</Text>
+          <Text style={styles.title}>Control de dosis y refuerzos</Text>
+          <Text style={styles.subtitle}>
+            Revisa el calendario, despliega el historial cuando lo necesites y programa una notificacion push para la proxima dosis.
+          </Text>
+        </View>
 
-      {recordsError ? <Text style={styles.errorText}>{recordsError}</Text> : null}
+        {recordsError ? <Text style={styles.errorText}>{recordsError}</Text> : null}
 
-      <View style={styles.filterCard}>
-        <Text style={styles.label}>Filtrar por persona</Text>
-        {loadingPatients ? (
-          <View style={styles.loadingRow}>
-            <ActivityIndicator color="#1d4ed8" />
-            <Text style={styles.loadingText}>Cargando personas...</Text>
-          </View>
-        ) : patientOptions.length === 0 ? (
-          <View style={styles.emptyBox}>
-            <Text style={styles.emptyText}>No hay personas vinculadas para aplicar filtros.</Text>
-            <TouchableOpacity style={styles.secondaryBtn} onPress={fetchPatients}>
-              <Text style={styles.secondaryBtnText}>Reintentar</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={filterPacienteId}
-              onValueChange={(value) => setFilterPacienteId(String(value))}
-            >
-              <Picker.Item label="Todas las personas" value="" />
-              {patientOptions.map((patient) => (
-                <Picker.Item
-                  key={patient.pacienteId}
-                  label={patient.displayName}
-                  value={String(patient.pacienteId)}
-                />
-              ))}
-            </Picker>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.recordsSection}>
-        {loadingRecords ? (
-          <View style={styles.stateBox}>
-            <ActivityIndicator color="#0ea5e9" />
-            <Text style={styles.stateText}>Cargando vacunas...</Text>
-          </View>
-        ) : visibleRecords.length === 0 ? (
-          <View style={styles.stateBox}>
-            <Text style={styles.stateTitle}>Sin registros</Text>
-            <Text style={styles.stateText}>
-              {activePatientId
-                ? 'Este paciente aún no tiene vacunas registradas.'
-                : 'Selecciona un paciente para ver su historial de vacunas.'}
-            </Text>
-          </View>
-        ) : (
-          visibleRecords.map((record) => {
-            const label = patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`;
-            return (
-              <View key={record.vacunaId} style={styles.vaccineCard}>
-                <View style={styles.vaccineHeader}>
-                  <View>
-                    <Text style={styles.vaccineName}>{record.nombre}</Text>
-                    <Text style={styles.vaccineMeta}>
-                      {label} · Aplicada {formatRecordDate(record.fechaaplicacion)}
-                    </Text>
-                  </View>
-                </View>
-                {record.lote ? (
-                  <Text style={styles.vaccineDetail}>Lote: {record.lote}</Text>
-                ) : null}
-                <Text style={styles.vaccineDetail}>
-                  Próxima dosis: <Text style={styles.vaccineHighlight}>{formatNextDose(record.proximadosis)}</Text>
-                </Text>
-              </View>
-            );
-          })
-        )}
-      </View>
-
-      {showForm && (
-        <View style={styles.formCard}>
-          <Text style={styles.formTitle}>Registrar vacuna</Text>
-
-          <Text style={styles.label}>Paciente</Text>
+        <View style={styles.filterCard}>
+          <Text style={styles.label}>Filtrar por persona</Text>
           {loadingPatients ? (
             <View style={styles.loadingRow}>
-              <ActivityIndicator color="#1d4ed8" />
+              <ActivityIndicator color="#29B6FF" />
               <Text style={styles.loadingText}>Cargando personas...</Text>
             </View>
           ) : patientOptions.length === 0 ? (
             <View style={styles.emptyBox}>
-              <Text style={styles.emptyText}>
-                No hay personas vinculadas. Crea una desde Gestionar Expediente.
-              </Text>
+              <Text style={styles.emptyText}>No hay personas vinculadas para aplicar filtros.</Text>
               <TouchableOpacity style={styles.secondaryBtn} onPress={fetchPatients}>
                 <Text style={styles.secondaryBtnText}>Reintentar</Text>
               </TouchableOpacity>
@@ -501,227 +605,587 @@ export function VacunaFormScreen() {
           ) : (
             <View style={styles.pickerWrapper}>
               <Picker
-                selectedValue={form.pacienteId}
-                onValueChange={(value) => handleChange('pacienteId', String(value))}
+                style={styles.picker}
+                selectedValue={filterPacienteId}
+                onValueChange={(value) => setFilterPacienteId(String(value))}
+                dropdownIconColor="#F4F8FF"
               >
+                <Picker.Item label="Todas las personas" value="" color={pickerItemColor} />
                 {patientOptions.map((patient) => (
                   <Picker.Item
                     key={patient.pacienteId}
                     label={patient.displayName}
                     value={String(patient.pacienteId)}
+                    color={pickerItemColor}
                   />
                 ))}
               </Picker>
             </View>
           )}
-          {patientError ? <Text style={styles.errorText}>{patientError}</Text> : null}
-
-          <Text style={styles.label}>Nombre vacuna</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Nombre vacuna"
-            value={form.nombre}
-            onChangeText={(value) => handleChange('nombre', value)}
-          />
-
-          <Text style={styles.label}>Fecha de aplicación</Text>
-          <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('fecha')}>
-            <Text style={styles.dateButtonText}>{formatDisplayDate(form.fecha)}</Text>
-          </TouchableOpacity>
-          {renderIOSPicker('fecha')}
-
-          <Text style={styles.label}>Lote</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Lote"
-            value={form.lote}
-            onChangeText={(value) => handleChange('lote', value)}
-          />
-
-          <Text style={styles.label}>Próxima dosis</Text>
-          <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('proximaDosis')}>
-            <Text style={styles.dateButtonText}>
-              {form.proximaDosis ? formatDisplayDate(form.proximaDosis) : 'Opcional'}
-            </Text>
-          </TouchableOpacity>
-          {renderIOSPicker('proximaDosis')}
-
-          <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
-            <Text style={styles.btnText}>Guardar vacuna</Text>
-          </TouchableOpacity>
         </View>
-      )}
+
+        <View style={styles.calendarCard}>
+          <Text style={styles.formTitle}>Calendario de vacunas</Text>
+          {loadingRecords ? (
+            <View style={styles.stateBox}>
+              <ActivityIndicator color="#29B6FF" />
+              <Text style={styles.stateText}>Cargando calendario...</Text>
+            </View>
+          ) : visibleRecords.length === 0 ? (
+            <View style={styles.stateBox}>
+              <Text style={styles.stateTitle}>Sin fechas registradas</Text>
+              <Text style={styles.stateText}>
+                Agrega una vacuna para ver las dosis marcadas en el calendario.
+              </Text>
+            </View>
+          ) : (
+            <Calendar
+              markedDates={markedDates}
+              markingType="multi-dot"
+              onDayPress={handleDayPress}
+              initialDate={selectedDate || undefined}
+              enableSwipeMonths
+              firstDay={1}
+              theme={{
+                calendarBackground: '#0D1B2A',
+                dayTextColor: '#F4F8FF',
+                monthTextColor: '#F4F8FF',
+                textSectionTitleColor: '#29B6FF',
+                todayTextColor: '#38F28E',
+                arrowColor: '#29B6FF',
+                selectedDayBackgroundColor: '#29B6FF',
+                selectedDayTextColor: '#F4F8FF',
+              }}
+              style={styles.calendar}
+            />
+          )}
+        </View>
+
+        <View style={styles.daySection}>
+          <TouchableOpacity
+            style={styles.sectionToggle}
+            onPress={() => setShowDaySection((prev) => !prev)}
+            activeOpacity={0.85}
+          >
+            <View style={styles.sectionToggleCopy}>
+              <Text style={styles.formTitle}>Dosis del dia</Text>
+              <Text style={styles.sectionHelper}>
+                {showDaySection ? 'Ocultar vacunas de la fecha seleccionada' : 'Desplegar vacunas de la fecha seleccionada'}
+              </Text>
+            </View>
+            <View style={styles.sectionToggleActions}>
+              <View style={styles.countBadge}>
+                <Text style={styles.countBadgeText}>{recordsForSelectedDay.length}</Text>
+              </View>
+              <Text style={styles.sectionToggleIcon}>{showDaySection ? 'Ã¢Ë†â€™' : '+'}</Text>
+            </View>
+          </TouchableOpacity>
+
+          {showDaySection ? (
+            <>
+              <Text style={styles.dayLabel}>{formatDisplayDate(selectedDate, selectedDate)}</Text>
+              {recordsForSelectedDay.length === 0 ? (
+                <Text style={styles.emptyText}>No hay vacunas ni proximas dosis en esta fecha.</Text>
+              ) : (
+                recordsForSelectedDay.map((record) => {
+                  const label = patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`;
+                  return (
+                    <View key={`day-${record.vacunaId}-${record.dayType}`} style={styles.vaccineCard}>
+                      <View style={styles.vaccineHeader}>
+                        <View>
+                          <Text style={styles.vaccineName}>{record.nombre}</Text>
+                          <Text style={styles.vaccineMeta}>{label}</Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.dayTypeBadge,
+                            record.dayType === 'proxima' ? styles.dayTypeNext : styles.dayTypeApplied,
+                          ]}
+                        >
+                          <Text style={styles.dayTypeBadgeText}>
+                            {record.dayType === 'proxima' ? 'Proxima dosis' : 'Aplicada'}
+                          </Text>
+                        </View>
+                      </View>
+                      {record.lote ? <Text style={styles.vaccineDetail}>Lote: {record.lote}</Text> : null}
+                      <Text style={styles.vaccineDetail}>
+                        Proxima dosis:{' '}
+                        <Text style={styles.vaccineHighlight}>{formatNextDose(record.proximadosis)}</Text>
+                      </Text>
+                    </View>
+                  );
+                })
+              )}
+            </>
+          ) : null}
+        </View>
+
+        <View style={styles.recordsSection}>
+          <TouchableOpacity
+            style={styles.sectionToggle}
+            onPress={() => setShowHistorySection((prev) => !prev)}
+            activeOpacity={0.85}
+          >
+            <View style={styles.sectionToggleCopy}>
+              <Text style={styles.formTitle}>Historial completo</Text>
+              <Text style={styles.sectionHelper}>
+                {showHistorySection ? 'Ocultar vacunas anteriores' : 'Desplegar vacunas anteriores'}
+              </Text>
+            </View>
+            <View style={styles.sectionToggleActions}>
+              <View style={styles.countBadge}>
+                <Text style={styles.countBadgeText}>{visibleRecords.length}</Text>
+              </View>
+              <Text style={styles.sectionToggleIcon}>{showHistorySection ? 'Ã¢Ë†â€™' : '+'}</Text>
+            </View>
+          </TouchableOpacity>
+
+          {showHistorySection ? (
+            loadingRecords ? (
+              <View style={styles.stateBox}>
+                <ActivityIndicator color="#29B6FF" />
+                <Text style={styles.stateText}>Cargando vacunas...</Text>
+              </View>
+            ) : visibleRecords.length === 0 ? (
+              <View style={styles.stateBox}>
+                <Text style={styles.stateTitle}>Sin registros</Text>
+                <Text style={styles.stateText}>
+                  {activePatientId
+                    ? 'Este paciente aun no tiene vacunas registradas.'
+                    : 'Selecciona un paciente para ver su historial de vacunas.'}
+                </Text>
+              </View>
+            ) : (
+              visibleRecords.map((record) => {
+                const label = patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`;
+                return (
+                  <View key={record.vacunaId} style={styles.vaccineCard}>
+                    <View style={styles.vaccineHeader}>
+                      <View>
+                        <Text style={styles.vaccineName}>{record.nombre}</Text>
+                        <Text style={styles.vaccineMeta}>
+                          {label} Ã‚Â· Aplicada {formatRecordDate(record.fechaaplicacion)}
+                        </Text>
+                      </View>
+                    </View>
+                    {record.lote ? <Text style={styles.vaccineDetail}>Lote: {record.lote}</Text> : null}
+                    <Text style={styles.vaccineDetail}>
+                      Proxima dosis:{' '}
+                      <Text style={styles.vaccineHighlight}>{formatNextDose(record.proximadosis)}</Text>
+                    </Text>
+                  </View>
+                );
+              })
+            )
+          ) : null}
+        </View>
+
+        {showForm ? (
+          <View style={styles.formCard}>
+            <Text style={styles.formTitle}>Registrar vacuna</Text>
+
+            <Text style={styles.label}>Paciente</Text>
+            {loadingPatients ? (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator color="#29B6FF" />
+                <Text style={styles.loadingText}>Cargando personas...</Text>
+              </View>
+            ) : patientOptions.length === 0 ? (
+              <View style={styles.emptyBox}>
+                <Text style={styles.emptyText}>
+                  No hay personas vinculadas. Crea una desde Gestionar Expediente.
+                </Text>
+                <TouchableOpacity style={styles.secondaryBtn} onPress={fetchPatients}>
+                  <Text style={styles.secondaryBtnText}>Reintentar</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.pickerWrapper}>
+                <Picker
+                  style={styles.picker}
+                  selectedValue={form.pacienteId}
+                  onValueChange={(value) => handleChange('pacienteId', String(value))}
+                  dropdownIconColor="#F4F8FF"
+                >
+                  {patientOptions.map((patient) => (
+                    <Picker.Item
+                      key={patient.pacienteId}
+                      label={patient.displayName}
+                      value={String(patient.pacienteId)}
+                      color={pickerItemColor}
+                    />
+                  ))}
+                </Picker>
+              </View>
+            )}
+            {patientError ? <Text style={styles.errorText}>{patientError}</Text> : null}
+
+            <Text style={styles.label}>Nombre vacuna</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Nombre vacuna"
+              placeholderTextColor="#9FB3C8"
+              value={form.nombre}
+              onChangeText={(value) => handleChange('nombre', value)}
+            />
+
+            <Text style={styles.label}>Fecha de aplicacion</Text>
+            <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('fecha')}>
+              <Text style={styles.dateButtonText}>{formatDisplayDate(form.fecha)}</Text>
+            </TouchableOpacity>
+            {renderIOSPicker('fecha')}
+
+            <Text style={styles.label}>Lote</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Lote"
+              placeholderTextColor="#9FB3C8"
+              value={form.lote}
+              onChangeText={(value) => handleChange('lote', value)}
+            />
+
+            <Text style={styles.label}>Proxima dosis</Text>
+            <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('proximaDosis')}>
+              <Text style={styles.dateButtonText}>
+                {form.proximaDosis ? formatDisplayDate(form.proximaDosis) : 'Opcional'}
+              </Text>
+            </TouchableOpacity>
+            {renderIOSPicker('proximaDosis')}
+
+            {form.proximaDosis ? (
+              <View style={styles.inlineNotificationCard}>
+                <View style={styles.inlineNotificationCopy}>
+                  <Text style={styles.inlineNotificationTitle}>Notificacion de proxima dosis</Text>
+                  <Text style={styles.inlineNotificationHint}>
+                    Programa un aviso push para la fecha de la siguiente dosis.
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.inlineNotificationToggle,
+                    showNotificationForm && styles.inlineNotificationToggleActive,
+                  ]}
+                  onPress={() => setShowNotificationForm((prev) => !prev)}
+                >
+                  <Text style={styles.inlineNotificationToggleText}>
+                    {showNotificationForm ? 'Ocultar' : 'Crear'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <Text style={styles.sectionHelper}>
+                Agrega una fecha de proxima dosis si quieres crear una notificacion.
+              </Text>
+            )}
+
+            <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
+              <Text style={styles.btnText}>Guardar vacuna</Text>
+            </TouchableOpacity>
+
+            {showNotificationForm ? (
+              <View style={styles.notificationCard}>
+                <Text style={styles.formTitle}>Notificacion de proxima dosis</Text>
+                <Text style={styles.sectionHelper}>
+                  El canal queda fijo como notificacion push.
+                </Text>
+
+                <Text style={styles.label}>Canal</Text>
+                <View style={styles.fixedChannelCard}>
+                  <Text style={styles.fixedChannelText}>Notificacion push</Text>
+                </View>
+
+                <Text style={styles.label}>Mensaje</Text>
+                <TextInput
+                  style={[styles.input, styles.multiline]}
+                  placeholder="Mensaje de la notificacion"
+                  placeholderTextColor="#9FB3C8"
+                  value={notificationForm.mensaje}
+                  multiline
+                  onChangeText={(value) => handleNotificationChange('mensaje', value)}
+                />
+
+                <Text style={styles.label}>Fecha y hora del aviso</Text>
+                <View style={styles.dateTimeRow}>
+                  <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('notificationDate')}>
+                    <Text style={styles.dateButtonText}>{formatDisplayDate(notificationDate)}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('notificationTime')}>
+                    <Text style={styles.dateButtonText}>{formatDisplayTime(notificationTime)}</Text>
+                  </TouchableOpacity>
+                </View>
+                {renderIOSPicker('notificationDate')}
+                {renderIOSPicker('notificationTime')}
+
+                <TouchableOpacity style={styles.notificationBtn} onPress={handleCreateNotification}>
+                  <Text style={styles.notificationBtnText}>Crear notificacion push</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+      </ScrollView>
+
       <TouchableOpacity style={styles.fab} onPress={() => setShowForm((prev) => !prev)}>
-        <Text style={styles.fabText}>{showForm ? '×' : '+'}</Text>
+        <Text style={styles.fabText}>{showForm ? 'Ãƒâ€”' : '+'}</Text>
       </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#071120',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   content: {
     padding: 24,
+    paddingBottom: 110,
     gap: 16,
+  },
+  heroCard: {
+    backgroundColor: '#182A44',
+    borderRadius: 26,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: '#1B3355',
+  },
+  kicker: {
+    color: '#29B6FF',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    marginBottom: 8,
   },
   header: {
     gap: 4,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#F4F8FF',
+    lineHeight: 34,
   },
   subtitle: {
-    color: '#cbd5e1',
-  },
-  recordsSection: {
-    gap: 12,
+    color: '#C9D7E8',
+    lineHeight: 20,
+    marginTop: 8,
   },
   filterCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 16,
     padding: 16,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
   },
-  stateBox: {
-    backgroundColor: '#1e293b',
-    borderRadius: 18,
-    padding: 18,
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  stateTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#f8fafc',
-  },
-  stateText: {
-    color: '#475569',
-    textAlign: 'center',
-  },
-  vaccineCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  vaccineHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  vaccineName: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  vaccineMeta: {
-    color: '#475569',
-  },
-  vaccineDetail: {
-    color: '#334155',
-  },
-  vaccineHighlight: {
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  toggleBtn: {
-    backgroundColor: '#0ea5e9',
-    borderRadius: 14,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  toggleBtnText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  fab: {
-    position: 'absolute',
-    right: 24,
-    bottom: 24,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: '#0ea5e9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 7,
-  },
-  fabText: {
-    color: '#fff',
-    fontSize: 30,
-    lineHeight: 32,
-    fontWeight: '700',
-  },
-  formCard: {
-    backgroundColor: '#1e293b',
+  calendarCard: {
+    backgroundColor: '#132238',
     borderRadius: 20,
     padding: 18,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
+  },
+  daySection: {
+    backgroundColor: '#132238',
+    borderRadius: 20,
+    padding: 18,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#27496D',
+  },
+  recordsSection: {
+    backgroundColor: '#132238',
+    borderRadius: 20,
+    padding: 18,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#27496D',
+  },
+  formCard: {
+    backgroundColor: '#132238',
+    borderRadius: 20,
+    padding: 18,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#27496D',
+  },
+  notificationCard: {
+    marginTop: 8,
+    backgroundColor: '#182A44',
+    borderRadius: 18,
+    padding: 16,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#27496D',
   },
   formTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#F4F8FF',
+  },
+  sectionHelper: {
+    color: '#29B6FF',
+    lineHeight: 19,
+  },
+  sectionToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  sectionToggleCopy: {
+    flex: 1,
+  },
+  sectionToggleActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  sectionToggleIcon: {
+    color: '#F4F8FF',
+    fontSize: 24,
+    fontWeight: '700',
+    width: 20,
+    textAlign: 'center',
+  },
+  countBadge: {
+    minWidth: 34,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#071120',
+    alignItems: 'center',
+  },
+  countBadgeText: {
+    color: '#29B6FF',
+    fontWeight: '800',
+    fontSize: 12,
   },
   label: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#f8fafc',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-    backgroundColor: '#0b1220',
-    color: '#f8fafc',
+    color: '#F4F8FF',
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#0b1220',
+    backgroundColor: '#0D1B2A',
   },
-  dateButton: {
+  picker: {
+    color: '#F4F8FF',
+  },
+  fixedChannelCard: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+    backgroundColor: '#0D1B2A',
+  },
+  fixedChannelText: {
+    color: '#F4F8FF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  inlineNotificationCard: {
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 16,
+    padding: 14,
+    backgroundColor: '#182A44',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  inlineNotificationCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  inlineNotificationTitle: {
+    color: '#F4F8FF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  inlineNotificationHint: {
+    color: '#29B6FF',
+    lineHeight: 18,
+  },
+  inlineNotificationToggle: {
+    minWidth: 90,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: '#29B6FF',
+    alignItems: 'center',
+  },
+  inlineNotificationToggleActive: {
+    backgroundColor: '#29B6FF',
+  },
+  inlineNotificationToggleText: {
+    color: '#F4F8FF',
+    fontWeight: '700',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#27496D',
     borderRadius: 12,
     padding: 14,
-    backgroundColor: '#0b1220',
+    fontSize: 16,
+    backgroundColor: '#0D1B2A',
+    color: '#F4F8FF',
+  },
+  multiline: {
+    minHeight: 92,
+    textAlignVertical: 'top',
+  },
+  dateButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 12,
+    padding: 14,
+    backgroundColor: '#0D1B2A',
   },
   dateButtonText: {
     fontSize: 16,
-    color: '#f8fafc',
+    color: '#F4F8FF',
+    textAlign: 'center',
+  },
+  dateTimeRow: {
+    flexDirection: 'row',
+    gap: 12,
   },
   primaryBtn: {
-    backgroundColor: '#22c55e',
+    backgroundColor: '#38F28E',
     paddingVertical: 16,
-    borderRadius: 10,
+    borderRadius: 12,
     marginTop: 4,
   },
   btnText: {
-    color: '#fff',
+    color: '#F4F8FF',
     textAlign: 'center',
-    fontWeight: '600',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  notificationBtn: {
+    backgroundColor: '#38F28E',
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  notificationBtnText: {
+    color: '#F4F8FF',
+    textAlign: 'center',
+    fontWeight: '700',
     fontSize: 16,
   },
   loadingRow: {
@@ -731,50 +1195,142 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   loadingText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
+  },
+  stateBox: {
+    backgroundColor: '#132238',
+    borderRadius: 18,
+    padding: 18,
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#27496D',
+  },
+  stateTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#F4F8FF',
+  },
+  stateText: {
+    color: '#9FB3C8',
+    textAlign: 'center',
   },
   emptyBox: {
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: '#1e293b',
+    borderColor: '#27496D',
+    backgroundColor: '#132238',
     borderRadius: 14,
     padding: 14,
     gap: 8,
   },
   emptyText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
+  },
+  errorText: {
+    color: '#FF4D73',
   },
   secondaryBtn: {
     alignSelf: 'flex-start',
-    backgroundColor: '#f97316',
+    backgroundColor: '#FF4D73',
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 6,
   },
   secondaryBtnText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontWeight: '600',
   },
-  errorText: {
-    color: '#fca5a5',
+  calendar: {
+    borderRadius: 16,
+  },
+  dayLabel: {
+    color: '#29B6FF',
+    fontWeight: '600',
+  },
+  dayTypeBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    alignSelf: 'flex-start',
+  },
+  dayTypeApplied: {
+    backgroundColor: '#38F28E18',
+  },
+  dayTypeNext: {
+    backgroundColor: '#FF4D7318',
+  },
+  dayTypeBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#071120',
+  },
+  vaccineCard: {
+    backgroundColor: '#F4F8FF',
+    borderRadius: 16,
+    padding: 16,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#F4F8FF',
+  },
+  vaccineHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  vaccineName: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#071120',
+  },
+  vaccineMeta: {
+    color: '#9FB3C8',
+  },
+  vaccineDetail: {
+    color: '#27496D',
+  },
+  vaccineHighlight: {
+    fontWeight: '700',
+    color: '#071120',
   },
   iosPickerWrapper: {
     marginTop: 6,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#0b1220',
+    backgroundColor: '#0D1B2A',
   },
   iosPickerDoneBtn: {
     borderTopWidth: 1,
-    borderTopColor: '#334155',
+    borderTopColor: '#27496D',
     paddingVertical: 10,
     alignItems: 'center',
-    backgroundColor: '#172554',
+    backgroundColor: '#182A44',
   },
   iosPickerDoneText: {
-    color: '#bfdbfe',
+    color: '#29B6FF',
+    fontWeight: '700',
+  },
+  fab: {
+    position: 'absolute',
+    right: 24,
+    bottom: 24,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#29B6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 7,
+  },
+  fabText: {
+    color: '#F4F8FF',
+    fontSize: 30,
+    lineHeight: 32,
     fontWeight: '700',
   },
 });

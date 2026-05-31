@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -62,7 +62,7 @@ const formatErrorMessage = (error: unknown): string => {
     }
     return error.message;
   }
-  return 'Ocurrió un error inesperado. Intenta nuevamente.';
+  return 'OcurriÃƒÂ³ un error inesperado. Intenta nuevamente.';
 };
 
 export function LoginScreen({ navigation }: Props) {
@@ -84,7 +84,7 @@ export function LoginScreen({ navigation }: Props) {
       return 'Ingresa tu usuario para detectar la huella guardada en este dispositivo.';
     }
     if (!fingerprintTemplate) {
-      return 'Registra tu huella desde este dispositivo durante el registro para poder usarla aquí.';
+      return 'Registra tu huella desde este dispositivo durante el registro para poder usarla aquÃƒÂ­.';
     }
     return 'Usa tu huella para iniciar sesion sin contrasena.';
   }, [biometricAvailable, fingerprintTemplate, username]);
@@ -142,7 +142,7 @@ export function LoginScreen({ navigation }: Props) {
   const handleLogin = async () => {
     setFeedback(null);
     if (!username || !password) {
-      const message = 'Por favor completa usuario y contraseña.';
+      const message = 'Por favor completa usuario y contraseÃƒÂ±a.';
       setFeedback({ type: 'error', message });
       Alert.alert('Campos Incompletos', message);
       return;
@@ -150,7 +150,7 @@ export function LoginScreen({ navigation }: Props) {
     try {
       setLoading(true);
       const body = await executeLogin({ username, password });
-      Alert.alert('Bienvenido', body?.message ?? 'Inicio de sesión exitoso');
+      Alert.alert('Bienvenido', body?.message ?? 'Inicio de sesiÃƒÂ³n exitoso');
     } catch (error) {
       const message = formatErrorMessage(error);
       setFeedback({ type: 'error', message });
@@ -169,28 +169,28 @@ export function LoginScreen({ navigation }: Props) {
       return;
     }
     if (!fingerprintTemplate) {
-      const message = 'Registra tu huella durante el registro en este mismo dispositivo para usar esta opción.';
+      const message = 'Registra tu huella durante el registro en este mismo dispositivo para usar esta opciÃƒÂ³n.';
       setFeedback({ type: 'error', message });
       Alert.alert('Huella No Encontrada', message);
       return;
     }
     if (!biometricAvailable) {
-      const message = 'Habilita la biometría en este dispositivo.';
+      const message = 'Habilita la biometrÃƒÂ­a en este dispositivo.';
       setFeedback({ type: 'error', message });
-      Alert.alert('Biometría No Disponible', message);
+      Alert.alert('BiometrÃƒÂ­a No Disponible', message);
       return;
     }
     try {
       setFingerprintLoading(true);
       const auth = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Autentícate con tu huella',
+        promptMessage: 'AutentÃƒÂ­cate con tu huella',
         disableDeviceFallback: true,
       });
       if (!auth.success) {
-        throw new Error('autenticación cancelada');
+        throw new Error('autenticaciÃƒÂ³n cancelada');
       }
       const body = await executeLogin({ username, fingerprintTemplate });
-      Alert.alert('Bienvenido', body?.message ?? 'Inicio de sesión exitoso');
+      Alert.alert('Bienvenido', body?.message ?? 'Inicio de sesiÃƒÂ³n exitoso');
     } catch (error) {
       const message = formatErrorMessage(error);
       setFeedback({ type: 'error', message });
@@ -212,18 +212,18 @@ export function LoginScreen({ navigation }: Props) {
         <TextInput
           style={styles.input}
           placeholder="Ej: Usuario.demo"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor="#9FB3C8"
           autoCapitalize="none"
           autoCorrect={false}
           value={username}
           onChangeText={(text) => setUsername(sanitizeUsername(text))}
         />
-        <Text style={styles.label}>Contraseña</Text>
+        <Text style={styles.label}>ContraseÃƒÂ±a</Text>
         <View style={styles.passwordWrapper}>
           <TextInput
             style={[styles.input, styles.passwordInput]}
-            placeholder="Escribe Tu Contraseña"
-            placeholderTextColor="#9ca3af"
+            placeholder="Escribe Tu ContraseÃƒÂ±a"
+            placeholderTextColor="#9FB3C8"
             secureTextEntry={!showPassword}
             value={password}
             onChangeText={(text) => setPassword(text)}
@@ -235,15 +235,15 @@ export function LoginScreen({ navigation }: Props) {
         <View style={styles.actions}>
           <Text style={styles.remember}>Recordarme</Text>
           <TouchableOpacity onPress={() => navigation.navigate('CambiarContrasena')}>
-            <Text style={styles.forget}>Olvide Mi Contraseña</Text>
+            <Text style={styles.forget}>Olvide Mi ContraseÃƒÂ±a</Text>
           </TouchableOpacity>
         </View>
         <TouchableOpacity style={styles.primaryBtn} onPress={handleLogin} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Iniciar</Text>}
+          {loading ? <ActivityIndicator color="#F4F8FF" /> : <Text style={styles.btnText}>Iniciar</Text>}
         </TouchableOpacity>
         <View style={styles.fingerprintSection}>
           <View style={styles.fingerprintHeader}>
-            <Ionicons name="finger-print-outline" size={22} color="#1d4ed8" />
+            <Ionicons name="finger-print-outline" size={22} color="#29B6FF" />
             <Text style={styles.fingerprintTitle}>Huella digital</Text>
           </View>
           <Text style={styles.fingerprintHint}>{fingerprintStatusMessage}</Text>
@@ -254,7 +254,7 @@ export function LoginScreen({ navigation }: Props) {
             accessibilityLabel="Iniciar sesion con huella digital"
           >
             {fingerprintLoading ? (
-              <ActivityIndicator color="#1d4ed8" />
+              <ActivityIndicator color="#29B6FF" />
             ) : (
               <Text style={[styles.fingerprintActionText, !fingerprintReady && styles.fingerprintActionTextDisabled]}>
                 {fingerprintReady ? 'Ingresar con huella' : 'Huella no disponible'}
@@ -263,7 +263,7 @@ export function LoginScreen({ navigation }: Props) {
           </TouchableOpacity>
         </View>
         <Text style={styles.footer}>
-          ¿No Tienes Cuenta?
+          Ã‚Â¿No Tienes Cuenta?
           <Text style={styles.link} onPress={() => navigation.navigate('Registro')}>
             {' '}
             Registrarme
@@ -277,7 +277,7 @@ export function LoginScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#f1f1f1',
+    backgroundColor: '#F4F8FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -285,9 +285,9 @@ const styles = StyleSheet.create({
     width: '80%',
     borderRadius: 20,
     padding: 24,
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F8FF',
     elevation: 10,
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOpacity: 0.1,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 10 },
@@ -295,28 +295,28 @@ const styles = StyleSheet.create({
   welcome: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#111',
+    color: '#071120',
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#6b7280',
+    color: '#9FB3C8',
     marginBottom: 20,
   },
   label: {
     fontSize: 12,
-    color: '#6b7280',
+    color: '#9FB3C8',
     marginBottom: 4,
     fontWeight: '600',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: '#C9D7E8',
     borderRadius: 10,
     padding: 12,
     marginBottom: 12,
     fontSize: 15,
-    color: '#111',
+    color: '#071120',
   },
   passwordWrapper: {
     position: 'relative',
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   togglePasswordText: {
-    color: '#2563eb',
+    color: '#29B6FF',
     fontWeight: '600',
   },
   actions: {
@@ -343,31 +343,31 @@ const styles = StyleSheet.create({
   },
   remember: {
     fontSize: 12,
-    color: '#6b7280',
+    color: '#9FB3C8',
   },
   forget: {
     fontSize: 12,
-    color: '#2563eb',
+    color: '#29B6FF',
     textDecorationLine: 'underline',
   },
   primaryBtn: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#29B6FF',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
   },
   btnText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontWeight: '700',
     fontSize: 16,
   },
   fingerprintSection: {
     marginTop: 14,
     borderWidth: 1,
-    borderColor: '#dbeafe',
+    borderColor: '#C9D7E8',
     borderRadius: 12,
     padding: 14,
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#F4F8FF',
   },
   fingerprintHeader: {
     flexDirection: 'row',
@@ -378,38 +378,38 @@ const styles = StyleSheet.create({
   fingerprintTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1e3a8a',
+    color: '#29B6FF',
   },
   fingerprintHint: {
     fontSize: 12,
-    color: '#1e40af',
+    color: '#29B6FF',
     marginBottom: 10,
   },
   fingerprintAction: {
     borderWidth: 1,
-    borderColor: '#1d4ed8',
+    borderColor: '#29B6FF',
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
   },
   fingerprintActionDisabled: {
-    borderColor: '#cbd5f5',
-    backgroundColor: '#e0e7ff',
+    borderColor: '#C9D7E8',
+    backgroundColor: '#29B6FF18',
   },
   fingerprintActionText: {
-    color: '#1d4ed8',
+    color: '#29B6FF',
     fontWeight: '700',
   },
   fingerprintActionTextDisabled: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
   },
   footer: {
     textAlign: 'center',
     marginTop: 16,
-    color: '#4b5563',
+    color: '#9FB3C8',
   },
   link: {
-    color: '#1d4ed8',
+    color: '#29B6FF',
     fontWeight: '600',
   },
   circle: {
@@ -420,12 +420,12 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   blueCircle: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#29B6FF',
     top: 90,
     left: 30,
   },
   orangeCircle: {
-    backgroundColor: '#fb923c',
+    backgroundColor: '#FF4D73',
     bottom: 90,
     right: 30,
   },
@@ -436,22 +436,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   feedbackSuccess: {
-    backgroundColor: '#ecfccb',
-    borderColor: '#65a30d',
+    backgroundColor: '#38F28E18',
+    borderColor: '#38F28E',
   },
   feedbackError: {
-    backgroundColor: '#fee2e2',
-    borderColor: '#b91c1c',
+    backgroundColor: '#FF4D7318',
+    borderColor: '#FF4D73',
   },
   feedbackText: {
     fontSize: 13,
     fontWeight: '600',
   },
   feedbackTextSuccess: {
-    color: '#365314',
+    color: '#38F28E',
   },
   feedbackTextError: {
-    color: '#7f1d1d',
+    color: '#FF4D73',
   },
 });
 

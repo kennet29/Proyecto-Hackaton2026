@@ -247,10 +247,10 @@ const getIntensityRank = (value?: string | null) => {
 
 const getIntensityColor = (value?: string | null) => {
   const normalized = (value ?? '').toLowerCase();
-  if (normalized === 'intensa') return '#ef4444';
-  if (normalized === 'moderada') return '#f59e0b';
-  if (normalized === 'leve') return '#22c55e';
-  return '#64748b';
+  if (normalized === 'intensa') return '#FF4D73';
+  if (normalized === 'moderada') return '#FF4D73';
+  if (normalized === 'leve') return '#38F28E';
+  return '#9FB3C8';
 };
 
 const getIntensityLabel = (value?: string | null) => {
@@ -268,13 +268,14 @@ const getAchievementCategoryLabel = (value: AchievementCategory) => {
 };
 
 const getAchievementCategoryColor = (value: AchievementCategory) => {
-  if (value === 'constancia') return '#38bdf8';
-  if (value === 'actividad') return '#22c55e';
-  return '#f59e0b';
+  if (value === 'constancia') return '#29B6FF';
+  if (value === 'actividad') return '#38F28E';
+  return '#FF4D73';
 };
 
 export function SeguimientoFisicoScreen({ navigation }: Props) {
   const { token } = useAuth();
+  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(today());
@@ -424,22 +425,22 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
     const marks: CalendarMarks = {};
     (historial?.registros ?? []).forEach((record) => {
       const existing = marks[record.fecha] ?? {};
-      const existingRank = getIntensityRank(existing.dotColor === '#ef4444' ? 'intensa' : existing.dotColor === '#f59e0b' ? 'moderada' : existing.dotColor === '#22c55e' ? 'leve' : null);
+      const existingRank = getIntensityRank(existing.dotColor === '#FF4D73' ? 'intensa' : existing.dotColor === '#FF4D73' ? 'moderada' : existing.dotColor === '#38F28E' ? 'leve' : null);
       const currentRank = getIntensityRank(record.intensidad);
       marks[record.fecha] = {
         ...existing,
         marked: true,
-        dotColor: currentRank >= existingRank ? getIntensityColor(record.intensidad) : existing.dotColor ?? '#38bdf8',
+        dotColor: currentRank >= existingRank ? getIntensityColor(record.intensidad) : existing.dotColor ?? '#29B6FF',
       };
     });
     if (selectedCalendarDate) {
       marks[selectedCalendarDate] = {
         ...(marks[selectedCalendarDate] ?? {}),
         selected: true,
-        selectedColor: '#0284c7',
-        selectedTextColor: '#fff',
+        selectedColor: '#29B6FF',
+        selectedTextColor: '#F4F8FF',
         marked: marks[selectedCalendarDate]?.marked ?? false,
-        dotColor: marks[selectedCalendarDate]?.dotColor ?? '#38bdf8',
+        dotColor: marks[selectedCalendarDate]?.dotColor ?? '#29B6FF',
       };
     }
     return marks;
@@ -611,7 +612,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => loadData(selectedPatientId, true)}
-            tintColor="#fff"
+            tintColor="#F4F8FF"
           />
         }
       >
@@ -626,7 +627,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
           <Text style={styles.sectionTitle}>Paciente</Text>
           {loadingPatients ? (
             <View style={styles.loadingBox}>
-              <ActivityIndicator color="#38bdf8" />
+              <ActivityIndicator color="#29B6FF" />
               <Text style={styles.loadingText}>Cargando pacientes...</Text>
             </View>
           ) : patients.length === 0 ? (
@@ -646,6 +647,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                         : patient.displayName
                     }
                     value={String(patient.pacienteId)}
+                    color={pickerItemColor}
                   />
                 ))}
               </Picker>
@@ -658,7 +660,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
           <Text style={styles.sectionTitle}>Resumen</Text>
           {loadingData ? (
             <View style={styles.loadingBox}>
-              <ActivityIndicator color="#38bdf8" />
+              <ActivityIndicator color="#29B6FF" />
               <Text style={styles.loadingText}>Cargando resumen...</Text>
             </View>
           ) : (
@@ -713,12 +715,12 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
               enableSwipeMonths
               firstDay={1}
               theme={{
-                calendarBackground: '#f8fafc',
-                todayTextColor: '#0284c7',
-                arrowColor: '#0284c7',
-                selectedDayBackgroundColor: '#0284c7',
-                selectedDayTextColor: '#fff',
-                monthTextColor: '#0f172a',
+                calendarBackground: '#F4F8FF',
+                todayTextColor: '#29B6FF',
+                arrowColor: '#29B6FF',
+                selectedDayBackgroundColor: '#29B6FF',
+                selectedDayTextColor: '#F4F8FF',
+                monthTextColor: '#071120',
                 textDayFontFamily: 'System',
                 textMonthFontFamily: 'System',
                 textDayHeaderFontFamily: 'System',
@@ -729,15 +731,15 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
 
           <View style={styles.calendarLegend}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#22c55e' }]} />
+              <View style={[styles.legendDot, { backgroundColor: '#38F28E' }]} />
               <Text style={styles.legendText}>Leve</Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#f59e0b' }]} />
+              <View style={[styles.legendDot, { backgroundColor: '#FF4D73' }]} />
               <Text style={styles.legendText}>Moderada</Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#ef4444' }]} />
+              <View style={[styles.legendDot, { backgroundColor: '#FF4D73' }]} />
               <Text style={styles.legendText}>Intensa</Text>
             </View>
           </View>
@@ -836,11 +838,11 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
               <Text style={styles.trendTitle}>Peso y calorias por fecha</Text>
               <View style={styles.combinedLegendRow}>
                 <View style={styles.combinedLegendItem}>
-                  <View style={[styles.combinedLegendSwatch, { backgroundColor: '#38bdf8' }]} />
+                  <View style={[styles.combinedLegendSwatch, { backgroundColor: '#29B6FF' }]} />
                   <Text style={styles.combinedLegendText}>Peso</Text>
                 </View>
                 <View style={styles.combinedLegendItem}>
-                  <View style={[styles.combinedLegendSwatch, { backgroundColor: '#f97316' }]} />
+                  <View style={[styles.combinedLegendSwatch, { backgroundColor: '#FF4D73' }]} />
                   <Text style={styles.combinedLegendText}>Calorias</Text>
                 </View>
               </View>
@@ -1041,7 +1043,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
           <Text style={styles.sectionTitle}>Logros</Text>
           {loadingData ? (
             <View style={styles.loadingBox}>
-              <ActivityIndicator color="#38bdf8" />
+              <ActivityIndicator color="#29B6FF" />
               <Text style={styles.loadingText}>Cargando logros...</Text>
             </View>
           ) : logros?.logros?.length ? (
@@ -1140,29 +1142,29 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   container: {
     padding: 20,
     paddingBottom: 110,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     gap: 16,
   },
   hero: {
-    backgroundColor: '#082f49',
+    backgroundColor: '#29B6FF18',
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#38bdf8',
+    borderColor: '#29B6FF',
   },
   heroTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 24,
     fontWeight: '800',
     marginBottom: 6,
   },
   heroText: {
-    color: '#dbeafe',
+    color: '#C9D7E8',
     fontSize: 14,
     lineHeight: 20,
   },
@@ -1173,47 +1175,47 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   calendarSubtitle: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontSize: 13,
     lineHeight: 18,
     marginTop: 6,
   },
   calendarPill: {
-    backgroundColor: '#082f49',
+    backgroundColor: '#29B6FF18',
     borderWidth: 1,
-    borderColor: '#0ea5e9',
+    borderColor: '#29B6FF',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   calendarPillText: {
-    color: '#e0f2fe',
+    color: '#29B6FF',
     fontSize: 12,
     fontWeight: '700',
   },
   calendarPanel: {
-    backgroundColor: '#e2e8f0',
+    backgroundColor: '#F4F8FF',
     borderRadius: 20,
     padding: 10,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: '#C9D7E8',
   },
   calendar: {
     borderRadius: 16,
   },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 16,
     gap: 12,
   },
   sectionTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 18,
     fontWeight: '700',
   },
   subsectionTitle: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 14,
     fontWeight: '700',
     marginTop: 4,
@@ -1225,27 +1227,27 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   collapsibleAction: {
-    color: '#38bdf8',
+    color: '#29B6FF',
     fontSize: 13,
     fontWeight: '700',
   },
   collapsedHint: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontSize: 13,
     lineHeight: 18,
   },
   pickerWrapper: {
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F4F8FF',
   },
   input: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F4F8FF',
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#0f172a',
+    color: '#071120',
   },
   textArea: {
     minHeight: 92,
@@ -1263,18 +1265,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fieldLabel: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     fontSize: 13,
     fontWeight: '700',
   },
   primaryBtn: {
-    backgroundColor: '#0284c7',
+    backgroundColor: '#29B6FF',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 15,
     fontWeight: '700',
   },
@@ -1286,19 +1288,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     marginTop: 8,
   },
   emptyText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     lineHeight: 20,
   },
   errorText: {
-    color: '#fca5a5',
+    color: '#FF4D73',
     lineHeight: 20,
   },
   metricText: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     fontSize: 14,
   },
   achievementGrid: {
@@ -1308,7 +1310,7 @@ const styles = StyleSheet.create({
   },
   achievementBadge: {
     minWidth: '48%',
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     borderRadius: 14,
     borderWidth: 1,
     paddingHorizontal: 12,
@@ -1322,20 +1324,20 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   achievementTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 14,
     fontWeight: '700',
   },
   achievementDescription: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     fontSize: 12,
     lineHeight: 18,
   },
   achievementProgressCard: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     padding: 12,
     gap: 8,
   },
@@ -1350,14 +1352,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   achievementProgressText: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontSize: 12,
     fontWeight: '600',
   },
   achievementProgressTrack: {
     height: 8,
     borderRadius: 999,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     overflow: 'hidden',
   },
   achievementProgressFill: {
@@ -1369,12 +1371,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   sectionDividerTitle: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 16,
     fontWeight: '800',
   },
   sectionDividerText: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontSize: 13,
     lineHeight: 18,
   },
@@ -1382,7 +1384,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   chartSubtitle: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontSize: 13,
     lineHeight: 18,
     marginTop: 6,
@@ -1396,26 +1398,26 @@ const styles = StyleSheet.create({
   },
   trendRangeChip: {
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: '#0f172a',
+    borderColor: '#27496D',
+    backgroundColor: '#071120',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
   },
   trendRangeChipActive: {
-    backgroundColor: '#0ea5e9',
-    borderColor: '#38bdf8',
+    backgroundColor: '#29B6FF',
+    borderColor: '#29B6FF',
   },
   trendRangeChipText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     fontSize: 12,
     fontWeight: '700',
   },
   trendRangeChipTextActive: {
-    color: '#082f49',
+    color: '#29B6FF',
   },
   trendSummaryText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     fontSize: 12,
     marginBottom: 12,
   },
@@ -1423,11 +1425,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'stretch',
     gap: 10,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     borderRadius: 16,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
   },
   barChartYAxis: {
     width: 50,
@@ -1440,7 +1442,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   barChartAxisLabel: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -1459,7 +1461,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1,
-    backgroundColor: '#334155',
+    backgroundColor: '#27496D',
   },
   barChartGridTop: {
     top: 18,
@@ -1477,10 +1479,10 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   lineChartWeightSegment: {
-    backgroundColor: '#38bdf8',
+    backgroundColor: '#29B6FF',
   },
   lineChartCaloriesSegment: {
-    backgroundColor: '#f97316',
+    backgroundColor: '#FF4D73',
   },
   lineChartPoint: {
     position: 'absolute',
@@ -1488,21 +1490,21 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 999,
     borderWidth: 2,
-    borderColor: '#e2e8f0',
+    borderColor: '#F4F8FF',
     zIndex: 3,
   },
   lineChartWeightPoint: {
-    backgroundColor: '#38bdf8',
+    backgroundColor: '#29B6FF',
   },
   lineChartCaloriesPoint: {
-    backgroundColor: '#f97316',
+    backgroundColor: '#FF4D73',
   },
   lineChartEmptyPoint: {
     position: 'absolute',
     width: 10,
     height: 10,
     borderRadius: 999,
-    backgroundColor: '#475569',
+    backgroundColor: '#9FB3C8',
     zIndex: 2,
   },
   lineChartValueLabel: {
@@ -1514,15 +1516,15 @@ const styles = StyleSheet.create({
     zIndex: 4,
   },
   lineChartWeightLabel: {
-    color: '#7dd3fc',
+    color: '#29B6FF',
   },
   lineChartCaloriesLabel: {
-    color: '#fdba74',
+    color: '#FF4D73',
   },
   lineChartDateLabel: {
     position: 'absolute',
     width: 48,
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontSize: 11,
     fontWeight: '600',
     textAlign: 'center',
@@ -1536,9 +1538,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 7,
@@ -1549,17 +1551,17 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   legendText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     fontSize: 12,
     fontWeight: '600',
   },
   dayDetailBox: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 14,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
   },
   dayDetailHeader: {
     flexDirection: 'row',
@@ -1568,7 +1570,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   dayDetailEyebrow: {
-    color: '#7dd3fc',
+    color: '#29B6FF',
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -1576,7 +1578,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   dayDetailTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 16,
     fontWeight: '800',
   },
@@ -1588,7 +1590,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dayIntensityBadgeText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 12,
     fontWeight: '800',
   },
@@ -1598,36 +1600,36 @@ const styles = StyleSheet.create({
   },
   dayDetailMetricCard: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: '#071120',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#1f2937',
+    borderColor: '#132238',
     paddingHorizontal: 12,
     paddingVertical: 10,
     gap: 4,
   },
   dayDetailMetricLabel: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontSize: 12,
     fontWeight: '700',
   },
   dayDetailMetricValue: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 15,
     fontWeight: '800',
   },
   calendarEmptyBox: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     padding: 14,
   },
   trendBlock: {
     gap: 10,
   },
   trendTitle: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 14,
     fontWeight: '700',
   },
@@ -1647,19 +1649,19 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   combinedLegendText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     fontSize: 12,
     fontWeight: '700',
   },
   trendChart: {
     position: 'relative',
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     borderRadius: 16,
     paddingTop: 14,
     paddingBottom: 12,
     minHeight: 188,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
   },
   trendBaseline: {
     position: 'absolute',
@@ -1667,7 +1669,7 @@ const styles = StyleSheet.create({
     right: 10,
     bottom: 52,
     height: 1,
-    backgroundColor: '#334155',
+    backgroundColor: '#27496D',
   },
   trendPlotArea: {
     position: 'relative',
@@ -1680,13 +1682,13 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#e2e8f0',
+    borderColor: '#F4F8FF',
     marginLeft: -6,
     marginBottom: -6,
     zIndex: 3,
   },
   trendCaloriesPoint: {
-    backgroundColor: '#f97316',
+    backgroundColor: '#FF4D73',
   },
   trendLine: {
     position: 'absolute',
@@ -1698,7 +1700,7 @@ const styles = StyleSheet.create({
   },
   trendPointValue: {
     position: 'absolute',
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     fontSize: 11,
     fontWeight: '700',
     textAlign: 'center',
@@ -1707,7 +1709,7 @@ const styles = StyleSheet.create({
   },
   trendDateTick: {
     position: 'absolute',
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontSize: 11,
     fontWeight: '600',
     bottom: 0,
@@ -1720,17 +1722,17 @@ const styles = StyleSheet.create({
   },
   listItem: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 14,
     padding: 12,
     gap: 4,
   },
   itemTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontWeight: '700',
   },
   itemText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
   },
   fab: {
     position: 'absolute',
@@ -1739,17 +1741,17 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#0284c7',
+    backgroundColor: '#29B6FF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOpacity: 0.18,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
     elevation: 7,
   },
   fabText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 30,
     lineHeight: 32,
     fontWeight: '700',

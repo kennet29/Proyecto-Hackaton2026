@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -76,15 +77,16 @@ const getScoreLabel = (value?: string | number | null) => {
 
 const getScoreColor = (value?: string | number | null) => {
   const normalized = String(value ?? '3');
-  if (normalized === '1') return '#ef4444';
-  if (normalized === '2') return '#f97316';
-  if (normalized === '3') return '#facc15';
-  if (normalized === '4') return '#84cc16';
-  return '#22c55e';
+  if (normalized === '1') return '#FF4D73';
+  if (normalized === '2') return '#FF4D73';
+  if (normalized === '3') return '#FF4D73';
+  if (normalized === '4') return '#38F28E';
+  return '#38F28E';
 };
 
 export function SaludMentalScreen() {
   const { token, user } = useAuth();
+  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [historial, setHistorial] = useState<SaludMentalHistorial | null>(null);
@@ -305,7 +307,7 @@ export function SaludMentalScreen() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={() => loadData(selectedPatientId, true)}
-          tintColor="#fff"
+          tintColor="#F4F8FF"
         />
       }
     >
@@ -326,7 +328,7 @@ export function SaludMentalScreen() {
         </View>
         {loadingPatients ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color="#22c55e" />
+            <ActivityIndicator color="#38F28E" />
             <Text style={styles.loadingText}>Cargando pacientes...</Text>
           </View>
         ) : patients.length === 0 ? (
@@ -346,6 +348,7 @@ export function SaludMentalScreen() {
                       : patient.displayName
                   }
                   value={String(patient.pacienteId)}
+                  color={pickerItemColor}
                 />
               ))}
             </Picker>
@@ -393,7 +396,7 @@ export function SaludMentalScreen() {
                   onValueChange={(value) => handleChange('estadoAnimo', String(value))}
                 >
                   {scoreOptions.map((item) => (
-                    <Picker.Item key={`animo-${item.value}`} label={item.label} value={item.value} />
+                    <Picker.Item key={`animo-${item.value}`} label={item.label} value={item.value} color={pickerItemColor} />
                   ))}
                 </Picker>
               </View>
@@ -411,7 +414,7 @@ export function SaludMentalScreen() {
                   onValueChange={(value) => handleChange('estres', String(value))}
                 >
                   {scoreOptions.map((item) => (
-                    <Picker.Item key={`estres-${item.value}`} label={item.label} value={item.value} />
+                    <Picker.Item key={`estres-${item.value}`} label={item.label} value={item.value} color={pickerItemColor} />
                   ))}
                 </Picker>
               </View>
@@ -434,6 +437,7 @@ export function SaludMentalScreen() {
                     key={`ansiedad-${item.value}`}
                     label={item.label}
                     value={item.value}
+                    color={pickerItemColor}
                   />
                 ))}
               </Picker>
@@ -534,7 +538,7 @@ export function SaludMentalScreen() {
           disabled={submitting || !form.pacienteId}
         >
           {submitting ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color="#F4F8FF" />
           ) : (
             <Text style={styles.primaryBtnText}>Guardar registro</Text>
           )}
@@ -548,7 +552,7 @@ export function SaludMentalScreen() {
         </View>
         {loadingData ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color="#22c55e" />
+            <ActivityIndicator color="#38F28E" />
             <Text style={styles.loadingText}>Cargando estadisticas...</Text>
           </View>
         ) : (
@@ -656,43 +660,43 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     paddingBottom: 32,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     gap: 16,
   },
   hero: {
-    backgroundColor: '#132a1b',
+    backgroundColor: '#38F28E18',
     borderRadius: 22,
     padding: 22,
     borderWidth: 1,
-    borderColor: '#22c55e',
+    borderColor: '#38F28E',
     gap: 8,
   },
   heroBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#166534',
+    backgroundColor: '#38F28E',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   heroBadgeText: {
-    color: '#dcfce7',
+    color: '#38F28E',
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   heroTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 24,
     fontWeight: '800',
   },
   heroText: {
-    color: '#d1fae5',
+    color: '#38F28E',
     fontSize: 14,
     lineHeight: 20,
   },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#132238',
     borderRadius: 18,
     padding: 16,
     gap: 12,
@@ -701,30 +705,30 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   sectionTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 18,
     fontWeight: '700',
   },
   sectionSubtitle: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontSize: 13,
     lineHeight: 18,
   },
   formSection: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     padding: 14,
     gap: 10,
   },
   formSectionTitle: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 15,
     fontWeight: '800',
   },
   scaleHint: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontSize: 12,
     lineHeight: 18,
   },
@@ -736,7 +740,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fieldLabel: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     fontSize: 13,
     fontWeight: '700',
   },
@@ -752,22 +756,22 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   scorePillText: {
-    color: '#0f172a',
+    color: '#071120',
     fontSize: 11,
     fontWeight: '800',
   },
   pickerWrapper: {
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F4F8FF',
   },
   input: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F4F8FF',
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#0f172a',
+    color: '#071120',
   },
   textArea: {
     minHeight: 110,
@@ -781,13 +785,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   primaryBtn: {
-    backgroundColor: '#22c55e',
+    backgroundColor: '#38F28E',
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontSize: 15,
     fontWeight: '800',
   },
@@ -799,15 +803,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     marginTop: 8,
   },
   emptyText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     lineHeight: 20,
   },
   errorText: {
-    color: '#fca5a5',
+    color: '#FF4D73',
     lineHeight: 20,
   },
   metricsRow: {
@@ -816,82 +820,82 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     padding: 12,
     gap: 4,
   },
   metricCardLabel: {
-    color: '#94a3b8',
+    color: '#9FB3C8',
     fontSize: 12,
     fontWeight: '700',
   },
   metricCardValue: {
-    color: '#f8fafc',
+    color: '#F4F8FF',
     fontSize: 22,
     fontWeight: '800',
   },
   latestRecordBox: {
-    backgroundColor: '#10261a',
+    backgroundColor: '#38F28E18',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#166534',
+    borderColor: '#38F28E',
     padding: 14,
     gap: 4,
   },
   latestRecordTitle: {
-    color: '#dcfce7',
+    color: '#38F28E',
     fontSize: 13,
     fontWeight: '800',
   },
   latestRecordText: {
-    color: '#bbf7d0',
+    color: '#38F28E',
     fontSize: 13,
   },
   metricText: {
-    color: '#e2e8f0',
+    color: '#F4F8FF',
     fontSize: 14,
   },
   highlightBox: {
-    backgroundColor: '#14532d',
+    backgroundColor: '#38F28E',
     borderRadius: 14,
     padding: 14,
     gap: 4,
   },
   highlightTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontWeight: '700',
   },
   highlightText: {
-    color: '#dcfce7',
+    color: '#38F28E',
   },
   alertItem: {
     borderWidth: 1,
-    borderColor: '#365314',
-    backgroundColor: '#1a2e05',
+    borderColor: '#38F28E18',
+    backgroundColor: '#38F28E18',
     borderRadius: 12,
     padding: 12,
   },
   alertText: {
-    color: '#ecfccb',
+    color: '#38F28E',
     lineHeight: 20,
   },
   listItem: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#27496D',
     borderRadius: 14,
     padding: 12,
     gap: 6,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#071120',
   },
   itemTitle: {
-    color: '#fff',
+    color: '#F4F8FF',
     fontWeight: '800',
   },
   itemText: {
-    color: '#cbd5e1',
+    color: '#C9D7E8',
     lineHeight: 19,
   },
 });
