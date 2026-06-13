@@ -21,19 +21,41 @@ import { VersionModule } from "./version/version.module";
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const authMode = config.get<string>("DB_AUTH", "sql").toLowerCase();
+        const host = config.get<string>("DB_HOST", "localhost");
+        const isAzureSql = host.toLowerCase().endsWith(".database.windows.net");
+        const encrypt =
+          config.get<string>("DB_ENCRYPT")?.toLowerCase() === "true" ||
+          (!config.get<string>("DB_ENCRYPT") && isAzureSql);
+        const trustServerCertificate =
+          config.get<string>("DB_TRUST_SERVER_CERTIFICATE")?.toLowerCase() ===
+            "true" ||
+          (!config.get<string>("DB_TRUST_SERVER_CERTIFICATE") && !isAzureSql);
+
+        console.log(
+          `[db-config] host=${host} auth=${authMode} encrypt=${encrypt} trustServerCertificate=${trustServerCertificate}`,
+        );
+
         const baseConfig = {
           type: "mssql" as const,
-          host: config.get<string>("DB_HOST", "localhost"),
+          host,
           port: Number(config.get<string>("DB_PORT", "1433")),
           database: config.get<string>("DB_NAME"),
+          connectionTimeout: 15000,
+          requestTimeout: 15000,
           entities: [Usuario, PasswordResetToken, RevokedToken],
           autoLoadEntities: true,
           synchronize: false,
           options: {
-            encrypt: false,
+            encrypt,
+            trustServerCertificate,
+            enableArithAbort: true,
           },
           extra: {
-            trustServerCertificate: true,
+            options: {
+              encrypt,
+              trustServerCertificate,
+              enableArithAbort: true,
+            },
           },
         };
 

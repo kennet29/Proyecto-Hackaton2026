@@ -5,6 +5,15 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
+const host = process.env.DB_HOST || 'localhost';
+const isAzureSql = host.toLowerCase().endsWith('.database.windows.net');
+const encrypt =
+  process.env.DB_ENCRYPT?.toLowerCase() === 'true' ||
+  (!process.env.DB_ENCRYPT && isAzureSql);
+const trustServerCertificate =
+  process.env.DB_TRUST_SERVER_CERTIFICATE?.toLowerCase() === 'true' ||
+  (!process.env.DB_TRUST_SERVER_CERTIFICATE && !isAzureSql);
+
 const TABLES = [
   'paciente',
   'usuario',
@@ -56,13 +65,25 @@ const EXTRA_MODULES = [
 
 const dataSource = new DataSource({
   type: 'mssql',
-  host: process.env.DB_HOST || 'localhost',
+  host,
   port: Number(process.env.DB_PORT || 1433),
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  options: { encrypt: false },
-  extra: { trustServerCertificate: true },
+  connectionTimeout: 15000,
+  requestTimeout: 15000,
+  options: {
+    encrypt,
+    trustServerCertificate,
+    enableArithAbort: true,
+  },
+  extra: {
+    options: {
+      encrypt,
+      trustServerCertificate,
+      enableArithAbort: true,
+    },
+  },
 });
 
 async function ensureDatabaseConnection() {
