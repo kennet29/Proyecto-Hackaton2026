@@ -57,6 +57,8 @@ Usa `@nestjs/config` globalmente (`AppModule`). Carga la configuracion desde `.e
 | `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASSWORD`, `MAIL_FROM` | Opcional | Si faltan, `MailService` sigue funcionando pero solo loguea la falta de SMTP (`src/mail/mail.service.ts`). |
 | `NOTIFICATIONS_DEFAULT_TZ` | No (`UTC`) | Zona horaria usada cuando el cliente no envia `timezone` (`src/notifications/notifications.service.ts`). |
 | `QR_DEEPLINK_BASE` | No (`gestionsalud://permiso-acceso`) | Esquema usado para generar enlaces profundos en QR de permisos (`permisoacceso.service.ts`). |
+| `SHARE_LINK_BASE` | No (`http://localhost:3010/api/v1/permiso-acceso/compartido`) | Base HTTP usada para construir enlaces compartidos que exponen JSON. |
+| `SHARE_LINK_SECRET` | No (`JWT_SECRET`) | Secreto HMAC para firmar enlaces compartidos. Si no se define, reutiliza `JWT_SECRET`. |
 | `BACKEND_VERSION` / `APP_VERSION` | No | Sobrescriben la version reportada por `VersionService` sin tocar `package.json`. |
 
 **Buenas practicas:**
@@ -91,7 +93,7 @@ Usa `@nestjs/config` globalmente (`AppModule`). Carga la configuracion desde `.e
 - `src/users/entities/user.entity.ts`: tabla `usuario`, almacena `hashPassword` y `fingerprintHash` como `varbinary`.
 - `src/auth/entities/password-reset-token.entity.ts`: tokens de restablecimiento con expiracion y marca `used`.
 - `src/auth/entities/revoked-token.entity.ts`: lista negra de JWT (`jwtId`).
-- `src/modules/permisoacceso/*.entity.ts`: permisos otorgados a medicos, tokens QR temporales.
+- `src/modules/permisoacceso/*.entity.ts`: permisos otorgados a medicos, tokens QR temporales y enlaces compartidos firmados.
 - `src/modules/periodo/*`: modulo especializado para calendario menstrual, sintomas, prediccion, historial y reporte medico.
 - `src/modules/saludmental/*`: modulo especializado para registro diario, habitos, estadisticas, alertas y reporte medico de salud mental.
 - Todas las demas tablas estan bajo `src/modules/<tabla>/<tabla>.entity.ts`, generadas automaticamente y sincronizadas con SQL Server.
@@ -146,8 +148,11 @@ Este modulo es util para scripts administrativos o sincronizaciones bulk; manten
   - `GET /permiso-acceso/mios`: medicos ven sus permisos.
   - `PATCH /permiso-acceso/:permisoId`: actualiza tipo, notas o estado (solo actores que controlen al paciente).
   - `DELETE /permiso-acceso/:permisoId`: marca `estado=revocado`.
+  - `POST /permiso-acceso/:permisoId/enlace`: genera un enlace firmado con expiracion y lista de `secciones` a compartir. Devuelve `token`, `shareUrl`, `expiresAt` y el alcance seleccionado.
+  - `GET /permiso-acceso/compartido/:token`: endpoint publico que valida el enlace y devuelve un JSON con las secciones compartidas mientras el permiso siga activo.
   - `POST /permiso-acceso/:permisoId/qr`: genera un token efimero (1-60 min, default 5) y devuelve `token`, `expiresAt` y `deepLink` (`QR_DEEPLINK_BASE`). Guarda registro en `permisoacceso_token`.
   - `POST /permiso-acceso/qr/claim`: solo medicos. Marca el token como usado y confirma acceso, retornando `permisoId` y `pacienteId`.
+  - Secciones soportadas por el enlace: `resumenClinico`, `consultasMedicas`, `saludMental`, `periodo`, `seguimientoFisico`, `seguimientoPostevento`, `examenesClinicos`, `citasMedicas`, `medicaciones`, `vacunas`, `alergias`, `condicionesCronicas`, `antecedentesFamiliares`, `documentosClinicos`, `desparasitaciones`, `embarazos`, `estiloVida`, `evaluacionesHabitos`, `habitosEspecificos`, `lesiones`, `notificaciones`, `operaciones`, `puntajesRiesgo`, `recordatoriosCitas`, `registroDental`, `registrosMenstruales`.
 - `UsuarioPaciente` (`src/modules/usuariopaciente`): vincula cuentas a historiales de pacientes.
   - `POST /usuario-paciente`: `actor` puede indicar `usuarioId` (si es admin) o se asume el propio. Evita duplicados.
   - `GET /usuario-paciente/mis-pacientes`: lista relaciones del usuario autenticado.
@@ -160,10 +165,10 @@ Todas las rutas incluyen prefijo `/api/v1`. Las respuestas y validaciones siguen
 - `GET /version`: devuelve `BackendVersionInfo` (`name`, `description`, `version`, `semver`, `apiVersion`, `buildDate`). Usa `process.env.BACKEND_VERSION` o `package.json`.
 
 ### 9.2 Usuarios especializados (`src/users`)
-- `POST /users` (**publico**): crea usuario con `username`, `password`, `pacienteId?`, `role?`, `activo?`, `fingerprintTemplate?`. Se hashea con bcrypt y se almacena `fingerprintHash` opcional. Pensado para la primera alta de admin; despues conviene cerrar el endpoint o securizarlo.
+- `POST /users` (**publico**): crea usuario con `username`, `password`, `city?`, `country?`, `pacienteId?`, `role?`, `activo?`, `fingerprintTemplate?`. Se hashea con bcrypt y se almacena `fingerprintHash` opcional. Pensado para la primera alta de admin; despues conviene cerrar el endpoint o securizarlo.
 - `GET /users`: lista todos los registros.
 - `GET /users/:id`: busca por entero.
-- `PATCH /users/:id`: permite cambiar rol, estado, paciente default, password y huella.
+- `PATCH /users/:id`: permite cambiar ciudad, pais, rol, estado, paciente default, password y huella.
 - `DELETE /users/:id`: elimina tras verificar filas afectadas.
 
 ### 9.3 Autenticacion (`src/auth`)

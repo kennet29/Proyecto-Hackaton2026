@@ -10,12 +10,14 @@ import {
   Req,
 } from "@nestjs/common";
 import { Request } from "express";
+import { Public } from "../../auth/decorators/public.decorator";
 import { AuthenticatedUser } from "../../auth/auth.service";
 import { CreatePermisoAccesoDto } from "./dto/create-permisoacceso.dto";
 import { PermisoaccesoService } from "./permisoacceso.service";
 import { UpdatePermisoAccesoDto } from "./dto/update-permisoacceso.dto";
 import { CreatePermisoAccesoQrDto } from "./dto/create-permisoacceso-qr.dto";
 import { ClaimPermisoAccesoQrDto } from "./dto/claim-permisoacceso-qr.dto";
+import { CreatePermisoAccesoLinkDto } from "./dto/create-permisoacceso-link.dto";
 
 /**
  * Expone los endpoints HTTP del dominio permisoacceso.
@@ -126,6 +128,37 @@ export class PermisoaccesoController {
       payload,
       req.user as AuthenticatedUser,
     );
+  }
+
+  /**
+   * Generate share link.
+   * @param permisoId Identificador asociado a permiso.
+   * @param payload Datos validados que recibe la operaciÃ³n.
+   * @param req Solicitud HTTP actual.
+   * @returns Resultado de la operaciÃ³n.
+   */
+  @Post(":permisoId/enlace")
+  generateShareLink(
+    @Param("permisoId", ParseIntPipe) permisoId: number,
+    @Body() payload: CreatePermisoAccesoLinkDto,
+    @Req() req: Request,
+  ) {
+    return this.permisosService.createShareLink(
+      permisoId,
+      payload,
+      req.user as AuthenticatedUser,
+    );
+  }
+
+  /**
+   * Resolve share link.
+   * @param token Token firmado incluido en el enlace.
+   * @returns JSON con los datos compartidos.
+   */
+  @Public()
+  @Get("compartido/:token")
+  resolveShareLink(@Param("token") token: string) {
+    return this.permisosService.resolveShareLink(token);
   }
 
   /**

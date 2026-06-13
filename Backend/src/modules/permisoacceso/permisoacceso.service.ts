@@ -6,20 +6,31 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { randomBytes } from "crypto";
-import { UsersService } from "../../users/users.service";
+import { createHmac, randomBytes, timingSafeEqual } from "crypto";
+import { DataSource, Repository } from "typeorm";
 import { AuthenticatedUser } from "../../auth/auth.service";
-import { PermisoAcceso } from "./permisoacceso.entity";
+import { PacienteAccessService } from "../../auth/paciente-access.service";
+import { UsersService } from "../../users/users.service";
+import { ConsultamedicaService } from "../consultamedica/consultamedica.service";
+import { ExamenclinicoService } from "../examenclinico/examenclinico.service";
+import { PacienteService } from "../paciente/paciente.service";
+import { PeriodoService } from "../periodo/periodo.service";
+import { SaludmentalService } from "../saludmental/saludmental.service";
+import { SeguimientofisicoService } from "../seguimientofisico/seguimientofisico.service";
+import { SeguimientoposteventoService } from "../seguimientopostevento/seguimientopostevento.service";
 import {
   CreatePermisoAccesoDto,
   temporalDurations,
 } from "./dto/create-permisoacceso.dto";
-import { PacienteAccessService } from "../../auth/paciente-access.service";
-import { UpdatePermisoAccesoDto } from "./dto/update-permisoacceso.dto";
-import { PermisoAccesoToken } from "./permisoacceso-token.entity";
+import {
+  CreatePermisoAccesoLinkDto,
+  shareableSections,
+} from "./dto/create-permisoacceso-link.dto";
 import { CreatePermisoAccesoQrDto } from "./dto/create-permisoacceso-qr.dto";
 import { ClaimPermisoAccesoQrDto } from "./dto/claim-permisoacceso-qr.dto";
+import { UpdatePermisoAccesoDto } from "./dto/update-permisoacceso.dto";
+import { PermisoAcceso } from "./permisoacceso.entity";
+import { PermisoAccesoToken } from "./permisoacceso-token.entity";
 
 const durationMap: Record<(typeof temporalDurations)[number], number> = {
   "15m": 15,
@@ -27,8 +38,40 @@ const durationMap: Record<(typeof temporalDurations)[number], number> = {
   "1d": 60 * 24,
 };
 
+type ShareSection = (typeof shareableSections)[number];
+
+type ShareTokenPayload = {
+  permisoId: number;
+  pacienteId: number;
+  medicoId: number;
+  secciones: ShareSection[];
+  expiraEn: number;
+};
+
+const rawShareSectionMap: Partial<Record<ShareSection, string>> = {
+  alergias: "alergia",
+  antecedentesFamiliares: "antecedentefamiliar",
+  citasMedicas: "citamedica",
+  condicionesCronicas: "condicioncronica",
+  desparasitaciones: "desparasitacion",
+  documentosClinicos: "documentoclinico",
+  embarazos: "embarazo",
+  estiloVida: "estilovida",
+  evaluacionesHabitos: "evaluacionsaludhabito",
+  habitosEspecificos: "habitoespecifico",
+  lesiones: "lesion",
+  medicaciones: "medicacion",
+  notificaciones: "notificacion",
+  operaciones: "operacion",
+  puntajesRiesgo: "puntajeriesgo",
+  recordatoriosCitas: "recordatoriocita",
+  registroDental: "registrodental",
+  registrosMenstruales: "registromensual",
+  vacunas: "vacuna",
+};
+
 /**
- * Implementa la lógica de negocio y persistencia del dominio permisoacceso.
+ * Implementa la lÃ³gica de negocio y persistencia del dominio permisoacceso.
  */
 @Injectable()
 export class PermisoaccesoService {
@@ -40,14 +83,22 @@ export class PermisoaccesoService {
     private readonly usersService: UsersService,
     private readonly pacienteAccessService: PacienteAccessService,
     private readonly configService: ConfigService,
+    private readonly dataSource: DataSource,
+    private readonly pacienteService: PacienteService,
+    private readonly consultamedicaService: ConsultamedicaService,
+    private readonly saludmentalService: SaludmentalService,
+    private readonly periodoService: PeriodoService,
+    private readonly seguimientoFisicoService: SeguimientofisicoService,
+    private readonly seguimientoPosteventoService: SeguimientoposteventoService,
+    private readonly examenclinicoService: ExamenclinicoService,
   ) {}
 
   /**
    * Grant.
    * @param pacienteId Identificador asociado a paciente.
-   * @param payload Datos validados que recibe la operación.
-   * @param actor Valor del parámetro `actor`.
-   * @returns Resultado de la operación.
+   * @param payload Datos validados que recibe la operaciÃ³n.
+   * @param actor Valor del parÃ¡metro `actor`.
+   * @returns Resultado de la operaciÃ³n.
    */
   async grant(
     pacienteId: number,
@@ -86,8 +137,8 @@ export class PermisoaccesoService {
   /**
    * Create qr token.
    * @param permisoId Identificador asociado a permiso.
-   * @param payload Datos validados que recibe la operación.
-   * @param actor Valor del parámetro `actor`.
+   * @param payload Datos validados que recibe la operaciÃ³n.
+   * @param actor Valor del parÃ¡metro `actor`.
    * @returns Registro creado.
    */
   async createQrToken(
@@ -95,15 +146,8 @@ export class PermisoaccesoService {
     payload: CreatePermisoAccesoQrDto,
     actor: AuthenticatedUser,
   ): Promise<{
-    /**
-     * Campo de datos asociado a `token`.
-     */
-    token: string; /**
-     * Campo de datos asociado a `expiresAt`.
-     */
-    expiresAt: Date; /**
-     * Campo de datos asociado a `deepLink`.
-     */
+    token: string;
+    expiresAt: Date;
     deepLink: string;
   }> {
     const permiso = await this.permisoRepository.findOne({
@@ -140,27 +184,131 @@ export class PermisoaccesoService {
   }
 
   /**
+   * Create share link.
+   * @param permisoId Identificador asociado a permiso.
+   * @param payload Datos validados que recibe la operaciÃ³n.
+   * @param actor Valor del parÃ¡metro `actor`.
+   * @returns Resultado de la operaciÃ³n.
+   */
+  async createShareLink(
+    permisoId: number,
+    payload: CreatePermisoAccesoLinkDto,
+    actor: AuthenticatedUser,
+  ): Promise<{
+    token: string;
+    expiresAt: Date;
+    shareUrl: string;
+    permisoId: number;
+    pacienteId: number;
+    medicoId: number;
+    secciones: ShareSection[];
+  }> {
+    const permiso = await this.permisoRepository.findOne({
+      where: { id: permisoId },
+    });
+    if (!permiso) {
+      throw new NotFoundException("permiso no encontrado");
+    }
+
+    await this.ensureActorControlsPaciente(actor, permiso.pacienteId);
+    await this.ensurePermisoActivo(
+      permiso,
+      "el permiso ya expiro, crea uno nuevo antes de compartir",
+    );
+
+    const requestedExpiresAt = new Date(
+      Date.now() + payload.duracionMinutos * 60 * 1000,
+    );
+    const expiresAt =
+      permiso.fechaFin && permiso.fechaFin.getTime() < requestedExpiresAt.getTime()
+        ? permiso.fechaFin
+        : requestedExpiresAt;
+    const secciones = payload.secciones as ShareSection[];
+    const token = this.signShareToken({
+      permisoId: permiso.id,
+      pacienteId: permiso.pacienteId,
+      medicoId: permiso.medicoId,
+      secciones,
+      expiraEn: expiresAt.getTime(),
+    });
+    const baseShareLink = (
+      this.configService.get<string>("SHARE_LINK_BASE") ??
+      "http://localhost:3010/api/v1/permiso-acceso/compartido"
+    ).replace(/\/+$/, "");
+    const shareUrl = `${baseShareLink}/${encodeURIComponent(token)}`;
+
+    return {
+      token,
+      expiresAt,
+      shareUrl,
+      permisoId: permiso.id,
+      pacienteId: permiso.pacienteId,
+      medicoId: permiso.medicoId,
+      secciones,
+    };
+  }
+
+  /**
+   * Resolve share link.
+   * @param token Token firmado del enlace compartido.
+   * @returns JSON con los datos compartidos.
+   */
+  async resolveShareLink(token: string) {
+    const payload = this.verifyShareToken(token);
+    const permiso = await this.permisoRepository.findOne({
+      where: { id: payload.permisoId },
+    });
+    if (!permiso) {
+      throw new NotFoundException("el permiso asociado al enlace no existe");
+    }
+    if (
+      permiso.pacienteId !== payload.pacienteId ||
+      permiso.medicoId !== payload.medicoId
+    ) {
+      throw new ForbiddenException("el enlace compartido ya no es valido");
+    }
+
+    await this.ensurePermisoActivo(
+      permiso,
+      "el permiso del paciente ya expiro o fue revocado",
+    );
+
+    const data = await this.buildSharedData(
+      payload.pacienteId,
+      payload.secciones,
+    );
+
+    return {
+      generatedAt: new Date().toISOString(),
+      expiresAt: new Date(payload.expiraEn).toISOString(),
+      permiso: {
+        permisoId: permiso.id,
+        pacienteId: permiso.pacienteId,
+        medicoId: permiso.medicoId,
+        tipo: permiso.tipo,
+        estado: permiso.estado,
+        fechaInicio: permiso.fechaInicio.toISOString(),
+        fechaFin: permiso.fechaFin ? permiso.fechaFin.toISOString() : null,
+        notas: permiso.notas ?? null,
+      },
+      secciones: payload.secciones,
+      data,
+    };
+  }
+
+  /**
    * Claim qr token.
-   * @param payload Datos validados que recibe la operación.
-   * @param actor Valor del parámetro `actor`.
-   * @returns Resultado de la operación.
+   * @param payload Datos validados que recibe la operaciÃ³n.
+   * @param actor Valor del parÃ¡metro `actor`.
+   * @returns Resultado de la operaciÃ³n.
    */
   async claimQrToken(
     payload: ClaimPermisoAccesoQrDto,
     actor: AuthenticatedUser,
   ): Promise<{
-    /**
-     * Campo de datos asociado a `message`.
-     */
-    message: string; /**
-     * Identificador persistido para `permisoId`.
-     */
-    permisoId: number; /**
-     * Identificador persistido para `pacienteId`.
-     */
-    pacienteId: number; /**
-     * Campo de datos asociado a `expira`.
-     */
+    message: string;
+    permisoId: number;
+    pacienteId: number;
     expira?: Date | null;
   }> {
     if (actor.role?.toLowerCase() !== "medico") {
@@ -206,8 +354,8 @@ export class PermisoaccesoService {
   /**
    * List for paciente.
    * @param pacienteId Identificador asociado a paciente.
-   * @param actor Valor del parámetro `actor`.
-   * @returns Resultado de la operación.
+   * @param actor Valor del parÃ¡metro `actor`.
+   * @returns Resultado de la operaciÃ³n.
    */
   async listForPaciente(
     pacienteId: number,
@@ -223,8 +371,8 @@ export class PermisoaccesoService {
 
   /**
    * List for medico.
-   * @param actor Valor del parámetro `actor`.
-   * @returns Resultado de la operación.
+   * @param actor Valor del parÃ¡metro `actor`.
+   * @returns Resultado de la operaciÃ³n.
    */
   async listForMedico(actor: AuthenticatedUser): Promise<PermisoAcceso[]> {
     if (actor.role?.toLowerCase() !== "medico") {
@@ -242,8 +390,8 @@ export class PermisoaccesoService {
   /**
    * Revoke.
    * @param permisoId Identificador asociado a permiso.
-   * @param actor Valor del parámetro `actor`.
-   * @returns La operación se completa sin devolver contenido.
+   * @param actor Valor del parÃ¡metro `actor`.
+   * @returns La operaciÃ³n se completa sin devolver contenido.
    */
   async revoke(permisoId: number, actor: AuthenticatedUser): Promise<void> {
     const permiso = await this.permisoRepository.findOne({
@@ -264,8 +412,8 @@ export class PermisoaccesoService {
   /**
    * Update.
    * @param permisoId Identificador asociado a permiso.
-   * @param payload Datos validados que recibe la operación.
-   * @param actor Valor del parámetro `actor`.
+   * @param payload Datos validados que recibe la operaciÃ³n.
+   * @param actor Valor del parÃ¡metro `actor`.
    * @returns Registro actualizado.
    */
   async update(
@@ -340,9 +488,9 @@ export class PermisoaccesoService {
 
   /**
    * Ensure actor controls paciente.
-   * @param actor Valor del parámetro `actor`.
+   * @param actor Valor del parÃ¡metro `actor`.
    * @param pacienteId Identificador asociado a paciente.
-   * @returns Resultado de la operación.
+   * @returns Resultado de la operaciÃ³n.
    */
   private async ensureActorControlsPaciente(
     actor: AuthenticatedUser,
@@ -358,9 +506,9 @@ export class PermisoaccesoService {
 
   /**
    * Calculate end date.
-   * @param start Valor del parámetro `start`.
-   * @param duration Valor del parámetro `duration`.
-   * @returns Resultado de la operación.
+   * @param start Valor del parÃ¡metro `start`.
+   * @param duration Valor del parÃ¡metro `duration`.
+   * @returns Resultado de la operaciÃ³n.
    */
   private calculateEndDate(
     start: Date,
@@ -376,7 +524,7 @@ export class PermisoaccesoService {
    * Deactivate existing.
    * @param pacienteId Identificador asociado a paciente.
    * @param medicoId Identificador asociado a medico.
-   * @returns La operación se completa sin devolver contenido.
+   * @returns La operaciÃ³n se completa sin devolver contenido.
    */
   private async deactivateExisting(
     pacienteId: number,
@@ -390,8 +538,8 @@ export class PermisoaccesoService {
 
   /**
    * Refresh statuses.
-   * @param permisos Valor del parámetro `permisos`.
-   * @returns Resultado de la operación.
+   * @param permisos Valor del parÃ¡metro `permisos`.
+   * @returns Resultado de la operaciÃ³n.
    */
   private async refreshStatuses(
     permisos: PermisoAcceso[],
@@ -410,5 +558,243 @@ export class PermisoaccesoService {
       await this.permisoRepository.save(expired);
     }
     return permisos;
+  }
+
+  /**
+   * Ensure permiso activo.
+   * @param permiso Permiso que se debe validar.
+   * @param expiredMessage Mensaje usado al expirar.
+   * @returns Resultado de la operaciÃ³n.
+   */
+  private async ensurePermisoActivo(
+    permiso: PermisoAcceso,
+    expiredMessage: string,
+  ): Promise<void> {
+    if (permiso.estado !== "activo") {
+      throw new ForbiddenException("el permiso ya no esta activo");
+    }
+    if (permiso.fechaFin && permiso.fechaFin.getTime() < Date.now()) {
+      permiso.estado = "expirado";
+      await this.permisoRepository.save(permiso);
+      throw new ForbiddenException(expiredMessage);
+    }
+  }
+
+  /**
+   * Sign share token.
+   * @param payload Datos internos del enlace.
+   * @returns Token firmado.
+   */
+  private signShareToken(payload: ShareTokenPayload): string {
+    const encodedPayload = Buffer.from(JSON.stringify(payload)).toString(
+      "base64url",
+    );
+    const signature = createHmac("sha256", this.getShareLinkSecret())
+      .update(encodedPayload)
+      .digest("base64url");
+    return `${encodedPayload}.${signature}`;
+  }
+
+  /**
+   * Verify share token.
+   * @param token Token a validar.
+   * @returns Payload interno validado.
+   */
+  private verifyShareToken(token: string): ShareTokenPayload {
+    const [encodedPayload, signature] = token.split(".");
+    if (!encodedPayload || !signature) {
+      throw new BadRequestException("enlace compartido invalido");
+    }
+
+    const expectedSignature = createHmac("sha256", this.getShareLinkSecret())
+      .update(encodedPayload)
+      .digest("base64url");
+    const providedBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expectedSignature);
+    if (
+      providedBuffer.length !== expectedBuffer.length ||
+      !timingSafeEqual(providedBuffer, expectedBuffer)
+    ) {
+      throw new ForbiddenException("la firma del enlace compartido no es valida");
+    }
+
+    let payload: unknown;
+    try {
+      payload = JSON.parse(
+        Buffer.from(encodedPayload, "base64url").toString("utf8"),
+      );
+    } catch {
+      throw new BadRequestException("no se pudo interpretar el enlace compartido");
+    }
+
+    if (!this.isShareTokenPayload(payload)) {
+      throw new BadRequestException("el enlace compartido no tiene un formato valido");
+    }
+    if (payload.expiraEn < Date.now()) {
+      throw new ForbiddenException("el enlace compartido ya expiro");
+    }
+
+    return payload;
+  }
+
+  /**
+   * Get share link secret.
+   * @returns Secreto utilizado para firma.
+   */
+  private getShareLinkSecret(): string {
+    return (
+      this.configService.get<string>("SHARE_LINK_SECRET") ??
+      this.configService.get<string>("JWT_SECRET", "dev-secret")
+    );
+  }
+
+  /**
+   * Valida el payload interno del enlace.
+   * @param value Valor a validar.
+   * @returns Indicador de validez.
+   */
+  private isShareTokenPayload(value: unknown): value is ShareTokenPayload {
+    if (!value || typeof value !== "object") {
+      return false;
+    }
+    const candidate = value as Partial<ShareTokenPayload>;
+    return (
+      typeof candidate.permisoId === "number" &&
+      typeof candidate.pacienteId === "number" &&
+      typeof candidate.medicoId === "number" &&
+      typeof candidate.expiraEn === "number" &&
+      Array.isArray(candidate.secciones) &&
+      candidate.secciones.every((section) =>
+        shareableSections.includes(section as ShareSection),
+      )
+    );
+  }
+
+  /**
+   * Build shared data.
+   * @param pacienteId Identificador asociado a paciente.
+   * @param secciones Secciones solicitadas.
+   * @returns Resultado de la operaciÃ³n.
+   */
+  private async buildSharedData(
+    pacienteId: number,
+    secciones: ShareSection[],
+  ): Promise<Record<string, unknown>> {
+    const entries = await Promise.all(
+      secciones.map(async (section) => {
+        return [section, await this.getSectionData(pacienteId, section)] as const;
+      }),
+    );
+    return Object.fromEntries(entries);
+  }
+
+  /**
+   * Get section data.
+   * @param pacienteId Identificador asociado a paciente.
+   * @param section SecciÃ³n seleccionada.
+   * @returns Datos serializables para la secciÃ³n.
+   */
+  private async getSectionData(pacienteId: number, section: ShareSection) {
+    switch (section) {
+      case "resumenClinico":
+        return this.normalizeForJson(
+          await this.pacienteService.getClinicalSummary(pacienteId),
+        );
+      case "consultasMedicas":
+        return this.normalizeForJson(
+          await this.consultamedicaService.findAllByPaciente(pacienteId),
+        );
+      case "saludMental":
+        return this.normalizeForJson({
+          historial: await this.saludmentalService.getHistorial(pacienteId),
+          estadisticas: await this.saludmentalService.getEstadisticas(pacienteId),
+          alertas: await this.saludmentalService.getAlertas(pacienteId),
+        });
+      case "periodo":
+        return this.normalizeForJson({
+          historial: await this.periodoService.getHistorial(pacienteId),
+          prediccion: await this.periodoService.getPrediction(pacienteId),
+          reporteMedico: await this.periodoService.getMedicalReport(pacienteId),
+        });
+      case "seguimientoFisico":
+        return this.normalizeForJson({
+          historial: await this.seguimientoFisicoService.getHistorial(pacienteId),
+          resumen: await this.seguimientoFisicoService.getResumen(pacienteId),
+          progresoPeso:
+            await this.seguimientoFisicoService.getPesoProgress(pacienteId),
+          logros: await this.seguimientoFisicoService.getLogros(pacienteId),
+        });
+      case "seguimientoPostevento":
+        return this.normalizeForJson({
+          historial:
+            await this.seguimientoPosteventoService.getHistorial(pacienteId),
+          compartidosConMedico:
+            await this.seguimientoPosteventoService.getCompartidosConMedico(
+              pacienteId,
+            ),
+        });
+      case "examenesClinicos":
+        return this.normalizeForJson(
+          await this.examenclinicoService.findAll(pacienteId),
+        );
+      default:
+        return this.findRawSectionData(pacienteId, section);
+    }
+  }
+
+  /**
+   * Find raw section data.
+   * @param pacienteId Identificador asociado a paciente.
+   * @param section SecciÃ³n seleccionada.
+   * @returns Resultado serializable.
+   */
+  private async findRawSectionData(
+    pacienteId: number,
+    section: ShareSection,
+  ) {
+    const tableName = rawShareSectionMap[section];
+    if (!tableName) {
+      throw new BadRequestException(
+        `la seccion ${section} no esta disponible para compartir`,
+      );
+    }
+
+    const rows = await this.dataSource.query(
+      `SELECT * FROM [${tableName}] WHERE pacienteid = @0`,
+      [pacienteId],
+    );
+    return this.normalizeForJson(rows);
+  }
+
+  /**
+   * Normaliza valores complejos para serializarlos a JSON.
+   * @param value Valor a normalizar.
+   * @returns Valor compatible con JSON.
+   */
+  private normalizeForJson(value: unknown): unknown {
+    if (value === null || value === undefined) {
+      return value;
+    }
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    if (Buffer.isBuffer(value)) {
+      return value.toString("base64");
+    }
+    if (Array.isArray(value)) {
+      return value.map((item) => this.normalizeForJson(item));
+    }
+    if (typeof value === "bigint") {
+      return value.toString();
+    }
+    if (typeof value === "object") {
+      return Object.fromEntries(
+        Object.entries(value as Record<string, unknown>).map(([key, item]) => [
+          key,
+          this.normalizeForJson(item),
+        ]),
+      );
+    }
+    return value;
   }
 }

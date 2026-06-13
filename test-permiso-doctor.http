@@ -130,7 +130,27 @@ Content-Type: application/json
 GET {{baseUrl}}/permiso-acceso/mios
 Authorization: Bearer {{loginDoctor.response.body.$.accessToken}}
 
-### 12. Doctor consulta historial de salud mental del paciente
+### 12. Paciente genera un enlace compartido con JSON de secciones elegidas
+# @name crearEnlaceCompartido
+POST {{baseUrl}}/permiso-acceso/{{crearPermisoTemporal.response.body.$.id}}/enlace
+Authorization: Bearer {{loginPaciente.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "duracionMinutos": 30,
+  "secciones": [
+    "resumenClinico",
+    "consultasMedicas",
+    "saludMental",
+    "examenesClinicos"
+  ]
+}
+
+### 13. Abrir enlace compartido y ver JSON publico
+# @name jsonCompartido
+GET {{baseUrl}}/permiso-acceso/compartido/{{crearEnlaceCompartido.response.body.$.token}}
+
+### 14. Doctor consulta historial de salud mental del paciente con su permiso activo
 # @name historialComoDoctor
 GET {{baseUrl}}/salud-mental/paciente/{{crearPaciente.response.body.$.pacienteId}}/historial
 Authorization: Bearer {{loginDoctor.response.body.$.accessToken}}

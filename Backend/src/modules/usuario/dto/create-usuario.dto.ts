@@ -12,6 +12,8 @@ const passwordHashField = z
 export const createUsuarioSchema = z.object({
   pacienteId: z.number().int().nullable().optional(),
   nombreusuario: z.string(),
+  ciudad: z.string().max(100).nullable().optional(),
+  pais: z.string().max(100).nullable().optional(),
   hashpassword: passwordHashField,
   rolprincipal: z.string().optional(),
   activo: z.boolean().optional(),
@@ -39,6 +41,8 @@ export const updateUsuarioSchema = z
   .object({
     pacienteId: z.number().int().nullable().optional(),
     nombreusuario: z.string(),
+    ciudad: z.string().max(100).nullable().optional(),
+    pais: z.string().max(100).nullable().optional(),
     hashpassword: passwordHashField,
     rolprincipal: z.string().optional(),
     activo: z.boolean().optional(),

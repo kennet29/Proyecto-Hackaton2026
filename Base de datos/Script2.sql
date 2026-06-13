@@ -1433,6 +1433,8 @@ CREATE TABLE [dbo].[usuario](
 	[usuarioid] [int] IDENTITY(1,1) NOT NULL,
 	[pacienteid] [int] NULL,
 	[nombreusuario] [nvarchar](60) NOT NULL,
+	[ciudad] [nvarchar](100) NULL,
+	[pais] [nvarchar](100) NULL,
 	[hashpassword] [varbinary](256) NOT NULL,
 	[huelladigitalhash] [varbinary](64) NULL,
 	[rolprincipal] [nvarchar](40) NOT NULL,

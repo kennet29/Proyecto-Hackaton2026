@@ -123,6 +123,12 @@ export class UsersService {
     if (payload.pacienteId !== undefined) {
       user.pacienteId = payload.pacienteId;
     }
+    if (payload.city !== undefined) {
+      user.city = payload.city;
+    }
+    if (payload.country !== undefined) {
+      user.country = payload.country;
+    }
     if (payload.role !== undefined) {
       user.role = payload.role;
     }
@@ -197,6 +203,8 @@ export class UsersService {
       const fingerprintHash = this.hashFingerprint(payload.fingerprintTemplate);
       const entity = this.usuarioRepository.create({
         username: payload.username,
+        city: payload.city,
+        country: payload.country,
         pacienteId: payload.pacienteId,
         role,
         activo,

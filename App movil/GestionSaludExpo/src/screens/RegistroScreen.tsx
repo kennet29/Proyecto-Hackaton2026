@@ -58,6 +58,8 @@ const formatErrorMessage = (error: unknown): string => {
 export function RegistroScreen({ navigation }: Props) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [city, setCity] = useState('');
+  const [country, setCountry] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -69,7 +71,8 @@ export function RegistroScreen({ navigation }: Props) {
   const [registrationEnabled, setRegistrationEnabled] = useState(true);
   const [bootstrapMode, setBootstrapMode] = useState(false);
 
-  const sanitizeText = (value: string) => value.replace(/[^a-zA-Z\s]/g, '');
+  const sanitizeText = (value: string) =>
+    value.replace(/[^a-zA-ZÀ-ÿ\u00f1\u00d1\s.-]/g, '');
   const sanitizeUsername = (value: string) => value.replace(/[^a-zA-Z0-9._-]/g, '');
   const sanitizePassword = (value: string) => value;
   const sanitizeEmail = (value: string) => value.replace(/\s/g, '').toLowerCase();
@@ -140,7 +143,7 @@ export function RegistroScreen({ navigation }: Props) {
       Alert.alert('Registro no disponible', message);
       return;
     }
-    if (!fullName || !email || !username || !password || !confirmPassword) {
+    if (!fullName || !email || !city || !country || !username || !password || !confirmPassword) {
       const message = 'Completa todos los datos para continuar.';
       setFeedback({ type: 'error', message });
       Alert.alert('Campos Incompletos', message);
@@ -161,6 +164,8 @@ export function RegistroScreen({ navigation }: Props) {
         body: JSON.stringify({
           fullName,
           email,
+          city,
+          country,
           username,
           password,
           fingerprintTemplate: fingerprintTemplate ?? undefined,
@@ -227,6 +232,26 @@ export function RegistroScreen({ navigation }: Props) {
           autoCorrect={false}
           value={email}
           onChangeText={(text) => setEmail(sanitizeEmail(text))}
+        />
+
+        <Text style={styles.label}>Ciudad</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Ej: Managua"
+          placeholderTextColor="#9FB3C8"
+          autoCapitalize="words"
+          value={city}
+          onChangeText={(text) => setCity(sanitizeText(text))}
+        />
+
+        <Text style={styles.label}>PaÃƒÂ­s</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Ej: Nicaragua"
+          placeholderTextColor="#9FB3C8"
+          autoCapitalize="words"
+          value={country}
+          onChangeText={(text) => setCountry(sanitizeText(text))}
         />
 
         <Text style={styles.label}>Usuario</Text>

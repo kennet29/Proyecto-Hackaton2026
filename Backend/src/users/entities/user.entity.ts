@@ -30,6 +30,18 @@ export class Usuario {
   username!: string;
 
   /**
+   * Campo de datos asociado a `city`.
+   */
+  @Column({ name: "ciudad", length: 100, nullable: true })
+  city?: string;
+
+  /**
+   * Campo de datos asociado a `country`.
+   */
+  @Column({ name: "pais", length: 100, nullable: true })
+  country?: string;
+
+  /**
    * Campo de datos asociado a `hashPassword`.
    */
   @Column({ name: "hashpassword", type: "varbinary", length: 256 })

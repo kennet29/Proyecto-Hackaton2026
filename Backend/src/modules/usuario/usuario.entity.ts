@@ -24,6 +24,18 @@ export class Usuario {
   nombreusuario!: string;
 
   /**
+   * Campo de datos asociado a `ciudad`.
+   */
+  @Column({ name: "ciudad", type: "nvarchar", length: 100, nullable: true })
+  ciudad?: string;
+
+  /**
+   * Campo de datos asociado a `pais`.
+   */
+  @Column({ name: "pais", type: "nvarchar", length: 100, nullable: true })
+  pais?: string;
+
+  /**
    * Campo de datos asociado a `hashpassword`.
    */
   @Column({ name: "hashpassword", type: "varbinary", length: 256 })
