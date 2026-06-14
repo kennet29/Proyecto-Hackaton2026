@@ -479,6 +479,7 @@ export function SeguimientoPosteventoScreen() {
       <Text style={styles.label}>Paciente</Text>
       <View style={styles.pickerWrapper}>
         <Picker
+          style={styles.picker}
           selectedValue={form.pacienteId}
           onValueChange={(value) => {
             handleChange('pacienteId', String(value));
@@ -503,7 +504,11 @@ export function SeguimientoPosteventoScreen() {
 
       <Text style={styles.label}>Tipo de evento</Text>
       <View style={styles.pickerWrapper}>
-        <Picker selectedValue={form.tipoEvento} onValueChange={(value) => handleTipoEventoChange(String(value))}>
+        <Picker
+          style={styles.picker}
+          selectedValue={form.tipoEvento}
+          onValueChange={(value) => handleTipoEventoChange(String(value))}
+        >
           <Picker.Item label="Operacion" value="operacion" />
           <Picker.Item label="Lesion" value="lesion" />
           <Picker.Item label="Emergencia" value="emergencia" />
@@ -517,6 +522,7 @@ export function SeguimientoPosteventoScreen() {
           </Text>
           <View style={styles.pickerWrapper}>
             <Picker
+              style={styles.picker}
               selectedValue={form.tipoEvento === 'operacion' ? form.operacionId : form.lesionId}
               onValueChange={(value) => applyRelatedEvent(String(value))}
               enabled={hasValidPatient && !loadingEvents}
@@ -546,7 +552,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={styles.input}
         placeholder="Titulo del seguimiento"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor="#F4F8FF"
         value={form.tituloEvento}
         onChangeText={(value) => handleChange('tituloEvento', value)}
       />
@@ -555,14 +561,14 @@ export function SeguimientoPosteventoScreen() {
         <TextInput
           style={[styles.input, styles.halfInput]}
           placeholder="Fecha evento YYYY-MM-DD"
-          placeholderTextColor="#9FB3C8"
+          placeholderTextColor="#F4F8FF"
           value={form.fechaEvento}
           onChangeText={(value) => handleChange('fechaEvento', value)}
         />
         <TextInput
           style={[styles.input, styles.halfInput]}
           placeholder="Fecha seguimiento YYYY-MM-DD"
-          placeholderTextColor="#9FB3C8"
+          placeholderTextColor="#F4F8FF"
           value={form.fechaSeguimiento}
           onChangeText={(value) => handleChange('fechaSeguimiento', value)}
         />
@@ -570,7 +576,11 @@ export function SeguimientoPosteventoScreen() {
 
       <Text style={styles.label}>Estado actual</Text>
       <View style={styles.pickerWrapper}>
-        <Picker selectedValue={form.estado} onValueChange={(value) => handleChange('estado', String(value))}>
+        <Picker
+          style={styles.picker}
+          selectedValue={form.estado}
+          onValueChange={(value) => handleChange('estado', String(value))}
+        >
           <Picker.Item label="Activo" value="activo" />
           <Picker.Item label="En observacion" value="en observacion" />
           <Picker.Item label="Cerrado" value="cerrado" />
@@ -580,7 +590,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={styles.input}
         placeholder="Nivel de dolor 0-10"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor="#F4F8FF"
         keyboardType="numeric"
         value={form.nivelDolor}
         onChangeText={(value) => handleChange('nivelDolor', value)}
@@ -588,7 +598,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={[styles.input, styles.multiline]}
         placeholder="Evolucion general"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor="#F4F8FF"
         value={form.evolucion}
         multiline
         onChangeText={(value) => handleChange('evolucion', value)}
@@ -596,7 +606,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={[styles.input, styles.multiline]}
         placeholder="Sintomas o cambios observados"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor="#F4F8FF"
         value={form.sintomas}
         multiline
         onChangeText={(value) => handleChange('sintomas', value)}
@@ -604,7 +614,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={[styles.input, styles.multiline]}
         placeholder="Medicacion actual"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor="#F4F8FF"
         value={form.medicacionActual}
         multiline
         onChangeText={(value) => handleChange('medicacionActual', value)}
@@ -612,7 +622,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={[styles.input, styles.multiline]}
         placeholder="Cuidados en casa"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor="#F4F8FF"
         value={form.cuidadosHogar}
         multiline
         onChangeText={(value) => handleChange('cuidadosHogar', value)}
@@ -620,7 +630,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={[styles.input, styles.multiline]}
         placeholder="Notas adicionales"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor="#F4F8FF"
         value={form.notas}
         multiline
         onChangeText={(value) => handleChange('notas', value)}
@@ -628,7 +638,7 @@ export function SeguimientoPosteventoScreen() {
       <TextInput
         style={styles.input}
         placeholder="Proximo control YYYY-MM-DD"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor="#F4F8FF"
         value={form.proximoControl}
         onChangeText={(value) => handleChange('proximoControl', value)}
       />
@@ -725,6 +735,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     overflow: 'hidden',
     backgroundColor: '#0D1B2A',
+  },
+  picker: {
+    color: '#F4F8FF',
   },
   input: {
     borderWidth: 1,

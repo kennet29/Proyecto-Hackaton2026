@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: gestionsalud-backend
+    runtime: node
+    rootDir: Backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/v1/health
+    buildFilter:
+      paths:
+        - Backend/**
+      ignoredPaths:
+        - Documentacion/**
+        - "Landing page/**"
+        - "App movil/**"

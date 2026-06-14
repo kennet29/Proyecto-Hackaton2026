@@ -10,6 +10,7 @@ import { PasswordResetToken } from "./auth/entities/password-reset-token.entity"
 import { RevokedToken } from "./auth/entities/revoked-token.entity";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { VersionModule } from "./version/version.module";
+import { HealthModule } from "./health/health.module";
 
 /**
  * Agrupa controladores y proveedores del dominio app.
@@ -86,6 +87,7 @@ import { VersionModule } from "./version/version.module";
     AuthModule,
     NotificationsModule,
     VersionModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
