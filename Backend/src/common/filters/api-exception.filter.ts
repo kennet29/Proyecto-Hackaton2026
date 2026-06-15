@@ -4,8 +4,10 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { Request, Response } from "express";
+import { QueryFailedError } from "typeorm";
 
 /**
  * Filtro de excepciones que transforma errores del flujo api exception filter.
@@ -21,6 +23,22 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
+
+    if (this.isDatabaseUnavailable(exception)) {
+      const dbException = new ServiceUnavailableException(
+        "la base de datos no esta disponible temporalmente, intenta nuevamente en unos minutos",
+      );
+      response.status(HttpStatus.SERVICE_UNAVAILABLE).json({
+        statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+        error: dbException.name,
+        message: dbException.message,
+        details: dbException.getResponse(),
+        path: request.url,
+        timestamp: new Date().toISOString(),
+        hint: this.buildHint(HttpStatus.SERVICE_UNAVAILABLE),
+      });
+      return;
+    }
 
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
@@ -61,6 +79,9 @@ export class ApiExceptionFilter implements ExceptionFilter {
    * @returns Estructura construida para el flujo interno.
    */
   private buildHint(status: number): string {
+    if (status === HttpStatus.SERVICE_UNAVAILABLE) {
+      return "el servicio depende de una conexion externa que no esta respondiendo, intenta nuevamente en unos minutos.";
+    }
     if (status >= 500) {
       return "nuestro servidor no pudo procesar la solicitud, intenta de nuevo en unos minutos.";
     }
@@ -74,5 +95,27 @@ export class ApiExceptionFilter implements ExceptionFilter {
       return "este recurso exige permisos adicionales.";
     }
     return "corrige los datos indicados en el mensaje y vuelve a enviar la solicitud.";
+  }
+
+  /**
+   * Indica si el error representa indisponibilidad temporal de SQL Server.
+   * @param exception Error original.
+   * @returns `true` cuando la base no se pudo alcanzar.
+   */
+  private isDatabaseUnavailable(exception: unknown): boolean {
+    if (!(exception instanceof QueryFailedError)) {
+      return false;
+    }
+    const driverError =
+      typeof exception.driverError === "object" && exception.driverError !== null
+        ? (exception.driverError as {
+            code?: string;
+            originalError?: { code?: string };
+          })
+        : undefined;
+    const code = driverError?.code ?? driverError?.originalError?.code;
+    return ["ETIMEOUT", "ESOCKET", "ECONNRESET", "ENOTFOUND"].includes(
+      code ?? "",
+    );
   }
 }

@@ -21,6 +21,10 @@ Carga estas variables en Render:
 - `DB_PASSWORD`
 - `DB_ENCRYPT=true`
 - `DB_TRUST_SERVER_CERTIFICATE=false`
+- `DB_CONNECTION_TIMEOUT_MS=60000`
+- `DB_REQUEST_TIMEOUT_MS=60000`
+- `DB_RETRY_ATTEMPTS=5`
+- `DB_RETRY_DELAY_MS=5000`
 - `JWT_SECRET`
 - `JWT_EXPIRES_IN`
 - `CORS_ORIGINS`
@@ -36,6 +40,7 @@ Carga estas variables en Render:
 
 - Render corre en Linux, asi que para SQL Server usa `DB_AUTH=sql`. No dependas de autenticacion Windows/NTLM alli.
 - Si tu base de datos esta en Azure SQL, asegurate de permitir conexiones desde servicios externos y de usar `encrypt=true`.
+- Si ves `ETIMEOUT` hacia `*.database.windows.net:1433`, primero confirma que Azure SQL permite conexiones desde la red de Render. Si la base es serverless o tarda en reactivarse, aumenta los timeouts y reintentos anteriores.
 - Cuando el deploy termine, valida:
   - `https://tu-servicio.onrender.com/api/v1/health`
   - `https://tu-servicio.onrender.com/api/docs`

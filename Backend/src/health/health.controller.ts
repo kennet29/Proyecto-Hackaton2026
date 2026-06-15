@@ -1,6 +1,7 @@
 import { Controller, Get } from "@nestjs/common";
 import { DataSource } from "typeorm";
 import { VersionService } from "../version/version.service";
+import { Public } from "../auth/decorators/public.decorator";
 
 /**
  * Expone un endpoint simple para health checks de infraestructura.
@@ -19,6 +20,7 @@ export class HealthController {
    * Get health.
    * @returns Estado operativo del backend.
    */
+  @Public()
   @Get()
   getHealth() {
     const version = this.versionService.getBackendVersion();

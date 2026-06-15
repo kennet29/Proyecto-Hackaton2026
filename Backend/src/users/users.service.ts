@@ -4,6 +4,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -47,7 +48,7 @@ export class UsersService {
     message: string;
     user: Usuario;
   }> {
-    const totalUsers = await this.usuarioRepository.count();
+    const totalUsers = await this.getTotalUsers();
     const bootstrapMode = totalUsers === 0;
     const publicEnabled =
       this.configService
@@ -75,7 +76,7 @@ export class UsersService {
    * @returns Resultado de la consulta solicitada.
    */
   async getRegistrationStatus() {
-    const totalUsers = await this.usuarioRepository.count();
+    const totalUsers = await this.getTotalUsers();
     const publicEnabled =
       this.configService
         .get<string>("ALLOW_PUBLIC_USER_REGISTRATION", "false")
@@ -213,7 +214,29 @@ export class UsersService {
       });
       return await this.usuarioRepository.save(entity);
     } catch (error) {
+      if (this.isDatabaseUnavailable(error)) {
+        throw new ServiceUnavailableException(
+          "la base de datos no esta disponible temporalmente, intenta nuevamente en unos minutos",
+        );
+      }
       return this.handleDbError(error, "crear");
+    }
+  }
+
+  /**
+   * Get total users.
+   * @returns Total de usuarios registrados.
+   */
+  private async getTotalUsers(): Promise<number> {
+    try {
+      return await this.usuarioRepository.count();
+    } catch (error) {
+      if (this.isDatabaseUnavailable(error)) {
+        throw new ServiceUnavailableException(
+          "la base de datos no esta disponible temporalmente, intenta nuevamente en unos minutos",
+        );
+      }
+      throw error;
     }
   }
 
@@ -224,6 +247,11 @@ export class UsersService {
    * @returns Resultado de la operación.
    */
   private handleDbError(error: unknown, action: string): never {
+    if (this.isDatabaseUnavailable(error)) {
+      throw new ServiceUnavailableException(
+        "la base de datos no esta disponible temporalmente, intenta nuevamente en unos minutos",
+      );
+    }
     if (error instanceof QueryFailedError) {
       const driverError = error.driverError as
         | {
@@ -246,6 +274,24 @@ export class UsersService {
       );
     }
     throw new InternalServerErrorException(`no se pudo ${action} el usuario`);
+  }
+
+  /**
+   * Indica si el error representa indisponibilidad temporal de SQL Server.
+   * @param error Error original.
+   * @returns `true` cuando la base no se pudo alcanzar.
+   */
+  private isDatabaseUnavailable(error: unknown): boolean {
+    const driverError =
+      error instanceof QueryFailedError &&
+      typeof error.driverError === "object" &&
+      error.driverError !== null
+        ? (error.driverError as { code?: string; originalError?: { code?: string } })
+        : null;
+    const code = driverError?.code ?? driverError?.originalError?.code;
+    return ["ETIMEOUT", "ESOCKET", "ECONNRESET", "ENOTFOUND"].includes(
+      code ?? "",
+    );
   }
 
   /**

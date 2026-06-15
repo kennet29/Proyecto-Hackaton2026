@@ -21,9 +21,29 @@ import { HealthModule } from "./health/health.module";
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
+        const parseMs = (value: string | undefined, fallback: number) => {
+          const parsed = Number(value);
+          return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+        };
         const authMode = config.get<string>("DB_AUTH", "sql").toLowerCase();
         const host = config.get<string>("DB_HOST", "localhost");
         const isAzureSql = host.toLowerCase().endsWith(".database.windows.net");
+        const connectionTimeout = parseMs(
+          config.get<string>("DB_CONNECTION_TIMEOUT_MS"),
+          isAzureSql ? 60000 : 15000,
+        );
+        const requestTimeout = parseMs(
+          config.get<string>("DB_REQUEST_TIMEOUT_MS"),
+          isAzureSql ? 60000 : 15000,
+        );
+        const retryAttempts = parseMs(
+          config.get<string>("DB_RETRY_ATTEMPTS"),
+          isAzureSql ? 5 : 2,
+        );
+        const retryDelay = parseMs(
+          config.get<string>("DB_RETRY_DELAY_MS"),
+          5000,
+        );
         const encrypt =
           config.get<string>("DB_ENCRYPT")?.toLowerCase() === "true" ||
           (!config.get<string>("DB_ENCRYPT") && isAzureSql);
@@ -33,7 +53,7 @@ import { HealthModule } from "./health/health.module";
           (!config.get<string>("DB_TRUST_SERVER_CERTIFICATE") && !isAzureSql);
 
         console.log(
-          `[db-config] host=${host} auth=${authMode} encrypt=${encrypt} trustServerCertificate=${trustServerCertificate}`,
+          `[db-config] host=${host} auth=${authMode} encrypt=${encrypt} trustServerCertificate=${trustServerCertificate} connectionTimeout=${connectionTimeout} requestTimeout=${requestTimeout} retryAttempts=${retryAttempts} retryDelay=${retryDelay}`,
         );
 
         const baseConfig = {
@@ -41,8 +61,10 @@ import { HealthModule } from "./health/health.module";
           host,
           port: Number(config.get<string>("DB_PORT", "1433")),
           database: config.get<string>("DB_NAME"),
-          connectionTimeout: 15000,
-          requestTimeout: 15000,
+          connectionTimeout,
+          requestTimeout,
+          retryAttempts,
+          retryDelay,
           entities: [Usuario, PasswordResetToken, RevokedToken],
           autoLoadEntities: true,
           synchronize: false,

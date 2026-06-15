@@ -5,8 +5,21 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
+function parseMs(value, fallback) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 const host = process.env.DB_HOST || 'localhost';
 const isAzureSql = host.toLowerCase().endsWith('.database.windows.net');
+const connectionTimeout = parseMs(
+  process.env.DB_CONNECTION_TIMEOUT_MS,
+  isAzureSql ? 60000 : 15000,
+);
+const requestTimeout = parseMs(
+  process.env.DB_REQUEST_TIMEOUT_MS,
+  isAzureSql ? 60000 : 15000,
+);
 const encrypt =
   process.env.DB_ENCRYPT?.toLowerCase() === 'true' ||
   (!process.env.DB_ENCRYPT && isAzureSql);
@@ -70,8 +83,8 @@ const dataSource = new DataSource({
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  connectionTimeout: 15000,
-  requestTimeout: 15000,
+  connectionTimeout,
+  requestTimeout,
   options: {
     encrypt,
     trustServerCertificate,

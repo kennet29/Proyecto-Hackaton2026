@@ -52,8 +52,13 @@ Usa `@nestjs/config` globalmente (`AppModule`). Carga la configuracion desde `.e
 | `DB_AUTH` | No (`sql`) | `sql` usa usuario/clave. `windows` habilita NTLM (`app.module.ts`). |
 | `DB_USER`, `DB_PASSWORD` | Si (modo sql) | Credenciales SQL. `DB_PASSWORD` puede omitirse si se usa autenticacion integrada. |
 | `DB_DOMAIN` | Requerido solo en `DB_AUTH=windows` | Dominio NTLM para `userName`. |
+| `DB_CONNECTION_TIMEOUT_MS` | No (`60000` Azure SQL, `15000` resto) | Tiempo maximo para abrir una conexion TCP con SQL Server. Sube este valor en Render si Azure SQL tarda en responder o reactivarse. |
+| `DB_REQUEST_TIMEOUT_MS` | No (`60000` Azure SQL, `15000` resto) | Tiempo maximo para ejecutar una solicitud SQL antes de abortarla. |
+| `DB_RETRY_ATTEMPTS` | No (`5` Azure SQL, `2` resto) | Reintentos de inicializacion de TypeORM cuando la base tarda en estar disponible. |
+| `DB_RETRY_DELAY_MS` | No (`5000`) | Espera entre reintentos de inicializacion de TypeORM. |
 | `JWT_SECRET` | Si | Secreto firmado por `@nestjs/jwt`. Guarda al menos 32 caracteres. |
 | `JWT_EXPIRES_IN` | No (`1h`) | Expiracion valida para `jsonwebtoken` (ej. `15m`, `2h`, `7d`). |
+| `ALLOW_PUBLIC_USER_REGISTRATION` | No (`false`) | Permite registros en `POST /users/register` cuando ya existe al menos un usuario. Si no se define, solo el primer usuario puede crearse publicamente y recibira rol `admin`. |
 | `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASSWORD`, `MAIL_FROM` | Opcional | Si faltan, `MailService` sigue funcionando pero solo loguea la falta de SMTP (`src/mail/mail.service.ts`). |
 | `NOTIFICATIONS_DEFAULT_TZ` | No (`UTC`) | Zona horaria usada cuando el cliente no envia `timezone` (`src/notifications/notifications.service.ts`). |
 | `QR_DEEPLINK_BASE` | No (`gestionsalud://permiso-acceso`) | Esquema usado para generar enlaces profundos en QR de permisos (`permisoacceso.service.ts`). |
@@ -165,7 +170,9 @@ Todas las rutas incluyen prefijo `/api/v1`. Las respuestas y validaciones siguen
 - `GET /version`: devuelve `BackendVersionInfo` (`name`, `description`, `version`, `semver`, `apiVersion`, `buildDate`). Usa `process.env.BACKEND_VERSION` o `package.json`.
 
 ### 9.2 Usuarios especializados (`src/users`)
-- `POST /users` (**publico**): crea usuario con `username`, `password`, `city?`, `country?`, `pacienteId?`, `role?`, `activo?`, `fingerprintTemplate?`. Se hashea con bcrypt y se almacena `fingerprintHash` opcional. Pensado para la primera alta de admin; despues conviene cerrar el endpoint o securizarlo.
+- `GET /users/registration-status` (**publico**): devuelve `{ bootstrapMode, publicRegistrationEnabled, totalUsers }` para que el cliente sepa si el registro abierto esta disponible.
+- `POST /users/register` (**publico**): crea usuario con `username`, `password`, `city?`, `country?`, `pacienteId?`, `fingerprintTemplate?`. Si no existe ningun usuario, crea la cuenta inicial con rol `admin`; si ya existen usuarios, solo funciona cuando `ALLOW_PUBLIC_USER_REGISTRATION=true` y asigna rol `paciente`.
+- `POST /users` (**admin/superadmin**): crea usuario con `username`, `password`, `city?`, `country?`, `pacienteId?`, `role?`, `activo?`, `fingerprintTemplate?`. Se hashea con bcrypt y se almacena `fingerprintHash` opcional.
 - `GET /users`: lista todos los registros.
 - `GET /users/:id`: busca por entero.
 - `PATCH /users/:id`: permite cambiar ciudad, pais, rol, estado, paciente default, password y huella.
@@ -245,6 +252,7 @@ Cada servicio define `PRIMARY_KEYS` al inicio (`*.service.ts`). Para tablas con 
    npm run start:dev
    ```
    El log final deberia mostrar `api usuarios <version> escuchando ... - conexion a base de datos exitosa (gestionsalud)`.
+   Si necesitas que cualquier paciente pueda registrarse desde la app aun despues de crear el usuario inicial, deja `ALLOW_PUBLIC_USER_REGISTRATION=true` en `.env`.
 2. **Build para produccion**
    ```bash
    npm run build
