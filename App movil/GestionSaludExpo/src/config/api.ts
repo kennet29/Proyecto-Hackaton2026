@@ -2,11 +2,20 @@ import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
 
 const API_SUFFIX = '/api/v1';
+const DEFAULT_API_BASE = 'https://proyecto-hackaton2026.onrender.com';
 
 const normalizeBaseUrl = (value: string): string => value.replace(/\/+$/, '');
+const ensureApiUrl = (value: string): string => {
+  const normalized = normalizeBaseUrl(value);
+  return normalized.endsWith(API_SUFFIX) ? normalized : `${normalized}${API_SUFFIX}`;
+};
 
 const envBase = process.env.EXPO_PUBLIC_API_URL
-  ? normalizeBaseUrl(process.env.EXPO_PUBLIC_API_URL)
+  ? ensureApiUrl(process.env.EXPO_PUBLIC_API_URL)
+  : null;
+
+const configuredBase = typeof Constants.expoConfig?.extra?.apiUrl === 'string'
+  ? ensureApiUrl(Constants.expoConfig.extra.apiUrl)
   : null;
 
 type HostCandidate = string | undefined | null;
@@ -43,7 +52,6 @@ const deriveHostFromScriptUrl = (): string | null => {
 
 const deriveHostFromExpo = (): string | null => {
   const possibleSources: HostCandidate[] = [
-    Constants.expoConfig?.extra?.apiUrl,
     Constants.expoConfig?.hostUri,
     Constants.expoGoConfig?.hostUri,
     (Constants as any).manifest?.debuggerHost,
@@ -71,7 +79,8 @@ const buildFallbackUrl = (): string => {
   return `http://${host}:3000${API_SUFFIX}`;
 };
 
-export const API_URL = envBase ?? buildFallbackUrl();
+export const API_URL =
+  envBase ?? configuredBase ?? ensureApiUrl(DEFAULT_API_BASE);
 
 if (__DEV__) {
   console.log(`[api] base URL: ${API_URL}`);

@@ -8,18 +8,18 @@ type Props = NativeStackScreenProps<RootStackParamList, 'IniciarSesion'>;
 export function IniciarSesionScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Bienvenido A Gestion Salud</Text>
+      <Text style={styles.title}>Bienvenido a Gestión Salud</Text>
       <Text style={styles.subtitle}>
         Organiza tus citas, tratamientos y recordatorios desde un solo lugar.
       </Text>
       <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.btnText}>Ir A Login</Text>
+        <Text style={styles.btnText}>Ir a login</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.secondaryBtn}
         onPress={() => navigation.navigate('Registro')}
       >
-        <Text style={styles.secondaryText}>Crear Cuenta</Text>
+        <Text style={styles.secondaryText}>Crear cuenta</Text>
       </TouchableOpacity>
     </View>
   );

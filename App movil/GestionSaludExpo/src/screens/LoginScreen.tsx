@@ -1,20 +1,20 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  Pressable,
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
-import * as LocalAuthentication from 'expo-local-authentication';
-import { Ionicons } from '@expo/vector-icons';
 import { loadFingerprintTemplate } from '../utils/fingerprint';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
@@ -62,7 +62,7 @@ const formatErrorMessage = (error: unknown): string => {
     }
     return error.message;
   }
-  return 'OcurriÃƒÂ³ un error inesperado. Intenta nuevamente.';
+  return 'Ocurrió un error inesperado. Intenta nuevamente.';
 };
 
 export function LoginScreen({ navigation }: Props) {
@@ -75,18 +75,23 @@ export function LoginScreen({ navigation }: Props) {
   const [fingerprintTemplate, setFingerprintTemplate] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const { login } = useAuth();
-  const fingerprintReady = useMemo(() => biometricAvailable && !!fingerprintTemplate, [biometricAvailable, fingerprintTemplate]);
+
+  const fingerprintReady = useMemo(
+    () => biometricAvailable && !!fingerprintTemplate,
+    [biometricAvailable, fingerprintTemplate],
+  );
+
   const fingerprintStatusMessage = useMemo(() => {
     if (!biometricAvailable) {
-      return 'Activa la biometria en tu dispositivo para usar esta funcion.';
+      return 'Activa la biometría en tu dispositivo para usar esta función.';
     }
     if (!username) {
       return 'Ingresa tu usuario para detectar la huella guardada en este dispositivo.';
     }
     if (!fingerprintTemplate) {
-      return 'Registra tu huella desde este dispositivo durante el registro para poder usarla aquÃƒÂ­.';
+      return 'Registra tu huella desde este dispositivo durante el registro para poder usarla aquí.';
     }
-    return 'Usa tu huella para iniciar sesion sin contrasena.';
+    return 'Usa tu huella para iniciar sesión sin contraseña.';
   }, [biometricAvailable, fingerprintTemplate, username]);
 
   const sanitizeUsername = (value: string) => value.replace(/[^a-zA-Z0-9._-]/g, '');
@@ -129,12 +134,12 @@ export function LoginScreen({ navigation }: Props) {
     });
     const body = await response.json().catch(() => null);
     if (!response.ok || !body?.accessToken || !body?.user) {
-      throw new Error(body?.message ?? 'credenciales invalidas');
+      throw new Error(body?.message ?? 'Credenciales inválidas');
     }
     login({ token: body.accessToken, user: body.user });
     setFeedback({
       type: 'success',
-      message: body?.message ?? 'Inicio de sesi?n exitoso.',
+      message: body?.message ?? 'Inicio de sesión exitoso.',
     });
     return body as LoginApiResponse;
   };
@@ -142,15 +147,15 @@ export function LoginScreen({ navigation }: Props) {
   const handleLogin = async () => {
     setFeedback(null);
     if (!username || !password) {
-      const message = 'Por favor completa usuario y contraseÃƒÂ±a.';
+      const message = 'Por favor completa usuario y contraseña.';
       setFeedback({ type: 'error', message });
-      Alert.alert('Campos Incompletos', message);
+      Alert.alert('Campos incompletos', message);
       return;
     }
     try {
       setLoading(true);
       const body = await executeLogin({ username, password });
-      Alert.alert('Bienvenido', body?.message ?? 'Inicio de sesiÃƒÂ³n exitoso');
+      Alert.alert('Bienvenido', body?.message ?? 'Inicio de sesión exitoso');
     } catch (error) {
       const message = formatErrorMessage(error);
       setFeedback({ type: 'error', message });
@@ -165,32 +170,33 @@ export function LoginScreen({ navigation }: Props) {
     if (!username) {
       const message = 'Ingresa el usuario asociado a la huella.';
       setFeedback({ type: 'error', message });
-      Alert.alert('Usuario Requerido', message);
+      Alert.alert('Usuario requerido', message);
       return;
     }
     if (!fingerprintTemplate) {
-      const message = 'Registra tu huella durante el registro en este mismo dispositivo para usar esta opciÃƒÂ³n.';
+      const message =
+        'Registra tu huella durante el registro en este mismo dispositivo para usar esta opción.';
       setFeedback({ type: 'error', message });
-      Alert.alert('Huella No Encontrada', message);
+      Alert.alert('Huella no encontrada', message);
       return;
     }
     if (!biometricAvailable) {
-      const message = 'Habilita la biometrÃƒÂ­a en este dispositivo.';
+      const message = 'Habilita la biometría en este dispositivo.';
       setFeedback({ type: 'error', message });
-      Alert.alert('BiometrÃƒÂ­a No Disponible', message);
+      Alert.alert('Biometría no disponible', message);
       return;
     }
     try {
       setFingerprintLoading(true);
       const auth = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'AutentÃƒÂ­cate con tu huella',
+        promptMessage: 'Autentícate con tu huella',
         disableDeviceFallback: true,
       });
       if (!auth.success) {
-        throw new Error('autenticaciÃƒÂ³n cancelada');
+        throw new Error('Autenticación cancelada');
       }
       const body = await executeLogin({ username, fingerprintTemplate });
-      Alert.alert('Bienvenido', body?.message ?? 'Inicio de sesiÃƒÂ³n exitoso');
+      Alert.alert('Bienvenido', body?.message ?? 'Inicio de sesión exitoso');
     } catch (error) {
       const message = formatErrorMessage(error);
       setFeedback({ type: 'error', message });
@@ -206,23 +212,23 @@ export function LoginScreen({ navigation }: Props) {
       <View style={[styles.circle, styles.orangeCircle]} />
       <View style={styles.card}>
         <Text style={styles.welcome}>Bienvenido</Text>
-        <Text style={styles.subtitle}>Nos Alegra Tenerte De Vuelta</Text>
+        <Text style={styles.subtitle}>Nos alegra tenerte de vuelta</Text>
         <FeedbackBanner feedback={feedback} />
         <Text style={styles.label}>Usuario</Text>
         <TextInput
           style={styles.input}
-          placeholder="Ej: Usuario.demo"
+          placeholder="Ej: usuario.demo"
           placeholderTextColor="#9FB3C8"
           autoCapitalize="none"
           autoCorrect={false}
           value={username}
           onChangeText={(text) => setUsername(sanitizeUsername(text))}
         />
-        <Text style={styles.label}>ContraseÃƒÂ±a</Text>
+        <Text style={styles.label}>Contraseña</Text>
         <View style={styles.passwordWrapper}>
           <TextInput
             style={[styles.input, styles.passwordInput]}
-            placeholder="Escribe Tu ContraseÃƒÂ±a"
+            placeholder="Escribe tu contraseña"
             placeholderTextColor="#9FB3C8"
             secureTextEntry={!showPassword}
             value={password}
@@ -235,11 +241,15 @@ export function LoginScreen({ navigation }: Props) {
         <View style={styles.actions}>
           <Text style={styles.remember}>Recordarme</Text>
           <TouchableOpacity onPress={() => navigation.navigate('CambiarContrasena')}>
-            <Text style={styles.forget}>Olvide Mi ContraseÃƒÂ±a</Text>
+            <Text style={styles.forget}>Olvidé mi contraseña</Text>
           </TouchableOpacity>
         </View>
         <TouchableOpacity style={styles.primaryBtn} onPress={handleLogin} disabled={loading}>
-          {loading ? <ActivityIndicator color="#F4F8FF" /> : <Text style={styles.btnText}>Iniciar</Text>}
+          {loading ? (
+            <ActivityIndicator color="#F4F8FF" />
+          ) : (
+            <Text style={styles.btnText}>Iniciar</Text>
+          )}
         </TouchableOpacity>
         <View style={styles.fingerprintSection}>
           <View style={styles.fingerprintHeader}>
@@ -248,22 +258,30 @@ export function LoginScreen({ navigation }: Props) {
           </View>
           <Text style={styles.fingerprintHint}>{fingerprintStatusMessage}</Text>
           <TouchableOpacity
-            style={[styles.fingerprintAction, (!fingerprintReady || fingerprintLoading) && styles.fingerprintActionDisabled]}
+            style={[
+              styles.fingerprintAction,
+              (!fingerprintReady || fingerprintLoading) && styles.fingerprintActionDisabled,
+            ]}
             onPress={handleFingerprintLogin}
             disabled={!fingerprintReady || fingerprintLoading}
-            accessibilityLabel="Iniciar sesion con huella digital"
+            accessibilityLabel="Iniciar sesión con huella digital"
           >
             {fingerprintLoading ? (
               <ActivityIndicator color="#29B6FF" />
             ) : (
-              <Text style={[styles.fingerprintActionText, !fingerprintReady && styles.fingerprintActionTextDisabled]}>
+              <Text
+                style={[
+                  styles.fingerprintActionText,
+                  !fingerprintReady && styles.fingerprintActionTextDisabled,
+                ]}
+              >
                 {fingerprintReady ? 'Ingresar con huella' : 'Huella no disponible'}
               </Text>
             )}
           </TouchableOpacity>
         </View>
         <Text style={styles.footer}>
-          Ã‚Â¿No Tienes Cuenta?
+          ¿No tienes cuenta?
           <Text style={styles.link} onPress={() => navigation.navigate('Registro')}>
             {' '}
             Registrarme
@@ -454,4 +472,3 @@ const styles = StyleSheet.create({
     color: '#FF4D73',
   },
 });
-

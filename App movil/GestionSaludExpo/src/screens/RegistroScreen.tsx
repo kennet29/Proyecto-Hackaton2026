@@ -52,7 +52,7 @@ const formatErrorMessage = (error: unknown): string => {
     }
     return error.message;
   }
-  return 'OcurriÃ³ un error inesperado. Intenta nuevamente.';
+  return 'Ocurrió un error inesperado. Intenta nuevamente.';
 };
 
 export function RegistroScreen({ navigation }: Props) {
@@ -72,7 +72,7 @@ export function RegistroScreen({ navigation }: Props) {
   const [bootstrapMode, setBootstrapMode] = useState(false);
 
   const sanitizeText = (value: string) =>
-    value.replace(/[^a-zA-ZÀ-ÿ\u00f1\u00d1\s.-]/g, '');
+    value.replace(/[^a-zA-Z\u00C0-\u00FF\u00F1\u00D1\s.-]/g, '');
   const sanitizeUsername = (value: string) => value.replace(/[^a-zA-Z0-9._-]/g, '');
   const sanitizePassword = (value: string) => value;
   const sanitizeEmail = (value: string) => value.replace(/\s/g, '').toLowerCase();
@@ -111,7 +111,10 @@ export function RegistroScreen({ navigation }: Props) {
   const handleRegisterFingerprint = async () => {
     try {
       if (!biometricAvailable) {
-        Alert.alert('BiometrÃ­a No Disponible', 'Configura tu huella en este dispositivo antes de continuar.');
+        Alert.alert(
+          'Biometría no disponible',
+          'Configura tu huella en este dispositivo antes de continuar.',
+        );
         return;
       }
       const auth = await LocalAuthentication.authenticateAsync({
@@ -119,17 +122,19 @@ export function RegistroScreen({ navigation }: Props) {
         disableDeviceFallback: true,
       });
       if (!auth.success) {
-        Alert.alert('Huella Cancelada', 'No se guardÃ³ ninguna huella.');
+        Alert.alert('Huella cancelada', 'No se guardó ninguna huella.');
         return;
       }
       const template = generateFingerprintTemplate();
       setFingerprintTemplate(template);
       setFingerprintStatus('saved');
-      Alert.alert('Huella Registrada', 'Se enviarÃ¡ junto con tu registro.');
+      Alert.alert('Huella registrada', 'Se enviará junto con tu registro.');
     } catch (error) {
       Alert.alert(
-        'Error biomÃ©trico',
-        error instanceof Error ? error.message : 'No se pudo registrar la huella. Intenta nuevamente.',
+        'Error biométrico',
+        error instanceof Error
+          ? error.message
+          : 'No se pudo registrar la huella. Intenta nuevamente.',
       );
     }
   };
@@ -138,7 +143,7 @@ export function RegistroScreen({ navigation }: Props) {
     setFeedback(null);
     if (!registrationEnabled) {
       const message =
-        'El registro publico esta deshabilitado. Solicita a un administrador que cree tu cuenta.';
+        'El registro público está deshabilitado. Solicita a un administrador que cree tu cuenta.';
       setFeedback({ type: 'error', message });
       Alert.alert('Registro no disponible', message);
       return;
@@ -146,13 +151,13 @@ export function RegistroScreen({ navigation }: Props) {
     if (!fullName || !email || !city || !country || !username || !password || !confirmPassword) {
       const message = 'Completa todos los datos para continuar.';
       setFeedback({ type: 'error', message });
-      Alert.alert('Campos Incompletos', message);
+      Alert.alert('Campos incompletos', message);
       return;
     }
     if (password !== confirmPassword) {
-      const message = 'La contraseÃ±a y su confirmaciÃ³n no coinciden.';
+      const message = 'La contraseña y su confirmación no coinciden.';
       setFeedback({ type: 'error', message });
-      Alert.alert('ValidaciÃ³n', message);
+      Alert.alert('Validación', message);
       return;
     }
 
@@ -175,18 +180,19 @@ export function RegistroScreen({ navigation }: Props) {
       if (!response.ok) {
         throw new Error(body?.message ?? 'No se pudo crear la cuenta');
       }
-      let successMessage = body?.message ?? 'Cuenta creada correctamente. Ya puedes iniciar sesiÃ³n.';
+      let successMessage =
+        body?.message ?? 'Cuenta creada correctamente. Ya puedes iniciar sesión.';
       if (fingerprintTemplate) {
         try {
           await saveFingerprintTemplate(username, fingerprintTemplate);
         } catch (storageError) {
           console.warn('No se pudo guardar la huella localmente', storageError);
           successMessage =
-            'Cuenta creada, pero no pudimos guardar la huella en este dispositivo. PodrÃ¡s registrarla nuevamente desde este mismo telÃ©fono.';
+            'Cuenta creada, pero no pudimos guardar la huella en este dispositivo. Podrás registrarla nuevamente desde este mismo teléfono.';
         }
       }
       setFeedback({ type: 'success', message: successMessage });
-      Alert.alert('Cuenta Creada', successMessage, [
+      Alert.alert('Cuenta creada', successMessage, [
         { text: 'Ir al login', onPress: () => navigation.replace('Login') },
       ]);
     } catch (error) {
@@ -201,28 +207,31 @@ export function RegistroScreen({ navigation }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>Crear Cuenta</Text>
-        <Text style={styles.subtitle}>Completa tus datos para registrarte en GestiÃ³n Salud.</Text>
+        <Text style={styles.title}>Crear cuenta</Text>
+        <Text style={styles.subtitle}>
+          Completa tus datos para registrarte en Gestión Salud.
+        </Text>
         <FeedbackBanner feedback={feedback} />
         {bootstrapMode ? (
           <View style={styles.bootstrapNotice}>
             <Text style={styles.bootstrapNoticeText}>
-              EstÃ¡s creando el primer usuario del sistema. Esta cuenta recibirÃ¡ acceso administrador inicial.
+              Estás creando el primer usuario del sistema. Esta cuenta recibirá acceso
+              administrador inicial.
             </Text>
           </View>
         ) : null}
 
-        <Text style={styles.label}>Nombre Completo</Text>
+        <Text style={styles.label}>Nombre completo</Text>
         <TextInput
           style={styles.input}
-          placeholder="Ej: Andrea Lopez"
+          placeholder="Ej: Andrea López"
           placeholderTextColor="#9FB3C8"
           autoCapitalize="words"
           value={fullName}
           onChangeText={(text) => setFullName(sanitizeText(text))}
         />
 
-        <Text style={styles.label}>Correo ElectrÃ³nico</Text>
+        <Text style={styles.label}>Correo electrónico</Text>
         <TextInput
           style={styles.input}
           placeholder="tu@email.com"
@@ -244,7 +253,7 @@ export function RegistroScreen({ navigation }: Props) {
           onChangeText={(text) => setCity(sanitizeText(text))}
         />
 
-        <Text style={styles.label}>PaÃƒÂ­s</Text>
+        <Text style={styles.label}>País</Text>
         <TextInput
           style={styles.input}
           placeholder="Ej: Nicaragua"
@@ -265,20 +274,20 @@ export function RegistroScreen({ navigation }: Props) {
           onChangeText={(text) => setUsername(sanitizeUsername(text))}
         />
 
-        <Text style={styles.label}>ContraseÃ±a</Text>
+        <Text style={styles.label}>Contraseña</Text>
         <TextInput
           style={styles.input}
-          placeholder="MÃ­nimo 8 caracteres"
+          placeholder="Mínimo 8 caracteres"
           placeholderTextColor="#9FB3C8"
           secureTextEntry
           value={password}
           onChangeText={(text) => setPassword(sanitizePassword(text))}
         />
 
-        <Text style={styles.label}>Confirmar ContraseÃ±a</Text>
+        <Text style={styles.label}>Confirmar contraseña</Text>
         <TextInput
           style={styles.input}
-          placeholder="Repite la contraseÃ±a"
+          placeholder="Repite la contraseña"
           placeholderTextColor="#9FB3C8"
           secureTextEntry
           value={confirmPassword}
@@ -287,17 +296,24 @@ export function RegistroScreen({ navigation }: Props) {
 
         {biometricAvailable ? (
           <View style={styles.fingerprintBox}>
-            <Text style={styles.label}>Huella Digital</Text>
+            <Text style={styles.label}>Huella digital</Text>
             <Text style={styles.fingerprintHint}>
-              Registra tu huella para iniciar sesiÃ³n desde este dispositivo sin contraseÃ±a.
+              Registra tu huella para iniciar sesión desde este dispositivo sin
+              contraseña.
             </Text>
             <TouchableOpacity
-              style={[styles.fingerprintBtn, fingerprintStatus === 'saved' && styles.fingerprintBtnActive]}
+              style={[
+                styles.fingerprintBtn,
+                fingerprintStatus === 'saved' && styles.fingerprintBtnActive,
+              ]}
               onPress={handleRegisterFingerprint}
               disabled={loading}
             >
               <Text
-                style={[styles.fingerprintBtnText, fingerprintStatus === 'saved' && styles.fingerprintBtnTextActive]}
+                style={[
+                  styles.fingerprintBtnText,
+                  fingerprintStatus === 'saved' && styles.fingerprintBtnTextActive,
+                ]}
               >
                 {fingerprintStatus === 'saved' ? 'Huella lista' : 'Registrar huella'}
               </Text>
@@ -305,7 +321,7 @@ export function RegistroScreen({ navigation }: Props) {
           </View>
         ) : (
           <Text style={styles.fingerprintWarning}>
-            Configura la huella en tu telÃ©fono para habilitar esta opciÃ³n.
+            Configura la huella en tu teléfono para habilitar esta opción.
           </Text>
         )}
 
@@ -323,7 +339,7 @@ export function RegistroScreen({ navigation }: Props) {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.secondaryBtn} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.secondaryLabel}>Ya Tengo Cuenta</Text>
+          <Text style={styles.secondaryLabel}>Ya tengo cuenta</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
