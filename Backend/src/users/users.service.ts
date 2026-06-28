@@ -14,6 +14,7 @@ import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { Usuario } from "./entities/user.entity";
 import { createHash } from "crypto";
+import { isDatabaseUnavailable } from "../common/database/database-error.util";
 
 /**
  * Implementa la lógica de negocio y persistencia del dominio users.
@@ -159,7 +160,11 @@ export class UsersService {
    * @returns Resultado de la operación.
    */
   async findByUsername(username: string): Promise<Usuario | null> {
-    return this.usuarioRepository.findOne({ where: { username } });
+    try {
+      return await this.usuarioRepository.findOne({ where: { username } });
+    } catch (error) {
+      return this.handleDbError(error, "consultar");
+    }
   }
 
   /**
@@ -168,7 +173,11 @@ export class UsersService {
    * @returns La operación se completa sin devolver contenido.
    */
   async registerLogin(id: number): Promise<void> {
-    await this.usuarioRepository.update(id, { lastLogin: new Date() });
+    try {
+      await this.usuarioRepository.update(id, { lastLogin: new Date() });
+    } catch (error) {
+      this.handleDbError(error, "registrar ingreso");
+    }
   }
 
   /**
@@ -214,7 +223,7 @@ export class UsersService {
       });
       return await this.usuarioRepository.save(entity);
     } catch (error) {
-      if (this.isDatabaseUnavailable(error)) {
+      if (isDatabaseUnavailable(error)) {
         throw new ServiceUnavailableException(
           "la base de datos no esta disponible temporalmente, intenta nuevamente en unos minutos",
         );
@@ -231,7 +240,7 @@ export class UsersService {
     try {
       return await this.usuarioRepository.count();
     } catch (error) {
-      if (this.isDatabaseUnavailable(error)) {
+      if (isDatabaseUnavailable(error)) {
         throw new ServiceUnavailableException(
           "la base de datos no esta disponible temporalmente, intenta nuevamente en unos minutos",
         );
@@ -247,7 +256,7 @@ export class UsersService {
    * @returns Resultado de la operación.
    */
   private handleDbError(error: unknown, action: string): never {
-    if (this.isDatabaseUnavailable(error)) {
+    if (isDatabaseUnavailable(error)) {
       throw new ServiceUnavailableException(
         "la base de datos no esta disponible temporalmente, intenta nuevamente en unos minutos",
       );
@@ -274,24 +283,6 @@ export class UsersService {
       );
     }
     throw new InternalServerErrorException(`no se pudo ${action} el usuario`);
-  }
-
-  /**
-   * Indica si el error representa indisponibilidad temporal de SQL Server.
-   * @param error Error original.
-   * @returns `true` cuando la base no se pudo alcanzar.
-   */
-  private isDatabaseUnavailable(error: unknown): boolean {
-    const driverError =
-      error instanceof QueryFailedError &&
-      typeof error.driverError === "object" &&
-      error.driverError !== null
-        ? (error.driverError as { code?: string; originalError?: { code?: string } })
-        : null;
-    const code = driverError?.code ?? driverError?.originalError?.code;
-    return ["ETIMEOUT", "ESOCKET", "ECONNRESET", "ENOTFOUND"].includes(
-      code ?? "",
-    );
   }
 
   /**

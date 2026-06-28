@@ -7,7 +7,7 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { Request, Response } from "express";
-import { QueryFailedError } from "typeorm";
+import { isDatabaseUnavailable } from "../database/database-error.util";
 
 /**
  * Filtro de excepciones que transforma errores del flujo api exception filter.
@@ -24,7 +24,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    if (this.isDatabaseUnavailable(exception)) {
+    if (isDatabaseUnavailable(exception)) {
       const dbException = new ServiceUnavailableException(
         "la base de datos no esta disponible temporalmente, intenta nuevamente en unos minutos",
       );
@@ -97,25 +97,4 @@ export class ApiExceptionFilter implements ExceptionFilter {
     return "corrige los datos indicados en el mensaje y vuelve a enviar la solicitud.";
   }
 
-  /**
-   * Indica si el error representa indisponibilidad temporal de SQL Server.
-   * @param exception Error original.
-   * @returns `true` cuando la base no se pudo alcanzar.
-   */
-  private isDatabaseUnavailable(exception: unknown): boolean {
-    if (!(exception instanceof QueryFailedError)) {
-      return false;
-    }
-    const driverError =
-      typeof exception.driverError === "object" && exception.driverError !== null
-        ? (exception.driverError as {
-            code?: string;
-            originalError?: { code?: string };
-          })
-        : undefined;
-    const code = driverError?.code ?? driverError?.originalError?.code;
-    return ["ETIMEOUT", "ESOCKET", "ECONNRESET", "ENOTFOUND"].includes(
-      code ?? "",
-    );
-  }
 }
