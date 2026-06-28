@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { BadRequestException, VersioningType } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import { json, urlencoded } from "express";
 import morgan from "morgan";
 import { cleanupOpenApiDoc, createZodValidationPipe } from "nestjs-zod";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
@@ -35,8 +36,11 @@ zodJsonSchemaProcessors.allProcessors.date = openApiDateProcessor;
  */
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const requestBodyLimit = process.env.REQUEST_BODY_LIMIT ?? "5mb";
   const requestLogFormat =
     ":method :url :status :res[content-length] - :response-time ms";
+  app.use(json({ limit: requestBodyLimit }));
+  app.use(urlencoded({ extended: true, limit: requestBodyLimit }));
   app.use(
     morgan(requestLogFormat, {
       stream: {

@@ -9,6 +9,13 @@ import {
 import { Request, Response } from "express";
 import { isDatabaseUnavailable } from "../database/database-error.util";
 
+type PayloadTooLargeLike = {
+  type?: string;
+  status?: number;
+  statusCode?: number;
+  limit?: number;
+};
+
 /**
  * Filtro de excepciones que transforma errores del flujo api exception filter.
  */
@@ -36,6 +43,28 @@ export class ApiExceptionFilter implements ExceptionFilter {
         path: request.url,
         timestamp: new Date().toISOString(),
         hint: this.buildHint(HttpStatus.SERVICE_UNAVAILABLE),
+      });
+      return;
+    }
+
+    const payloadTooLargeException = exception as PayloadTooLargeLike;
+    if (
+      payloadTooLargeException?.type === "entity.too.large" ||
+      payloadTooLargeException?.status === HttpStatus.PAYLOAD_TOO_LARGE ||
+      payloadTooLargeException?.statusCode === HttpStatus.PAYLOAD_TOO_LARGE
+    ) {
+      response.status(HttpStatus.PAYLOAD_TOO_LARGE).json({
+        statusCode: HttpStatus.PAYLOAD_TOO_LARGE,
+        error: "PayloadTooLarge",
+        message:
+          "la imagen enviada es demasiado grande para procesarse en una sola solicitud",
+        details: {
+          limit: payloadTooLargeException.limit,
+          type: payloadTooLargeException.type,
+        },
+        path: request.url,
+        timestamp: new Date().toISOString(),
+        hint: "reduce el tamano o calidad de la foto e intenta nuevamente.",
       });
       return;
     }
