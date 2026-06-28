@@ -42,7 +42,21 @@ export type RootStackParamList = {
   OperacionForm: undefined;
   OperacionCreate: undefined;
   CondicionCronicaForm: undefined;
-  CondicionCronicaCreate: undefined;
+  CondicionCronicaCreate:
+    | {
+        selectedTipoCondicion?: {
+          tipocondicionId: number;
+          nombre: string;
+        };
+        typedConditionName?: string;
+      }
+    | undefined;
+  CondicionTipoSelector:
+    | {
+        currentName?: string;
+        selectedId?: number;
+      }
+    | undefined;
   ControlCronico: undefined;
   Desparasitacion: undefined;
   DesparasitacionCreate: undefined;

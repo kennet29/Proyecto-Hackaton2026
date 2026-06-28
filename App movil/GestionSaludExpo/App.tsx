@@ -26,6 +26,7 @@ import { OperacionFormScreen } from './src/screens/OperacionFormScreen';
 import { OperacionCreateScreen } from './src/screens/OperacionCreateScreen';
 import { CondicionCronicaFormScreen } from './src/screens/CondicionCronicaFormScreen';
 import { CondicionCronicaCreateScreen } from './src/screens/CondicionCronicaCreateScreen';
+import { CondicionTipoSelectorScreen } from './src/screens/CondicionTipoSelectorScreen';
 import { ControlCronicoScreen } from './src/screens/ControlCronicoScreen';
 import { DesparasitacionScreen } from './src/screens/DesparasitacionScreen';
 import { DesparasitacionCreateScreen } from './src/screens/DesparasitacionCreateScreen';
@@ -155,6 +156,11 @@ const PrivateNavigator = () => {
         name="CondicionCronicaCreate"
         component={CondicionCronicaCreateScreen}
         options={{ title: 'Nueva Condicion Cronica' }}
+      />
+      <Stack.Screen
+        name="CondicionTipoSelector"
+        component={CondicionTipoSelectorScreen}
+        options={{ title: 'Escoger Condicion' }}
       />
       <Stack.Screen
         name="ControlCronico"

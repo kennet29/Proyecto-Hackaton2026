@@ -18,6 +18,7 @@ import { Calendar, DateData } from 'react-native-calendars';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +26,7 @@ import { API_URL } from '../config/api';
 import type { RootStackParamList } from '../navigation/types';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
+import { appColors, colorAlpha } from '../theme/colors';
 
 type PickerField =
   | 'fechaInicio'
@@ -269,6 +271,12 @@ export function MedicacionFormScreen({
       : null,
   );
   const [removeExistingAttachment, setRemoveExistingAttachment] = useState(false);
+  const selectedPatientName = form.pacienteId
+    ? patientOptions.find((patient) => String(patient.pacienteId) === form.pacienteId)?.displayName
+    : null;
+  const completedRequiredFields = [form.pacienteId, form.nombre.trim(), form.fechaInicio].filter(Boolean).length;
+  const totalRequiredFields = 3;
+  const formProgress = Math.round((completedRequiredFields / totalRequiredFields) * 100);
 
   const handleChange = (key: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -979,6 +987,15 @@ export function MedicacionFormScreen({
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
       >
         <View style={styles.heroCard}>
+          <View style={styles.heroTopRow}>
+            <View style={styles.heroIconBadge}>
+              <Ionicons name="medkit-outline" size={28} color={appColors.text} />
+            </View>
+            <View style={styles.heroStatusPill}>
+              <Ionicons name={isCreateMode ? 'create-outline' : 'calendar-outline'} size={14} color={appColors.info} />
+              <Text style={styles.heroStatusText}>{isCreateMode ? 'Formulario activo' : 'Historial'}</Text>
+            </View>
+          </View>
           <Text style={styles.kicker}>SEGUIMIENTO DE MEDICACION</Text>
           <View style={styles.header}>
             <Text style={styles.title}>
@@ -1237,14 +1254,30 @@ export function MedicacionFormScreen({
 
         {isCreateMode ? (
           <View style={styles.formCard}>
-            <Text style={styles.formTitle}>{isEditing ? 'Editar medicacion' : 'Registrar medicacion'}</Text>
-            <Text style={styles.sectionHelper}>
-              Completa el tratamiento, define la hora si quieres dejarla programada y agrega una
-              notificacion al cierre si aplica.
-            </Text>
+            <View style={styles.formHeaderCard}>
+              <View style={styles.formHeaderCopy}>
+                <Text style={styles.kicker}>DATOS DEL TRATAMIENTO</Text>
+                <Text style={styles.formHeaderTitle}>{isEditing ? 'Actualiza la medicacion' : 'Registra la medicacion'}</Text>
+                <Text style={styles.formHeaderText}>
+                  Completa paciente, medicamento e inicio. La hora, receta y notificacion son complementos opcionales.
+                </Text>
+              </View>
+              <View style={styles.progressBadge}>
+                <Text style={styles.progressBadgeValue}>{formProgress}%</Text>
+                <Text style={styles.progressBadgeLabel}>listo</Text>
+              </View>
+            </View>
 
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Paciente</Text>
+            <View style={styles.formStepCard}>
+              <View style={styles.stepHeader}>
+                <View style={styles.stepIcon}>
+                  <Ionicons name="person-outline" size={18} color={appColors.info} />
+                </View>
+                <View style={styles.stepCopy}>
+                  <Text style={styles.stepTitle}>1. Persona asociada</Text>
+                  <Text style={styles.stepHint}>Selecciona a quien pertenece este tratamiento.</Text>
+                </View>
+              </View>
               {loadingPatients ? (
                 <View style={styles.loadingRow}>
                   <ActivityIndicator color="#29B6FF" />
@@ -1253,7 +1286,7 @@ export function MedicacionFormScreen({
               ) : patientOptions.length === 0 ? (
                 <View style={styles.emptyBox}>
                   <Text style={styles.emptyText}>
-                    No hay personas vinculadas. Agrega una desde Gestionar Expediente.
+                    No hay personas vinculadas. Agrega una desde Personas Asociadas.
                   </Text>
                   <TouchableOpacity style={styles.secondaryBtn} onPress={fetchPatients}>
                     <Text style={styles.secondaryBtnText}>Reintentar</Text>
@@ -1278,107 +1311,145 @@ export function MedicacionFormScreen({
                 </View>
               )}
               {form.pacienteId ? (
-                <Text style={styles.fieldHint}>
-                  {`Tratamiento asignado a ${patientNameById[Number(form.pacienteId)] ?? 'la persona seleccionada'}`}
-                </Text>
+                <View style={styles.selectedPatientCard}>
+                  <Ionicons name="checkmark-circle" size={18} color={appColors.success} />
+                  <Text style={styles.selectedPatientText}>
+                    {`Asignado a ${selectedPatientName ?? patientNameById[Number(form.pacienteId)] ?? 'la persona seleccionada'}`}
+                  </Text>
+                </View>
               ) : null}
             </View>
             {patientError ? <Text style={styles.errorText}>{patientError}</Text> : null}
 
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Nombre del medicamento</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Ej. Amoxicilina, Ibuprofeno, Metformina"
-                placeholderTextColor="#9FB3C8"
-                value={form.nombre}
-                onChangeText={(value) => handleChange('nombre', value)}
-              />
-            </View>
-
-            <View style={styles.formRow}>
-              <View style={styles.formColumn}>
-                <Text style={styles.label}>Dosis indicada</Text>
+            <View style={styles.formStepCard}>
+              <View style={styles.stepHeader}>
+                <View style={styles.stepIcon}>
+                  <Ionicons name="medical-outline" size={18} color={appColors.info} />
+                </View>
+                <View style={styles.stepCopy}>
+                  <Text style={styles.stepTitle}>2. Medicamento e indicacion</Text>
+                  <Text style={styles.stepHint}>Registra nombre, dosis, via y notas de la receta.</Text>
+                </View>
+              </View>
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Nombre del medicamento</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Ej. 500 mg, 1 tableta, 10 ml"
+                  placeholder="Ej. Amoxicilina, Ibuprofeno, Metformina"
                   placeholderTextColor="#9FB3C8"
-                  value={form.dosis}
-                  onChangeText={(value) => handleChange('dosis', value)}
+                  value={form.nombre}
+                  onChangeText={(value) => handleChange('nombre', value)}
                 />
               </View>
-              <View style={styles.formColumn}>
-                <Text style={styles.label}>Via de administracion</Text>
+
+              <View style={styles.formRow}>
+                <View style={styles.formColumn}>
+                  <Text style={styles.label}>Dosis indicada</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Ej. 500 mg, 1 tableta, 10 ml"
+                    placeholderTextColor="#9FB3C8"
+                    value={form.dosis}
+                    onChangeText={(value) => handleChange('dosis', value)}
+                  />
+                </View>
+                <View style={styles.formColumn}>
+                  <Text style={styles.label}>Via de administracion</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Ej. Oral, intravenosa, topica"
+                    placeholderTextColor="#9FB3C8"
+                    value={form.via}
+                    onChangeText={(value) => handleChange('via', value)}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Indicaciones de la receta</Text>
                 <TextInput
-                  style={styles.input}
-                  placeholder="Ej. Oral, intravenosa, topica"
+                  style={[styles.input, styles.multiline]}
+                  placeholder="Ej. Tomar despues de los alimentos durante 7 dias"
                   placeholderTextColor="#9FB3C8"
-                  value={form.via}
-                  onChangeText={(value) => handleChange('via', value)}
+                  value={form.indicaciones}
+                  multiline
+                  onChangeText={(value) => handleChange('indicaciones', value)}
                 />
               </View>
             </View>
 
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Indicaciones de la receta</Text>
-              <TextInput
-                style={[styles.input, styles.multiline]}
-                placeholder="Ej. Tomar despues de los alimentos durante 7 dias"
-                placeholderTextColor="#9FB3C8"
-                value={form.indicaciones}
-                multiline
-                onChangeText={(value) => handleChange('indicaciones', value)}
-              />
-            </View>
+            <View style={styles.formStepCard}>
+              <View style={styles.stepHeader}>
+                <View style={styles.stepIcon}>
+                  <Ionicons name="time-outline" size={18} color={appColors.info} />
+                </View>
+                <View style={styles.stepCopy}>
+                  <Text style={styles.stepTitle}>3. Duracion y horario</Text>
+                  <Text style={styles.stepHint}>Define inicio, hora de toma y fin del tratamiento.</Text>
+                </View>
+              </View>
 
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Fecha de inicio del tratamiento</Text>
-              <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('fechaInicio')}>
-                <Text style={styles.dateButtonText}>{formatDisplayDate(form.fechaInicio)}</Text>
-              </TouchableOpacity>
-            </View>
-            {renderIOSPicker('fechaInicio')}
+              <View style={styles.dateGrid}>
+                <View style={styles.dateGridItem}>
+                  <Text style={styles.label}>Inicio</Text>
+                  <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('fechaInicio')}>
+                    <Ionicons name="calendar-outline" size={18} color={appColors.info} />
+                    <Text style={styles.dateButtonText}>{formatDisplayDate(form.fechaInicio)}</Text>
+                  </TouchableOpacity>
+                  {renderIOSPicker('fechaInicio')}
+                </View>
 
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Hora programada de la toma</Text>
-              <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('horaMedicacion')}>
-                <Text style={styles.dateButtonText}>
-                  {form.horaMedicacion ? formatDisplayTime(form.horaMedicacion) : 'Selecciona una hora opcional'}
+                <View style={styles.dateGridItem}>
+                  <Text style={styles.label}>Hora de toma</Text>
+                  <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('horaMedicacion')}>
+                    <Ionicons name="alarm-outline" size={18} color={appColors.info} />
+                    <Text style={styles.dateButtonText}>
+                      {form.horaMedicacion ? formatDisplayTime(form.horaMedicacion) : 'Opcional'}
+                    </Text>
+                  </TouchableOpacity>
+                  {renderIOSPicker('horaMedicacion')}
+                </View>
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Finalizacion</Text>
+                <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('fechaFin')}>
+                  <Ionicons name="flag-outline" size={18} color={appColors.info} />
+                  <Text style={styles.dateButtonText}>
+                    {form.fechaFin ? formatDisplayDate(form.fechaFin) : 'Selecciona una fecha opcional'}
+                  </Text>
+                </TouchableOpacity>
+                <Text style={styles.fieldHint}>
+                  Agregala si quieres dejar definido hasta cuando debe tomarse el medicamento.
                 </Text>
-              </TouchableOpacity>
-              <Text style={styles.fieldHint}>
-                Si defines una hora, se registra en el horario de la medicacion.
-              </Text>
+              </View>
+              {renderIOSPicker('fechaFin')}
             </View>
-            {renderIOSPicker('horaMedicacion')}
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Fecha de finalizacion del tratamiento</Text>
-              <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('fechaFin')}>
-                <Text style={styles.dateButtonText}>
-                  {form.fechaFin ? formatDisplayDate(form.fechaFin) : 'Selecciona una fecha opcional'}
-                </Text>
-              </TouchableOpacity>
-              <Text style={styles.fieldHint}>
-                Agregala si quieres dejar definido hasta cuando debe tomarse el medicamento.
-              </Text>
-            </View>
-            {renderIOSPicker('fechaFin')}
 
             <View style={styles.attachmentCard}>
-              <Text style={styles.formTitle}>Receta fisica adjunta</Text>
-              <Text style={styles.sectionHelper}>
-                Adjunta una foto o un PDF de la receta para dejar respaldo dentro de la medicacion.
-              </Text>
+              <View style={styles.stepHeader}>
+                <View style={styles.stepIcon}>
+                  <Ionicons name="document-attach-outline" size={18} color={appColors.info} />
+                </View>
+                <View style={styles.stepCopy}>
+                  <Text style={styles.stepTitle}>Receta fisica adjunta</Text>
+                  <Text style={styles.stepHint}>
+                    Adjunta una foto o un PDF de la receta para dejar respaldo.
+                  </Text>
+                </View>
+              </View>
 
               <View style={styles.attachmentActions}>
                 <TouchableOpacity style={styles.attachmentButton} onPress={handleTakePhoto}>
+                  <Ionicons name="camera-outline" size={16} color={appColors.info} />
                   <Text style={styles.attachmentButtonText}>Tomar foto</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.attachmentButton} onPress={handlePickImage}>
+                  <Ionicons name="image-outline" size={16} color={appColors.info} />
                   <Text style={styles.attachmentButtonText}>Elegir imagen</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.attachmentButton} onPress={handlePickPdf}>
+                  <Ionicons name="document-text-outline" size={16} color={appColors.info} />
                   <Text style={styles.attachmentButtonText}>Elegir PDF</Text>
                 </TouchableOpacity>
               </View>
@@ -1423,6 +1494,9 @@ export function MedicacionFormScreen({
 
             {form.fechaFin ? (
               <View style={styles.inlineNotificationCard}>
+                <View style={styles.inlineNotificationIcon}>
+                  <Ionicons name="notifications-outline" size={20} color={appColors.info} />
+                </View>
                 <View style={styles.inlineNotificationCopy}>
                   <Text style={styles.inlineNotificationTitle}>Notificacion del tratamiento</Text>
                   <Text style={styles.inlineNotificationHint}>
@@ -1442,24 +1516,34 @@ export function MedicacionFormScreen({
                 </TouchableOpacity>
               </View>
             ) : (
-              <Text style={styles.fieldHint}>
-                Agrega una fecha de finalizacion si quieres crear una notificacion.
-              </Text>
+              <View style={styles.lockedNotificationCard}>
+                <Ionicons name="lock-closed-outline" size={18} color={appColors.textMuted} />
+                <Text style={styles.fieldHint}>
+                  Agrega una fecha de finalizacion si quieres crear una notificacion.
+                </Text>
+              </View>
             )}
 
             <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
+              <Ionicons name="save-outline" size={20} color={appColors.text} />
               <Text style={styles.btnText}>{isEditing ? 'Guardar cambios' : 'Guardar medicacion'}</Text>
             </TouchableOpacity>
 
             {showNotificationForm ? (
               <View style={styles.notificationCard}>
-                <Text style={styles.formTitle}>Notificacion del tratamiento</Text>
-                <Text style={styles.sectionHelper}>
-                  El canal queda fijo como notificacion push.
-                </Text>
+                <View style={styles.stepHeader}>
+                  <View style={styles.stepIcon}>
+                    <Ionicons name="notifications-outline" size={18} color={appColors.success} />
+                  </View>
+                  <View style={styles.stepCopy}>
+                    <Text style={styles.stepTitle}>Notificacion del tratamiento</Text>
+                    <Text style={styles.stepHint}>El canal queda fijo como notificacion push.</Text>
+                  </View>
+                </View>
 
                 <Text style={styles.label}>Canal</Text>
                 <View style={styles.fixedChannelCard}>
+                  <Ionicons name="phone-portrait-outline" size={18} color={appColors.info} />
                   <Text style={styles.fixedChannelText}>Notificacion push</Text>
                 </View>
 
@@ -1492,6 +1576,7 @@ export function MedicacionFormScreen({
                 {renderIOSPicker('notificationTime')}
 
                 <TouchableOpacity style={styles.notificationBtn} onPress={handleCreateNotification}>
+                  <Ionicons name="alarm-outline" size={20} color={appColors.background} />
                   <Text style={styles.notificationBtnText}>Crear notificacion push</Text>
                 </TouchableOpacity>
               </View>
@@ -1529,6 +1614,38 @@ const styles = StyleSheet.create({
     padding: 22,
     borderWidth: 1,
     borderColor: '#29B6FF',
+  },
+  heroTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  heroIconBadge: {
+    width: 58,
+    height: 58,
+    borderRadius: 20,
+    backgroundColor: colorAlpha(appColors.info, '26'),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '55'),
+  },
+  heroStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: appColors.background,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '44'),
+  },
+  heroStatusText: {
+    color: appColors.textSoft,
+    fontSize: 12,
+    fontWeight: '800',
   },
   kicker: {
     color: '#29B6FF',
@@ -1584,12 +1701,93 @@ const styles = StyleSheet.create({
     borderColor: '#27496D',
   },
   formCard: {
+    backgroundColor: '#071120',
+    borderRadius: 24,
+    padding: 0,
+    gap: 14,
+    borderWidth: 0,
+    borderColor: 'transparent',
+  },
+  formHeaderCard: {
     backgroundColor: '#132238',
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 18,
-    gap: 12,
+    gap: 16,
     borderWidth: 1,
     borderColor: '#27496D',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  formHeaderCopy: {
+    flex: 1,
+    gap: 6,
+  },
+  formHeaderTitle: {
+    color: '#F4F8FF',
+    fontSize: 22,
+    fontWeight: '800',
+    lineHeight: 27,
+  },
+  formHeaderText: {
+    color: '#C9D7E8',
+    lineHeight: 19,
+  },
+  progressBadge: {
+    width: 76,
+    height: 76,
+    borderRadius: 24,
+    backgroundColor: colorAlpha(appColors.info, '20'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '66'),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressBadgeValue: {
+    color: appColors.text,
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  progressBadgeLabel: {
+    color: appColors.info,
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  formStepCard: {
+    backgroundColor: '#132238',
+    borderRadius: 22,
+    padding: 18,
+    gap: 14,
+    borderWidth: 1,
+    borderColor: '#27496D',
+  },
+  stepHeader: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  stepIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 14,
+    backgroundColor: colorAlpha(appColors.info, '18'),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '40'),
+  },
+  stepCopy: {
+    flex: 1,
+    gap: 3,
+  },
+  stepTitle: {
+    color: appColors.text,
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  stepHint: {
+    color: appColors.textMuted,
+    lineHeight: 18,
   },
   notificationCard: {
     marginTop: 8,
@@ -1687,6 +1885,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 16,
     backgroundColor: '#0D1B2A',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   fixedChannelText: {
     color: '#F4F8FF',
@@ -1704,6 +1905,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
+  },
+  inlineNotificationIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 16,
+    backgroundColor: colorAlpha(appColors.info, '18'),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   inlineNotificationCopy: {
     flex: 1,
@@ -1733,6 +1942,16 @@ const styles = StyleSheet.create({
     color: '#F4F8FF',
     fontWeight: '700',
   },
+  lockedNotificationCard: {
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 16,
+    padding: 14,
+    backgroundColor: '#132238',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   attachmentCard: {
     marginTop: 4,
     borderWidth: 1,
@@ -1752,6 +1971,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     backgroundColor: '#182A44',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '30'),
   },
   attachmentButtonText: {
     color: '#29B6FF',
@@ -1811,11 +2035,22 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     backgroundColor: '#0D1B2A',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   dateButtonText: {
     fontSize: 16,
     color: '#F4F8FF',
-    textAlign: 'center',
+    flex: 1,
+  },
+  dateGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  dateGridItem: {
+    flex: 1,
+    gap: 8,
   },
   dateTimeRow: {
     flexDirection: 'row',
@@ -1829,6 +2064,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
   },
   btnText: {
     color: '#F4F8FF',
@@ -1841,11 +2080,15 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
   },
   notificationBtnText: {
-    color: '#F4F8FF',
+    color: '#071120',
     textAlign: 'center',
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 16,
   },
   loadingRow: {
@@ -1896,6 +2139,22 @@ const styles = StyleSheet.create({
   secondaryBtnText: {
     color: '#F4F8FF',
     fontWeight: '600',
+  },
+  selectedPatientCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: colorAlpha(appColors.success, '14'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.success, '45'),
+  },
+  selectedPatientText: {
+    color: appColors.textSoft,
+    flex: 1,
+    fontWeight: '700',
   },
   errorText: {
     color: '#FF4D73',

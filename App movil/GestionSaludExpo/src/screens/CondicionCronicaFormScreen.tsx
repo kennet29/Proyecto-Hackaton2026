@@ -12,12 +12,14 @@ import {
 } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import type { RootStackParamList } from '../navigation/types';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
+import { appColors, colorAlpha } from '../theme/colors';
 
 type TipoCondicion = {
   tipocondicionId: number;
@@ -84,9 +86,25 @@ const formatRecordDate = (value?: string | null) => {
 
 type CondicionCronicaFormScreenProps = {
   mode?: 'list' | 'create';
+  selectedTipoCondicion?: {
+    tipocondicionId: number;
+    nombre: string;
+  };
+  typedConditionName?: string;
 };
 
-export function CondicionCronicaFormScreen({ mode = 'list' }: CondicionCronicaFormScreenProps) {
+const normalizeConditionName = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+
+export function CondicionCronicaFormScreen({
+  mode = 'list',
+  selectedTipoCondicion,
+  typedConditionName,
+}: CondicionCronicaFormScreenProps) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isCreateMode = mode === 'create';
   const { token, user } = useAuth();
@@ -100,6 +118,7 @@ export function CondicionCronicaFormScreen({ mode = 'list' }: CondicionCronicaFo
   const [form, setForm] = useState({
     pacienteId: '',
     tipocondicionId: '',
+    condicionNombre: '',
     fechadiagnostico: '',
     estado: 'Activa',
     severidad: '',
@@ -128,6 +147,7 @@ export function CondicionCronicaFormScreen({ mode = 'list' }: CondicionCronicaFo
     setForm((prev) => ({
       pacienteId: prev.pacienteId,
       tipocondicionId: '',
+      condicionNombre: '',
       fechadiagnostico: '',
       estado: 'Activa',
       severidad: '',
@@ -176,7 +196,8 @@ export function CondicionCronicaFormScreen({ mode = 'list' }: CondicionCronicaFo
           .filter(
             (item: TipoCondicion) =>
               Number.isFinite(item.tipocondicionId) && item.tipocondicionId > 0,
-          ),
+          )
+          .sort((a: TipoCondicion, b: TipoCondicion) => a.nombre.localeCompare(b.nombre, 'es')),
       );
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Fallo al cargar tipos de condicion');
@@ -226,6 +247,25 @@ export function CondicionCronicaFormScreen({ mode = 'list' }: CondicionCronicaFo
     fetchRecords();
   }, [fetchPatients, fetchTypes, fetchRecords]);
 
+  useEffect(() => {
+    if (selectedTipoCondicion?.tipocondicionId) {
+      setForm((prev) => ({
+        ...prev,
+        tipocondicionId: String(selectedTipoCondicion.tipocondicionId),
+        condicionNombre: selectedTipoCondicion.nombre,
+      }));
+      return;
+    }
+
+    if (typedConditionName !== undefined) {
+      setForm((prev) => ({
+        ...prev,
+        tipocondicionId: '',
+        condicionNombre: typedConditionName,
+      }));
+    }
+  }, [selectedTipoCondicion, typedConditionName]);
+
   const typeNameById = useMemo(() => {
     const map: Record<number, string> = {};
     typeOptions.forEach((item) => {
@@ -264,6 +304,14 @@ export function CondicionCronicaFormScreen({ mode = 'list' }: CondicionCronicaFo
     return patientNameById[activePatientId] ?? `Paciente #${activePatientId}`;
   }, [form.pacienteId, patientNameById]);
 
+  const selectedConditionName = useMemo(() => {
+    const activeTypeId = Number(form.tipocondicionId);
+    if (Number.isFinite(activeTypeId) && activeTypeId > 0) {
+      return typeNameById[activeTypeId] ?? form.condicionNombre;
+    }
+    return form.condicionNombre.trim();
+  }, [form.condicionNombre, form.tipocondicionId, typeNameById]);
+
   const showDatePicker = (field: 'fechadiagnostico' | 'proximoseguimiento') => {
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
@@ -280,18 +328,75 @@ export function CondicionCronicaFormScreen({ mode = 'list' }: CondicionCronicaFo
     else setShowIOSSeguimientoPicker(true);
   };
 
+  const resolveTipoCondicionId = useCallback(async () => {
+    const selectedId = Number(form.tipocondicionId);
+    if (Number.isFinite(selectedId) && selectedId > 0) {
+      return selectedId;
+    }
+
+    const typedName = form.condicionNombre.trim();
+    if (!typedName) {
+      throw new Error('Debes escribir o seleccionar una condicion clinica');
+    }
+
+    const existingType = typeOptions.find(
+      (item) => normalizeConditionName(item.nombre) === normalizeConditionName(typedName),
+    );
+    if (existingType) {
+      setForm((prev) => ({
+        ...prev,
+        tipocondicionId: String(existingType.tipocondicionId),
+        condicionNombre: existingType.nombre,
+      }));
+      return existingType.tipocondicionId;
+    }
+
+    const response = await fetch(`${API_URL}/tipocondicioncronica`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        nombre: typedName,
+        activo: true,
+        creadopor: user?.username ?? undefined,
+      }),
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(body?.message ?? 'No se pudo crear el tipo de condicion');
+    }
+
+    const createdType: TipoCondicion = {
+      tipocondicionId: Number(body?.tipocondicionId ?? body?.tipocondicionid ?? body?.id ?? 0),
+      nombre: String(body?.nombre ?? typedName),
+    };
+    if (!Number.isFinite(createdType.tipocondicionId) || createdType.tipocondicionId <= 0) {
+      throw new Error('La condicion fue creada, pero no se recibio su identificador');
+    }
+
+    setTypeOptions((prev) =>
+      [...prev, createdType].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')),
+    );
+    setForm((prev) => ({
+      ...prev,
+      tipocondicionId: String(createdType.tipocondicionId),
+      condicionNombre: createdType.nombre,
+    }));
+    return createdType.tipocondicionId;
+  }, [form.condicionNombre, form.tipocondicionId, headers, typeOptions, user?.username]);
+
   const handleSubmit = useCallback(async () => {
-    if (!form.pacienteId || !form.tipocondicionId) {
-      Alert.alert('Faltan Datos', 'Paciente y tipo de condicion son obligatorios');
+    if (!form.pacienteId || !form.condicionNombre.trim()) {
+      Alert.alert('Faltan Datos', 'Paciente y condicion clinica son obligatorios');
       return;
     }
     try {
+      const tipocondicionId = await resolveTipoCondicionId();
       const response = await fetch(`${API_URL}/condicioncronica`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
           pacienteId: Number(form.pacienteId),
-          tipocondicionId: Number(form.tipocondicionId),
+          tipocondicionId,
           fechadiagnostico: form.fechadiagnostico || undefined,
           estado: form.estado.trim() || 'Activa',
           severidad: form.severidad.trim() || undefined,
@@ -315,7 +420,7 @@ export function CondicionCronicaFormScreen({ mode = 'list' }: CondicionCronicaFo
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Fallo la peticion');
     }
-  }, [fetchRecords, form, headers, isCreateMode, navigation, resetForm, user?.username]);
+  }, [fetchRecords, form, headers, isCreateMode, navigation, resetForm, resolveTipoCondicionId, user?.username]);
 
   return (
     <View style={styles.screen}>
@@ -449,23 +554,58 @@ export function CondicionCronicaFormScreen({ mode = 'list' }: CondicionCronicaFo
           <View style={styles.formCard}>
             <Text style={styles.formTitle}>Nueva condicion cronica</Text>
 
-            <Text style={styles.label}>Tipo de condicion</Text>
-            <View style={styles.pickerWrapper}>
-              <Picker
-                style={styles.picker}
-                selectedValue={form.tipocondicionId}
-                onValueChange={(value) => handleChange('tipocondicionId', String(value))}
-                dropdownIconColor="#F4F8FF"
+            <Text style={styles.label}>Condicion clinica</Text>
+            <View style={styles.conditionInputCard}>
+              <View style={styles.conditionInputWrapper}>
+                <Ionicons name="medical-outline" size={20} color={appColors.info} />
+                <TextInput
+                  style={styles.conditionInput}
+                  placeholder="Escribe la condicion. Ej. Diabetes tipo 2"
+                  placeholderTextColor="#9FB3C8"
+                  value={form.condicionNombre}
+                  autoCapitalize="words"
+                  onChangeText={(value) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      condicionNombre: value,
+                      tipocondicionId:
+                        typeOptions.find(
+                          (item) => normalizeConditionName(item.nombre) === normalizeConditionName(value),
+                        )?.tipocondicionId.toString() ?? '',
+                    }))
+                  }
+                />
+              </View>
+              <TouchableOpacity
+                style={styles.conditionPickerButton}
+                onPress={() =>
+                  navigation.navigate('CondicionTipoSelector', {
+                    currentName: form.condicionNombre,
+                    selectedId: Number(form.tipocondicionId) || undefined,
+                  })
+                }
               >
-                <Picker.Item label="Selecciona una condicion" value="" />
-                {typeOptions.map((item) => (
-                  <Picker.Item
-                    key={item.tipocondicionId}
-                    label={item.nombre}
-                    value={String(item.tipocondicionId)}
+                <Ionicons name="search-outline" size={18} color={appColors.text} />
+                <Text style={styles.conditionPickerButtonText}>Buscar en lista</Text>
+              </TouchableOpacity>
+              {selectedConditionName ? (
+                <View style={styles.selectedConditionCard}>
+                  <Ionicons
+                    name={form.tipocondicionId ? 'checkmark-circle' : 'add-circle-outline'}
+                    size={18}
+                    color={form.tipocondicionId ? appColors.success : appColors.info}
                   />
-                ))}
-              </Picker>
+                  <Text style={styles.selectedConditionText}>
+                    {form.tipocondicionId
+                      ? `Seleccionada: ${selectedConditionName}`
+                      : `Nueva condicion: ${selectedConditionName}`}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.fieldHint}>
+                  Puedes escribir una condicion nueva o escoger una existente desde el catalogo.
+                </Text>
+              )}
             </View>
 
             <Text style={styles.label}>Fecha de diagnostico</Text>
@@ -640,6 +780,63 @@ const styles = StyleSheet.create({
   },
   picker: {
     color: '#F4F8FF',
+  },
+  conditionInputCard: {
+    backgroundColor: '#0D1B2A',
+    borderRadius: 18,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#27496D',
+    marginBottom: 12,
+    gap: 10,
+  },
+  conditionInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#1B3355',
+  },
+  conditionInput: {
+    flex: 1,
+    minHeight: 54,
+    color: '#F4F8FF',
+    fontSize: 16,
+  },
+  conditionPickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: 14,
+    paddingVertical: 13,
+    backgroundColor: '#29B6FF',
+  },
+  conditionPickerButtonText: {
+    color: '#F4F8FF',
+    fontWeight: '800',
+  },
+  selectedConditionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: 14,
+    padding: 12,
+    backgroundColor: colorAlpha(appColors.info, '14'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '40'),
+  },
+  selectedConditionText: {
+    color: '#C9D7E8',
+    flex: 1,
+    fontWeight: '700',
+  },
+  fieldHint: {
+    color: '#9FB3C8',
+    lineHeight: 18,
   },
   dateButton: {
     borderWidth: 1,

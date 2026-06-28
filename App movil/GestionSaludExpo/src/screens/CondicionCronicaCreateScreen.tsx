@@ -5,6 +5,12 @@ import { CondicionCronicaFormScreen } from './CondicionCronicaFormScreen';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CondicionCronicaCreate'>;
 
-export function CondicionCronicaCreateScreen(_props: Props) {
-  return <CondicionCronicaFormScreen mode="create" />;
+export function CondicionCronicaCreateScreen({ route }: Props) {
+  return (
+    <CondicionCronicaFormScreen
+      mode="create"
+      selectedTipoCondicion={route.params?.selectedTipoCondicion}
+      typedConditionName={route.params?.typedConditionName}
+    />
+  );
 }
