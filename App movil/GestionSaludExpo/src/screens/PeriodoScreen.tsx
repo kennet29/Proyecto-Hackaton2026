@@ -11,9 +11,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
+import { appColors, colorAlpha } from '../theme/colors';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 
 type PeriodoRecord = {
@@ -80,7 +82,7 @@ const formatEnum = (value?: string | null) => {
 
 export function PeriodoScreen() {
   const { token, user } = useAuth();
-  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
+  const pickerItemColor = Platform.OS === 'android' ? appColors.background : appColors.text;
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [modulePassword, setModulePassword] = useState('');
@@ -203,7 +205,7 @@ export function PeriodoScreen() {
         }
       } catch (error) {
         setDataError(
-          error instanceof Error ? error.message : 'No se pudieron cargar los datos del modulo',
+          error instanceof Error ? error.message : 'No se pudieron cargar los datos del módulo',
         );
       } finally {
         if (useRefresh) {
@@ -230,18 +232,18 @@ export function PeriodoScreen() {
     if (!patients.length) {
       Alert.alert(
         'Acceso no disponible',
-        'El modulo de periodo requiere al menos una persona de genero femenino registrada.',
+        'El módulo de periodo requiere al menos una persona de género femenino registrada.',
       );
       return;
     }
 
     if (!modulePassword.trim()) {
-      Alert.alert('Clave requerida', 'Ingresa la contraseÃƒÂ±a adicional del modulo.');
+      Alert.alert('Clave requerida', 'Ingresa la contraseña adicional del módulo.');
       return;
     }
 
     if (modulePassword.trim() !== PERIODO_EXTRA_PASSWORD) {
-      Alert.alert('Clave incorrecta', 'La contraseÃƒÂ±a adicional del modulo no coincide.');
+      Alert.alert('Clave incorrecta', 'La contraseña adicional del módulo no coincide.');
       return;
     }
 
@@ -252,14 +254,14 @@ export function PeriodoScreen() {
   const handleSubmit = async () => {
     if (!patients.length) {
       Alert.alert(
-        'Modulo bloqueado',
-        'Debes tener al menos una paciente femenina vinculada para usar este modulo.',
+        'Módulo bloqueado',
+        'Debes tener al menos una paciente femenina vinculada para usar este módulo.',
       );
       return;
     }
 
     if (!isUnlocked) {
-      Alert.alert('Acceso protegido', 'Desbloquea el modulo con la contraseÃƒÂ±a adicional.');
+      Alert.alert('Acceso protegido', 'Desbloquea el módulo con la contraseña adicional.');
       return;
     }
 
@@ -296,7 +298,7 @@ export function PeriodoScreen() {
         throw new Error(body?.message ?? 'No se pudo registrar el periodo');
       }
 
-      Alert.alert('Registro creado', 'El periodo se guardo correctamente');
+      Alert.alert('Registro creado', 'El periodo se guardó correctamente');
       setForm((prev) => ({
         ...prev,
         fechaInicio: today(),
@@ -324,32 +326,84 @@ export function PeriodoScreen() {
 
   return (
     <ScrollView
+      style={styles.scroll}
       contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
           onRefresh={() => loadData(selectedPatientId, true)}
-          tintColor="#F4F8FF"
+          tintColor={appColors.text}
         />
       }
     >
       <View style={styles.hero}>
-        <Text style={styles.heroTitle}>Modulo de Periodo</Text>
+        <View style={styles.heroHeader}>
+          <View style={styles.heroIcon}>
+            <Ionicons name="moon-outline" size={24} color={appColors.text} />
+          </View>
+          <View style={styles.heroCopy}>
+            <Text style={styles.heroEyebrow}>Bienestar femenino</Text>
+            <Text style={styles.heroTitle}>Módulo de Periodo</Text>
+          </View>
+        </View>
         <Text style={styles.heroText}>
-          Registra ciclos, sintomas y revisa la prediccion del siguiente periodo.
+          Registra ciclos, síntomas y revisa la predicción del siguiente periodo.
         </Text>
+        <View style={styles.heroChips}>
+          <View style={styles.chip}>
+            <Ionicons name="calendar-outline" size={14} color={appColors.accent} />
+            <Text style={styles.chipText}>Ciclos</Text>
+          </View>
+          <View style={styles.chip}>
+            <Ionicons name="pulse-outline" size={14} color={appColors.info} />
+            <Text style={styles.chipText}>Síntomas</Text>
+          </View>
+          <View style={styles.chip}>
+            <Ionicons name="analytics-outline" size={14} color={appColors.success} />
+            <Text style={styles.chipText}>Predicción</Text>
+          </View>
+        </View>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Acceso y validacion</Text>
+        <View style={styles.sectionHeader}>
+          <View>
+            <Text style={styles.sectionLabel}>Seguridad</Text>
+            <Text style={styles.sectionTitle}>Acceso y validación</Text>
+          </View>
+          <View
+            style={[
+              styles.statusBadge,
+              isUnlocked ? styles.statusBadgeSuccess : styles.statusBadgeLocked,
+            ]}
+          >
+            <Ionicons
+              name={isUnlocked ? 'lock-open-outline' : 'lock-closed-outline'}
+              size={14}
+              color={isUnlocked ? appColors.success : appColors.accent}
+            />
+            <Text
+              style={[
+                styles.statusBadgeText,
+                isUnlocked ? styles.statusBadgeTextSuccess : styles.statusBadgeTextLocked,
+              ]}
+            >
+              {isUnlocked ? 'Activo' : 'Bloqueado'}
+            </Text>
+          </View>
+        </View>
         {!hasFemalePatients ? (
-          <Text style={styles.errorText}>
-            Este modulo solo se habilita si al menos una persona vinculada tiene genero femenino.
-          </Text>
+          <View style={styles.noticeBox}>
+            <Ionicons name="information-circle-outline" size={20} color={appColors.accent} />
+            <Text style={styles.errorText}>
+              Este módulo se habilita cuando existe una persona vinculada con género femenino.
+            </Text>
+          </View>
         ) : isUnlocked ? (
           <>
             <Text style={styles.successText}>
-              Modulo desbloqueado. Ya puedes registrar y consultar periodos.
+              Módulo desbloqueado. Ya puedes registrar y consultar periodos.
             </Text>
             <TouchableOpacity
               style={styles.secondaryBtn}
@@ -359,24 +413,27 @@ export function PeriodoScreen() {
                 setPrediction(null);
               }}
             >
-              <Text style={styles.secondaryBtnText}>Bloquear modulo</Text>
+              <Ionicons name="lock-closed-outline" size={18} color={appColors.text} />
+              <Text style={styles.secondaryBtnText}>Bloquear módulo</Text>
             </TouchableOpacity>
           </>
         ) : (
           <>
             <Text style={styles.helperText}>
-              Se encontro al menos una paciente femenina. Ingresa la contraseÃƒÂ±a adicional para continuar.
+              Se encontró al menos una paciente femenina. Ingresa la contraseña adicional para continuar.
             </Text>
             <TextInput
               style={styles.input}
               value={modulePassword}
               onChangeText={setModulePassword}
-              placeholder="ContraseÃƒÂ±a adicional del modulo"
+              placeholder="Contraseña adicional del módulo"
+              placeholderTextColor={appColors.textMuted}
               secureTextEntry
               autoCapitalize="none"
             />
             <TouchableOpacity style={styles.primaryBtn} onPress={handleUnlock}>
-              <Text style={styles.primaryBtnText}>Desbloquear modulo</Text>
+              <Ionicons name="lock-open-outline" size={18} color={appColors.background} />
+              <Text style={styles.primaryBtnText}>Desbloquear módulo</Text>
             </TouchableOpacity>
           </>
         )}
@@ -393,7 +450,7 @@ export function PeriodoScreen() {
           </View>
         ) : patients.length === 0 ? (
           <Text style={styles.emptyText}>
-            No hay pacientes femeninas vinculadas para este modulo.
+            No hay pacientes femeninas vinculadas para este módulo.
           </Text>
         ) : (
           <View style={styles.pickerWrapper}>
@@ -406,7 +463,7 @@ export function PeriodoScreen() {
                   key={patient.pacienteId}
                   label={
                     patient.parentesco
-                      ? `${patient.displayName} Ã‚Â· ${patient.parentesco}`
+                      ? `${patient.displayName} · ${patient.parentesco}`
                       : patient.displayName
                   }
                   value={String(patient.pacienteId)}
@@ -426,6 +483,7 @@ export function PeriodoScreen() {
           value={form.fechaInicio}
           onChangeText={(value) => handleChange('fechaInicio', value)}
           placeholder="Fecha inicio (YYYY-MM-DD)"
+          placeholderTextColor={appColors.textMuted}
           autoCapitalize="none"
         />
         <TextInput
@@ -433,6 +491,7 @@ export function PeriodoScreen() {
           value={form.fechaFin}
           onChangeText={(value) => handleChange('fechaFin', value)}
           placeholder="Fecha fin (opcional)"
+          placeholderTextColor={appColors.textMuted}
           autoCapitalize="none"
         />
         <View style={styles.row}>
@@ -440,7 +499,8 @@ export function PeriodoScreen() {
             style={[styles.input, styles.halfInput]}
             value={form.duracionDias}
             onChangeText={(value) => handleChange('duracionDias', value)}
-            placeholder="Duracion"
+            placeholder="Duración"
+            placeholderTextColor={appColors.textMuted}
             keyboardType="numeric"
           />
           <TextInput
@@ -448,6 +508,7 @@ export function PeriodoScreen() {
             value={form.cicloDias}
             onChangeText={(value) => handleChange('cicloDias', value)}
             placeholder="Ciclo"
+            placeholderTextColor={appColors.textMuted}
             keyboardType="numeric"
           />
         </View>
@@ -472,13 +533,15 @@ export function PeriodoScreen() {
           style={styles.input}
           value={form.sintomas}
           onChangeText={(value) => handleChange('sintomas', value)}
-          placeholder="Sintomas separados por coma"
+          placeholder="Síntomas separados por coma"
+          placeholderTextColor={appColors.textMuted}
         />
         <TextInput
           style={[styles.input, styles.textArea]}
           value={form.observaciones}
           onChangeText={(value) => handleChange('observaciones', value)}
           placeholder="Observaciones"
+          placeholderTextColor={appColors.textMuted}
           multiline
           textAlignVertical="top"
         />
@@ -487,7 +550,14 @@ export function PeriodoScreen() {
           onPress={handleSubmit}
           disabled={submitting || !form.pacienteId}
         >
-          {submitting ? <ActivityIndicator color="#F4F8FF" /> : <Text style={styles.primaryBtnText}>Guardar periodo</Text>}
+          {submitting ? (
+            <ActivityIndicator color={appColors.background} />
+          ) : (
+            <>
+              <Ionicons name="save-outline" size={18} color={appColors.background} />
+              <Text style={styles.primaryBtnText}>Guardar periodo</Text>
+            </>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -499,7 +569,7 @@ export function PeriodoScreen() {
             <Text style={styles.loadingText}>Cargando historial...</Text>
           </View>
         ) : !selectedPatientId ? (
-          <Text style={styles.emptyText}>Selecciona una paciente para ver informacion.</Text>
+          <Text style={styles.emptyText}>Selecciona una paciente para ver información.</Text>
         ) : (
           <>
             <Text style={styles.metricText}>Paciente: {selectedPatientLabel ?? `#${selectedPatientId}`}</Text>
@@ -507,14 +577,14 @@ export function PeriodoScreen() {
               Total de registros: {historial?.totalRegistros ?? 0}
             </Text>
             <Text style={styles.metricText}>
-              Promedio de duracion: {historial?.promedioDuracionDias ?? 'Sin dato'}
+              Promedio de duración: {historial?.promedioDuracionDias ?? 'Sin dato'}
             </Text>
             <Text style={styles.metricText}>
               Promedio de ciclo: {historial?.promedioCicloDias ?? 'Sin dato'}
             </Text>
             {prediction?.proximoPeriodo ? (
               <View style={styles.highlightBox}>
-                <Text style={styles.highlightTitle}>Siguiente prediccion</Text>
+                <Text style={styles.highlightTitle}>Siguiente predicción</Text>
                 <Text style={styles.highlightText}>
                   Inicio: {formatDate(prediction.proximoPeriodo.fechaInicio)}
                 </Text>
@@ -522,11 +592,11 @@ export function PeriodoScreen() {
                   Fin: {formatDate(prediction.proximoPeriodo.fechaFin)}
                 </Text>
                 <Text style={styles.highlightText}>
-                  Ovulacion estimada: {formatDate(prediction.ovulacionEstimada)}
+                  Ovulación estimada: {formatDate(prediction.ovulacionEstimada)}
                 </Text>
                 {prediction.ventanaFertil ? (
                   <Text style={styles.highlightText}>
-                    Ventana fertil: {formatDate(prediction.ventanaFertil.inicio)} al{' '}
+                    Ventana fértil: {formatDate(prediction.ventanaFertil.inicio)} al{' '}
                     {formatDate(prediction.ventanaFertil.fin)}
                   </Text>
                 ) : null}
@@ -546,18 +616,18 @@ export function PeriodoScreen() {
                 {formatDate(item.fechaInicio)} {item.fechaFin ? `- ${formatDate(item.fechaFin)}` : ''}
               </Text>
               <Text style={styles.itemText}>
-                Flujo: {formatEnum(item.flujo)} Ã‚Â· Dolor: {formatEnum(item.dolor)}
+                Flujo: {formatEnum(item.flujo)} · Dolor: {formatEnum(item.dolor)}
               </Text>
               <Text style={styles.itemText}>
-                Duracion: {item.duracionDias ?? 'N/D'} dias Ã‚Â· Ciclo: {item.cicloDias ?? 'N/D'} dias
+                Duración: {item.duracionDias ?? 'N/D'} días · Ciclo: {item.cicloDias ?? 'N/D'} días
               </Text>
               {item.sintomas?.length ? (
-                <Text style={styles.itemText}>Sintomas: {item.sintomas.join(', ')}</Text>
+                <Text style={styles.itemText}>Síntomas: {item.sintomas.join(', ')}</Text>
               ) : null}
             </View>
           ))
         ) : (
-          <Text style={styles.emptyText}>Todavia no hay registros para esta paciente.</Text>
+          <Text style={styles.emptyText}>Todavía no hay registros para esta paciente.</Text>
         )}
       </View>
         </>
@@ -567,52 +637,153 @@ export function PeriodoScreen() {
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+    backgroundColor: appColors.background,
+  },
   container: {
-    padding: 20,
-    backgroundColor: '#071120',
-    gap: 16,
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 32,
+    backgroundColor: appColors.background,
+    gap: 14,
   },
   hero: {
-    backgroundColor: '#132238',
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#FF4D73',
-  },
-  heroTitle: {
-    color: '#F4F8FF',
-    fontSize: 24,
-    fontWeight: '800',
-    marginBottom: 6,
-  },
-  heroText: {
-    color: '#C9D7E8',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  card: {
-    backgroundColor: '#132238',
+    backgroundColor: appColors.surface,
     borderRadius: 18,
-    padding: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.accent, 'CC'),
+    gap: 14,
+  },
+  heroHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
+  heroIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colorAlpha(appColors.accent, '28'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.accent, '65'),
+  },
+  heroCopy: {
+    flex: 1,
+  },
+  heroEyebrow: {
+    color: appColors.accent,
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  heroTitle: {
+    color: appColors.text,
+    fontSize: 25,
+    fontWeight: '800',
+  },
+  heroText: {
+    color: appColors.textSoft,
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  heroChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    backgroundColor: colorAlpha(appColors.backgroundMuted, 'C8'),
+    borderWidth: 1,
+    borderColor: appColors.borderStrong,
+  },
+  chipText: {
+    color: appColors.textSoft,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  card: {
+    backgroundColor: appColors.surface,
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.border, '9A'),
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  sectionLabel: {
+    color: appColors.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
   sectionTitle: {
-    color: '#F4F8FF',
+    color: appColors.text,
     fontSize: 18,
     fontWeight: '700',
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderWidth: 1,
+  },
+  statusBadgeSuccess: {
+    backgroundColor: colorAlpha(appColors.success, '18'),
+    borderColor: colorAlpha(appColors.success, '6B'),
+  },
+  statusBadgeLocked: {
+    backgroundColor: colorAlpha(appColors.accent, '18'),
+    borderColor: colorAlpha(appColors.accent, '6B'),
+  },
+  statusBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  statusBadgeTextSuccess: {
+    color: appColors.success,
+  },
+  statusBadgeTextLocked: {
+    color: appColors.accent,
+  },
+  noticeBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: colorAlpha(appColors.accent, '12'),
   },
   pickerWrapper: {
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#F4F8FF',
+    backgroundColor: appColors.text,
   },
   input: {
-    backgroundColor: '#F4F8FF',
+    backgroundColor: appColors.text,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#071120',
+    color: appColors.background,
   },
   textArea: {
     minHeight: 92,
@@ -625,15 +796,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   primaryBtn: {
-    backgroundColor: '#FF4D73',
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    backgroundColor: appColors.accent,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#F4F8FF',
+    color: appColors.background,
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   disabledBtn: {
     opacity: 0.7,
@@ -643,65 +817,75 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#C9D7E8',
+    color: appColors.textSoft,
     marginTop: 8,
   },
   emptyText: {
-    color: '#C9D7E8',
+    color: appColors.textSoft,
     lineHeight: 20,
   },
   errorText: {
-    color: '#FF4D73',
+    color: appColors.accent,
+    flex: 1,
     lineHeight: 20,
+    fontWeight: '700',
   },
   successText: {
-    color: '#38F28E',
+    color: appColors.success,
     lineHeight: 20,
+    fontWeight: '700',
   },
   helperText: {
-    color: '#C9D7E8',
+    color: appColors.textSoft,
     lineHeight: 20,
   },
   metricText: {
-    color: '#F4F8FF',
+    color: appColors.text,
     fontSize: 14,
   },
   highlightBox: {
-    backgroundColor: '#FF4D7318',
+    backgroundColor: colorAlpha(appColors.accent, '18'),
     borderRadius: 14,
     padding: 14,
     gap: 4,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.accent, '4D'),
   },
   highlightTitle: {
-    color: '#F4F8FF',
+    color: appColors.text,
     fontWeight: '700',
   },
   highlightText: {
-    color: '#FF4D73',
+    color: appColors.accent,
   },
   listItem: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: appColors.border,
     borderRadius: 14,
     padding: 12,
     gap: 4,
+    backgroundColor: colorAlpha(appColors.backgroundMuted, '88'),
   },
   itemTitle: {
-    color: '#F4F8FF',
+    color: appColors.text,
     fontWeight: '700',
   },
   itemText: {
-    color: '#C9D7E8',
+    color: appColors.textSoft,
   },
   secondaryBtn: {
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#9FB3C8',
+    borderColor: appColors.border,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
+    backgroundColor: colorAlpha(appColors.backgroundMuted, '80'),
   },
   secondaryBtnText: {
-    color: '#F4F8FF',
+    color: appColors.text,
     fontSize: 15,
     fontWeight: '700',
   },

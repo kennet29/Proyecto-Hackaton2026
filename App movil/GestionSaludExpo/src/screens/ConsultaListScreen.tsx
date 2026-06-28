@@ -106,7 +106,7 @@ export function ConsultaListScreen({ navigation }: Props) {
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [patientLoadError, setPatientLoadError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState('');
-  const [showDayConsultas, setShowDayConsultas] = useState(true);
+  const [showDayConsultas, setShowDayConsultas] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const { token } = useAuth();
 
@@ -245,6 +245,21 @@ export function ConsultaListScreen({ navigation }: Props) {
     return data.filter((item) => toDateOnlyString(item.fechaconsulta) === selectedDate);
   }, [data, selectedDate]);
 
+  const hasDayConsultas = consultasForSelectedDay.length > 0;
+  const hasHistory = data.length > 0;
+
+  useEffect(() => {
+    if (!hasDayConsultas && showDayConsultas) {
+      setShowDayConsultas(false);
+    }
+  }, [hasDayConsultas, showDayConsultas]);
+
+  useEffect(() => {
+    if (!hasHistory && showHistory) {
+      setShowHistory(false);
+    }
+  }, [hasHistory, showHistory]);
+
   const selectedPatientLabel = useMemo(() => {
     if (!filterPacienteId) {
       return 'Todos los pacientes';
@@ -368,61 +383,73 @@ export function ConsultaListScreen({ navigation }: Props) {
 
         <View style={styles.dailySection}>
           <TouchableOpacity
-            style={styles.historyToggle}
-            onPress={() => setShowDayConsultas((prev) => !prev)}
+            style={[styles.historyToggle, !hasDayConsultas && styles.historyToggleDisabled]}
+            onPress={() => {
+              if (hasDayConsultas) {
+                setShowDayConsultas((prev) => !prev);
+              }
+            }}
             activeOpacity={0.85}
+            disabled={!hasDayConsultas}
           >
             <View style={styles.historyToggleCopy}>
               <Text style={styles.sectionTitle}>Consultas del dia</Text>
               <Text style={styles.historyHelper}>
-                {showDayConsultas ? 'Ocultar consultas de la fecha seleccionada' : 'Desplegar consultas de la fecha seleccionada'}
+                {!hasDayConsultas
+                  ? 'No hay consultas para desplegar en esta fecha'
+                  : showDayConsultas
+                    ? 'Ocultar consultas de la fecha seleccionada'
+                    : 'Desplegar consultas de la fecha seleccionada'}
               </Text>
             </View>
             <View style={styles.historyToggleActions}>
               <View style={styles.countBadge}>
                 <Text style={styles.countBadgeText}>{consultasForSelectedDay.length}</Text>
               </View>
-              <Text style={styles.historyToggleIcon}>{showDayConsultas ? 'Ã¢Ë†â€™' : '+'}</Text>
+              <Text style={[styles.historyToggleIcon, !hasDayConsultas && styles.historyToggleIconDisabled]}>
+                {hasDayConsultas ? (showDayConsultas ? '-' : '+') : ''}
+              </Text>
             </View>
           </TouchableOpacity>
 
-          {showDayConsultas ? (
-            consultasForSelectedDay.length === 0 && !loading ? (
-              <Text style={styles.empty}>
-                No hay consultas registradas para este dia.
-              </Text>
-            ) : (
-              consultasForSelectedDay.map((item) => renderConsultaCard(item))
-            )
+          {showDayConsultas && hasDayConsultas ? (
+            consultasForSelectedDay.map((item) => renderConsultaCard(item))
           ) : null}
         </View>
 
         <View style={styles.historySection}>
           <TouchableOpacity
-            style={styles.historyToggle}
-            onPress={() => setShowHistory((prev) => !prev)}
+            style={[styles.historyToggle, !hasHistory && styles.historyToggleDisabled]}
+            onPress={() => {
+              if (hasHistory) {
+                setShowHistory((prev) => !prev);
+              }
+            }}
             activeOpacity={0.85}
+            disabled={!hasHistory}
           >
             <View style={styles.historyToggleCopy}>
               <Text style={styles.sectionTitle}>Historial completo</Text>
               <Text style={styles.historyHelper}>
-                {showHistory ? 'Ocultar consultas anteriores' : 'Desplegar consultas anteriores'}
+                {!hasHistory
+                  ? 'No hay consultas registradas para mostrar'
+                  : showHistory
+                    ? 'Ocultar consultas anteriores'
+                    : 'Desplegar consultas anteriores'}
               </Text>
             </View>
             <View style={styles.historyToggleActions}>
               <View style={styles.countBadge}>
                 <Text style={styles.countBadgeText}>{data.length}</Text>
               </View>
-              <Text style={styles.historyToggleIcon}>{showHistory ? 'Ã¢Ë†â€™' : '+'}</Text>
+              <Text style={[styles.historyToggleIcon, !hasHistory && styles.historyToggleIconDisabled]}>
+                {hasHistory ? (showHistory ? '-' : '+') : ''}
+              </Text>
             </View>
           </TouchableOpacity>
 
-          {showHistory ? (
-            data.length === 0 && !loading ? (
-              <Text style={styles.empty}>Aun no tienes consultas registradas.</Text>
-            ) : (
-              data.map((item) => renderConsultaCard(item, 'history'))
-            )
+          {showHistory && hasHistory ? (
+            data.map((item) => renderConsultaCard(item, 'history'))
           ) : null}
         </View>
       </ScrollView>
@@ -566,6 +593,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
   },
+  historyToggleDisabled: {
+    opacity: 0.62,
+  },
   historyToggleCopy: {
     flex: 1,
   },
@@ -585,6 +615,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     width: 20,
     textAlign: 'center',
+  },
+  historyToggleIconDisabled: {
+    color: '#9FB3C8',
   },
   dailyHeader: {
     flexDirection: 'row',

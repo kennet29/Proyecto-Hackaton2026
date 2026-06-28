@@ -181,7 +181,7 @@ export function VacunaFormScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState(todayString());
-  const [showDaySection, setShowDaySection] = useState(true);
+  const [showDaySection, setShowDaySection] = useState(false);
   const [showHistorySection, setShowHistorySection] = useState(false);
   const [showNotificationForm, setShowNotificationForm] = useState(false);
 
@@ -376,6 +376,21 @@ export function VacunaFormScreen() {
 
     return entries;
   }, [selectedDate, visibleRecords]);
+
+  const hasDayRecords = recordsForSelectedDay.length > 0;
+  const hasHistoryRecords = visibleRecords.length > 0;
+
+  useEffect(() => {
+    if (!hasDayRecords && showDaySection) {
+      setShowDaySection(false);
+    }
+  }, [hasDayRecords, showDaySection]);
+
+  useEffect(() => {
+    if (!hasHistoryRecords && showHistorySection) {
+      setShowHistorySection(false);
+    }
+  }, [hasHistoryRecords, showHistorySection]);
 
   const showPicker = (field: PickerField) => {
     const isNotificationField = field === 'notificationDate' || field === 'notificationTime';
@@ -663,31 +678,39 @@ export function VacunaFormScreen() {
 
         <View style={styles.daySection}>
           <TouchableOpacity
-            style={styles.sectionToggle}
-            onPress={() => setShowDaySection((prev) => !prev)}
+            style={[styles.sectionToggle, !hasDayRecords && styles.sectionToggleDisabled]}
+            onPress={() => {
+              if (hasDayRecords) {
+                setShowDaySection((prev) => !prev);
+              }
+            }}
             activeOpacity={0.85}
+            disabled={!hasDayRecords}
           >
             <View style={styles.sectionToggleCopy}>
               <Text style={styles.formTitle}>Dosis del dia</Text>
               <Text style={styles.sectionHelper}>
-                {showDaySection ? 'Ocultar vacunas de la fecha seleccionada' : 'Desplegar vacunas de la fecha seleccionada'}
+                {!hasDayRecords
+                  ? 'No hay vacunas para desplegar en esta fecha'
+                  : showDaySection
+                    ? 'Ocultar vacunas de la fecha seleccionada'
+                    : 'Desplegar vacunas de la fecha seleccionada'}
               </Text>
             </View>
             <View style={styles.sectionToggleActions}>
               <View style={styles.countBadge}>
                 <Text style={styles.countBadgeText}>{recordsForSelectedDay.length}</Text>
               </View>
-              <Text style={styles.sectionToggleIcon}>{showDaySection ? 'Ã¢Ë†â€™' : '+'}</Text>
+              <Text style={[styles.sectionToggleIcon, !hasDayRecords && styles.sectionToggleIconDisabled]}>
+                {hasDayRecords ? (showDaySection ? '-' : '+') : ''}
+              </Text>
             </View>
           </TouchableOpacity>
 
-          {showDaySection ? (
+          {showDaySection && hasDayRecords ? (
             <>
               <Text style={styles.dayLabel}>{formatDisplayDate(selectedDate, selectedDate)}</Text>
-              {recordsForSelectedDay.length === 0 ? (
-                <Text style={styles.emptyText}>No hay vacunas ni proximas dosis en esta fecha.</Text>
-              ) : (
-                recordsForSelectedDay.map((record) => {
+              {recordsForSelectedDay.map((record) => {
                   const label = patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`;
                   return (
                     <View key={`day-${record.vacunaId}-${record.dayType}`} style={styles.vaccineCard}>
@@ -714,46 +737,49 @@ export function VacunaFormScreen() {
                       </Text>
                     </View>
                   );
-                })
-              )}
+                })}
             </>
           ) : null}
         </View>
 
         <View style={styles.recordsSection}>
           <TouchableOpacity
-            style={styles.sectionToggle}
-            onPress={() => setShowHistorySection((prev) => !prev)}
+            style={[styles.sectionToggle, !hasHistoryRecords && styles.sectionToggleDisabled]}
+            onPress={() => {
+              if (hasHistoryRecords) {
+                setShowHistorySection((prev) => !prev);
+              }
+            }}
             activeOpacity={0.85}
+            disabled={!hasHistoryRecords}
           >
             <View style={styles.sectionToggleCopy}>
               <Text style={styles.formTitle}>Historial completo</Text>
               <Text style={styles.sectionHelper}>
-                {showHistorySection ? 'Ocultar vacunas anteriores' : 'Desplegar vacunas anteriores'}
+                {!hasHistoryRecords
+                  ? activePatientId
+                    ? 'Este paciente no tiene vacunas para mostrar'
+                    : 'No hay vacunas registradas para mostrar'
+                  : showHistorySection
+                    ? 'Ocultar vacunas anteriores'
+                    : 'Desplegar vacunas anteriores'}
               </Text>
             </View>
             <View style={styles.sectionToggleActions}>
               <View style={styles.countBadge}>
                 <Text style={styles.countBadgeText}>{visibleRecords.length}</Text>
               </View>
-              <Text style={styles.sectionToggleIcon}>{showHistorySection ? 'Ã¢Ë†â€™' : '+'}</Text>
+              <Text style={[styles.sectionToggleIcon, !hasHistoryRecords && styles.sectionToggleIconDisabled]}>
+                {hasHistoryRecords ? (showHistorySection ? '-' : '+') : ''}
+              </Text>
             </View>
           </TouchableOpacity>
 
-          {showHistorySection ? (
+          {showHistorySection && hasHistoryRecords ? (
             loadingRecords ? (
               <View style={styles.stateBox}>
                 <ActivityIndicator color="#29B6FF" />
                 <Text style={styles.stateText}>Cargando vacunas...</Text>
-              </View>
-            ) : visibleRecords.length === 0 ? (
-              <View style={styles.stateBox}>
-                <Text style={styles.stateTitle}>Sin registros</Text>
-                <Text style={styles.stateText}>
-                  {activePatientId
-                    ? 'Este paciente aun no tiene vacunas registradas.'
-                    : 'Selecciona un paciente para ver su historial de vacunas.'}
-                </Text>
               </View>
             ) : (
               visibleRecords.map((record) => {
@@ -1038,6 +1064,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
   },
+  sectionToggleDisabled: {
+    opacity: 0.62,
+  },
   sectionToggleCopy: {
     flex: 1,
   },
@@ -1052,6 +1081,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     width: 20,
     textAlign: 'center',
+  },
+  sectionToggleIconDisabled: {
+    color: '#9FB3C8',
   },
   countBadge: {
     minWidth: 34,

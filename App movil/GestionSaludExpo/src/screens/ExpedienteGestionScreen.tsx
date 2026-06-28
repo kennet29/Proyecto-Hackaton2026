@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -14,6 +13,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
+import { appColors, colorAlpha } from '../theme/colors';
 import {
   fetchLinkedPatients as fetchLinkedPatientsList,
   invalidateLinkedPatientsCache,
@@ -81,6 +81,8 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
     () => ({
       nombres: '',
       apellidos: '',
+      sexo: '',
+      fechanacimiento: '',
       telefono: '',
       email: '',
       parentesco: '',
@@ -194,6 +196,8 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
         body: JSON.stringify({
           nombres: personForm.nombres.trim(),
           apellidos: personForm.apellidos.trim(),
+          sexo: personForm.sexo || undefined,
+          fechanacimiento: personForm.fechanacimiento.trim() || undefined,
           telefono: personForm.telefono.trim() || undefined,
           email: personForm.email.trim() || undefined,
           direccion: undefined,
@@ -287,7 +291,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
             </Text>
           </View>
           <TouchableOpacity
-            style={styles.primaryActionBtn}
+            style={[styles.primaryActionBtn, showPersonForm && styles.primaryActionBtnSecondary]}
             onPress={() => {
               setShowPersonForm((prev) => !prev);
               setPatientFeedback(null);
@@ -296,9 +300,14 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
             <Ionicons
               name={showPersonForm ? 'close-outline' : 'add-outline'}
               size={18}
-              color="#071120"
+              color={showPersonForm ? appColors.text : appColors.background}
             />
-            <Text style={styles.primaryActionText}>
+            <Text
+              style={[
+                styles.primaryActionText,
+                showPersonForm && styles.primaryActionTextSecondary,
+              ]}
+            >
               {showPersonForm ? 'Cerrar' : 'Nueva persona'}
             </Text>
           </TouchableOpacity>
@@ -374,6 +383,44 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                 value={personForm.apellidos}
                 onChangeText={(text) => handlePersonInput('apellidos', text)}
               />
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Sexo</Text>
+                <View style={styles.segmentedRow}>
+                  {[
+                    { label: 'Femenino', value: 'F' },
+                    { label: 'Masculino', value: 'M' },
+                    { label: 'Otro', value: 'O' },
+                  ].map((option) => {
+                    const isSelected = personForm.sexo === option.value;
+                    return (
+                      <TouchableOpacity
+                        key={option.value}
+                        activeOpacity={0.86}
+                        style={[styles.segmentOption, isSelected && styles.segmentOptionActive]}
+                        onPress={() => handlePersonInput('sexo', isSelected ? '' : option.value)}
+                      >
+                        <Text
+                          style={[
+                            styles.segmentOptionText,
+                            isSelected && styles.segmentOptionTextActive,
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Fecha de nacimiento (YYYY-MM-DD)"
+                placeholderTextColor="#9FB3C8"
+                keyboardType="numbers-and-punctuation"
+                autoCapitalize="none"
+                value={personForm.fechanacimiento}
+                onChangeText={(text) => handlePersonInput('fechanacimiento', text)}
+              />
               <TextInput
                 style={styles.input}
                 placeholder="Telefono"
@@ -409,18 +456,40 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               />
             </View>
 
-            <View style={styles.switchCard}>
-              <View>
-                <Text style={styles.switchTitle}>Marcar como principal</Text>
-                <Text style={styles.switchHelper}>Usa esta opcion para la persona central del expediente.</Text>
+            <TouchableOpacity
+              activeOpacity={0.88}
+              style={[
+                styles.principalButton,
+                personForm.esPrincipal && styles.principalButtonActive,
+              ]}
+              onPress={() => handlePersonInput('esPrincipal', !personForm.esPrincipal)}
+            >
+              <View style={styles.principalButtonIcon}>
+                <Ionicons
+                  name={personForm.esPrincipal ? 'star' : 'star-outline'}
+                  size={22}
+                  color={personForm.esPrincipal ? appColors.background : appColors.accent}
+                />
               </View>
-              <Switch
-                value={personForm.esPrincipal}
-                onValueChange={(value) => handlePersonInput('esPrincipal', value)}
-                thumbColor={personForm.esPrincipal ? '#29B6FF' : undefined}
-                trackColor={{ false: '#27496D', true: '#1B3355' }}
-              />
-            </View>
+              <View style={styles.principalButtonCopy}>
+                <Text style={styles.switchTitle}>Marcar como principal</Text>
+                <Text style={styles.switchHelper}>
+                  Usa esta opción para destacar la persona central del expediente.
+                </Text>
+              </View>
+              <View
+                style={[
+                  styles.principalStatus,
+                  personForm.esPrincipal && styles.principalStatusActive,
+                ]}
+              >
+                <Ionicons
+                  name={personForm.esPrincipal ? 'checkmark' : 'add'}
+                  size={16}
+                  color={personForm.esPrincipal ? appColors.background : appColors.textSoft}
+                />
+              </View>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.submitBtn, submittingPerson && styles.submitBtnDisabled]}
@@ -446,7 +515,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#182A44',
+    backgroundColor: appColors.background,
   },
   content: {
     padding: 20,
@@ -454,11 +523,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   heroCard: {
-    backgroundColor: '#182A44',
-    borderRadius: 30,
+    backgroundColor: appColors.surfaceStrong,
+    borderRadius: 24,
     padding: 22,
     borderWidth: 1,
-    borderColor: '#C9D7E8',
+    borderColor: appColors.borderStrong,
     gap: 14,
   },
   heroTopRow: {
@@ -472,24 +541,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#182A44',
+    backgroundColor: colorAlpha(appColors.info, '18'),
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '55'),
   },
   heroBadgeText: {
-    color: '#FF4D73',
+    color: appColors.info,
     fontSize: 12,
     fontWeight: '800',
   },
   heroTitle: {
-    color: '#132238',
+    color: appColors.text,
     fontSize: 26,
     fontWeight: '800',
     lineHeight: 32,
   },
   heroSubtitle: {
-    color: '#9FB3C8',
+    color: appColors.textSoft,
     fontSize: 14,
     lineHeight: 21,
   },
@@ -523,11 +594,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   panelCard: {
-    backgroundColor: '#F4F8FF',
-    borderRadius: 28,
+    backgroundColor: appColors.surface,
+    borderRadius: 22,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#C9D7E8',
+    borderColor: appColors.border,
     gap: 14,
   },
   panelHeaderRow: {
@@ -537,29 +608,38 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   panelTitle: {
-    color: '#071120',
+    color: appColors.text,
     fontSize: 20,
     fontWeight: '800',
   },
   panelHelper: {
-    color: '#9FB3C8',
+    color: appColors.textSoft,
     fontSize: 13,
     lineHeight: 19,
   },
   primaryActionBtn: {
-    alignSelf: 'flex-start',
+    alignSelf: 'stretch',
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#38F28E',
-    borderRadius: 999,
+    backgroundColor: appColors.success,
+    borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
+  primaryActionBtnSecondary: {
+    backgroundColor: colorAlpha(appColors.text, '10'),
+    borderWidth: 1,
+    borderColor: appColors.border,
+  },
   primaryActionText: {
-    color: '#071120',
+    color: appColors.background,
     fontWeight: '800',
     fontSize: 13,
+  },
+  primaryActionTextSecondary: {
+    color: appColors.text,
   },
   feedbackBox: {
     flexDirection: 'row',
@@ -582,22 +662,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   stateCard: {
-    backgroundColor: '#F4F8FF',
-    borderRadius: 22,
+    backgroundColor: appColors.backgroundMuted,
+    borderRadius: 18,
     padding: 20,
     alignItems: 'center',
     gap: 8,
     borderWidth: 1,
-    borderColor: '#F4F8FF',
+    borderColor: appColors.borderStrong,
   },
   stateTitle: {
-    color: '#071120',
+    color: appColors.text,
     fontSize: 16,
     fontWeight: '800',
     textAlign: 'center',
   },
   stateText: {
-    color: '#9FB3C8',
+    color: appColors.textSoft,
     fontSize: 13,
     lineHeight: 19,
     textAlign: 'center',
@@ -606,11 +686,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   personCard: {
-    backgroundColor: '#F4F8FF',
-    borderRadius: 22,
+    backgroundColor: appColors.surfaceStrong,
+    borderRadius: 18,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#C9D7E8',
+    borderColor: appColors.borderStrong,
     gap: 12,
   },
   personMainRow: {
@@ -623,7 +703,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#C9D7E8',
+    backgroundColor: colorAlpha(appColors.info, '20'),
   },
   personCopy: {
     flex: 1,
@@ -636,50 +716,50 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   personName: {
-    color: '#071120',
+    color: appColors.text,
     fontSize: 16,
     fontWeight: '800',
     flexShrink: 1,
   },
   personBadge: {
-    backgroundColor: '#38F28E18',
+    backgroundColor: colorAlpha(appColors.success, '18'),
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   personBadgeText: {
-    color: '#38F28E',
+    color: appColors.success,
     fontSize: 11,
     fontWeight: '800',
   },
   personMeta: {
-    color: '#9FB3C8',
+    color: appColors.textMuted,
     fontSize: 13,
   },
   personContact: {
-    color: '#27496D',
+    color: appColors.textSoft,
     fontSize: 13,
   },
   personNotes: {
-    color: '#9FB3C8',
+    color: appColors.textMuted,
     fontSize: 12,
     lineHeight: 17,
   },
   formCard: {
-    backgroundColor: '#182A44',
-    borderRadius: 24,
+    backgroundColor: appColors.surfaceStrong,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#182A44',
+    borderColor: appColors.borderStrong,
     padding: 16,
     gap: 14,
   },
   formTitle: {
-    color: '#F4F8FF',
+    color: appColors.text,
     fontSize: 18,
     fontWeight: '800',
   },
   formSubtitle: {
-    color: '#C9D7E8',
+    color: appColors.textSoft,
     fontSize: 13,
     lineHeight: 19,
   },
@@ -687,36 +767,99 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   input: {
-    backgroundColor: '#F4F8FF',
+    backgroundColor: appColors.text,
     borderWidth: 1,
-    borderColor: '#C9D7E8',
+    borderColor: appColors.border,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 13,
-    color: '#071120',
+    color: appColors.background,
     fontSize: 15,
   },
   multilineInput: {
     minHeight: 92,
   },
-  switchCard: {
+  fieldGroup: {
+    gap: 8,
+  },
+  fieldLabel: {
+    color: appColors.textSoft,
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  segmentedRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 8,
+  },
+  segmentOption: {
+    flex: 1,
     alignItems: 'center',
-    gap: 16,
-    backgroundColor: '#F4F8FF',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    backgroundColor: appColors.backgroundMuted,
+    borderWidth: 1,
+    borderColor: appColors.borderStrong,
+  },
+  segmentOptionActive: {
+    backgroundColor: colorAlpha(appColors.info, '22'),
+    borderColor: appColors.info,
+  },
+  segmentOptionText: {
+    color: appColors.textSoft,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  segmentOptionTextActive: {
+    color: appColors.info,
+  },
+  principalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: appColors.backgroundMuted,
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#C9D7E8',
+    borderColor: appColors.borderStrong,
+  },
+  principalButtonActive: {
+    backgroundColor: colorAlpha(appColors.accent, '18'),
+    borderColor: appColors.accent,
+  },
+  principalButtonIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: appColors.text,
+  },
+  principalButtonCopy: {
+    flex: 1,
+  },
+  principalStatus: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: appColors.surface,
+    borderWidth: 1,
+    borderColor: appColors.border,
+  },
+  principalStatusActive: {
+    backgroundColor: appColors.accent,
+    borderColor: appColors.accent,
   },
   switchTitle: {
-    color: '#071120',
+    color: appColors.text,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   switchHelper: {
-    color: '#9FB3C8',
+    color: appColors.textSoft,
     fontSize: 12,
     marginTop: 2,
     maxWidth: 240,
@@ -726,7 +869,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#FF4D7322',
+    backgroundColor: appColors.accent,
     borderRadius: 16,
     paddingVertical: 14,
   },
@@ -734,7 +877,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   submitBtnText: {
-    color: '#FF4D73',
+    color: appColors.background,
     fontSize: 15,
     fontWeight: '800',
   },

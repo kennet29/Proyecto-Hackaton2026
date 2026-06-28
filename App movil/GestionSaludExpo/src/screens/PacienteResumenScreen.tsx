@@ -19,6 +19,7 @@ import {
   readClinicalSummaryCache,
   writeClinicalSummaryCache,
 } from '../utils/clinicalSummaryCache';
+import { appColors, colorAlpha } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PacienteResumen'>;
 
@@ -221,6 +222,9 @@ export function PacienteResumenScreen({ navigation }: Props) {
     return buildFullName(summary, selectedOption?.displayName ?? user?.username?.split('@')[0]);
   }, [patientOptions, selectedPatientId, summary, user?.username]);
 
+  const selectedPatientLabel =
+    patientOptions.find((item) => String(item.pacienteId) === selectedPatientId)?.displayName ?? patientName;
+
   const overviewCards = useMemo(
     () =>
       summary
@@ -281,22 +285,33 @@ export function PacienteResumenScreen({ navigation }: Props) {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={() => fetchSummary(selectedPatientId, true)}
-          tintColor="#071120"
+          tintColor={appColors.text}
         />
       }
     >
       <View style={styles.headerCard}>
-        <View style={styles.headerIconBadge}>
-          <Ionicons name="medkit-outline" size={24} color="#182A44" />
+        <View style={styles.headerTopRow}>
+          <View style={styles.headerIconBadge}>
+            <Ionicons name="medkit-outline" size={24} color={appColors.background} />
+          </View>
+          <View style={styles.headerStatusPill}>
+            <Ionicons name="pulse-outline" size={14} color={appColors.info} />
+            <Text style={styles.headerStatusText}>Resumen clínico</Text>
+          </View>
         </View>
-        <Text style={styles.kicker}>RESUMEN CLINICO</Text>
         <Text style={styles.title}>Vista integral del expediente</Text>
+        <Text style={styles.subtitleClean}>
+          Reúne indicadores, alertas y actividad reciente para consultar el estado clínico sin cambiar de pantalla.
+        </Text>
         <Text style={styles.subtitle}>
-          Carga una sola fuente clÃƒÂ­nica, prioriza alertas y conserva una copia local para consulta rÃƒÂ¡pida.
+          Resumen clínico compacto.
         </Text>
 
         <View style={styles.selectorCard}>
           <Text style={styles.selectorLabel}>Paciente seleccionado</Text>
+          <Text style={styles.selectorValue} numberOfLines={1}>
+            {selectedPatientId ? selectedPatientLabel : 'Selecciona una persona'}
+          </Text>
           <View style={styles.pickerShell}>
             <Picker
               selectedValue={selectedPatientId}
@@ -322,10 +337,28 @@ export function PacienteResumenScreen({ navigation }: Props) {
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
+      {!loadingPatients && patientOptions.length === 0 ? (
+        <View style={styles.stateCard}>
+          <Ionicons name="people-outline" size={28} color={appColors.info} />
+          <Text style={styles.stateTitle}>No hay personas asociadas</Text>
+          <Text style={styles.stateText}>
+            Agrega una persona asociada para generar su resumen clínico.
+          </Text>
+        </View>
+      ) : null}
+
       {(loadingPatients || loadingSummary) && !refreshing ? (
         <View style={styles.loadingCard}>
-          <ActivityIndicator size="large" color="#071120" />
+          <ActivityIndicator size="large" color={appColors.info} />
           <Text style={styles.loadingText}>Cargando resumen del paciente...</Text>
+        </View>
+      ) : null}
+
+      {!loadingPatients && !loadingSummary && selectedPatientId && !summary && !error ? (
+        <View style={styles.stateCard}>
+          <Ionicons name="document-text-outline" size={28} color={appColors.info} />
+          <Text style={styles.stateTitle}>Resumen no disponible</Text>
+          <Text style={styles.stateText}>Actualiza la pantalla o intenta con otra persona asociada.</Text>
         </View>
       ) : null}
 
@@ -337,7 +370,7 @@ export function PacienteResumenScreen({ navigation }: Props) {
                 <Text style={styles.profileName}>{patientName}</Text>
                 <Text style={styles.profileMeta}>
                   ID #{summary.patient.pacienteId}
-                  {summary.patient.edadAproximada !== null ? ` Ã‚Â· ${summary.patient.edadAproximada} aÃƒÂ±os` : ''}
+                  {summary.patient.edadAproximada !== null ? ` · ${summary.patient.edadAproximada} años` : ''}
                 </Text>
               </View>
               <TouchableOpacity
@@ -355,7 +388,7 @@ export function PacienteResumenScreen({ navigation }: Props) {
                 color={dataSource === 'cache' ? '#FF4D73' : '#38F28E'}
               />
               <Text style={styles.syncBadgeText}>
-                {dataSource === 'cache' ? 'Copia local' : 'Datos sincronizados'} Ã‚Â· {formatDateTime(summary.generatedAt)}
+                {dataSource === 'cache' ? 'Copia local' : 'Datos sincronizados'} · {formatDateTime(summary.generatedAt)}
               </Text>
             </View>
 
@@ -429,7 +462,7 @@ export function PacienteResumenScreen({ navigation }: Props) {
               <Text style={styles.infoLabel}>Proxima cita</Text>
               <Text style={styles.infoValue}>
                 {summary.upcoming.nextAppointment
-                  ? `${formatDateTime(summary.upcoming.nextAppointment.fecha)} Ã‚Â· ${
+                  ? `${formatDateTime(summary.upcoming.nextAppointment.fecha)} · ${
                       summary.upcoming.nextAppointment.especialidad || 'Sin especialidad'
                     }`
                   : 'Sin cita pendiente'}
@@ -451,7 +484,7 @@ export function PacienteResumenScreen({ navigation }: Props) {
                   <View style={styles.recordMain}>
                     <Text style={styles.recordTitle}>{item.nombre}</Text>
                     <Text style={styles.recordDetail}>
-                      {item.dosis || 'Sin dosis'} Ã‚Â· {item.viaAdministracion || 'Sin via'}
+                      {item.dosis || 'Sin dosis'} · {item.viaAdministracion || 'Sin vía'}
                     </Text>
                     <Text style={styles.recordSub}>{item.indicaciones || 'Sin indicaciones'}</Text>
                   </View>
@@ -502,26 +535,51 @@ export function PacienteResumenScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#182A44',
+    backgroundColor: appColors.background,
   },
   content: {
-    padding: 18,
+    paddingHorizontal: 18,
+    paddingTop: 16,
     paddingBottom: 34,
   },
   headerCard: {
-    backgroundColor: '#182A44',
-    borderRadius: 28,
-    padding: 22,
-    marginBottom: 16,
+    backgroundColor: appColors.surfaceStrong,
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: appColors.borderStrong,
+    gap: 12,
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
   },
   headerIconBadge: {
-    width: 48,
-    height: 48,
+    width: 50,
+    height: 50,
     borderRadius: 16,
-    backgroundColor: '#F4F8FF',
+    backgroundColor: appColors.text,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+  },
+  headerStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: colorAlpha(appColors.info, '18'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '55'),
+  },
+  headerStatusText: {
+    color: appColors.info,
+    fontSize: 12,
+    fontWeight: '800',
   },
   kicker: {
     color: '#9FB3C8',
@@ -530,32 +588,62 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   title: {
-    color: '#F4F8FF',
-    fontSize: 28,
+    color: appColors.text,
+    fontSize: 26,
     fontWeight: '800',
+    lineHeight: 31,
+  },
+  subtitleClean: {
+    color: appColors.textSoft,
+    fontSize: 14,
+    lineHeight: 21,
   },
   subtitle: {
-    color: '#C9D7E8',
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 8,
+    display: 'none',
   },
   selectorCard: {
-    marginTop: 18,
-    backgroundColor: '#27496D',
-    borderRadius: 20,
+    backgroundColor: appColors.surface,
+    borderRadius: 16,
     padding: 14,
+    borderWidth: 1,
+    borderColor: appColors.border,
+    gap: 10,
+  },
+  selectorHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  selectorCopy: {
+    flex: 1,
   },
   selectorLabel: {
-    color: '#C9D7E8',
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 8,
+    color: appColors.textMuted,
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  selectorValue: {
+    color: appColors.text,
+    fontSize: 16,
+    fontWeight: '800',
+    marginTop: 3,
+  },
+  selectorIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colorAlpha(appColors.info, '18'),
   },
   pickerShell: {
-    backgroundColor: '#0D1B2A',
-    borderRadius: 16,
+    backgroundColor: appColors.background,
+    borderRadius: 14,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: appColors.borderStrong,
   },
   picker: {
     color: '#F4F8FF',
@@ -566,17 +654,40 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   loadingCard: {
-    backgroundColor: '#F4F8FF',
-    borderRadius: 24,
-    padding: 22,
+    backgroundColor: appColors.surface,
+    borderRadius: 18,
+    padding: 20,
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#182A44',
+    borderColor: appColors.border,
   },
   loadingText: {
-    color: '#9FB3C8',
+    color: appColors.textSoft,
     marginTop: 10,
+    fontWeight: '700',
+  },
+  stateCard: {
+    backgroundColor: appColors.surface,
+    borderRadius: 18,
+    padding: 20,
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: appColors.border,
+  },
+  stateTitle: {
+    color: appColors.text,
+    fontSize: 17,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  stateText: {
+    color: appColors.textSoft,
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: 'center',
   },
   profileCard: {
     backgroundColor: '#F4F8FF',

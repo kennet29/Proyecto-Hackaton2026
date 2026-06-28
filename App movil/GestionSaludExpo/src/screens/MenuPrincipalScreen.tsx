@@ -64,8 +64,8 @@ const tabMeta: TabMeta[] = [
 const homeOptions: OptionItem[] = [
   {
     key: 'home-expediente',
-    label: 'Gestionar Expediente',
-    description: 'Organiza personas vinculadas, accesos y el control central del expediente.',
+    label: 'Personas Asociadas',
+    description: 'Administra familiares vinculados y sus datos de salud desde un solo lugar.',
     icon: 'file-tray-full-outline',
     accent: appColors.info,
     navigateTo: 'ExpedienteGestion',

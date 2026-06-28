@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Pressable,
   StyleSheet,
   Text,
@@ -16,6 +17,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { loadFingerprintTemplate } from '../utils/fingerprint';
+import { appColors, colorAlpha } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 type FeedbackState = { type: 'success' | 'error'; message: string } | null;
@@ -74,6 +76,7 @@ export function LoginScreen({ navigation }: Props) {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [fingerprintTemplate, setFingerprintTemplate] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
+  const [welcomeSession, setWelcomeSession] = useState<LoginApiResponse | null>(null);
   const { login } = useAuth();
 
   const fingerprintReady = useMemo(
@@ -136,12 +139,22 @@ export function LoginScreen({ navigation }: Props) {
     if (!response.ok || !body?.accessToken || !body?.user) {
       throw new Error(body?.message ?? 'Credenciales inválidas');
     }
-    login({ token: body.accessToken, user: body.user });
     setFeedback({
       type: 'success',
       message: body?.message ?? 'Inicio de sesión exitoso.',
     });
     return body as LoginApiResponse;
+  };
+
+  const showWelcome = (body: LoginApiResponse) => {
+    setWelcomeSession(body);
+  };
+
+  const continueToApp = () => {
+    if (!welcomeSession) {
+      return;
+    }
+    login({ token: welcomeSession.accessToken, user: welcomeSession.user });
   };
 
   const handleLogin = async () => {
@@ -155,7 +168,7 @@ export function LoginScreen({ navigation }: Props) {
     try {
       setLoading(true);
       const body = await executeLogin({ username, password });
-      Alert.alert('Bienvenido', body?.message ?? 'Inicio de sesión exitoso');
+      showWelcome(body);
     } catch (error) {
       const message = formatErrorMessage(error);
       setFeedback({ type: 'error', message });
@@ -196,7 +209,7 @@ export function LoginScreen({ navigation }: Props) {
         throw new Error('Autenticación cancelada');
       }
       const body = await executeLogin({ username, fingerprintTemplate });
-      Alert.alert('Bienvenido', body?.message ?? 'Inicio de sesión exitoso');
+      showWelcome(body);
     } catch (error) {
       const message = formatErrorMessage(error);
       setFeedback({ type: 'error', message });
@@ -288,6 +301,31 @@ export function LoginScreen({ navigation }: Props) {
           </Text>
         </Text>
       </View>
+      <Modal
+        transparent
+        visible={!!welcomeSession}
+        animationType="fade"
+        onRequestClose={continueToApp}
+      >
+        <View style={styles.welcomeOverlay}>
+          <View style={styles.welcomeModalCard}>
+            <View style={styles.welcomeModalIcon}>
+              <Ionicons name="shield-checkmark-outline" size={30} color={appColors.background} />
+            </View>
+            <Text style={styles.welcomeModalEyebrow}>Sesión verificada</Text>
+            <Text style={styles.welcomeModalTitle}>
+              Bienvenido, {welcomeSession?.user.username ?? 'usuario'}
+            </Text>
+            <Text style={styles.welcomeModalText}>
+              {welcomeSession?.message ?? 'Inicio de sesión exitoso. Tu panel de salud está listo.'}
+            </Text>
+            <TouchableOpacity style={styles.welcomeModalButton} onPress={continueToApp}>
+              <Text style={styles.welcomeModalButtonText}>Entrar al panel</Text>
+              <Ionicons name="arrow-forward" size={18} color={appColors.background} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -429,6 +467,73 @@ const styles = StyleSheet.create({
   link: {
     color: '#29B6FF',
     fontWeight: '600',
+  },
+  welcomeOverlay: {
+    flex: 1,
+    backgroundColor: colorAlpha(appColors.overlay, 'B8'),
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  welcomeModalCard: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: 24,
+    padding: 22,
+    alignItems: 'center',
+    backgroundColor: appColors.surfaceStrong,
+    borderWidth: 1,
+    borderColor: appColors.border,
+    shadowColor: appColors.overlay,
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 16 },
+    elevation: 12,
+  },
+  welcomeModalIcon: {
+    width: 62,
+    height: 62,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: appColors.success,
+    marginBottom: 16,
+  },
+  welcomeModalEyebrow: {
+    color: appColors.info,
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  welcomeModalTitle: {
+    color: appColors.text,
+    fontSize: 24,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  welcomeModalText: {
+    color: appColors.textSoft,
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  welcomeModalButton: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: 14,
+    paddingVertical: 14,
+    backgroundColor: appColors.accent,
+  },
+  welcomeModalButtonText: {
+    color: appColors.background,
+    fontSize: 15,
+    fontWeight: '800',
   },
   circle: {
     position: 'absolute',

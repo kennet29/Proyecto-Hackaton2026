@@ -253,7 +253,7 @@ export function MedicacionFormScreen({
   const [recordsError, setRecordsError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedDate, setSelectedDate] = useState(todayString());
-  const [showDaySection, setShowDaySection] = useState(true);
+  const [showDaySection, setShowDaySection] = useState(false);
   const [showHistorySection, setShowHistorySection] = useState(false);
   const [showNotificationForm, setShowNotificationForm] = useState(false);
   const [attachment, setAttachment] = useState<MedicationAttachment | null>(null);
@@ -557,6 +557,21 @@ export function MedicacionFormScreen({
 
     return entries;
   }, [selectedDate, visibleRecords]);
+
+  const hasDayRecords = recordsForSelectedDay.length > 0;
+  const hasHistoryRecords = visibleRecords.length > 0;
+
+  useEffect(() => {
+    if (!hasDayRecords && showDaySection) {
+      setShowDaySection(false);
+    }
+  }, [hasDayRecords, showDaySection]);
+
+  useEffect(() => {
+    if (!hasHistoryRecords && showHistorySection) {
+      setShowHistorySection(false);
+    }
+  }, [hasHistoryRecords, showHistorySection]);
 
   const showPicker = (field: PickerField) => {
     if (Platform.OS === 'android') {
@@ -1040,33 +1055,39 @@ export function MedicacionFormScreen({
 
             <View style={styles.daySection}>
               <TouchableOpacity
-                style={styles.sectionToggle}
-                onPress={() => setShowDaySection((prev) => !prev)}
+                style={[styles.sectionToggle, !hasDayRecords && styles.sectionToggleDisabled]}
+                onPress={() => {
+                  if (hasDayRecords) {
+                    setShowDaySection((prev) => !prev);
+                  }
+                }}
                 activeOpacity={0.85}
+                disabled={!hasDayRecords}
               >
                 <View style={styles.sectionToggleCopy}>
                   <Text style={styles.formTitle}>Medicacion del dia</Text>
                   <Text style={styles.sectionHelper}>
-                    {showDaySection
-                      ? 'Ocultar medicaciones de la fecha seleccionada'
-                      : 'Desplegar medicaciones de la fecha seleccionada'}
+                    {!hasDayRecords
+                      ? 'No hay medicaciones para desplegar en esta fecha'
+                      : showDaySection
+                        ? 'Ocultar medicaciones de la fecha seleccionada'
+                        : 'Desplegar medicaciones de la fecha seleccionada'}
                   </Text>
                 </View>
                 <View style={styles.sectionToggleActions}>
                   <View style={styles.countBadge}>
                     <Text style={styles.countBadgeText}>{recordsForSelectedDay.length}</Text>
                   </View>
-                  <Text style={styles.sectionToggleIcon}>{showDaySection ? '-' : '+'}</Text>
+                  <Text style={[styles.sectionToggleIcon, !hasDayRecords && styles.sectionToggleIconDisabled]}>
+                    {hasDayRecords ? (showDaySection ? '-' : '+') : ''}
+                  </Text>
                 </View>
               </TouchableOpacity>
 
-              {showDaySection ? (
+              {showDaySection && hasDayRecords ? (
                 <>
                   <Text style={styles.dayLabel}>{formatDisplayDate(selectedDate, selectedDate)}</Text>
-                  {recordsForSelectedDay.length === 0 ? (
-                    <Text style={styles.emptyText}>No hay inicios ni finalizaciones de tratamiento en esta fecha.</Text>
-                  ) : (
-                    recordsForSelectedDay.map((record) => {
+                  {recordsForSelectedDay.map((record) => {
                       const label = patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`;
                       return (
                         <View key={`day-${record.medicacionId}-${record.dayType}`} style={styles.medicationCard}>
@@ -1103,46 +1124,49 @@ export function MedicacionFormScreen({
                           ) : null}
                         </View>
                       );
-                    })
-                  )}
+                    })}
                 </>
               ) : null}
             </View>
 
             <View style={styles.recordsSection}>
               <TouchableOpacity
-                style={styles.sectionToggle}
-                onPress={() => setShowHistorySection((prev) => !prev)}
+                style={[styles.sectionToggle, !hasHistoryRecords && styles.sectionToggleDisabled]}
+                onPress={() => {
+                  if (hasHistoryRecords) {
+                    setShowHistorySection((prev) => !prev);
+                  }
+                }}
                 activeOpacity={0.85}
+                disabled={!hasHistoryRecords}
               >
                 <View style={styles.sectionToggleCopy}>
                   <Text style={styles.formTitle}>Historial completo</Text>
                   <Text style={styles.sectionHelper}>
-                    {showHistorySection ? 'Ocultar medicaciones anteriores' : 'Desplegar medicaciones anteriores'}
+                    {!hasHistoryRecords
+                      ? activePatientId
+                        ? 'Este paciente no tiene medicaciones para mostrar'
+                        : 'No hay medicaciones registradas para mostrar'
+                      : showHistorySection
+                        ? 'Ocultar medicaciones anteriores'
+                        : 'Desplegar medicaciones anteriores'}
                   </Text>
                 </View>
                 <View style={styles.sectionToggleActions}>
                   <View style={styles.countBadge}>
                     <Text style={styles.countBadgeText}>{visibleRecords.length}</Text>
                   </View>
-                  <Text style={styles.sectionToggleIcon}>{showHistorySection ? '-' : '+'}</Text>
+                  <Text style={[styles.sectionToggleIcon, !hasHistoryRecords && styles.sectionToggleIconDisabled]}>
+                    {hasHistoryRecords ? (showHistorySection ? '-' : '+') : ''}
+                  </Text>
                 </View>
               </TouchableOpacity>
 
-              {showHistorySection ? (
+              {showHistorySection && hasHistoryRecords ? (
                 loadingRecords ? (
                   <View style={styles.stateBox}>
                     <ActivityIndicator color="#29B6FF" />
                     <Text style={styles.stateText}>Cargando medicaciones...</Text>
-                  </View>
-                ) : visibleRecords.length === 0 ? (
-                  <View style={styles.stateBox}>
-                    <Text style={styles.stateTitle}>Sin registros</Text>
-                    <Text style={styles.stateText}>
-                      {activePatientId
-                        ? 'Este paciente aun no tiene medicaciones registradas.'
-                        : 'Selecciona un paciente para revisar su historial.'}
-                    </Text>
                   </View>
                 ) : (
                   visibleRecords.map((record) => {
@@ -1602,6 +1626,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
   },
+  sectionToggleDisabled: {
+    opacity: 0.62,
+  },
   sectionToggleCopy: {
     flex: 1,
   },
@@ -1616,6 +1643,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     width: 20,
     textAlign: 'center',
+  },
+  sectionToggleIconDisabled: {
+    color: '#9FB3C8',
   },
   countBadge: {
     minWidth: 34,

@@ -83,7 +83,7 @@ const PrivateNavigator = () => {
       <Stack.Screen
         name="ExpedienteGestion"
         component={ExpedienteGestionScreen}
-        options={{ title: 'Gestionar Expediente' }}
+        options={{ title: 'Personas Asociadas' }}
       />
       <Stack.Screen
         name="PacienteForm"

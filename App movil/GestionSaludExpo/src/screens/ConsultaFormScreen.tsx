@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
@@ -346,12 +347,12 @@ export function ConsultaFormScreen({ route }: Props) {
     const scheduledAt = composeDateTime(notificationDate, notificationTime);
 
     if (!consulta?.consultaId) {
-      Alert.alert('Notificacion no disponible', 'Primero guarda la consulta para poder vincular una notificacion.');
+      Alert.alert('Notificación no disponible', 'Primero guarda la consulta para poder vincular una notificación.');
       return;
     }
 
     if (!form.pacienteId || !scheduledAt || !notificationForm.mensaje.trim()) {
-      Alert.alert('Faltan datos', 'Fecha, hora y mensaje son obligatorios para la notificacion.');
+      Alert.alert('Faltan datos', 'Fecha, hora y mensaje son obligatorios para la notificación.');
       return;
     }
 
@@ -375,14 +376,14 @@ export function ConsultaFormScreen({ route }: Props) {
 
       if (offlineResult.status === 'queued') {
         Alert.alert(
-          'Notificacion en cola',
-          'No habia conexion. La notificacion quedo pendiente y se enviara cuando vuelva la red.',
+          'Notificación en cola',
+          'No había conexión. La notificación quedó pendiente y se enviará cuando vuelva la red.',
         );
       } else {
-        Alert.alert('Notificacion creada', 'La consulta ya tiene una notificacion programada.');
+        Alert.alert('Notificación creada', 'La consulta ya tiene una notificación programada.');
       }
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo crear la notificacion');
+      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo crear la notificación');
     }
   };
 
@@ -471,27 +472,60 @@ export function ConsultaFormScreen({ route }: Props) {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>Notificacion de seguimiento</Text>
-        <Text style={styles.sectionHelper}>
-          {notificationReady
-            ? 'Programa un aviso para recordar el seguimiento de esta consulta.'
-            : 'Guarda primero la consulta para habilitar la notificacion vinculada.'}
-        </Text>
+      <View style={[styles.sectionCard, styles.notificationCard]}>
+        <View style={styles.notificationHeader}>
+          <View style={styles.notificationIconBadge}>
+            <Ionicons name="notifications-outline" size={22} color="#071120" />
+          </View>
+          <View style={styles.notificationHeaderCopy}>
+            <Text style={styles.sectionTitle}>Notificación de seguimiento</Text>
+            <Text style={styles.sectionHelper}>
+              {notificationReady
+                ? 'Programa un aviso push vinculado a esta consulta médica.'
+                : 'Guarda primero la consulta para habilitar el aviso de seguimiento.'}
+            </Text>
+          </View>
+        </View>
 
-        <Text style={styles.label}>Mensaje</Text>
+        <View
+          style={[
+            styles.notificationStatusCard,
+            notificationReady ? styles.notificationStatusReady : styles.notificationStatusLocked,
+          ]}
+        >
+          <Ionicons
+            name={notificationReady ? 'checkmark-circle-outline' : 'lock-closed-outline'}
+            size={19}
+            color={notificationReady ? '#38F28E' : '#FF4D73'}
+          />
+          <Text
+            style={[
+              styles.notificationStatusText,
+              notificationReady ? styles.notificationStatusTextReady : styles.notificationStatusTextLocked,
+            ]}
+          >
+            {notificationReady ? 'Lista para programar' : 'Pendiente de guardar consulta'}
+          </Text>
+        </View>
+
+        <View style={styles.notificationMetaRow}>
+          <View style={styles.channelPill}>
+            <Ionicons name="phone-portrait-outline" size={15} color="#29B6FF" />
+            <Text style={styles.channelPillText}>Push</Text>
+          </View>
+          <Text style={styles.notificationMetaText}>Se enviará en la fecha y hora seleccionadas.</Text>
+        </View>
+
+        <Text style={styles.label}>Mensaje del aviso</Text>
         <TextInput
-          style={[styles.input, styles.multiline]}
-          placeholder="Mensaje de la notificacion"
+          style={[styles.input, styles.multiline, !notificationReady && styles.disabledField]}
+          placeholder="Mensaje de la notificación"
           placeholderTextColor="#9FB3C8"
           value={notificationForm.mensaje}
           multiline
+          editable={notificationReady}
           onChangeText={(value) => handleNotificationChange('mensaje', value)}
         />
-        <Text style={styles.label}>Canal</Text>
-        <View style={styles.fixedChannelCard}>
-          <Text style={styles.fixedChannelText}>Notificacion push</Text>
-        </View>
 
         <Text style={styles.label}>Fecha y hora del aviso</Text>
         <View style={styles.dateTimeRow}>
@@ -518,7 +552,10 @@ export function ConsultaFormScreen({ route }: Props) {
           onPress={handleCreateNotification}
           disabled={!notificationReady}
         >
-          <Text style={styles.notificationBtnText}>Crear notificacion</Text>
+          <Ionicons name="alarm-outline" size={18} color="#071120" />
+          <Text style={styles.notificationBtnText}>
+            {notificationReady ? 'Programar notificación' : 'Guarda la consulta primero'}
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -563,6 +600,84 @@ const styles = StyleSheet.create({
     padding: 18,
     borderWidth: 1,
     borderColor: '#27496D',
+  },
+  notificationCard: {
+    gap: 12,
+    borderColor: '#1B3355',
+    backgroundColor: '#182A44',
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+  notificationIconBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#38F28E',
+  },
+  notificationHeaderCopy: {
+    flex: 1,
+  },
+  notificationStatusCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    borderWidth: 1,
+  },
+  notificationStatusReady: {
+    backgroundColor: '#38F28E18',
+    borderColor: '#38F28E66',
+  },
+  notificationStatusLocked: {
+    backgroundColor: '#FF4D7318',
+    borderColor: '#FF4D7366',
+  },
+  notificationStatusText: {
+    flex: 1,
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  notificationStatusTextReady: {
+    color: '#38F28E',
+  },
+  notificationStatusTextLocked: {
+    color: '#FF4D73',
+  },
+  notificationMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  channelPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    backgroundColor: '#29B6FF18',
+    borderWidth: 1,
+    borderColor: '#29B6FF55',
+  },
+  channelPillText: {
+    color: '#29B6FF',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  notificationMetaText: {
+    flex: 1,
+    minWidth: 180,
+    color: '#C9D7E8',
+    fontSize: 12,
+    lineHeight: 17,
   },
   sectionTitle: {
     fontSize: 20,
@@ -672,6 +787,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   notificationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     backgroundColor: '#38F28E',
     paddingVertical: 16,
     borderRadius: 14,
@@ -681,9 +800,9 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   notificationBtnText: {
-    color: '#F4F8FF',
+    color: '#071120',
     textAlign: 'center',
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 16,
   },
   errorText: {
