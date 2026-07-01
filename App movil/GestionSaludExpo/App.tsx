@@ -50,6 +50,7 @@ import { SeguimientoFisicoFormScreen } from './src/screens/SeguimientoFisicoForm
 import { PeriodoScreen } from './src/screens/PeriodoScreen';
 import { SaludMentalScreen } from './src/screens/SaludMentalScreen';
 import { NanoConsejeroScreen } from './src/screens/NanoConsejeroScreen';
+import { NanoHistorialScreen } from './src/screens/NanoHistorialScreen';
 import { ExamenClinicoScreen } from './src/screens/ExamenClinicoScreen';
 import { SeguimientoPosteventoScreen } from './src/screens/SeguimientoPosteventoScreen';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
@@ -192,6 +193,11 @@ const PrivateNavigator = () => {
         name="NanoConsejero"
         component={NanoConsejeroScreen}
         options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="NanoHistorial"
+        component={NanoHistorialScreen}
+        options={{ title: 'Historial de Nano' }}
       />
       <Stack.Screen
         name="ExamenClinico"

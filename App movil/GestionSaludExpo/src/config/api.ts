@@ -80,7 +80,7 @@ const buildFallbackUrl = (): string => {
 };
 
 export const API_URL =
-  envBase ?? configuredBase ?? ensureApiUrl(DEFAULT_API_BASE);
+  envBase ?? configuredBase ?? (__DEV__ ? buildFallbackUrl() : ensureApiUrl(DEFAULT_API_BASE));
 
 if (__DEV__) {
   console.log(`[api] base URL: ${API_URL}`);

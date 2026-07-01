@@ -1,7 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
+  Easing,
   Image,
   Platform,
   Pressable,
@@ -20,6 +22,7 @@ import { API_URL } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
+import { saveNanoHistoryEntry } from '../utils/nanoHistory';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NanoConsejero'>;
 
@@ -41,6 +44,57 @@ type AnalyzeMealResponse = {
   feedback?: string;
   wordCount?: number;
   goalLabel?: string;
+  macronutrients?: {
+    calories?: number;
+    carbohydratesGrams?: number;
+    proteinGrams?: number;
+    fatGrams?: number;
+    fiberGrams?: number;
+    sugarGrams?: number;
+  };
+  macroDistribution?: {
+    carbohydratesPercent?: number;
+    proteinPercent?: number;
+    fatPercent?: number;
+  };
+  micronutrients?: Array<{
+    key?: string;
+    label?: string;
+    amount?: string;
+    dailyValuePercent?: number;
+  }>;
+};
+
+type CompositionSlice = {
+  key: string;
+  label: string;
+  percentage: number;
+  accent: string;
+  grams?: number;
+  calories?: number;
+};
+
+type MacronutrientBreakdown = {
+  calories: number;
+  carbohydratesGrams: number;
+  proteinGrams: number;
+  fatGrams: number;
+  fiberGrams: number;
+  sugarGrams: number;
+};
+
+type MacroDistribution = {
+  carbohydratesPercent: number;
+  proteinPercent: number;
+  fatPercent: number;
+};
+
+type MicronutrientMetric = {
+  key: string;
+  label: string;
+  amount: string;
+  dailyValuePercent: number;
+  accent: string;
 };
 
 const FOOD_GOALS: FoodGoal[] = [
@@ -75,26 +129,159 @@ const FOOD_GOALS: FoodGoal[] = [
 ];
 
 const DIALOG_TEXT =
-  'Toma una foto de tu comida, elige el objetivo y Nano te devolvera una recomendacion breve con mejoras o confirmacion si vas bien.';
+  'Toma una foto de tu comida, elige el objetivo y Nano te devolvera una recomendacion con calorias, macronutrientes, micronutrientes y graficas para revisar la distribucion del plato.';
 
-function NanoRobotIcon() {
-  return (
-    <View style={styles.robotShell}>
-      <View style={styles.robotFlame} />
-      <View style={styles.robotHead}>
-        <View style={styles.robotFace}>
-          <View style={styles.robotEye} />
-          <View style={styles.robotMouth} />
-          <View style={styles.robotEye} />
-        </View>
-      </View>
-      <View style={styles.robotEarLeft} />
-      <View style={styles.robotEarRight} />
-      <View style={styles.robotBody} />
-      <View style={styles.robotFootLeft} />
-      <View style={styles.robotFootRight} />
-    </View>
-  );
+const SCAN_OVERLAY_HEIGHT = 300;
+
+const MACRO_ACCENTS = {
+  carbohydrates: '#38BDF8',
+  protein: '#FF4D73',
+  fat: '#FDBA74',
+  fiber: '#38F28E',
+  sugar: '#F59E0B',
+} as const;
+
+const MICRO_ACCENTS = ['#29B6FF', '#38F28E', '#FDBA74', '#FF4D73', '#A3E635', '#F97316'];
+
+function sanitizeMacronutrients(payload: AnalyzeMealResponse['macronutrients']): MacronutrientBreakdown | null {
+  if (!payload) {
+    return null;
+  }
+
+  const calories = Number(payload.calories);
+  const carbohydratesGrams = Number(payload.carbohydratesGrams);
+  const proteinGrams = Number(payload.proteinGrams);
+  const fatGrams = Number(payload.fatGrams);
+  const fiberGrams = Number(payload.fiberGrams ?? 0);
+  const sugarGrams = Number(payload.sugarGrams ?? 0);
+
+  if (![calories, carbohydratesGrams, proteinGrams, fatGrams, fiberGrams, sugarGrams].every(Number.isFinite)) {
+    return null;
+  }
+
+  return {
+    calories,
+    carbohydratesGrams,
+    proteinGrams,
+    fatGrams,
+    fiberGrams,
+    sugarGrams,
+  };
+}
+
+function sanitizeMicronutrients(
+  payload: AnalyzeMealResponse['micronutrients'],
+): MicronutrientMetric[] | null {
+  if (!payload?.length) {
+    return null;
+  }
+
+  const items = payload
+    .map((item, index) => {
+      const label = item.label?.trim();
+      const amount = item.amount?.trim();
+      const dailyValuePercent = Number(item.dailyValuePercent);
+
+      if (!label || !amount || !Number.isFinite(dailyValuePercent)) {
+        return null;
+      }
+
+      return {
+        key: item.key?.trim() || `micronutrient-${index + 1}`,
+        label,
+        amount,
+        dailyValuePercent,
+        accent: MICRO_ACCENTS[index % MICRO_ACCENTS.length],
+      };
+    })
+    .filter((item): item is MicronutrientMetric => item !== null);
+
+  return items.length ? items : null;
+}
+
+function sanitizeMacroDistribution(
+  payload: AnalyzeMealResponse['macroDistribution'],
+): MacroDistribution | null {
+  if (!payload) {
+    return null;
+  }
+
+  const carbohydratesPercent = Number(payload.carbohydratesPercent);
+  const proteinPercent = Number(payload.proteinPercent);
+  const fatPercent = Number(payload.fatPercent);
+
+  if (![carbohydratesPercent, proteinPercent, fatPercent].every(Number.isFinite)) {
+    return null;
+  }
+
+  return {
+    carbohydratesPercent,
+    proteinPercent,
+    fatPercent,
+  };
+}
+
+function buildComposition(
+  macronutrients: MacronutrientBreakdown | null,
+  distribution: MacroDistribution | null,
+): CompositionSlice[] | null {
+  if (!macronutrients && !distribution) {
+    return null;
+  }
+
+  const carbohydrateCalories = Math.max(macronutrients?.carbohydratesGrams ?? 0, 0) * 4;
+  const proteinCalories = Math.max(macronutrients?.proteinGrams ?? 0, 0) * 4;
+  const fatCalories = Math.max(macronutrients?.fatGrams ?? 0, 0) * 9;
+  const total = carbohydrateCalories + proteinCalories + fatCalories;
+
+  const percentages =
+    distribution ??
+    (total > 0
+      ? {
+          carbohydratesPercent: Math.round((carbohydrateCalories / total) * 100),
+          proteinPercent: Math.round((proteinCalories / total) * 100),
+          fatPercent: Math.round((fatCalories / total) * 100),
+        }
+      : null);
+
+  if (!percentages) {
+    return null;
+  }
+
+  return [
+    {
+      key: 'carbohydrates',
+      label: 'Carbohidratos',
+      percentage: percentages.carbohydratesPercent,
+      accent: MACRO_ACCENTS.carbohydrates,
+      grams: macronutrients?.carbohydratesGrams ?? 0,
+      calories: carbohydrateCalories,
+    },
+    {
+      key: 'protein',
+      label: 'Proteina',
+      percentage: percentages.proteinPercent,
+      accent: MACRO_ACCENTS.protein,
+      grams: macronutrients?.proteinGrams ?? 0,
+      calories: proteinCalories,
+    },
+    {
+      key: 'fat',
+      label: 'Grasas',
+      percentage: percentages.fatPercent,
+      accent: MACRO_ACCENTS.fat,
+      grams: macronutrients?.fatGrams ?? 0,
+      calories: fatCalories,
+    },
+  ];
+}
+
+function formatGramValue(value: number) {
+  return `${value.toFixed(value % 1 === 0 ? 0 : 1)} g`;
+}
+
+function formatCalorieValue(value: number) {
+  return `${Math.round(value)} kcal`;
 }
 
 export function NanoConsejeroScreen({ navigation }: Props) {
@@ -105,11 +292,95 @@ export function NanoConsejeroScreen({ navigation }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [analysisText, setAnalysisText] = useState<string | null>(null);
   const [analysisWordCount, setAnalysisWordCount] = useState<number | null>(null);
+  const [macronutrients, setMacronutrients] = useState<MacronutrientBreakdown | null>(null);
+  const [macroDistribution, setMacroDistribution] = useState<MacroDistribution | null>(null);
+  const [micronutrients, setMicronutrients] = useState<MicronutrientMetric[] | null>(null);
+  const scanTranslate = useRef(new Animated.Value(0)).current;
 
   const selectedGoal = useMemo(
     () => FOOD_GOALS.find((goal) => goal.id === selectedGoalId) ?? FOOD_GOALS[0],
     [selectedGoalId],
   );
+  const composition = useMemo(
+    () => buildComposition(macronutrients, macroDistribution),
+    [macronutrients, macroDistribution],
+  );
+  const macroHighlights = useMemo(
+    () =>
+      macronutrients
+        ? [
+            {
+              key: 'calories',
+              label: 'Calorias',
+              value: formatCalorieValue(macronutrients.calories),
+              accent: selectedGoal.accent,
+            },
+            {
+              key: 'protein',
+              label: 'Proteina',
+              value: formatGramValue(macronutrients.proteinGrams),
+              accent: MACRO_ACCENTS.protein,
+            },
+            {
+              key: 'carbohydrates',
+              label: 'Carbohidratos',
+              value: formatGramValue(macronutrients.carbohydratesGrams),
+              accent: MACRO_ACCENTS.carbohydrates,
+            },
+            {
+              key: 'fat',
+              label: 'Grasas',
+              value: formatGramValue(macronutrients.fatGrams),
+              accent: MACRO_ACCENTS.fat,
+            },
+            {
+              key: 'fiber',
+              label: 'Fibra',
+              value: formatGramValue(macronutrients.fiberGrams),
+              accent: MACRO_ACCENTS.fiber,
+            },
+            {
+              key: 'sugar',
+              label: 'Azucares',
+              value: formatGramValue(macronutrients.sugarGrams),
+              accent: MACRO_ACCENTS.sugar,
+            },
+          ]
+        : [],
+    [macronutrients, selectedGoal.accent],
+  );
+
+  useEffect(() => {
+    if (!submitting || !photo) {
+      scanTranslate.stopAnimation();
+      scanTranslate.setValue(0);
+      return;
+    }
+
+    const scanLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scanTranslate, {
+          toValue: SCAN_OVERLAY_HEIGHT - 16,
+          duration: 1450,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scanTranslate, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    scanLoop.start();
+
+    return () => {
+      scanLoop.stop();
+      scanTranslate.stopAnimation();
+      scanTranslate.setValue(0);
+    };
+  }, [photo, scanTranslate, submitting]);
 
   const handleTakePhoto = async () => {
     if (Platform.OS === 'web') {
@@ -143,6 +414,9 @@ export function NanoConsejeroScreen({ navigation }: Props) {
       });
       setAnalysisText(null);
       setAnalysisWordCount(null);
+      setMacronutrients(null);
+      setMacroDistribution(null);
+      setMicronutrients(null);
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo abrir la camara.');
     } finally {
@@ -164,6 +438,9 @@ export function NanoConsejeroScreen({ navigation }: Props) {
     setSubmitting(true);
     setAnalysisText(null);
     setAnalysisWordCount(null);
+    setMacronutrients(null);
+    setMacroDistribution(null);
+    setMicronutrients(null);
 
     try {
       const file = new FileSystem.File(photo.uri);
@@ -195,8 +472,26 @@ export function NanoConsejeroScreen({ navigation }: Props) {
         throw new Error('Nano no devolvio una recomendacion util.');
       }
 
+      const sanitizedMacronutrients = sanitizeMacronutrients(payload.macronutrients);
+      const sanitizedDistribution = sanitizeMacroDistribution(payload.macroDistribution);
+      const sanitizedMicronutrients = sanitizeMicronutrients(payload.micronutrients);
+
       setAnalysisText(payload.feedback);
       setAnalysisWordCount(payload.wordCount ?? null);
+      setMacronutrients(sanitizedMacronutrients);
+      setMacroDistribution(sanitizedDistribution);
+      setMicronutrients(sanitizedMicronutrients);
+
+      await saveNanoHistoryEntry({
+        id: `${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        goalLabel: selectedGoal.label,
+        photoUri: photo.uri,
+        feedback: payload.feedback,
+        wordCount: payload.wordCount ?? null,
+        macronutrients: sanitizedMacronutrients,
+        micronutrients: sanitizedMicronutrients,
+      });
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo analizar la comida.');
     } finally {
@@ -226,18 +521,6 @@ export function NanoConsejeroScreen({ navigation }: Props) {
             <Text style={styles.speechTitle}>Analisis de comida</Text>
           </View>
           <Text style={styles.speechText}>{DIALOG_TEXT}</Text>
-        </View>
-
-        <View style={styles.heroCard}>
-          <View style={styles.heroIconWrap}>
-            <NanoRobotIcon />
-          </View>
-          <View style={styles.heroTextWrap}>
-            <Text style={styles.heroTitle}>Foto + objetivo + recomendacion</Text>
-            <Text style={styles.heroSubtitle}>
-              Nano usa la imagen de tu plato y el contexto nutricional seleccionado para darte una respuesta breve.
-            </Text>
-          </View>
         </View>
 
         <View style={styles.section}>
@@ -288,7 +571,26 @@ export function NanoConsejeroScreen({ navigation }: Props) {
 
           <View style={styles.cameraCard}>
             {photo ? (
-              <Image source={{ uri: photo.uri }} style={styles.foodPreview} resizeMode="cover" />
+              <View style={styles.previewWrap}>
+                <Image source={{ uri: photo.uri }} style={styles.foodPreview} resizeMode="cover" />
+                {submitting ? (
+                  <View style={styles.scanOverlay} pointerEvents="none">
+                    <View style={styles.scanFrame} />
+                    <Animated.View
+                      style={[
+                        styles.scanLine,
+                        {
+                          transform: [{ translateY: scanTranslate }],
+                        },
+                      ]}
+                    />
+                    <View style={styles.scanBadge}>
+                      <Ionicons name="scan-outline" size={14} color={appColors.text} />
+                      <Text style={styles.scanBadgeText}>Escaneando composicion</Text>
+                    </View>
+                  </View>
+                ) : null}
+              </View>
             ) : (
               <View style={styles.placeholderWrap}>
                 <View style={styles.placeholderIcon}>
@@ -300,36 +602,61 @@ export function NanoConsejeroScreen({ navigation }: Props) {
                 </Text>
               </View>
             )}
-          </View>
 
-          <View style={styles.cameraActions}>
             <TouchableOpacity
-              style={[styles.primaryButton, capturing && styles.buttonDisabled]}
+              style={[styles.floatingCameraButton, capturing && styles.buttonDisabled]}
               activeOpacity={0.9}
               onPress={() => void handleTakePhoto()}
               disabled={capturing}
             >
-              <Ionicons name="camera" size={18} color={appColors.text} />
-              <Text style={styles.primaryButtonText}>
-                {capturing ? 'Abriendo camara...' : photo ? 'Tomar otra foto' : 'Tomar foto'}
+              <Ionicons
+                name={photo ? 'camera-reverse-outline' : 'camera'}
+                size={16}
+                color={appColors.text}
+              />
+              <Text style={styles.floatingCameraButtonText}>
+                {capturing ? 'Abriendo...' : photo ? 'Otra foto' : 'Tomar foto'}
               </Text>
             </TouchableOpacity>
+          </View>
 
-            {photo ? (
+          {photo ? (
+            <View style={styles.photoMetaRow}>
+              <Text style={styles.photoMetaText}>Foto lista para analizar</Text>
               <TouchableOpacity
-                style={styles.secondaryButton}
+                style={styles.removePhotoButton}
                 activeOpacity={0.9}
                 onPress={() => {
                   setPhoto(null);
                   setAnalysisText(null);
                   setAnalysisWordCount(null);
+                  setMacronutrients(null);
+                  setMacroDistribution(null);
+                  setMicronutrients(null);
                 }}
               >
-                <Ionicons name="trash-outline" size={18} color={appColors.accent} />
-                <Text style={styles.secondaryButtonText}>Quitar foto</Text>
+                <Ionicons name="trash-outline" size={16} color={appColors.accent} />
+                <Text style={styles.removePhotoButtonText}>Quitar foto</Text>
               </TouchableOpacity>
-            ) : null}
-          </View>
+            </View>
+          ) : null}
+
+          <TouchableOpacity
+            style={styles.historyButton}
+            activeOpacity={0.9}
+            onPress={() => navigation.navigate('NanoHistorial')}
+          >
+            <View style={styles.historyButtonIcon}>
+              <Ionicons name="time-outline" size={18} color={appColors.info} />
+            </View>
+            <View style={styles.historyButtonCopy}>
+              <Text style={styles.historyButtonTitle}>Ver historial</Text>
+              <Text style={styles.historyButtonSubtitle}>
+                Revisa los ultimos analisis guardados de Nano.
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={appColors.textMuted} />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.summaryCard}>
@@ -399,6 +726,148 @@ export function NanoConsejeroScreen({ navigation }: Props) {
               <Text style={styles.analysisTitle}>Respuesta de Nano</Text>
             </View>
             <Text style={styles.analysisText}>{analysisText}</Text>
+            {macroHighlights.length ? (
+              <View style={styles.analysisMetricGrid}>
+                {macroHighlights.map((item) => (
+                  <View
+                    key={item.key}
+                    style={[
+                      styles.analysisMetricChip,
+                      {
+                        borderColor: colorAlpha(item.accent, '70'),
+                        backgroundColor: colorAlpha(item.accent, '18'),
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.analysisMetricLabel, { color: item.accent }]}>{item.label}</Text>
+                    <Text style={styles.analysisMetricValue}>{item.value}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            <Text style={styles.analysisCaption}>
+              Estimaciones aproximadas calculadas desde la foto del plato.
+            </Text>
+          </View>
+        ) : null}
+
+        {macronutrients || composition ? (
+          <View style={styles.compositionCard}>
+            <View style={styles.analysisHeader}>
+              <Ionicons name="analytics-outline" size={20} color={appColors.success} />
+              <Text style={styles.analysisTitle}>Macronutrientes estimados</Text>
+            </View>
+            <Text style={styles.compositionSubtitle}>
+              Cantidades aproximadas y distribucion calorica principal del plato.
+            </Text>
+
+            {macroHighlights.length ? (
+              <View style={styles.macroGrid}>
+                {macroHighlights.map((item) => (
+                  <View key={item.key} style={styles.macroCard}>
+                    <View style={[styles.macroDot, { backgroundColor: item.accent }]} />
+                    <Text style={styles.macroCardLabel}>{item.label}</Text>
+                    <Text style={styles.macroCardValue}>{item.value}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.pendingMacroCard}>
+                <Ionicons name="information-circle-outline" size={18} color={appColors.info} />
+                <Text style={styles.pendingMacroText}>
+                  Nano no envio gramos detallados, pero si hay distribucion porcentual disponible.
+                </Text>
+              </View>
+            )}
+
+            {composition ? (
+              <View style={styles.distributionCard}>
+                <Text style={styles.distributionTitle}>Distribucion calorica</Text>
+                <View style={styles.distributionBar}>
+                  {composition.map((item) => (
+                    <View
+                      key={item.key}
+                      style={[
+                        styles.distributionSegment,
+                        {
+                          width: `${item.percentage}%`,
+                          backgroundColor: item.accent,
+                        },
+                      ]}
+                    />
+                  ))}
+                </View>
+
+                <View style={styles.compositionList}>
+                  {composition.map((item) => (
+                    <View key={item.key} style={styles.compositionRow}>
+                      <View style={styles.compositionHeader}>
+                        <View style={styles.compositionLabelWrap}>
+                          <View style={[styles.compositionDot, { backgroundColor: item.accent }]} />
+                          <Text style={styles.compositionLabel}>{item.label}</Text>
+                        </View>
+                        <Text style={styles.compositionValue}>{item.percentage}%</Text>
+                      </View>
+                      <View style={styles.compositionMetaRow}>
+                        <Text style={styles.compositionMetaText}>
+                          {typeof item.grams === 'number'
+                            ? formatGramValue(item.grams)
+                            : 'Sin gramos exactos'}
+                        </Text>
+                        <Text style={styles.compositionMetaText}>
+                          {typeof item.calories === 'number'
+                            ? `${Math.round(item.calories)} kcal`
+                            : 'Sin kcal'}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        {micronutrients ? (
+          <View style={styles.microCard}>
+            <View style={styles.analysisHeader}>
+              <Ionicons name="leaf-outline" size={20} color={appColors.info} />
+              <Text style={styles.analysisTitle}>Vitaminas y minerales</Text>
+            </View>
+            <Text style={styles.compositionSubtitle}>
+              Aporte estimado de micronutrientes presentes en la comida analizada.
+            </Text>
+
+            <View style={styles.microList}>
+              {micronutrients.map((item) => (
+                <View key={item.key} style={styles.microRow}>
+                  <View style={styles.microRowHeader}>
+                    <View style={styles.microTitleWrap}>
+                      <View style={[styles.microDot, { backgroundColor: item.accent }]} />
+                      <Text style={styles.microCell}>{item.label}</Text>
+                    </View>
+                    <Text style={styles.microCellValue}>{item.amount}</Text>
+                  </View>
+                  <View style={styles.microProgressMeta}>
+                    <Text style={styles.microPercentLabel}>Cobertura estimada</Text>
+                    <Text style={[styles.microPercentValue, { color: item.accent }]}>
+                      {Math.round(item.dailyValuePercent)}%
+                    </Text>
+                  </View>
+                  <View style={styles.microTrack}>
+                    <View
+                      style={[
+                        styles.microFill,
+                        {
+                          width: `${Math.min(Math.max(item.dailyValuePercent, 0), 100)}%`,
+                          backgroundColor: item.accent,
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
+              ))}
+            </View>
           </View>
         ) : null}
       </ScrollView>
@@ -475,39 +944,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     fontWeight: '500',
   },
-  heroCard: {
-    marginTop: 18,
-    borderRadius: 28,
-    padding: 20,
-    backgroundColor: appColors.surfaceStrong,
-    borderWidth: 1,
-    borderColor: appColors.border,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  heroIconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 22,
-    backgroundColor: colorAlpha(appColors.info, '18'),
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  heroTextWrap: {
-    flex: 1,
-  },
-  heroTitle: {
-    color: appColors.text,
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  heroSubtitle: {
-    color: appColors.textSoft,
-    fontSize: 14,
-    lineHeight: 21,
-    marginTop: 6,
-  },
   section: {
     marginTop: 22,
   },
@@ -566,10 +1002,61 @@ const styles = StyleSheet.create({
     backgroundColor: appColors.surfaceStrong,
     overflow: 'hidden',
     minHeight: 260,
+    position: 'relative',
+  },
+  previewWrap: {
+    width: '100%',
+    height: SCAN_OVERLAY_HEIGHT,
   },
   foodPreview: {
     width: '100%',
-    height: 300,
+    height: SCAN_OVERLAY_HEIGHT,
+  },
+  scanOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'space-between',
+    padding: 14,
+  },
+  scanFrame: {
+    ...StyleSheet.absoluteFillObject,
+    margin: 14,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '90'),
+  },
+  scanLine: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
+    top: 14,
+    height: 16,
+    borderRadius: 10,
+    backgroundColor: colorAlpha(appColors.info, '40'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.text, '55'),
+    shadowColor: appColors.info,
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
+  },
+  scanBadge: {
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: colorAlpha(appColors.background, 'C8'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '60'),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  scanBadgeText: {
+    color: appColors.text,
+    fontSize: 12,
+    fontWeight: '800',
   },
   placeholderWrap: {
     minHeight: 260,
@@ -601,43 +1088,93 @@ const styles = StyleSheet.create({
     marginTop: 8,
     maxWidth: 280,
   },
-  cameraActions: {
-    marginTop: 14,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  primaryButton: {
-    minHeight: 52,
-    borderRadius: 18,
-    paddingHorizontal: 18,
-    backgroundColor: appColors.info,
+  floatingCameraButton: {
+    position: 'absolute',
+    right: 14,
+    bottom: 14,
+    minHeight: 40,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    backgroundColor: colorAlpha(appColors.info, 'E8'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.text, '26'),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
+    shadowColor: appColors.overlay,
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
-  primaryButtonText: {
+  floatingCameraButtonText: {
     color: appColors.text,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '800',
   },
-  secondaryButton: {
-    minHeight: 52,
-    borderRadius: 18,
-    paddingHorizontal: 18,
+  photoMetaRow: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  photoMetaText: {
+    color: appColors.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  removePhotoButton: {
+    minHeight: 36,
+    borderRadius: 14,
+    paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: colorAlpha(appColors.accent, '88'),
     backgroundColor: colorAlpha(appColors.accent, '12'),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
   },
-  secondaryButtonText: {
+  removePhotoButtonText: {
     color: appColors.accent,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  historyButton: {
+    marginTop: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: appColors.border,
+    backgroundColor: appColors.surfaceStrong,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  historyButtonIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colorAlpha(appColors.info, '16'),
+  },
+  historyButtonCopy: {
+    flex: 1,
+  },
+  historyButtonTitle: {
+    color: appColors.text,
     fontSize: 15,
     fontWeight: '800',
+  },
+  historyButtonSubtitle: {
+    marginTop: 4,
+    color: appColors.textSoft,
+    fontSize: 13,
+    lineHeight: 18,
   },
   summaryCard: {
     marginTop: 24,
@@ -713,106 +1250,245 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 24,
   },
-  buttonDisabled: {
-    opacity: 0.6,
+  analysisMetricGrid: {
+    marginTop: 16,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
   },
-  robotShell: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    transform: [{ scale: 1.4 }],
+  analysisMetricChip: {
+    minWidth: '30%',
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
-  robotFlame: {
-    position: 'absolute',
-    top: 0,
-    right: 8,
-    width: 11,
-    height: 11,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    borderBottomLeftRadius: 10,
-    backgroundColor: appColors.accent,
-    transform: [{ rotate: '22deg' }],
+  analysisMetricLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  robotHead: {
-    width: 29,
-    height: 23,
+  analysisMetricValue: {
     marginTop: 4,
-    borderRadius: 11,
-    backgroundColor: appColors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
+    color: appColors.text,
+    fontSize: 15,
+    fontWeight: '800',
   },
-  robotFace: {
-    width: 23,
-    height: 18,
-    borderRadius: 8,
-    backgroundColor: appColors.background,
+  analysisCaption: {
+    marginTop: 14,
+    color: appColors.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  compositionCard: {
+    marginTop: 18,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.success, '88'),
+    backgroundColor: colorAlpha(appColors.success, '12'),
+    padding: 18,
+  },
+  compositionSubtitle: {
+    color: appColors.textSoft,
+    fontSize: 14,
+    lineHeight: 21,
+    marginBottom: 14,
+  },
+  macroGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  macroCard: {
+    width: '47%',
+    borderRadius: 18,
+    backgroundColor: colorAlpha(appColors.background, '52'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.border, 'B0'),
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  macroDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  macroCardLabel: {
+    color: appColors.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  macroCardValue: {
+    marginTop: 6,
+    color: appColors.text,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  pendingMacroCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '70'),
+    backgroundColor: colorAlpha(appColors.info, '12'),
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-evenly',
+    gap: 10,
   },
-  robotEye: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: appColors.text,
+  pendingMacroText: {
+    flex: 1,
+    color: appColors.textSoft,
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '600',
   },
-  robotMouth: {
-    width: 4,
-    height: 2,
-    borderBottomLeftRadius: 3,
-    borderBottomRightRadius: 3,
-    backgroundColor: appColors.text,
-    marginTop: 4,
+  distributionCard: {
+    marginTop: 18,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.border, 'B8'),
+    backgroundColor: colorAlpha(appColors.background, '54'),
+    padding: 16,
   },
-  robotEarLeft: {
-    position: 'absolute',
-    top: 14,
-    left: 1,
-    width: 3,
-    height: 9,
-    borderRadius: 2,
-    backgroundColor: appColors.background,
+  distributionTitle: {
+    color: appColors.text,
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 12,
   },
-  robotEarRight: {
-    position: 'absolute',
-    top: 14,
-    right: 1,
-    width: 3,
-    height: 9,
-    borderRadius: 2,
-    backgroundColor: appColors.background,
+  distributionBar: {
+    flexDirection: 'row',
+    height: 18,
+    borderRadius: 999,
+    overflow: 'hidden',
+    backgroundColor: colorAlpha(appColors.textMuted, '24'),
   },
-  robotBody: {
-    width: 14,
-    height: 9,
-    marginTop: 3,
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
-    borderBottomLeftRadius: 9,
-    borderBottomRightRadius: 9,
-    backgroundColor: appColors.accent,
+  distributionSegment: {
+    height: '100%',
   },
-  robotFootLeft: {
-    position: 'absolute',
-    bottom: 2,
-    left: 8,
-    width: 8,
-    height: 5,
-    borderRadius: 4,
-    backgroundColor: appColors.accent,
-    transform: [{ rotate: '22deg' }],
+  compositionList: {
+    marginTop: 16,
+    gap: 12,
   },
-  robotFootRight: {
-    position: 'absolute',
-    bottom: 2,
-    right: 8,
-    width: 8,
-    height: 5,
-    borderRadius: 4,
-    backgroundColor: appColors.accent,
-    transform: [{ rotate: '-22deg' }],
+  compositionRow: {
+    gap: 8,
+  },
+  compositionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  compositionLabelWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  compositionDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  compositionLabel: {
+    color: appColors.text,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  compositionValue: {
+    color: appColors.textSoft,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  compositionMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  compositionMetaText: {
+    color: appColors.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  microCard: {
+    marginTop: 18,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '88'),
+    backgroundColor: colorAlpha(appColors.info, '10'),
+    padding: 18,
+  },
+  microList: {
+    gap: 12,
+  },
+  microRow: {
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    backgroundColor: colorAlpha(appColors.backgroundMuted, '70'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.border, 'A8'),
+  },
+  microRowHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  microTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 10,
+  },
+  microDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  microCell: {
+    flex: 1,
+    color: appColors.text,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  microCellValue: {
+    minWidth: 68,
+    color: appColors.textSoft,
+    fontSize: 14,
+    fontWeight: '800',
+    textAlign: 'right',
+  },
+  microProgressMeta: {
+    marginTop: 12,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  microPercentLabel: {
+    color: appColors.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  microPercentValue: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  microTrack: {
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: colorAlpha(appColors.textMuted, '26'),
+    overflow: 'hidden',
+  },
+  microFill: {
+    height: '100%',
+    borderRadius: 999,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
 });

@@ -74,6 +74,7 @@ export type RootStackParamList = {
   Periodo: undefined;
   SaludMental: undefined;
   NanoConsejero: undefined;
+  NanoHistorial: undefined;
   ExamenClinico: undefined;
   SeguimientoPostevento: undefined;
   Educacion: undefined;

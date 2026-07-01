@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import https from "node:https";
+import { z } from "zod";
 import { decodeBase64Image, validateImageMimeType } from "../common/utils/base64-image.util";
 import { AnalyzeMealDto } from "./dto/analyze-meal.dto";
 
@@ -24,6 +25,43 @@ type OpenAIResponsePayload = {
     message?: string;
   };
 };
+
+const numericField = (max: number) =>
+  z.preprocess((value) => {
+    if (typeof value === "number") {
+      return value;
+    }
+
+    if (typeof value === "string") {
+      const normalized = Number(value.replace(/[^0-9.-]+/g, ""));
+      return Number.isFinite(normalized) ? normalized : value;
+    }
+
+    return value;
+  }, z.number().finite().min(0).max(max));
+
+const nanoAnalysisSchema = z.object({
+  summary: z.string().trim().min(20).max(700),
+  macronutrients: z.object({
+    calories: numericField(5000),
+    carbohydrates_g: numericField(1000),
+    protein_g: numericField(1000),
+    fat_g: numericField(1000),
+    fiber_g: numericField(300).optional().default(0),
+    sugar_g: numericField(300).optional().default(0),
+  }),
+  micronutrients: z
+    .array(
+      z.object({
+        key: z.string().trim().min(2).max(40),
+        label: z.string().trim().min(2).max(60),
+        amount: z.string().trim().min(1).max(40),
+        dailyValuePercent: numericField(300),
+      }),
+    )
+    .min(3)
+    .max(8),
+});
 
 /**
  * Implementa la logica de negocio del dominio nano.
@@ -78,24 +116,40 @@ export class NanoService {
           ],
         },
       ],
-      max_output_tokens: 220,
+      max_output_tokens: 520,
     });
 
-    const rawFeedback = this.extractTextFromResponse(response);
-    if (!rawFeedback) {
+    const rawAnalysis = this.extractTextFromResponse(response);
+    if (!rawAnalysis) {
       throw new BadGatewayException(
         "OpenAI no devolvio una recomendacion util para esta imagen.",
       );
     }
 
-    const normalized = this.normalizeToEightyWords(rawFeedback);
+    const analysis = this.parseStructuredAnalysis(rawAnalysis);
+    const summary = this.normalizeSummary(analysis.summary);
 
     return {
-      feedback: normalized.text,
+      feedback: summary,
       goalKey: payload.goalKey,
       goalLabel: payload.goalLabel,
-      wordCount: normalized.wordCount,
+      wordCount: this.countWords(summary),
       model: this.model,
+      macronutrients: {
+        calories: this.roundNumber(analysis.macronutrients.calories, 0),
+        carbohydratesGrams: this.roundNumber(analysis.macronutrients.carbohydrates_g, 1),
+        proteinGrams: this.roundNumber(analysis.macronutrients.protein_g, 1),
+        fatGrams: this.roundNumber(analysis.macronutrients.fat_g, 1),
+        fiberGrams: this.roundNumber(analysis.macronutrients.fiber_g ?? 0, 1),
+        sugarGrams: this.roundNumber(analysis.macronutrients.sugar_g ?? 0, 1),
+      },
+      macroDistribution: this.buildMacroDistribution(analysis.macronutrients),
+      micronutrients: analysis.micronutrients.map((item, index) => ({
+        key: this.slugify(item.key || item.label || `micronutriente-${index + 1}`),
+        label: item.label,
+        amount: item.amount,
+        dailyValuePercent: this.roundNumber(item.dailyValuePercent, 0),
+      })),
     };
   }
 
@@ -109,11 +163,13 @@ export class NanoService {
     const goalContext = this.describeGoal(goalKey, goalLabel);
     return [
       "Eres un asistente de nutricion llamado Nano.",
-      "Analiza una foto de comida y responde en espanol.",
-      "La respuesta debe tener exactamente 80 palabras.",
-      "No uses listas, encabezados, markdown ni comillas.",
-      "Primero indica brevemente si la comida va bien para el objetivo y luego sugiere cambios concretos si hacen falta.",
-      "No inventes gramos exactos ni diagnosticos clinicos.",
+      "Analiza una foto de comida y responde en espanol con JSON valido solamente.",
+      "No uses markdown, texto adicional, comillas triples ni bloques de codigo.",
+      "Haz estimaciones aproximadas y conservadoras a partir de lo visible en la imagen.",
+      "No des diagnosticos clinicos ni afirmes precision absoluta.",
+      'Devuelve exactamente este esquema: {"summary":"string","macronutrients":{"calories":0,"carbohydrates_g":0,"protein_g":0,"fat_g":0,"fiber_g":0,"sugar_g":0},"micronutrients":[{"key":"string","label":"string","amount":"string","dailyValuePercent":0}]}',
+      "En summary escribe entre 55 y 80 palabras, indicando si la comida va bien para el objetivo, las calorias aproximadas y los macronutrientes mas relevantes, ademas de una mejora concreta si aplica.",
+      "En micronutrients incluye de 4 a 6 vitaminas o minerales probables presentes en el plato con cantidad estimada y porcentaje diario aproximado.",
       `Objetivo del usuario: ${goalLabel}.`,
       `Contexto del objetivo: ${goalContext}.`,
     ].join(" ");
@@ -162,30 +218,371 @@ export class NanoService {
    * @param text Texto devuelto por el proveedor.
    * @returns Resultado de la operacion.
    */
-  private normalizeToEightyWords(text: string) {
-    const cleaned = text
-      .replace(/\s+([,.!?;:])/g, "$1")
-      .replace(/\s+/g, " ")
-      .trim();
-    const words = cleaned.split(/\s+/).filter(Boolean);
+  private parseStructuredAnalysis(rawText: string) {
+    const cleaned = this.cleanJsonCandidate(rawText);
 
-    if (words.length <= 80) {
+    try {
+      const parsed = JSON.parse(cleaned) as unknown;
+      return nanoAnalysisSchema.parse(this.normalizeAnalysisShape(parsed));
+    } catch (error) {
+      throw new BadGatewayException(
+        "Nano devolvio un analisis con formato invalido.",
+      );
+    }
+  }
+
+  /**
+   * Normalize analysis shape.
+   * @param value Valor devuelto por el proveedor.
+   * @returns Resultado de la operacion.
+   */
+  private normalizeAnalysisShape(value: unknown) {
+    const source = this.asRecord(value);
+    const macroSource =
+      this.pickRecord(source, [
+        "macronutrients",
+        "macros",
+        "nutrition",
+        "nutrients",
+      ]) ?? source;
+
+    const carbohydrates =
+      this.pickNumber(macroSource, [
+        "carbohydrates_g",
+        "carbohydrates",
+        "carbs_g",
+        "carbs",
+        "hidratos",
+      ]) ?? 0;
+    const protein =
+      this.pickNumber(macroSource, [
+        "protein_g",
+        "protein",
+        "proteins",
+        "proteina",
+      ]) ?? 0;
+    const fat =
+      this.pickNumber(macroSource, ["fat_g", "fat", "fats", "grasas"]) ?? 0;
+    const fiber =
+      this.pickNumber(macroSource, ["fiber_g", "fiber", "fibra"]) ?? 0;
+    const sugar =
+      this.pickNumber(macroSource, ["sugar_g", "sugar", "azucar", "azucares"]) ??
+      0;
+    const estimatedCalories = carbohydrates * 4 + protein * 4 + fat * 9;
+    const calories =
+      this.pickNumber(macroSource, [
+        "calories",
+        "kcal",
+        "energy",
+        "energy_kcal",
+        "calorias",
+      ]) ?? estimatedCalories;
+
+    return {
+      summary:
+        this.pickString(source, [
+          "summary",
+          "feedback",
+          "recommendation",
+          "message",
+          "analysis",
+        ]) ?? "",
+      macronutrients: {
+        calories,
+        carbohydrates_g: carbohydrates,
+        protein_g: protein,
+        fat_g: fat,
+        fiber_g: fiber,
+        sugar_g: sugar,
+      },
+      micronutrients: this.normalizeMicronutrients(
+        source.micronutrients ??
+          source.micros ??
+          source.vitamins ??
+          source.minerals,
+      ),
+    };
+  }
+
+  /**
+   * Normalize micronutrients.
+   * @param value Valor devuelto por el proveedor.
+   * @returns Resultado de la operacion.
+   */
+  private normalizeMicronutrients(value: unknown) {
+    if (Array.isArray(value)) {
+      return value
+        .map((item, index) => {
+          const record = this.asRecord(item);
+          const label =
+            this.pickString(record, ["label", "name", "title"]) ??
+            `Micronutriente ${index + 1}`;
+          const amount =
+            this.pickString(record, ["amount", "quantity", "value"]) ?? "N/D";
+          const dailyValuePercent =
+            this.pickNumber(record, [
+              "dailyValuePercent",
+              "daily_value_percent",
+              "percent",
+              "percentage",
+            ]) ?? this.extractNumberFromText(amount) ?? 0;
+
+          return {
+            key:
+              this.pickString(record, ["key", "id"]) ??
+              this.slugify(label || `micronutriente-${index + 1}`),
+            label,
+            amount,
+            dailyValuePercent,
+          };
+        })
+        .slice(0, 8);
+    }
+
+    const record = this.asRecord(value);
+    return Object.entries(record)
+      .map(([key, item], index) => {
+        const child = this.asRecord(item);
+        const label =
+          this.pickString(child, ["label", "name", "title"]) ??
+          this.humanizeLabel(key);
+        const rawAmount =
+          this.pickString(child, ["amount", "quantity", "value"]) ??
+          (typeof item === "string" ? item : null);
+        const dailyValuePercent =
+          this.pickNumber(child, [
+            "dailyValuePercent",
+            "daily_value_percent",
+            "percent",
+            "percentage",
+          ]) ?? this.extractNumberFromText(rawAmount) ?? 0;
+
+        return {
+          key: this.slugify(key || `micronutriente-${index + 1}`),
+          label,
+          amount: rawAmount ?? `${this.roundNumber(dailyValuePercent, 0)}%`,
+          dailyValuePercent,
+        };
+      })
+      .filter((item) => item.label && item.amount)
+      .slice(0, 8);
+  }
+
+  /**
+   * Build macro distribution.
+   * @param macronutrients Macronutrientes estimados.
+   * @returns Resultado de la operacion.
+   */
+  private buildMacroDistribution(macronutrients: {
+    carbohydrates_g: number;
+    protein_g: number;
+    fat_g: number;
+  }) {
+    const carbohydrateCalories = Math.max(macronutrients.carbohydrates_g, 0) * 4;
+    const proteinCalories = Math.max(macronutrients.protein_g, 0) * 4;
+    const fatCalories = Math.max(macronutrients.fat_g, 0) * 9;
+    const totalCalories =
+      carbohydrateCalories + proteinCalories + fatCalories;
+
+    if (totalCalories <= 0) {
       return {
-        text: cleaned,
-        wordCount: words.length,
+        carbohydratesPercent: 0,
+        proteinPercent: 0,
+        fatPercent: 0,
       };
     }
 
-    let trimmed = words.slice(0, 80).join(" ");
-    trimmed = trimmed.replace(/\s+([,.!?;:])/g, "$1").trim();
-    if (!/[.!?]$/.test(trimmed)) {
-      trimmed = `${trimmed}.`;
+    const rawPercentages = [
+      (carbohydrateCalories / totalCalories) * 100,
+      (proteinCalories / totalCalories) * 100,
+      (fatCalories / totalCalories) * 100,
+    ];
+    const rounded = rawPercentages.map((value) => Math.floor(value));
+    let remainder = 100 - rounded.reduce((sum, value) => sum + value, 0);
+    const ranked = rawPercentages
+      .map((value, index) => ({ index, decimal: value - Math.floor(value) }))
+      .sort((left, right) => right.decimal - left.decimal);
+
+    for (let index = 0; index < ranked.length && remainder > 0; index += 1) {
+      rounded[ranked[index].index] += 1;
+      remainder -= 1;
     }
 
     return {
-      text: trimmed,
-      wordCount: 80,
+      carbohydratesPercent: rounded[0],
+      proteinPercent: rounded[1],
+      fatPercent: rounded[2],
     };
+  }
+
+  /**
+   * Clean json candidate.
+   * @param rawText Texto devuelto por el proveedor.
+   * @returns Resultado de la operacion.
+   */
+  private cleanJsonCandidate(rawText: string) {
+    const withoutFence = rawText
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
+
+    const firstBrace = withoutFence.indexOf("{");
+    const lastBrace = withoutFence.lastIndexOf("}");
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+      return withoutFence.slice(firstBrace, lastBrace + 1);
+    }
+
+    return withoutFence;
+  }
+
+  /**
+   * Normalize summary.
+   * @param text Texto devuelto por el proveedor.
+   * @returns Resultado de la operacion.
+   */
+  private normalizeSummary(text: string) {
+    return text
+      .replace(/\s+([,.!?;:])/g, "$1")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  /**
+   * Count words.
+   * @param text Texto a contar.
+   * @returns Resultado de la operacion.
+   */
+  private countWords(text: string) {
+    return this.normalizeSummary(text).split(/\s+/).filter(Boolean).length;
+  }
+
+  /**
+   * Round number.
+   * @param value Valor a redondear.
+   * @param decimals Cantidad de decimales.
+   * @returns Resultado de la operacion.
+   */
+  private roundNumber(value: number, decimals: number) {
+    const factor = 10 ** decimals;
+    return Math.round(value * factor) / factor;
+  }
+
+  /**
+   * As record.
+   * @param value Valor a normalizar.
+   * @returns Resultado de la operacion.
+   */
+  private asRecord(value: unknown) {
+    return value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
+  }
+
+  /**
+   * Pick record.
+   * @param source Fuente de datos.
+   * @param keys Llaves candidatas.
+   * @returns Resultado de la operacion.
+   */
+  private pickRecord(
+    source: Record<string, unknown>,
+    keys: string[],
+  ): Record<string, unknown> | null {
+    for (const key of keys) {
+      const value = source[key];
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        return value as Record<string, unknown>;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Pick string.
+   * @param source Fuente de datos.
+   * @param keys Llaves candidatas.
+   * @returns Resultado de la operacion.
+   */
+  private pickString(source: Record<string, unknown>, keys: string[]) {
+    for (const key of keys) {
+      const value = source[key];
+      if (typeof value === "string" && value.trim()) {
+        return value.trim();
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Pick number.
+   * @param source Fuente de datos.
+   * @param keys Llaves candidatas.
+   * @returns Resultado de la operacion.
+   */
+  private pickNumber(source: Record<string, unknown>, keys: string[]) {
+    for (const key of keys) {
+      const value = source[key];
+      if (typeof value === "number" && Number.isFinite(value)) {
+        return value;
+      }
+
+      if (typeof value === "string") {
+        const parsed = this.extractNumberFromText(value);
+        if (parsed !== null) {
+          return parsed;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Extract number from text.
+   * @param value Texto a normalizar.
+   * @returns Resultado de la operacion.
+   */
+  private extractNumberFromText(value: string | null | undefined) {
+    if (!value) {
+      return null;
+    }
+
+    const normalized = Number(value.replace(/[^0-9.-]+/g, ""));
+    return Number.isFinite(normalized) ? normalized : null;
+  }
+
+  /**
+   * Humanize label.
+   * @param value Texto a normalizar.
+   * @returns Resultado de la operacion.
+   */
+  private humanizeLabel(value: string) {
+    const cleaned = value
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return cleaned
+      ? cleaned.charAt(0).toUpperCase() + cleaned.slice(1)
+      : "Micronutriente";
+  }
+
+  /**
+   * Slugify.
+   * @param value Texto a normalizar.
+   * @returns Resultado de la operacion.
+   */
+  private slugify(value: string) {
+    return value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40);
   }
 
   /**
