@@ -9,6 +9,7 @@ export const analyzeMealSchema = z.object({
   goalLabel: z.string().trim().min(2).max(120),
   imageBase64: z.string().trim().min(20).max(12_000_000),
   imageMimeType: z.string().trim().min(6).max(80),
+  userNote: z.string().trim().min(1).max(180).optional(),
 });
 
 /**

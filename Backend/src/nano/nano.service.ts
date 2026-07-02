@@ -40,28 +40,35 @@ const numericField = (max: number) =>
     return value;
   }, z.number().finite().min(0).max(max));
 
-const nanoAnalysisSchema = z.object({
-  summary: z.string().trim().min(20).max(700),
-  macronutrients: z.object({
-    calories: numericField(5000),
-    carbohydrates_g: numericField(1000),
-    protein_g: numericField(1000),
-    fat_g: numericField(1000),
-    fiber_g: numericField(300).optional().default(0),
-    sugar_g: numericField(300).optional().default(0),
+const nanoAnalysisSchema = z.discriminatedUnion("is_food", [
+  z.object({
+    is_food: z.literal(true),
+    summary: z.string().trim().min(20).max(700),
+    macronutrients: z.object({
+      calories: numericField(5000),
+      carbohydrates_g: numericField(1000),
+      protein_g: numericField(1000),
+      fat_g: numericField(1000),
+      fiber_g: numericField(300).optional().default(0),
+      sugar_g: numericField(300).optional().default(0),
+    }),
+    micronutrients: z
+      .array(
+        z.object({
+          key: z.string().trim().min(2).max(40),
+          label: z.string().trim().min(2).max(60),
+          amount: z.string().trim().min(1).max(40),
+          dailyValuePercent: numericField(300),
+        }),
+      )
+      .min(3)
+      .max(8),
   }),
-  micronutrients: z
-    .array(
-      z.object({
-        key: z.string().trim().min(2).max(40),
-        label: z.string().trim().min(2).max(60),
-        amount: z.string().trim().min(1).max(40),
-        dailyValuePercent: numericField(300),
-      }),
-    )
-    .min(3)
-    .max(8),
-});
+  z.object({
+    is_food: z.literal(false),
+    rejection_reason: z.string().trim().min(10).max(220),
+  }),
+]);
 
 /**
  * Implementa la logica de negocio del dominio nano.
@@ -107,7 +114,7 @@ export class NanoService {
           content: [
             {
               type: "input_text",
-              text: this.buildPrompt(payload.goalKey, payload.goalLabel),
+              text: this.buildPrompt(payload.goalKey, payload.goalLabel, payload.userNote),
             },
             {
               type: "input_image",
@@ -127,13 +134,16 @@ export class NanoService {
     }
 
     const analysis = this.parseStructuredAnalysis(rawAnalysis);
+    if (!analysis.is_food) {
+      throw new BadRequestException(analysis.rejection_reason);
+    }
+
     const summary = this.normalizeSummary(analysis.summary);
 
     return {
       feedback: summary,
       goalKey: payload.goalKey,
       goalLabel: payload.goalLabel,
-      wordCount: this.countWords(summary),
       model: this.model,
       macronutrients: {
         calories: this.roundNumber(analysis.macronutrients.calories, 0),
@@ -159,19 +169,25 @@ export class NanoService {
    * @param goalLabel Etiqueta visible del objetivo seleccionado.
    * @returns Resultado de la operacion.
    */
-  private buildPrompt(goalKey: string, goalLabel: string) {
+  private buildPrompt(goalKey: string, goalLabel: string, userNote?: string) {
     const goalContext = this.describeGoal(goalKey, goalLabel);
+    const normalizedUserNote = this.normalizeOptionalNote(userNote);
     return [
       "Eres un asistente de nutricion llamado Nano.",
       "Analiza una foto de comida y responde en espanol con JSON valido solamente.",
+      "Primero valida si la imagen muestra comida o bebida consumible por humanos de forma clara.",
+      'Si la imagen no muestra comida o no se puede identificar con suficiente claridad, devuelve exactamente este esquema: {"is_food":false,"rejection_reason":"Solo se pueden analizar fotos claras de comida o bebida."}',
       "No uses markdown, texto adicional, comillas triples ni bloques de codigo.",
       "Haz estimaciones aproximadas y conservadoras a partir de lo visible en la imagen.",
       "No des diagnosticos clinicos ni afirmes precision absoluta.",
-      'Devuelve exactamente este esquema: {"summary":"string","macronutrients":{"calories":0,"carbohydrates_g":0,"protein_g":0,"fat_g":0,"fiber_g":0,"sugar_g":0},"micronutrients":[{"key":"string","label":"string","amount":"string","dailyValuePercent":0}]}',
+      'Si si es comida, devuelve exactamente este esquema: {"is_food":true,"summary":"string","macronutrients":{"calories":0,"carbohydrates_g":0,"protein_g":0,"fat_g":0,"fiber_g":0,"sugar_g":0},"micronutrients":[{"key":"string","label":"string","amount":"string","dailyValuePercent":0}]}',
       "En summary escribe entre 55 y 80 palabras, indicando si la comida va bien para el objetivo, las calorias aproximadas y los macronutrientes mas relevantes, ademas de una mejora concreta si aplica.",
       "En micronutrients incluye de 4 a 6 vitaminas o minerales probables presentes en el plato con cantidad estimada y porcentaje diario aproximado.",
       `Objetivo del usuario: ${goalLabel}.`,
       `Contexto del objetivo: ${goalContext}.`,
+      normalizedUserNote
+        ? `Nota opcional del usuario sobre la comida: ${normalizedUserNote}. Considerala solo si es coherente con la imagen.`
+        : "No hay nota adicional del usuario.",
     ].join(" ");
   }
 
@@ -238,6 +254,25 @@ export class NanoService {
    */
   private normalizeAnalysisShape(value: unknown) {
     const source = this.asRecord(value);
+    const rejectionReason = this.pickString(source, [
+      "rejection_reason",
+      "rejectionReason",
+      "reason",
+      "message",
+    ]);
+    const isFood =
+      this.pickBoolean(source, ["is_food", "isFood", "food_detected", "foodDetected"]) ??
+      (rejectionReason ? false : null) ??
+      true;
+
+    if (!isFood) {
+      return {
+        is_food: false,
+        rejection_reason:
+          rejectionReason ?? "Solo se pueden analizar fotos claras de comida o bebida.",
+      };
+    }
+
     const macroSource =
       this.pickRecord(source, [
         "macronutrients",
@@ -279,6 +314,7 @@ export class NanoService {
       ]) ?? estimatedCalories;
 
     return {
+      is_food: true,
       summary:
         this.pickString(source, [
           "summary",
@@ -449,12 +485,17 @@ export class NanoService {
   }
 
   /**
-   * Count words.
-   * @param text Texto a contar.
+   * Normalize optional note.
+   * @param value Texto libre del usuario.
    * @returns Resultado de la operacion.
    */
-  private countWords(text: string) {
-    return this.normalizeSummary(text).split(/\s+/).filter(Boolean).length;
+  private normalizeOptionalNote(value: string | null | undefined) {
+    if (typeof value !== "string") {
+      return null;
+    }
+
+    const normalized = value.replace(/\s+/g, " ").trim();
+    return normalized || null;
   }
 
   /**
@@ -533,6 +574,34 @@ export class NanoService {
         const parsed = this.extractNumberFromText(value);
         if (parsed !== null) {
           return parsed;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Pick boolean.
+   * @param source Fuente de datos.
+   * @param keys Llaves candidatas.
+   * @returns Resultado de la operacion.
+   */
+  private pickBoolean(source: Record<string, unknown>, keys: string[]) {
+    for (const key of keys) {
+      const value = source[key];
+      if (typeof value === "boolean") {
+        return value;
+      }
+
+      if (typeof value === "string") {
+        const normalized = value.trim().toLowerCase();
+        if (["true", "si", "sí", "yes"].includes(normalized)) {
+          return true;
+        }
+
+        if (["false", "no"].includes(normalized)) {
+          return false;
         }
       }
     }
