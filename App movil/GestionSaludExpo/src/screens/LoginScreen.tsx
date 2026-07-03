@@ -77,7 +77,7 @@ export function LoginScreen({ navigation }: Props) {
   const [fingerprintTemplate, setFingerprintTemplate] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [welcomeSession, setWelcomeSession] = useState<LoginApiResponse | null>(null);
-  const { login } = useAuth();
+  const { clearSessionMessage, login, sessionMessage } = useAuth();
 
   const fingerprintReady = useMemo(
     () => biometricAvailable && !!fingerprintTemplate,
@@ -128,6 +128,16 @@ export function LoginScreen({ navigation }: Props) {
     };
     loadTemplate();
   }, [username]);
+
+  useEffect(() => {
+    if (!sessionMessage) {
+      return;
+    }
+
+    setFeedback({ type: 'error', message: sessionMessage });
+    Alert.alert('Sesion requerida', sessionMessage);
+    clearSessionMessage();
+  }, [clearSessionMessage, sessionMessage]);
 
   const executeLogin = async (payload: Record<string, unknown>): Promise<LoginApiResponse> => {
     const response = await fetch(`${API_URL}/auth/login`, {
