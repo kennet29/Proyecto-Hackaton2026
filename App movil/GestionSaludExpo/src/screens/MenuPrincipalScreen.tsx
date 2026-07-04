@@ -221,14 +221,6 @@ const medicalOptions: OptionItem[] = [
 
 const wellnessOptions: OptionItem[] = [
   {
-    key: 'habitos',
-    label: 'Habitos',
-    description: 'Actividad fisica, sueno, alimentacion y riesgos',
-    icon: 'walk-outline',
-    accent: appColors.success,
-    navigateTo: 'Habitos',
-  },
-  {
     key: 'seguimiento-fisico',
     label: 'Seguimiento Fisico',
     description: 'Peso, ejercicio, pasos y progreso diario',

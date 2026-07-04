@@ -124,6 +124,7 @@ export function NanoHistorialScreen({}: Props) {
                 ) : null}
 
                 <Text style={styles.feedbackText}>{item.feedback}</Text>
+                {item.userNote ? <Text style={styles.noteText}>Nota: {item.userNote}</Text> : null}
 
                 {item.macronutrients ? (
                   <View style={styles.macroRow}>
@@ -272,6 +273,13 @@ const styles = StyleSheet.create({
     color: appColors.textSoft,
     fontSize: 14,
     lineHeight: 22,
+  },
+  noteText: {
+    marginTop: 10,
+    color: appColors.textMuted,
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '600',
   },
   macroRow: {
     marginTop: 14,

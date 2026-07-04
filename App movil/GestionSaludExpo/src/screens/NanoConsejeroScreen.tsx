@@ -11,6 +11,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -18,6 +19,7 @@ import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import Svg, { Circle, G } from 'react-native-svg';
 import { API_URL } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
@@ -42,7 +44,6 @@ type CapturedPhoto = {
 
 type AnalyzeMealResponse = {
   feedback?: string;
-  wordCount?: number;
   goalLabel?: string;
   macronutrients?: {
     calories?: number;
@@ -97,6 +98,14 @@ type MicronutrientMetric = {
   accent: string;
 };
 
+type PieSlice = {
+  key: string;
+  label: string;
+  grams: number;
+  percentage: number;
+  accent: string;
+};
+
 const FOOD_GOALS: FoodGoal[] = [
   {
     id: 'weight-loss',
@@ -142,6 +151,7 @@ const MACRO_ACCENTS = {
 } as const;
 
 const MICRO_ACCENTS = ['#29B6FF', '#38F28E', '#FDBA74', '#FF4D73', '#A3E635', '#F97316'];
+const MAX_MEAL_NOTE_LENGTH = 180;
 
 function sanitizeMacronutrients(payload: AnalyzeMealResponse['macronutrients']): MacronutrientBreakdown | null {
   if (!payload) {
@@ -284,14 +294,113 @@ function formatCalorieValue(value: number) {
   return `${Math.round(value)} kcal`;
 }
 
+function buildPieSlices(macronutrients: MacronutrientBreakdown | null): PieSlice[] {
+  if (!macronutrients) {
+    return [];
+  }
+
+  const candidates = [
+    {
+      key: 'carbohydrates',
+      label: 'Carbohidratos',
+      grams: Math.max(macronutrients.carbohydratesGrams, 0),
+      accent: MACRO_ACCENTS.carbohydrates,
+    },
+    {
+      key: 'protein',
+      label: 'Proteinas',
+      grams: Math.max(macronutrients.proteinGrams, 0),
+      accent: MACRO_ACCENTS.protein,
+    },
+    {
+      key: 'fat',
+      label: 'Grasas',
+      grams: Math.max(macronutrients.fatGrams, 0),
+      accent: MACRO_ACCENTS.fat,
+    },
+    {
+      key: 'fiber',
+      label: 'Fibra',
+      grams: Math.max(macronutrients.fiberGrams, 0),
+      accent: MACRO_ACCENTS.fiber,
+    },
+    {
+      key: 'sugar',
+      label: 'Azucares',
+      grams: Math.max(macronutrients.sugarGrams, 0),
+      accent: MACRO_ACCENTS.sugar,
+    },
+  ].filter((item) => item.grams > 0);
+
+  const total = candidates.reduce((sum, item) => sum + item.grams, 0);
+  if (total <= 0) {
+    return [];
+  }
+
+  return candidates.map((item) => ({
+    ...item,
+    percentage: Math.round((item.grams / total) * 100),
+  }));
+}
+
+function PieChart({
+  slices,
+  size = 180,
+  strokeWidth = 32,
+}: {
+  slices: PieSlice[];
+  size?: number;
+  strokeWidth?: number;
+}) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  let accumulated = 0;
+
+  return (
+    <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <G rotation="-90" origin={`${size / 2}, ${size / 2}`}>
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={colorAlpha(appColors.textMuted, '22')}
+          strokeWidth={strokeWidth}
+          fill="none"
+        />
+        {slices.map((slice) => {
+          const sliceLength = (slice.percentage / 100) * circumference;
+          const element = (
+            <Circle
+              key={slice.key}
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke={slice.accent}
+              strokeWidth={strokeWidth}
+              strokeLinecap="butt"
+              fill="none"
+              strokeDasharray={`${sliceLength} ${circumference - sliceLength}`}
+              strokeDashoffset={-accumulated}
+            />
+          );
+
+          accumulated += sliceLength;
+          return element;
+        })}
+      </G>
+    </Svg>
+  );
+}
+
 export function NanoConsejeroScreen({ navigation }: Props) {
   const { token } = useAuth();
+  const [activeView, setActiveView] = useState<'capture' | 'results'>('capture');
   const [selectedGoalId, setSelectedGoalId] = useState<string>(FOOD_GOALS[0].id);
   const [photo, setPhoto] = useState<CapturedPhoto | null>(null);
   const [capturing, setCapturing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [mealNote, setMealNote] = useState('');
   const [analysisText, setAnalysisText] = useState<string | null>(null);
-  const [analysisWordCount, setAnalysisWordCount] = useState<number | null>(null);
   const [macronutrients, setMacronutrients] = useState<MacronutrientBreakdown | null>(null);
   const [macroDistribution, setMacroDistribution] = useState<MacroDistribution | null>(null);
   const [micronutrients, setMicronutrients] = useState<MicronutrientMetric[] | null>(null);
@@ -304,6 +413,12 @@ export function NanoConsejeroScreen({ navigation }: Props) {
   const composition = useMemo(
     () => buildComposition(macronutrients, macroDistribution),
     [macronutrients, macroDistribution],
+  );
+  const pieSlices = useMemo(() => buildPieSlices(macronutrients), [macronutrients]);
+  const piePercentByKey = useMemo(
+    () =>
+      Object.fromEntries(pieSlices.map((item) => [item.key, item.percentage])) as Record<string, number>,
+    [pieSlices],
   );
   const macroHighlights = useMemo(
     () =>
@@ -318,36 +433,36 @@ export function NanoConsejeroScreen({ navigation }: Props) {
             {
               key: 'protein',
               label: 'Proteina',
-              value: formatGramValue(macronutrients.proteinGrams),
+              value: `${formatGramValue(macronutrients.proteinGrams)}${typeof piePercentByKey.protein === 'number' ? ` - ${piePercentByKey.protein}%` : ''}`,
               accent: MACRO_ACCENTS.protein,
             },
             {
               key: 'carbohydrates',
               label: 'Carbohidratos',
-              value: formatGramValue(macronutrients.carbohydratesGrams),
+              value: `${formatGramValue(macronutrients.carbohydratesGrams)}${typeof piePercentByKey.carbohydrates === 'number' ? ` - ${piePercentByKey.carbohydrates}%` : ''}`,
               accent: MACRO_ACCENTS.carbohydrates,
             },
             {
               key: 'fat',
               label: 'Grasas',
-              value: formatGramValue(macronutrients.fatGrams),
+              value: `${formatGramValue(macronutrients.fatGrams)}${typeof piePercentByKey.fat === 'number' ? ` - ${piePercentByKey.fat}%` : ''}`,
               accent: MACRO_ACCENTS.fat,
             },
             {
               key: 'fiber',
               label: 'Fibra',
-              value: formatGramValue(macronutrients.fiberGrams),
+              value: `${formatGramValue(macronutrients.fiberGrams)}${typeof piePercentByKey.fiber === 'number' ? ` - ${piePercentByKey.fiber}%` : ''}`,
               accent: MACRO_ACCENTS.fiber,
             },
             {
               key: 'sugar',
               label: 'Azucares',
-              value: formatGramValue(macronutrients.sugarGrams),
+              value: `${formatGramValue(macronutrients.sugarGrams)}${typeof piePercentByKey.sugar === 'number' ? ` - ${piePercentByKey.sugar}%` : ''}`,
               accent: MACRO_ACCENTS.sugar,
             },
           ]
         : [],
-    [macronutrients, selectedGoal.accent],
+    [macronutrients, piePercentByKey, selectedGoal.accent],
   );
 
   useEffect(() => {
@@ -413,12 +528,47 @@ export function NanoConsejeroScreen({ navigation }: Props) {
         fileName: asset.fileName ?? `meal-${Date.now()}.jpg`,
       });
       setAnalysisText(null);
-      setAnalysisWordCount(null);
       setMacronutrients(null);
       setMacroDistribution(null);
       setMicronutrients(null);
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo abrir la camara.');
+    } finally {
+      setCapturing(false);
+    }
+  };
+
+  const handlePickFromGallery = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permiso requerido', 'Debes permitir acceso a la galeria para seleccionar una foto.');
+      return;
+    }
+
+    setCapturing(true);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsEditing: false,
+        quality: 0.8,
+      });
+
+      if (result.canceled || !result.assets?.length) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      setPhoto({
+        uri: asset.uri,
+        mimeType: asset.mimeType ?? 'image/jpeg',
+        fileName: asset.fileName ?? `meal-gallery-${Date.now()}.jpg`,
+      });
+      setAnalysisText(null);
+      setMacronutrients(null);
+      setMacroDistribution(null);
+      setMicronutrients(null);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo abrir la galeria.');
     } finally {
       setCapturing(false);
     }
@@ -437,7 +587,6 @@ export function NanoConsejeroScreen({ navigation }: Props) {
 
     setSubmitting(true);
     setAnalysisText(null);
-    setAnalysisWordCount(null);
     setMacronutrients(null);
     setMacroDistribution(null);
     setMicronutrients(null);
@@ -445,6 +594,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
     try {
       const file = new FileSystem.File(photo.uri);
       const imageBase64 = await file.base64();
+      const trimmedMealNote = mealNote.trim();
 
       const response = await fetch(`${API_URL}/nano/analyze-meal`, {
         method: 'POST',
@@ -458,6 +608,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
           imageBase64,
           imageMimeType: photo.mimeType,
           fileName: photo.fileName,
+          userNote: trimmedMealNote || undefined,
         }),
       });
 
@@ -477,10 +628,10 @@ export function NanoConsejeroScreen({ navigation }: Props) {
       const sanitizedMicronutrients = sanitizeMicronutrients(payload.micronutrients);
 
       setAnalysisText(payload.feedback);
-      setAnalysisWordCount(payload.wordCount ?? null);
       setMacronutrients(sanitizedMacronutrients);
       setMacroDistribution(sanitizedDistribution);
       setMicronutrients(sanitizedMicronutrients);
+      setActiveView('results');
 
       await saveNanoHistoryEntry({
         id: `${Date.now()}`,
@@ -488,7 +639,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
         goalLabel: selectedGoal.label,
         photoUri: photo.uri,
         feedback: payload.feedback,
-        wordCount: payload.wordCount ?? null,
+        userNote: trimmedMealNote || null,
         macronutrients: sanitizedMacronutrients,
         micronutrients: sanitizedMicronutrients,
       });
@@ -523,6 +674,50 @@ export function NanoConsejeroScreen({ navigation }: Props) {
           <Text style={styles.speechText}>{DIALOG_TEXT}</Text>
         </View>
 
+        <View style={styles.viewSwitcher}>
+          <TouchableOpacity
+            style={[styles.viewTab, activeView === 'capture' && styles.viewTabActive]}
+            activeOpacity={0.9}
+            onPress={() => setActiveView('capture')}
+          >
+            <Ionicons
+              name="camera-outline"
+              size={16}
+              color={activeView === 'capture' ? appColors.text : appColors.textMuted}
+            />
+            <Text
+              style={[
+                styles.viewTabText,
+                activeView === 'capture' && styles.viewTabTextActive,
+              ]}
+            >
+              Captura
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.viewTab, activeView === 'results' && styles.viewTabActive]}
+            activeOpacity={0.9}
+            onPress={() => setActiveView('results')}
+          >
+            <Ionicons
+              name="analytics-outline"
+              size={16}
+              color={activeView === 'results' ? appColors.text : appColors.textMuted}
+            />
+            <Text
+              style={[
+                styles.viewTabText,
+                activeView === 'results' && styles.viewTabTextActive,
+              ]}
+            >
+              Resultados
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {activeView === 'capture' ? (
+          <>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>1. Para que quieres evaluar la comida</Text>
           <Text style={styles.sectionSubtitle}>
@@ -629,7 +824,6 @@ export function NanoConsejeroScreen({ navigation }: Props) {
                 onPress={() => {
                   setPhoto(null);
                   setAnalysisText(null);
-                  setAnalysisWordCount(null);
                   setMacronutrients(null);
                   setMacroDistribution(null);
                   setMicronutrients(null);
@@ -657,6 +851,45 @@ export function NanoConsejeroScreen({ navigation }: Props) {
             </View>
             <Ionicons name="chevron-forward" size={18} color={appColors.textMuted} />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.galleryButton}
+            activeOpacity={0.9}
+            onPress={() => void handlePickFromGallery()}
+            disabled={capturing}
+          >
+            <View style={styles.galleryButtonIcon}>
+              <Ionicons name="images-outline" size={18} color={appColors.accent} />
+            </View>
+            <View style={styles.historyButtonCopy}>
+              <Text style={styles.galleryButtonTitle}>Escoger de galeria</Text>
+              <Text style={styles.galleryButtonSubtitle}>
+                Selecciona una foto guardada para analizarla con Nano.
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={appColors.textMuted} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>3. Nota opcional sobre la comida</Text>
+          <Text style={styles.sectionSubtitle}>
+            Si quieres, agrega una nota corta con contexto como ingredientes, porcion o preparacion.
+          </Text>
+
+          <View style={styles.noteCard}>
+            <TextInput
+              style={styles.noteInput}
+              placeholder="Ejemplo: pollo a la plancha con poca sal y sin salsa"
+              placeholderTextColor={appColors.textMuted}
+              value={mealNote}
+              onChangeText={(value) => setMealNote(value.slice(0, MAX_MEAL_NOTE_LENGTH))}
+              maxLength={MAX_MEAL_NOTE_LENGTH}
+              multiline
+              textAlignVertical="top"
+            />
+            <Text style={styles.noteCounter}>{mealNote.trim().length}/{MAX_MEAL_NOTE_LENGTH}</Text>
+          </View>
         </View>
 
         <View style={styles.summaryCard}>
@@ -695,9 +928,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
             <View style={styles.summaryTextWrap}>
               <Text style={styles.summaryLabel}>Respuesta de Nano</Text>
               <Text style={styles.summaryValue}>
-                {analysisText
-                  ? `Lista${analysisWordCount ? ` - ${analysisWordCount} palabras` : ''}`
-                  : 'Todavia no se ha generado'}
+                {analysisText ? 'Lista para revisar' : 'Todavia no se ha generado'}
               </Text>
             </View>
           </View>
@@ -718,8 +949,10 @@ export function NanoConsejeroScreen({ navigation }: Props) {
             {submitting ? 'Analizando comida...' : 'Analizar con Nano'}
           </Text>
         </TouchableOpacity>
+          </>
+        ) : null}
 
-        {analysisText ? (
+        {activeView === 'results' && analysisText ? (
           <View style={styles.analysisCard}>
             <View style={styles.analysisHeader}>
               <Ionicons name="chatbubble-ellipses-outline" size={20} color={appColors.info} />
@@ -751,7 +984,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
           </View>
         ) : null}
 
-        {macronutrients || composition ? (
+        {activeView === 'results' && (macronutrients || composition) ? (
           <View style={styles.compositionCard}>
             <View style={styles.analysisHeader}>
               <Ionicons name="analytics-outline" size={20} color={appColors.success} />
@@ -779,6 +1012,38 @@ export function NanoConsejeroScreen({ navigation }: Props) {
                 </Text>
               </View>
             )}
+
+            {pieSlices.length ? (
+              <View style={styles.pieCard}>
+                <Text style={styles.distributionTitle}>Grafico de pastel nutricional</Text>
+                <Text style={styles.pieSubtitle}>
+                  Porcentaje estimado por gramos reportados de carbohidratos, proteinas, grasas, fibra y azucares.
+                </Text>
+                <View style={styles.pieLayout}>
+                  <View style={styles.pieChartWrap}>
+                    <PieChart slices={pieSlices} />
+                    <View style={styles.pieCenterBadge}>
+                      <Text style={styles.pieCenterValue}>{Math.round(macronutrients?.calories ?? 0)}</Text>
+                      <Text style={styles.pieCenterLabel}>kcal</Text>
+                    </View>
+                  </View>
+                  <View style={styles.pieLegend}>
+                    {pieSlices.map((item) => (
+                      <View key={`pie-${item.key}`} style={styles.pieLegendRow}>
+                        <View style={styles.pieLegendLabelWrap}>
+                          <View style={[styles.pieLegendDot, { backgroundColor: item.accent }]} />
+                          <Text style={styles.pieLegendLabel}>{item.label}</Text>
+                        </View>
+                        <View style={styles.pieLegendValues}>
+                          <Text style={styles.pieLegendPercent}>{item.percentage}%</Text>
+                          <Text style={styles.pieLegendGrams}>{formatGramValue(item.grams)}</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              </View>
+            ) : null}
 
             {composition ? (
               <View style={styles.distributionCard}>
@@ -828,7 +1093,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
           </View>
         ) : null}
 
-        {micronutrients ? (
+        {activeView === 'results' && micronutrients ? (
           <View style={styles.microCard}>
             <View style={styles.analysisHeader}>
               <Ionicons name="leaf-outline" size={20} color={appColors.info} />
@@ -868,6 +1133,23 @@ export function NanoConsejeroScreen({ navigation }: Props) {
                 </View>
               ))}
             </View>
+          </View>
+        ) : null}
+
+        {activeView === 'results' && !analysisText && !macronutrients && !micronutrients ? (
+          <View style={styles.resultsEmptyCard}>
+            <Ionicons name="sparkles-outline" size={24} color={appColors.info} />
+            <Text style={styles.resultsEmptyTitle}>Todavia no hay resultados</Text>
+            <Text style={styles.resultsEmptyText}>
+              Usa la vista de captura para tomar o escoger una foto y luego analizarla con Nano.
+            </Text>
+            <TouchableOpacity
+              style={styles.resultsEmptyButton}
+              activeOpacity={0.9}
+              onPress={() => setActiveView('capture')}
+            >
+              <Text style={styles.resultsEmptyButtonText}>Ir a captura</Text>
+            </TouchableOpacity>
           </View>
         ) : null}
       </ScrollView>
@@ -943,6 +1225,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '500',
+  },
+  viewSwitcher: {
+    marginTop: 18,
+    padding: 6,
+    borderRadius: 22,
+    backgroundColor: appColors.surface,
+    borderWidth: 1,
+    borderColor: appColors.border,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  viewTab: {
+    flex: 1,
+    minHeight: 46,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  viewTabActive: {
+    backgroundColor: colorAlpha(appColors.info, '22'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '55'),
+  },
+  viewTabText: {
+    color: appColors.textMuted,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  viewTabTextActive: {
+    color: appColors.text,
   },
   section: {
     marginTop: 22,
@@ -1176,6 +1490,59 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
+  galleryButton: {
+    marginTop: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.accent, '70'),
+    backgroundColor: colorAlpha(appColors.accent, '10'),
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  galleryButtonIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colorAlpha(appColors.accent, '16'),
+  },
+  galleryButtonTitle: {
+    color: appColors.text,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  galleryButtonSubtitle: {
+    marginTop: 4,
+    color: appColors.textSoft,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  noteCard: {
+    marginTop: 14,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: appColors.border,
+    backgroundColor: appColors.surfaceStrong,
+    padding: 16,
+  },
+  noteInput: {
+    minHeight: 96,
+    color: appColors.text,
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: '500',
+  },
+  noteCounter: {
+    marginTop: 10,
+    color: appColors.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'right',
+  },
   summaryCard: {
     marginTop: 24,
     borderRadius: 24,
@@ -1346,6 +1713,91 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     fontWeight: '600',
   },
+  pieCard: {
+    marginTop: 18,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.border, 'B8'),
+    backgroundColor: colorAlpha(appColors.background, '54'),
+    padding: 16,
+  },
+  pieSubtitle: {
+    color: appColors.textSoft,
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 14,
+  },
+  pieLayout: {
+    gap: 18,
+  },
+  pieChartWrap: {
+    alignSelf: 'center',
+    width: 180,
+    height: 180,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pieCenterBadge: {
+    position: 'absolute',
+    width: 86,
+    height: 86,
+    borderRadius: 43,
+    backgroundColor: appColors.surfaceStrong,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.border, 'C0'),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pieCenterValue: {
+    color: appColors.text,
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  pieCenterLabel: {
+    color: appColors.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  pieLegend: {
+    gap: 10,
+  },
+  pieLegendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  pieLegendLabelWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 8,
+  },
+  pieLegendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  pieLegendLabel: {
+    color: appColors.text,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  pieLegendValues: {
+    alignItems: 'flex-end',
+  },
+  pieLegendPercent: {
+    color: appColors.text,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  pieLegendGrams: {
+    marginTop: 2,
+    color: appColors.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+  },
   distributionCard: {
     marginTop: 18,
     borderRadius: 20,
@@ -1487,6 +1939,42 @@ const styles = StyleSheet.create({
   microFill: {
     height: '100%',
     borderRadius: 999,
+  },
+  resultsEmptyCard: {
+    marginTop: 18,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '88'),
+    backgroundColor: colorAlpha(appColors.info, '10'),
+    padding: 24,
+    alignItems: 'center',
+  },
+  resultsEmptyTitle: {
+    marginTop: 14,
+    color: appColors.text,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  resultsEmptyText: {
+    marginTop: 8,
+    color: appColors.textSoft,
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: 'center',
+  },
+  resultsEmptyButton: {
+    marginTop: 18,
+    minHeight: 44,
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    backgroundColor: appColors.info,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resultsEmptyButtonText: {
+    color: appColors.text,
+    fontSize: 14,
+    fontWeight: '800',
   },
   buttonDisabled: {
     opacity: 0.6,

@@ -20,6 +20,14 @@ import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ConsultaForm'>;
 type DatePickerField = 'consulta-date' | 'consulta-time' | 'notification-date' | 'notification-time';
+type ConsultaPayload = {
+  consultaId: number;
+  pacienteId: number;
+  fechaconsulta: string;
+  motivo: string;
+  diagnostico?: string;
+  tratamiento?: string;
+};
 
 const extractDatePortion = (value?: string | null) => {
   if (!value) return '';
@@ -102,6 +110,9 @@ const composeDateTime = (dateValue?: string, timeValue?: string) => {
 export function ConsultaFormScreen({ route }: Props) {
   const { consulta } = route.params || {};
   const isEditing = Boolean(consulta?.consultaId);
+  const [currentConsultaId, setCurrentConsultaId] = useState<number | null>(
+    consulta?.consultaId ?? null,
+  );
   const [consultaDate, setConsultaDate] = useState(() => extractDatePortion(consulta?.fechaconsulta));
   const [consultaTime, setConsultaTime] = useState(() => extractTimePortion(consulta?.fechaconsulta));
   const [notificationDate, setNotificationDate] = useState(() => extractDatePortion(consulta?.fechaconsulta));
@@ -133,6 +144,7 @@ export function ConsultaFormScreen({ route }: Props) {
   const [patientOptions, setPatientOptions] = useState<LinkedPatient[]>([]);
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [patientLoadError, setPatientLoadError] = useState<string | null>(null);
+  const hasNotificationDraft = Boolean(notificationDate && notificationTime && notificationForm.mensaje.trim());
 
   const handleChange = (key: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -178,6 +190,10 @@ export function ConsultaFormScreen({ route }: Props) {
   useEffect(() => {
     fetchPatients();
   }, [fetchPatients]);
+
+  useEffect(() => {
+    setCurrentConsultaId(consulta?.consultaId ?? null);
+  }, [consulta?.consultaId]);
 
   const showPicker = (field: DatePickerField) => {
     const isDateField = field.endsWith('date');
@@ -304,6 +320,31 @@ export function ConsultaFormScreen({ route }: Props) {
     );
   };
 
+  const createNotificationForConsulta = async (consultaId: number) => {
+    const scheduledAt = composeDateTime(notificationDate, notificationTime);
+
+    if (!form.pacienteId || !scheduledAt || !notificationForm.mensaje.trim()) {
+      return null;
+    }
+
+    return submitJsonWithOfflineFallback({
+      token,
+      path: '/notificacion',
+      method: 'POST',
+      description: 'crear notificacion de consulta',
+      body: {
+        pacienteId: Number(form.pacienteId),
+        tipo: 'consulta_medica',
+        mensaje: notificationForm.mensaje.trim(),
+        fechaprogramada: scheduledAt,
+        medio: 'push',
+        entidadorigen: 'consultamedica',
+        entidadId: consultaId,
+        creadopor: user?.username ?? undefined,
+      },
+    });
+  };
+
   const handleSubmit = async () => {
     if (!form.pacienteId || !form.fecha || !form.motivo) {
       Alert.alert('Faltan Datos', 'Paciente, fecha y motivo son obligatorios');
@@ -311,7 +352,7 @@ export function ConsultaFormScreen({ route }: Props) {
     }
 
     try {
-      const offlineResult = await submitJsonWithOfflineFallback({
+      const offlineResult = await submitJsonWithOfflineFallback<ConsultaPayload>({
         token,
         path: consulta ? `/consultamedica/${consulta.consultaId}` : '/consultamedica',
         method: consulta ? 'PATCH' : 'POST',
@@ -327,17 +368,63 @@ export function ConsultaFormScreen({ route }: Props) {
       });
 
       if (offlineResult.status === 'queued') {
+        const queuedMessage =
+          hasNotificationDraft && !isEditing
+            ? 'No habia conexion. La consulta quedo pendiente de sincronizacion. La notificacion se podra programar cuando la consulta ya exista en el servidor.'
+            : 'No habia conexion. La consulta quedo pendiente de sincronizacion y se enviara automaticamente cuando vuelva la red.';
         Alert.alert(
           'Consulta en cola',
-          'No habia conexion. La consulta quedo pendiente de sincronizacion y se enviara automaticamente cuando vuelva la red.',
+          queuedMessage,
         );
       } else {
-        Alert.alert('Consulta guardada', `Se ${consulta ? 'actualizo' : 'registro'} la atencion.`);
+        const persistedConsultaId =
+          offlineResult.data?.consultaId ?? currentConsultaId ?? consulta?.consultaId ?? null;
+
+        if (persistedConsultaId) {
+          setCurrentConsultaId(persistedConsultaId);
+        }
+
+        if (!isEditing && persistedConsultaId && hasNotificationDraft) {
+          try {
+            const notificationResult = await createNotificationForConsulta(persistedConsultaId);
+
+            if (notificationResult?.status === 'queued') {
+              Alert.alert(
+                'Consulta guardada',
+                'La consulta se registro correctamente. La notificacion quedo en cola y se enviara cuando vuelva la red.',
+              );
+            } else if (notificationResult) {
+              Alert.alert(
+                'Consulta y notificacion guardadas',
+                'La consulta se registro y su notificacion de seguimiento quedo programada.',
+              );
+            } else {
+              Alert.alert('Consulta guardada', `Se ${consulta ? 'actualizo' : 'registro'} la atencion.`);
+            }
+          } catch (notificationError) {
+            Alert.alert(
+              'Consulta guardada',
+              notificationError instanceof Error
+                ? `La consulta se guardo, pero la notificacion no se pudo crear: ${notificationError.message}`
+                : 'La consulta se guardo, pero la notificacion no se pudo crear.',
+            );
+          }
+        } else {
+          Alert.alert('Consulta guardada', `Se ${consulta ? 'actualizo' : 'registro'} la atencion.`);
+        }
       }
 
-      setForm({ pacienteId: '', fecha: '', motivo: '', diagnostico: '', tratamiento: '' });
-      setConsultaDate('');
-      setConsultaTime('');
+      if (!isEditing) {
+        setForm({ pacienteId: '', fecha: '', motivo: '', diagnostico: '', tratamiento: '' });
+        setConsultaDate('');
+        setConsultaTime('');
+        setNotificationDate('');
+        setNotificationTime('08:00');
+        setNotificationForm({
+          mensaje: 'Recordatorio de seguimiento de consulta medica',
+        });
+        setCurrentConsultaId(null);
+      }
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Fallo la peticion');
     }
@@ -346,7 +433,7 @@ export function ConsultaFormScreen({ route }: Props) {
   const handleCreateNotification = async () => {
     const scheduledAt = composeDateTime(notificationDate, notificationTime);
 
-    if (!consulta?.consultaId) {
+    if (!(currentConsultaId ?? consulta?.consultaId)) {
       Alert.alert('Notificación no disponible', 'Primero guarda la consulta para poder vincular una notificación.');
       return;
     }
@@ -369,7 +456,7 @@ export function ConsultaFormScreen({ route }: Props) {
           fechaprogramada: scheduledAt,
           medio: 'push',
           entidadorigen: 'consultamedica',
-          entidadId: consulta.consultaId,
+          entidadId: currentConsultaId ?? consulta?.consultaId ?? undefined,
           creadopor: user?.username ?? undefined,
         },
       });
@@ -387,7 +474,7 @@ export function ConsultaFormScreen({ route }: Props) {
     }
   };
 
-  const notificationReady = Boolean(consulta?.consultaId);
+  const notificationReady = Boolean(currentConsultaId ?? consulta?.consultaId);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -395,7 +482,7 @@ export function ConsultaFormScreen({ route }: Props) {
         <Text style={styles.kicker}>{isEditing ? 'EDITAR CONSULTA' : 'NUEVA CONSULTA'}</Text>
         <Text style={styles.title}>{isEditing ? 'Actualizar consulta medica' : 'Registrar consulta medica'}</Text>
         <Text style={styles.subtitle}>
-          Ajusta los datos clinicos y, si la consulta ya existe, programa una notificacion de seguimiento desde la misma vista.
+          Ajusta los datos clinicos y deja lista la notificacion de seguimiento desde la misma vista.
         </Text>
       </View>
 
@@ -468,7 +555,13 @@ export function ConsultaFormScreen({ route }: Props) {
         />
 
         <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
-          <Text style={styles.primaryBtnText}>{consulta ? 'Actualizar consulta' : 'Guardar consulta'}</Text>
+          <Text style={styles.primaryBtnText}>
+            {consulta
+              ? 'Actualizar consulta'
+              : hasNotificationDraft
+                ? 'Guardar consulta y notificacion'
+                : 'Guardar consulta'}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -482,7 +575,7 @@ export function ConsultaFormScreen({ route }: Props) {
             <Text style={styles.sectionHelper}>
               {notificationReady
                 ? 'Programa un aviso push vinculado a esta consulta médica.'
-                : 'Guarda primero la consulta para habilitar el aviso de seguimiento.'}
+                : 'Deja listo el aviso y se programara automaticamente cuando guardes la consulta.'}
             </Text>
           </View>
         </View>
@@ -504,7 +597,7 @@ export function ConsultaFormScreen({ route }: Props) {
               notificationReady ? styles.notificationStatusTextReady : styles.notificationStatusTextLocked,
             ]}
           >
-            {notificationReady ? 'Lista para programar' : 'Pendiente de guardar consulta'}
+            {notificationReady ? 'Lista para programar' : 'Lista para guardar con la consulta'}
           </Text>
         </View>
 
@@ -518,28 +611,25 @@ export function ConsultaFormScreen({ route }: Props) {
 
         <Text style={styles.label}>Mensaje del aviso</Text>
         <TextInput
-          style={[styles.input, styles.multiline, !notificationReady && styles.disabledField]}
+          style={[styles.input, styles.multiline]}
           placeholder="Mensaje de la notificación"
           placeholderTextColor="#9FB3C8"
           value={notificationForm.mensaje}
           multiline
-          editable={notificationReady}
           onChangeText={(value) => handleNotificationChange('mensaje', value)}
         />
 
         <Text style={styles.label}>Fecha y hora del aviso</Text>
         <View style={styles.dateTimeRow}>
           <TouchableOpacity
-            style={[styles.dateButton, !notificationReady && styles.disabledField]}
+            style={styles.dateButton}
             onPress={() => showPicker('notification-date')}
-            disabled={!notificationReady}
           >
             <Text style={styles.dateButtonText}>{formatDisplayDate(notificationDate)}</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.dateButton, !notificationReady && styles.disabledField]}
+            style={styles.dateButton}
             onPress={() => showPicker('notification-time')}
-            disabled={!notificationReady}
           >
             <Text style={styles.dateButtonText}>{formatDisplayTime(notificationTime)}</Text>
           </TouchableOpacity>

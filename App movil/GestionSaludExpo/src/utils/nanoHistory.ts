@@ -25,7 +25,7 @@ export type NanoHistoryEntry = {
   goalLabel: string;
   photoUri: string;
   feedback: string;
-  wordCount: number | null;
+  userNote?: string | null;
   macronutrients: NanoHistoryMacronutrients | null;
   micronutrients: NanoHistoryMicronutrient[] | null;
 };

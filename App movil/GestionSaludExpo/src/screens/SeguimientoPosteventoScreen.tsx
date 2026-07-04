@@ -66,7 +66,7 @@ const buildEntryMeta = (entry: FollowUpEntry) => {
   if (entry.nivelDolor !== null) {
     markers.push(`Dolor ${entry.nivelDolor}/10`);
   }
-  return markers.join(' Ã‚Â· ');
+  return markers.join(' - ');
 };
 
 export function SeguimientoPosteventoScreen() {
@@ -310,7 +310,9 @@ export function SeguimientoPosteventoScreen() {
       if (selected) {
         setForm((prev) => ({
           ...prev,
-          tituloEvento: prev.tituloEvento.trim() ? prev.tituloEvento : `Postoperatorio: ${selected.title}`,
+          tituloEvento: prev.tituloEvento.trim()
+            ? prev.tituloEvento
+            : `Postoperatorio: ${selected.title}`,
           fechaEvento: selected.date || prev.fechaEvento,
         }));
       }
@@ -323,7 +325,9 @@ export function SeguimientoPosteventoScreen() {
     if (selected) {
       setForm((prev) => ({
         ...prev,
-        tituloEvento: prev.tituloEvento.trim() ? prev.tituloEvento : `Seguimiento lesion: ${selected.title}`,
+        tituloEvento: prev.tituloEvento.trim()
+          ? prev.tituloEvento
+          : `Seguimiento lesion: ${selected.title}`,
         fechaEvento: selected.date || prev.fechaEvento,
       }));
     }
@@ -404,6 +408,7 @@ export function SeguimientoPosteventoScreen() {
           creadoPor: user?.username ?? undefined,
         },
       });
+
       if (offlineResult.status === 'queued') {
         Alert.alert(
           'Seguimiento en cola',
@@ -418,50 +423,8 @@ export function SeguimientoPosteventoScreen() {
         );
         fetchEntries();
       }
+
       resetForm();
-      return;
-
-      const response = await fetch(`${API_URL}/seguimientopostevento`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeaders,
-        },
-        body: JSON.stringify({
-          pacienteId: selectedPatientId,
-          tipoEvento: form.tipoEvento,
-          operacionId: form.operacionId ? Number(form.operacionId) : undefined,
-          lesionId: form.lesionId ? Number(form.lesionId) : undefined,
-          tituloEvento: form.tituloEvento.trim(),
-          fechaEvento: form.fechaEvento.trim(),
-          fechaSeguimiento: form.fechaSeguimiento.trim(),
-          estado: form.estado,
-          nivelDolor: form.nivelDolor ? Number(form.nivelDolor) : undefined,
-          evolucion: form.evolucion.trim() || undefined,
-          sintomas: form.sintomas.trim() || undefined,
-          medicacionActual: form.medicacionActual.trim() || undefined,
-          cuidadosHogar: form.cuidadosHogar.trim() || undefined,
-          notas: form.notas.trim() || undefined,
-          compartirConMedico,
-          requiereAtencion,
-          proximoControl: form.proximoControl.trim() || undefined,
-          creadoPor: user?.username ?? undefined,
-        }),
-      });
-
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.message ?? 'No se pudo guardar el seguimiento');
-      }
-
-      Alert.alert(
-        'Seguimiento guardado',
-        compartirConMedico
-          ? 'La nota quedo registrada y marcada para compartir con el medico.'
-          : 'La nota quedo registrada en el historial del caso.',
-      );
-      resetForm();
-      fetchEntries();
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo guardar el seguimiento');
     } finally {
@@ -540,7 +503,7 @@ export function SeguimientoPosteventoScreen() {
               {currentEventOptions.map((event) => (
                 <Picker.Item
                   key={event.id}
-                  label={`#${event.id} Ã‚Â· ${formatDate(event.date)} Ã‚Â· ${event.title}`}
+                  label={`#${event.id} - ${formatDate(event.date)} - ${event.title}`}
                   value={String(event.id)}
                 />
               ))}
@@ -549,29 +512,36 @@ export function SeguimientoPosteventoScreen() {
         </>
       ) : null}
 
+      <Text style={styles.label}>Titulo del seguimiento</Text>
       <TextInput
         style={styles.input}
-        placeholder="Titulo del seguimiento"
+        placeholder="Escribe un titulo"
         placeholderTextColor="#F4F8FF"
         value={form.tituloEvento}
         onChangeText={(value) => handleChange('tituloEvento', value)}
       />
 
       <View style={styles.row}>
-        <TextInput
-          style={[styles.input, styles.halfInput]}
-          placeholder="Fecha evento YYYY-MM-DD"
-          placeholderTextColor="#F4F8FF"
-          value={form.fechaEvento}
-          onChangeText={(value) => handleChange('fechaEvento', value)}
-        />
-        <TextInput
-          style={[styles.input, styles.halfInput]}
-          placeholder="Fecha seguimiento YYYY-MM-DD"
-          placeholderTextColor="#F4F8FF"
-          value={form.fechaSeguimiento}
-          onChangeText={(value) => handleChange('fechaSeguimiento', value)}
-        />
+        <View style={styles.fieldGroupHalf}>
+          <Text style={styles.label}>Fecha del evento</Text>
+          <TextInput
+            style={[styles.input, styles.halfInput]}
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor="#F4F8FF"
+            value={form.fechaEvento}
+            onChangeText={(value) => handleChange('fechaEvento', value)}
+          />
+        </View>
+        <View style={styles.fieldGroupHalf}>
+          <Text style={styles.label}>Fecha de seguimiento</Text>
+          <TextInput
+            style={[styles.input, styles.halfInput]}
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor="#F4F8FF"
+            value={form.fechaSeguimiento}
+            onChangeText={(value) => handleChange('fechaSeguimiento', value)}
+          />
+        </View>
       </View>
 
       <Text style={styles.label}>Estado actual</Text>
@@ -587,57 +557,70 @@ export function SeguimientoPosteventoScreen() {
         </Picker>
       </View>
 
+      <Text style={styles.label}>Nivel de dolor</Text>
       <TextInput
         style={styles.input}
-        placeholder="Nivel de dolor 0-10"
+        placeholder="Valor entre 0 y 10"
         placeholderTextColor="#F4F8FF"
         keyboardType="numeric"
         value={form.nivelDolor}
         onChangeText={(value) => handleChange('nivelDolor', value)}
       />
+
+      <Text style={styles.label}>Evolucion general</Text>
       <TextInput
         style={[styles.input, styles.multiline]}
-        placeholder="Evolucion general"
+        placeholder="Describe la evolucion"
         placeholderTextColor="#F4F8FF"
         value={form.evolucion}
         multiline
         onChangeText={(value) => handleChange('evolucion', value)}
       />
+
+      <Text style={styles.label}>Sintomas o cambios observados</Text>
       <TextInput
         style={[styles.input, styles.multiline]}
-        placeholder="Sintomas o cambios observados"
+        placeholder="Describe sintomas o cambios"
         placeholderTextColor="#F4F8FF"
         value={form.sintomas}
         multiline
         onChangeText={(value) => handleChange('sintomas', value)}
       />
+
+      <Text style={styles.label}>Medicacion actual</Text>
       <TextInput
         style={[styles.input, styles.multiline]}
-        placeholder="Medicacion actual"
+        placeholder="Medicamentos en uso"
         placeholderTextColor="#F4F8FF"
         value={form.medicacionActual}
         multiline
         onChangeText={(value) => handleChange('medicacionActual', value)}
       />
+
+      <Text style={styles.label}>Cuidados en casa</Text>
       <TextInput
         style={[styles.input, styles.multiline]}
-        placeholder="Cuidados en casa"
+        placeholder="Indica los cuidados"
         placeholderTextColor="#F4F8FF"
         value={form.cuidadosHogar}
         multiline
         onChangeText={(value) => handleChange('cuidadosHogar', value)}
       />
+
+      <Text style={styles.label}>Notas adicionales</Text>
       <TextInput
         style={[styles.input, styles.multiline]}
-        placeholder="Notas adicionales"
+        placeholder="Agrega notas complementarias"
         placeholderTextColor="#F4F8FF"
         value={form.notas}
         multiline
         onChangeText={(value) => handleChange('notas', value)}
       />
+
+      <Text style={styles.label}>Proximo control</Text>
       <TextInput
         style={styles.input}
-        placeholder="Proximo control YYYY-MM-DD"
+        placeholder="YYYY-MM-DD"
         placeholderTextColor="#F4F8FF"
         value={form.proximoControl}
         onChangeText={(value) => handleChange('proximoControl', value)}
@@ -680,7 +663,7 @@ export function SeguimientoPosteventoScreen() {
           <View key={entry.seguimientoPosteventoId} style={styles.entryCard}>
             <Text style={styles.entryTitle}>{entry.tituloEvento}</Text>
             <Text style={styles.entryMeta}>
-              {entry.tipoEvento} Ã‚Â· evento {formatDate(entry.fechaEvento)} Ã‚Â· seguimiento {formatDate(entry.fechaSeguimiento)}
+              {entry.tipoEvento} - evento {formatDate(entry.fechaEvento)} - seguimiento {formatDate(entry.fechaSeguimiento)}
             </Text>
             <Text style={styles.entryMeta}>{entry.estado}</Text>
             {buildEntryMeta(entry) ? <Text style={styles.entryHighlights}>{buildEntryMeta(entry)}</Text> : null}
@@ -755,6 +738,10 @@ const styles = StyleSheet.create({
   },
   halfInput: {
     flex: 1,
+  },
+  fieldGroupHalf: {
+    flex: 1,
+    gap: 8,
   },
   multiline: {
     minHeight: 90,
