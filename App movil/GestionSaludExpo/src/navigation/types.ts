@@ -61,6 +61,7 @@ export type RootStackParamList = {
   Desparasitacion: undefined;
   DesparasitacionCreate: undefined;
   DocumentoForm: undefined;
+  CompartirHistorial: undefined;
   Embarazo: undefined;
   RecordatorioForm: undefined;
   RegistroDentalForm: undefined;

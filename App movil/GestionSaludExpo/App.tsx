@@ -31,6 +31,7 @@ import { ControlCronicoScreen } from './src/screens/ControlCronicoScreen';
 import { DesparasitacionScreen } from './src/screens/DesparasitacionScreen';
 import { DesparasitacionCreateScreen } from './src/screens/DesparasitacionCreateScreen';
 import { DocumentoFormScreen } from './src/screens/DocumentoFormScreen';
+import { CompartirHistorialScreen } from './src/screens/CompartirHistorialScreen';
 import { EmbarazoScreen } from './src/screens/EmbarazoScreen';
 import { RecordatorioFormScreen } from './src/screens/RecordatorioFormScreen';
 import { RegistroDentalFormScreen } from './src/screens/RegistroDentalFormScreen';
@@ -213,6 +214,11 @@ const PrivateNavigator = () => {
         name="DocumentoForm"
         component={DocumentoFormScreen}
         options={{ title: 'Documentos' }}
+      />
+      <Stack.Screen
+        name="CompartirHistorial"
+        component={CompartirHistorialScreen}
+        options={{ title: 'Compartir Historial' }}
       />
       <Stack.Screen
         name="RecordatorioForm"

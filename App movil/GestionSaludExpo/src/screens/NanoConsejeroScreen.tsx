@@ -343,6 +343,20 @@ function buildPieSlices(macronutrients: MacronutrientBreakdown | null): PieSlice
   }));
 }
 
+function splitFeedbackIntoPoints(feedback?: string | null) {
+  if (!feedback) {
+    return [];
+  }
+
+  const normalized = feedback
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return normalized.slice(0, 4);
+}
+
 function PieChart({
   slices,
   size = 180,
@@ -464,6 +478,15 @@ export function NanoConsejeroScreen({ navigation }: Props) {
         : [],
     [macronutrients, piePercentByKey, selectedGoal.accent],
   );
+  const primaryHighlights = useMemo(
+    () =>
+      macroHighlights.filter((item) =>
+        ['calories', 'protein', 'carbohydrates', 'fat'].includes(item.key),
+      ),
+    [macroHighlights],
+  );
+  const analysisPoints = useMemo(() => splitFeedbackIntoPoints(analysisText), [analysisText]);
+  const micronutrientHighlights = useMemo(() => micronutrients?.slice(0, 4) ?? [], [micronutrients]);
 
   useEffect(() => {
     if (!submitting || !photo) {
@@ -958,178 +981,86 @@ export function NanoConsejeroScreen({ navigation }: Props) {
               <Ionicons name="chatbubble-ellipses-outline" size={20} color={appColors.info} />
               <Text style={styles.analysisTitle}>Respuesta de Nano</Text>
             </View>
-            <Text style={styles.analysisText}>{analysisText}</Text>
-            {macroHighlights.length ? (
-              <View style={styles.analysisMetricGrid}>
-                {macroHighlights.map((item) => (
-                  <View
-                    key={item.key}
-                    style={[
-                      styles.analysisMetricChip,
-                      {
-                        borderColor: colorAlpha(item.accent, '70'),
-                        backgroundColor: colorAlpha(item.accent, '18'),
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.analysisMetricLabel, { color: item.accent }]}>{item.label}</Text>
-                    <Text style={styles.analysisMetricValue}>{item.value}</Text>
+            <Text style={styles.analysisIntro}>
+              Esta recomendacion esta basada en la foto y en el objetivo que elegiste: {selectedGoal.label}.
+            </Text>
+            <View style={styles.analysisPointList}>
+              {(analysisPoints.length ? analysisPoints : [analysisText]).map((point, index) => (
+                <View key={`${point}-${index}`} style={styles.analysisPointRow}>
+                  <View style={styles.analysisPointBullet}>
+                    <Ionicons name="checkmark" size={12} color={appColors.text} />
                   </View>
-                ))}
-              </View>
-            ) : null}
+                  <Text style={styles.analysisPointText}>{point}</Text>
+                </View>
+              ))}
+            </View>
             <Text style={styles.analysisCaption}>
-              Estimaciones aproximadas calculadas desde la foto del plato.
+              Estos valores son estimados y sirven como guia rapida.
             </Text>
           </View>
         ) : null}
 
-        {activeView === 'results' && (macronutrients || composition) ? (
-          <View style={styles.compositionCard}>
+        {activeView === 'results' && primaryHighlights.length ? (
+          <View style={styles.quickStatsCard}>
             <View style={styles.analysisHeader}>
-              <Ionicons name="analytics-outline" size={20} color={appColors.success} />
-              <Text style={styles.analysisTitle}>Macronutrientes estimados</Text>
+              <Ionicons name="flash-outline" size={20} color={appColors.success} />
+              <Text style={styles.analysisTitle}>Datos principales</Text>
             </View>
-            <Text style={styles.compositionSubtitle}>
-              Cantidades aproximadas y distribucion calorica principal del plato.
-            </Text>
-
-            {macroHighlights.length ? (
-              <View style={styles.macroGrid}>
-                {macroHighlights.map((item) => (
-                  <View key={item.key} style={styles.macroCard}>
-                    <View style={[styles.macroDot, { backgroundColor: item.accent }]} />
-                    <Text style={styles.macroCardLabel}>{item.label}</Text>
-                    <Text style={styles.macroCardValue}>{item.value}</Text>
-                  </View>
-                ))}
-              </View>
-            ) : (
-              <View style={styles.pendingMacroCard}>
-                <Ionicons name="information-circle-outline" size={18} color={appColors.info} />
-                <Text style={styles.pendingMacroText}>
-                  Nano no envio gramos detallados, pero si hay distribucion porcentual disponible.
-                </Text>
-              </View>
-            )}
-
-            {pieSlices.length ? (
-              <View style={styles.pieCard}>
-                <Text style={styles.distributionTitle}>Grafico de pastel nutricional</Text>
-                <Text style={styles.pieSubtitle}>
-                  Porcentaje estimado por gramos reportados de carbohidratos, proteinas, grasas, fibra y azucares.
-                </Text>
-                <View style={styles.pieLayout}>
-                  <View style={styles.pieChartWrap}>
-                    <PieChart slices={pieSlices} />
-                    <View style={styles.pieCenterBadge}>
-                      <Text style={styles.pieCenterValue}>{Math.round(macronutrients?.calories ?? 0)}</Text>
-                      <Text style={styles.pieCenterLabel}>kcal</Text>
-                    </View>
-                  </View>
-                  <View style={styles.pieLegend}>
-                    {pieSlices.map((item) => (
-                      <View key={`pie-${item.key}`} style={styles.pieLegendRow}>
-                        <View style={styles.pieLegendLabelWrap}>
-                          <View style={[styles.pieLegendDot, { backgroundColor: item.accent }]} />
-                          <Text style={styles.pieLegendLabel}>{item.label}</Text>
-                        </View>
-                        <View style={styles.pieLegendValues}>
-                          <Text style={styles.pieLegendPercent}>{item.percentage}%</Text>
-                          <Text style={styles.pieLegendGrams}>{formatGramValue(item.grams)}</Text>
-                        </View>
-                      </View>
-                    ))}
-                  </View>
+            <View style={styles.quickStatsGrid}>
+              {primaryHighlights.map((item) => (
+                <View key={item.key} style={styles.quickStatCard}>
+                  <Text style={[styles.quickStatLabel, { color: item.accent }]}>{item.label}</Text>
+                  <Text style={styles.quickStatValue}>{item.value}</Text>
                 </View>
-              </View>
-            ) : null}
+              ))}
+            </View>
+          </View>
+        ) : null}
 
-            {composition ? (
-              <View style={styles.distributionCard}>
-                <Text style={styles.distributionTitle}>Distribucion calorica</Text>
-                <View style={styles.distributionBar}>
-                  {composition.map((item) => (
+        {activeView === 'results' && composition ? (
+          <View style={styles.balanceCard}>
+            <View style={styles.analysisHeader}>
+              <Ionicons name="analytics-outline" size={20} color={appColors.accent} />
+              <Text style={styles.analysisTitle}>Balance del plato</Text>
+            </View>
+            <Text style={styles.balanceSubtitle}>
+              Asi se reparte la mayor parte de la energia del plato.
+            </Text>
+            <View style={styles.balanceList}>
+              {composition.map((item) => (
+                <View key={item.key} style={styles.balanceRow}>
+                  <View style={styles.balanceRowHeader}>
+                    <Text style={styles.balanceLabel}>{item.label}</Text>
+                    <Text style={styles.balanceValue}>{item.percentage}%</Text>
+                  </View>
+                  <View style={styles.balanceTrack}>
                     <View
-                      key={item.key}
                       style={[
-                        styles.distributionSegment,
-                        {
-                          width: `${item.percentage}%`,
-                          backgroundColor: item.accent,
-                        },
+                        styles.balanceFill,
+                        { width: `${item.percentage}%`, backgroundColor: item.accent },
                       ]}
                     />
-                  ))}
+                  </View>
                 </View>
-
-                <View style={styles.compositionList}>
-                  {composition.map((item) => (
-                    <View key={item.key} style={styles.compositionRow}>
-                      <View style={styles.compositionHeader}>
-                        <View style={styles.compositionLabelWrap}>
-                          <View style={[styles.compositionDot, { backgroundColor: item.accent }]} />
-                          <Text style={styles.compositionLabel}>{item.label}</Text>
-                        </View>
-                        <Text style={styles.compositionValue}>{item.percentage}%</Text>
-                      </View>
-                      <View style={styles.compositionMetaRow}>
-                        <Text style={styles.compositionMetaText}>
-                          {typeof item.grams === 'number'
-                            ? formatGramValue(item.grams)
-                            : 'Sin gramos exactos'}
-                        </Text>
-                        <Text style={styles.compositionMetaText}>
-                          {typeof item.calories === 'number'
-                            ? `${Math.round(item.calories)} kcal`
-                            : 'Sin kcal'}
-                        </Text>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            ) : null}
+              ))}
+            </View>
           </View>
         ) : null}
 
-        {activeView === 'results' && micronutrients ? (
-          <View style={styles.microCard}>
+        {activeView === 'results' && micronutrientHighlights.length ? (
+          <View style={styles.microSimpleCard}>
             <View style={styles.analysisHeader}>
               <Ionicons name="leaf-outline" size={20} color={appColors.info} />
-              <Text style={styles.analysisTitle}>Vitaminas y minerales</Text>
+              <Text style={styles.analysisTitle}>Vitaminas y minerales destacados</Text>
             </View>
-            <Text style={styles.compositionSubtitle}>
-              Aporte estimado de micronutrientes presentes en la comida analizada.
-            </Text>
-
-            <View style={styles.microList}>
-              {micronutrients.map((item) => (
-                <View key={item.key} style={styles.microRow}>
-                  <View style={styles.microRowHeader}>
-                    <View style={styles.microTitleWrap}>
-                      <View style={[styles.microDot, { backgroundColor: item.accent }]} />
-                      <Text style={styles.microCell}>{item.label}</Text>
-                    </View>
-                    <Text style={styles.microCellValue}>{item.amount}</Text>
-                  </View>
-                  <View style={styles.microProgressMeta}>
-                    <Text style={styles.microPercentLabel}>Cobertura estimada</Text>
-                    <Text style={[styles.microPercentValue, { color: item.accent }]}>
-                      {Math.round(item.dailyValuePercent)}%
-                    </Text>
-                  </View>
-                  <View style={styles.microTrack}>
-                    <View
-                      style={[
-                        styles.microFill,
-                        {
-                          width: `${Math.min(Math.max(item.dailyValuePercent, 0), 100)}%`,
-                          backgroundColor: item.accent,
-                        },
-                      ]}
-                    />
-                  </View>
+            <View style={styles.microChipGrid}>
+              {micronutrientHighlights.map((item) => (
+                <View key={item.key} style={styles.microChip}>
+                  <Text style={styles.microChipLabel}>{item.label}</Text>
+                  <Text style={styles.microChipValue}>{item.amount}</Text>
+                  <Text style={[styles.microChipPercent, { color: item.accent }]}>
+                    {Math.round(item.dailyValuePercent)}% aprox.
+                  </Text>
                 </View>
               ))}
             </View>
@@ -1612,6 +1543,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
   },
+  analysisIntro: {
+    color: appColors.textSoft,
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  analysisPointList: {
+    marginTop: 14,
+    gap: 12,
+  },
+  analysisPointRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  analysisPointBullet: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginTop: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colorAlpha(appColors.info, '48'),
+  },
+  analysisPointText: {
+    flex: 1,
+    color: appColors.text,
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: '600',
+  },
   analysisText: {
     color: appColors.textSoft,
     fontSize: 15,
@@ -1647,6 +1608,121 @@ const styles = StyleSheet.create({
     color: appColors.textMuted,
     fontSize: 12,
     lineHeight: 18,
+  },
+  quickStatsCard: {
+    marginTop: 18,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.success, '88'),
+    backgroundColor: colorAlpha(appColors.success, '10'),
+    padding: 18,
+  },
+  quickStatsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  quickStatCard: {
+    width: '47%',
+    borderRadius: 18,
+    padding: 14,
+    backgroundColor: colorAlpha(appColors.background, '52'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.border, 'A8'),
+  },
+  quickStatLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  quickStatValue: {
+    marginTop: 8,
+    color: appColors.text,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  balanceCard: {
+    marginTop: 18,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.accent, '88'),
+    backgroundColor: colorAlpha(appColors.accent, '10'),
+    padding: 18,
+  },
+  balanceSubtitle: {
+    color: appColors.textSoft,
+    fontSize: 14,
+    lineHeight: 21,
+    marginBottom: 14,
+  },
+  balanceList: {
+    gap: 12,
+  },
+  balanceRow: {
+    gap: 8,
+  },
+  balanceRowHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  balanceLabel: {
+    color: appColors.text,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  balanceValue: {
+    color: appColors.textSoft,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  balanceTrack: {
+    height: 12,
+    borderRadius: 999,
+    overflow: 'hidden',
+    backgroundColor: colorAlpha(appColors.textMuted, '24'),
+  },
+  balanceFill: {
+    height: '100%',
+    borderRadius: 999,
+  },
+  microSimpleCard: {
+    marginTop: 18,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '88'),
+    backgroundColor: colorAlpha(appColors.info, '10'),
+    padding: 18,
+  },
+  microChipGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  microChip: {
+    width: '47%',
+    borderRadius: 18,
+    padding: 14,
+    backgroundColor: colorAlpha(appColors.backgroundMuted, '88'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.border, 'A8'),
+  },
+  microChipLabel: {
+    color: appColors.text,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  microChipValue: {
+    marginTop: 8,
+    color: appColors.textSoft,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  microChipPercent: {
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: '800',
   },
   compositionCard: {
     marginTop: 18,

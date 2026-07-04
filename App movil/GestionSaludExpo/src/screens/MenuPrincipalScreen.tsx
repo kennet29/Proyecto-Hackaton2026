@@ -264,6 +264,14 @@ const managementOptions: OptionItem[] = [
     navigateTo: 'DocumentoForm',
   },
   {
+    key: 'compartir-historial',
+    label: 'Compartir Historial',
+    description: 'Genera un enlace para que un medico vea el expediente autorizado',
+    icon: 'share-social-outline',
+    accent: '#38F28E',
+    navigateTo: 'CompartirHistorial',
+  },
+  {
     key: 'recordatorios',
     label: 'Recordatorios',
     description: 'Configura alertas y canales',
