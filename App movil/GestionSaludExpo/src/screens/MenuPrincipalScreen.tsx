@@ -272,6 +272,14 @@ const managementOptions: OptionItem[] = [
     navigateTo: 'CompartirHistorial',
   },
   {
+    key: 'abrir-historial-compartido',
+    label: 'Abrir Historial Compartido',
+    description: 'Pega un enlace o codigo recibido para verlo dentro de la app',
+    icon: 'open-outline',
+    accent: '#29B6FF',
+    navigateTo: 'HistorialCompartido',
+  },
+  {
     key: 'recordatorios',
     label: 'Recordatorios',
     description: 'Configura alertas y canales',

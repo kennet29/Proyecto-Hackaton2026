@@ -32,6 +32,7 @@ import { DesparasitacionScreen } from './src/screens/DesparasitacionScreen';
 import { DesparasitacionCreateScreen } from './src/screens/DesparasitacionCreateScreen';
 import { DocumentoFormScreen } from './src/screens/DocumentoFormScreen';
 import { CompartirHistorialScreen } from './src/screens/CompartirHistorialScreen';
+import { HistorialCompartidoScreen } from './src/screens/HistorialCompartidoScreen';
 import { EmbarazoScreen } from './src/screens/EmbarazoScreen';
 import { RecordatorioFormScreen } from './src/screens/RecordatorioFormScreen';
 import { RegistroDentalFormScreen } from './src/screens/RegistroDentalFormScreen';
@@ -67,7 +68,7 @@ const sharedScreenOptions = {
 };
 
 const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: ['/'],
+  prefixes: ['/', 'gestionsalud://'],
   config: {
     screens: {
       Login: '',
@@ -105,6 +106,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       SeguimientoPostevento: 'seguimiento-caso',
       DocumentoForm: 'documentos',
       CompartirHistorial: 'compartir-historial',
+      HistorialCompartido: 'historial-compartido/:token?',
       RecordatorioForm: 'recordatorios',
       RegistroDentalForm: 'registro-dental',
       RegistroDentalCreate: 'registro-dental/nuevo',
@@ -278,6 +280,11 @@ const PrivateNavigator = () => {
         options={{ title: 'Compartir Historial' }}
       />
       <Stack.Screen
+        name="HistorialCompartido"
+        component={HistorialCompartidoScreen}
+        options={{ title: 'Historial Compartido' }}
+      />
+      <Stack.Screen
         name="RecordatorioForm"
         component={RecordatorioFormScreen}
         options={{ title: 'Recordatorios' }}
@@ -348,6 +355,11 @@ const PublicNavigator = () => (
     />
     <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
     <Stack.Screen name="Registro" component={RegistroScreen} options={{ title: 'Registro' }} />
+    <Stack.Screen
+      name="HistorialCompartido"
+      component={HistorialCompartidoScreen}
+      options={{ title: 'Historial Compartido' }}
+    />
     <Stack.Screen
       name="CambiarContrasena"
       component={CambiarContrasenaScreen}

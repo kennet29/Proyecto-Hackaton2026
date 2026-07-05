@@ -11,10 +11,14 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
+import { RootStackParamList } from '../navigation/types';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
+
+type Props = NativeStackScreenProps<RootStackParamList, 'CompartirHistorial'>;
 
 type DoctorRegistry = {
   usuarioId: number;
@@ -38,6 +42,8 @@ type ShareSectionKey =
 
 type GeneratedShareLink = {
   shareUrl: string;
+  appUrl: string;
+  token: string;
   expiresAt: string;
   patientName: string;
   doctorLabel: string;
@@ -91,6 +97,16 @@ const formatDateTime = (value?: string | null) => {
   });
 };
 
+const extractShareToken = (shareUrl: string, fallbackToken?: string | null) => {
+  if (fallbackToken) return String(fallbackToken);
+  try {
+    const parsed = new URL(shareUrl);
+    return parsed.pathname.split('/').filter(Boolean).pop() ?? shareUrl;
+  } catch {
+    return shareUrl.split('/').filter(Boolean).pop() ?? shareUrl;
+  }
+};
+
 const buildDoctorLabel = (doctor: DoctorRegistry) => {
   return `Medico #${doctor.usuarioId}`;
 };
@@ -117,8 +133,9 @@ const mapDoctors = (payload: any[]): DoctorRegistry[] =>
     })
     .filter((item): item is DoctorRegistry => Boolean(item));
 
-export function CompartirHistorialScreen() {
+export function CompartirHistorialScreen({ route }: Props) {
   const { token, user } = useAuth();
+  const initialPatientId = route.params?.pacienteId;
   const authHeaders = useMemo(() => {
     const headers: Record<string, string> = {};
     if (token) {
@@ -129,7 +146,9 @@ export function CompartirHistorialScreen() {
 
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [doctors, setDoctors] = useState<DoctorRegistry[]>([]);
-  const [selectedPatientId, setSelectedPatientId] = useState('');
+  const [selectedPatientId, setSelectedPatientId] = useState(
+    initialPatientId ? String(initialPatientId) : '',
+  );
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
   const [permissionType, setPermissionType] = useState<PermissionType>('temporal');
   const [permissionDuration, setPermissionDuration] = useState<PermissionDuration>('1h');
@@ -191,7 +210,14 @@ export function CompartirHistorialScreen() {
       setPatients(patientItems);
       setDoctors(finalDoctors);
 
-      if (!selectedPatientId && patientItems.length > 0) {
+      const routePatient = initialPatientId ? String(initialPatientId) : '';
+      const routePatientExists = patientItems.some(
+        (patient) => String(patient.pacienteId) === routePatient,
+      );
+
+      if (routePatient && routePatientExists) {
+        setSelectedPatientId(routePatient);
+      } else if (!selectedPatientId && patientItems.length > 0) {
         setSelectedPatientId(String(patientItems[0].pacienteId));
       }
       if (!selectedDoctorId && finalDoctors.length > 0) {
@@ -204,7 +230,7 @@ export function CompartirHistorialScreen() {
     } finally {
       setLoading(false);
     }
-  }, [authHeaders, selectedDoctorId, selectedPatientId, token]);
+  }, [authHeaders, initialPatientId, selectedDoctorId, selectedPatientId, token]);
 
   useEffect(() => {
     loadData();
@@ -229,7 +255,7 @@ export function CompartirHistorialScreen() {
     }
 
     if (!effectiveDoctorId) {
-      Alert.alert('Falta el medico', 'Selecciona un medico o escribe su ID de usuario.');
+      Alert.alert('Falta el medico', 'Selecciona un usuario medico o escribe su ID de usuario.');
       return;
     }
 
@@ -256,7 +282,10 @@ export function CompartirHistorialScreen() {
 
       const permissionPayload = await permissionResponse.json().catch(() => null);
       if (!permissionResponse.ok) {
-        throw new Error(permissionPayload?.message ?? 'No se pudo crear el permiso de acceso');
+        throw new Error(
+          permissionPayload?.message ??
+            'No se pudo crear el permiso. El usuario seleccionado debe tener rol medico.',
+        );
       }
 
       const permisoId = Number(permissionPayload?.id ?? permissionPayload?.permisoId);
@@ -284,9 +313,13 @@ export function CompartirHistorialScreen() {
       const doctorLabel = selectedDoctor
         ? `${buildDoctorLabel(selectedDoctor)}${selectedDoctor.especialidadprincipal ? ` · ${selectedDoctor.especialidadprincipal}` : ''}`
         : `Medico #${effectiveDoctorId}`;
+      const shareUrl = String(sharePayload?.shareUrl ?? '');
+      const shareToken = extractShareToken(shareUrl, sharePayload?.token);
 
       setGeneratedLink({
-        shareUrl: String(sharePayload?.shareUrl ?? ''),
+        shareUrl,
+        token: shareToken,
+        appUrl: `gestionsalud://historial-compartido/${encodeURIComponent(shareToken)}`,
         expiresAt: String(sharePayload?.expiresAt ?? ''),
         patientName: selectedPatient?.displayName ?? `Paciente #${selectedPatientId}`,
         doctorLabel,
@@ -308,7 +341,9 @@ export function CompartirHistorialScreen() {
       await Share.share({
         message:
           `Te comparto el historial medico de ${generatedLink.patientName}. ` +
-          `Enlace: ${generatedLink.shareUrl}. ` +
+          `Abre en la app: ${generatedLink.appUrl}. ` +
+          `Codigo: ${generatedLink.token}. ` +
+          `Enlace web: ${generatedLink.shareUrl}. ` +
           `Expira: ${formatDateTime(generatedLink.expiresAt)}.`,
         url: generatedLink.shareUrl,
       });
@@ -323,7 +358,7 @@ export function CompartirHistorialScreen() {
         <Text style={styles.kicker}>GESTION</Text>
         <Text style={styles.title}>Compartir historial medico</Text>
         <Text style={styles.subtitle}>
-          Crea un enlace temporal para que un medico pueda revisar el expediente que decidas compartir.
+          Crea un permiso para otro usuario. El backend solo lo aprobara si ese usuario tiene rol medico.
         </Text>
       </View>
 
@@ -358,7 +393,7 @@ export function CompartirHistorialScreen() {
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>2. Medico</Text>
             <Text style={styles.helperText}>
-              Toca un medico disponible o escribe su ID si ya te lo compartieron.
+              Toca un medico disponible o escribe el ID de un usuario con permiso de medico.
             </Text>
 
             {doctors.length > 0 ? (
@@ -414,6 +449,12 @@ export function CompartirHistorialScreen() {
                 setSelectedDoctorId('');
               }}
             />
+            <View style={styles.medicoRequirementBox}>
+              <Ionicons name="shield-checkmark-outline" size={18} color={appColors.success} />
+              <Text style={styles.medicoRequirementText}>
+                El permiso se crea solamente si el usuario destino tiene rol medico en el backend.
+              </Text>
+            </View>
           </View>
 
           <View style={styles.sectionCard}>
@@ -540,8 +581,17 @@ export function CompartirHistorialScreen() {
               <Text style={styles.resultText}>Paciente: {generatedLink.patientName}</Text>
               <Text style={styles.resultText}>Medico: {generatedLink.doctorLabel}</Text>
               <Text style={styles.resultText}>Expira: {formatDateTime(generatedLink.expiresAt)}</Text>
+              <Text style={styles.resultLabel}>Enlace interno de app</Text>
               <View style={styles.linkBox}>
-                <Text style={styles.linkText}>{generatedLink.shareUrl}</Text>
+                <Text selectable style={styles.linkText}>{generatedLink.appUrl}</Text>
+              </View>
+              <Text style={styles.resultLabel}>Codigo para pegar en la app</Text>
+              <View style={styles.linkBox}>
+                <Text selectable style={styles.codeText}>{generatedLink.token}</Text>
+              </View>
+              <Text style={styles.resultLabel}>Enlace web</Text>
+              <View style={styles.linkBox}>
+                <Text selectable style={styles.linkText}>{generatedLink.shareUrl}</Text>
               </View>
               <TouchableOpacity style={styles.shareButton} onPress={() => void handleShare()}>
                 <Ionicons name="share-social-outline" size={18} color={appColors.background} />
@@ -732,6 +782,24 @@ const styles = StyleSheet.create({
     minHeight: 96,
     textAlignVertical: 'top',
   },
+  medicoRequirementBox: {
+    marginTop: 12,
+    borderRadius: 16,
+    padding: 12,
+    backgroundColor: colorAlpha(appColors.success, '10'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.success, '45'),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  medicoRequirementText: {
+    color: appColors.textSoft,
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: '700',
+  },
   segmentRow: {
     flexDirection: 'row',
     gap: 12,
@@ -845,6 +913,13 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 4,
   },
+  resultLabel: {
+    color: appColors.text,
+    fontSize: 13,
+    fontWeight: '800',
+    marginTop: 14,
+    marginBottom: 6,
+  },
   linkBox: {
     marginTop: 14,
     borderRadius: 16,
@@ -857,6 +932,12 @@ const styles = StyleSheet.create({
     color: appColors.text,
     fontSize: 13,
     lineHeight: 19,
+  },
+  codeText: {
+    color: appColors.info,
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '800',
   },
   shareButton: {
     marginTop: 14,

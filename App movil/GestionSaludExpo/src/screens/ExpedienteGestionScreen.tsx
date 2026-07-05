@@ -311,6 +311,13 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               {showPersonForm ? 'Cerrar' : 'Nueva persona'}
             </Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.shareHistoryBtn}
+            onPress={() => navigation.navigate('CompartirHistorial')}
+          >
+            <Ionicons name="share-social-outline" size={18} color={appColors.info} />
+            <Text style={styles.shareHistoryText}>Compartir historial con medico</Text>
+          </TouchableOpacity>
         </View>
 
         <FeedbackBanner feedback={patientFeedback} />
@@ -356,6 +363,18 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                     {person.notas ? <Text style={styles.personNotes}>{person.notas}</Text> : null}
                   </View>
                 </View>
+                <TouchableOpacity
+                  activeOpacity={0.86}
+                  style={styles.personShareButton}
+                  onPress={() =>
+                    navigation.navigate('CompartirHistorial', {
+                      pacienteId: person.pacienteId,
+                    })
+                  }
+                >
+                  <Ionicons name="shield-checkmark-outline" size={18} color={appColors.success} />
+                  <Text style={styles.personShareText}>Compartir con usuario medico</Text>
+                </TouchableOpacity>
               </View>
             ))}
           </View>
@@ -641,6 +660,24 @@ const styles = StyleSheet.create({
   primaryActionTextSecondary: {
     color: appColors.text,
   },
+  shareHistoryBtn: {
+    alignSelf: 'stretch',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colorAlpha(appColors.info, '12'),
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '55'),
+  },
+  shareHistoryText: {
+    color: appColors.info,
+    fontWeight: '800',
+    fontSize: 13,
+  },
   feedbackBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -744,6 +781,22 @@ const styles = StyleSheet.create({
     color: appColors.textMuted,
     fontSize: 12,
     lineHeight: 17,
+  },
+  personShareButton: {
+    minHeight: 44,
+    borderRadius: 14,
+    backgroundColor: colorAlpha(appColors.success, '12'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.success, '45'),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  personShareText: {
+    color: appColors.success,
+    fontSize: 13,
+    fontWeight: '800',
   },
   formCard: {
     backgroundColor: appColors.surfaceStrong,

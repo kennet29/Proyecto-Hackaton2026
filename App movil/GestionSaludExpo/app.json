@@ -2,6 +2,7 @@
   "expo": {
     "name": "GestionSaludExpo",
     "slug": "GestionSaludExpo",
+    "scheme": "gestionsalud",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
