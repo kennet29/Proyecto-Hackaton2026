@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { LinkingOptions, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { RootStackParamList } from './src/navigation/types';
@@ -64,6 +64,63 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const sharedScreenOptions = {
   headerStyle: { backgroundColor: appColors.background },
   headerTintColor: appColors.text,
+};
+
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: ['/'],
+  config: {
+    screens: {
+      Login: '',
+      IniciarSesion: 'iniciar-sesion',
+      Registro: 'registro',
+      CambiarContrasena: 'cambiar-contrasena',
+      MenuPrincipal: 'panel',
+      PacienteResumen: 'paciente/resumen',
+      ExpedienteGestion: 'expediente',
+      PacienteForm: 'pacientes',
+      PacienteEditor: 'pacientes/editar',
+      ConsultaList: 'consultas',
+      ConsultaCreate: 'consultas/nueva',
+      ConsultaForm: 'consultas/editar',
+      CitaForm: 'citas',
+      VacunaForm: 'vacunas',
+      MedicacionForm: 'medicacion',
+      MedicacionCreate: 'medicacion/nueva',
+      LesionForm: 'lesiones',
+      LesionCreate: 'lesiones/nueva',
+      OperacionForm: 'operaciones',
+      OperacionCreate: 'operaciones/nueva',
+      CondicionCronicaForm: 'condiciones-cronicas',
+      CondicionCronicaCreate: 'condiciones-cronicas/nueva',
+      CondicionTipoSelector: 'condiciones-cronicas/tipo',
+      ControlCronico: 'control-cronico',
+      Desparasitacion: 'desparasitacion',
+      DesparasitacionCreate: 'desparasitacion/nueva',
+      Periodo: 'periodo',
+      Embarazo: 'embarazo',
+      SaludMental: 'salud-mental',
+      NanoConsejero: 'nano',
+      NanoHistorial: 'nano/historial',
+      ExamenClinico: 'examenes-clinicos',
+      SeguimientoPostevento: 'seguimiento-caso',
+      DocumentoForm: 'documentos',
+      CompartirHistorial: 'compartir-historial',
+      RecordatorioForm: 'recordatorios',
+      RegistroDentalForm: 'registro-dental',
+      RegistroDentalCreate: 'registro-dental/nuevo',
+      Alergia: 'alergias',
+      AlergiaCreate: 'alergias/nueva',
+      Habitos: 'habitos',
+      SeguimientoFisico: 'seguimiento-fisico',
+      SeguimientoFisicoForm: 'seguimiento-fisico/nuevo',
+      Educacion: 'educacion',
+      EducacionNivel: 'educacion/nivel',
+      EducacionTema: 'educacion/tema',
+      RecordatorioList: 'recordatorios/listado',
+      SobreNosotros: 'sobre-nosotros',
+      Contacto: 'contacto',
+    },
+  },
 };
 
 const PrivateNavigator = () => {
@@ -310,7 +367,15 @@ const RootNavigator = () => {
     );
   }
 
-  return <NavigationContainer>{token ? <PrivateNavigator /> : <PublicNavigator />}</NavigationContainer>;
+  return (
+    <View style={styles.appRoot}>
+      <View style={styles.appFrame}>
+        <NavigationContainer linking={linking}>
+          {token ? <PrivateNavigator /> : <PublicNavigator />}
+        </NavigationContainer>
+      </View>
+    </View>
+  );
 };
 
 export default function App() {
@@ -325,6 +390,17 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  appRoot: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: appColors.background,
+    alignItems: 'center',
+  },
+  appFrame: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: appColors.background,
+  },
   loadingScreen: {
     flex: 1,
     alignItems: 'center',

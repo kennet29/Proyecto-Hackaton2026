@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+﻿import React, { useMemo, useState } from 'react';
+import { Alert, FlatList, Modal, Platform, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -343,6 +343,11 @@ function WellnessAssistantIcon() {
 export function MenuPrincipalScreen({ navigation }: Props) {
   const { token, logout, user } = useAuth();
   const [activeTab, setActiveTab] = useState<MenuTabKey>('inicio');
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const { width } = useWindowDimensions();
+  const isWideLayout = width >= 760;
+  const isWebWide = Platform.OS === 'web' && width >= 1040;
+  const gridColumns = isWebWide ? 3 : isWideLayout ? 2 : 1;
 
   const activeMeta = useMemo(
     () => tabMeta.find((item) => item.key === activeTab) ?? tabMeta[0],
@@ -368,6 +373,27 @@ export function MenuPrincipalScreen({ navigation }: Props) {
     }
   };
 
+  const confirmLogout = () => {
+    if (Platform.OS === 'web') {
+      setLogoutModalVisible(true);
+      return;
+    }
+
+    Alert.alert('Cerrar sesion', 'Deseas salir de esta cuenta?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Salir', style: 'destructive', onPress: () => void handleLogout() },
+    ]);
+  };
+
+  const cancelWebLogout = () => {
+    setLogoutModalVisible(false);
+  };
+
+  const acceptWebLogout = () => {
+    setLogoutModalVisible(false);
+    void handleLogout();
+  };
+
   const handleOptionPress = (item: OptionItem) => {
     if (item.actionTab) {
       setActiveTab(item.actionTab);
@@ -381,8 +407,34 @@ export function MenuPrincipalScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <View style={styles.container}>
-        <View style={styles.heroCard}>
+      <View style={[styles.container, isWebWide && styles.webContainer]}>
+        <View style={[styles.contentShell, isWideLayout && styles.contentShellWide, isWebWide && styles.webContentShell]}>
+        {isWebWide ? (
+          <View style={[styles.navbar, styles.webNavbar]}>
+            {tabMeta.map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <TouchableOpacity
+                  key={tab.key}
+                  style={[styles.navItem, styles.webNavItem, isActive && styles.webNavItemActive]}
+                  onPress={() => setActiveTab(tab.key)}
+                  accessibilityRole="button"
+                  accessibilityLabel={tab.label}
+                >
+                  <View style={[styles.iconCircle, styles.webIconCircle, isActive && styles.iconCircleActive]}>
+                    <Ionicons
+                      name={tab.icon}
+                      size={22}
+                      color={isActive ? appColors.info : appColors.background}
+                    />
+                  </View>
+                  <Text style={[styles.navLabel, styles.webNavLabel, isActive && styles.navLabelActive]}>{tab.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ) : null}
+        <View style={[styles.heroCard, isWebWide && styles.webHeroCard]}>
           <View style={styles.heroTopRow}>
             <View style={styles.heroBadge}>
               <Ionicons name={activeMeta.icon} size={16} color="#29B6FF" />
@@ -390,31 +442,40 @@ export function MenuPrincipalScreen({ navigation }: Props) {
             </View>
             <TouchableOpacity
               style={styles.logoutButton}
-              onPress={() =>
-                Alert.alert('Cerrar sesion', 'Â¿Deseas salir de esta cuenta?', [
-                  { text: 'Cancelar', style: 'cancel' },
-                  { text: 'Salir', style: 'destructive', onPress: () => void handleLogout() },
-                ])
-              }
+              onPress={confirmLogout}
             >
               <Ionicons name="log-out-outline" size={18} color="#F4F8FF" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.pageTitle}>{activeMeta.title}</Text>
+          <Text style={[styles.pageTitle, isWebWide && styles.webPageTitle]}>{activeMeta.title}</Text>
           <Text style={styles.userLabel}>
-            Sesion activa: {user?.username ?? 'usuario'}{user?.role ? ` Â· ${user.role}` : ''}
+            Sesion activa: {user?.username ?? 'usuario'}{user?.role ? ` - ${user.role}` : ''}
           </Text>
-          <Text style={styles.pageSubtitle}>{activeMeta.subtitle}</Text>
+          <Text style={[styles.pageSubtitle, isWebWide && styles.webPageSubtitle]}>{activeMeta.subtitle}</Text>
         </View>
+
+        {isWebWide ? (
+          <View style={styles.webSectionHeader}>
+            <Text style={styles.webSectionTitle}>Accesos del modulo</Text>
+            <Text style={styles.webSectionMeta}>{activeOptions.length} opciones disponibles</Text>
+          </View>
+        ) : null}
 
         <FlatList
           data={activeOptions}
-          key={`${activeTab}-list`}
+          key={`${activeTab}-${gridColumns}-list`}
           keyExtractor={(item) => item.key}
           style={styles.list}
+          numColumns={gridColumns}
+          columnWrapperStyle={gridColumns > 1 ? styles.cardRow : undefined}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.card, { borderColor: item.accent }]}
+              style={[
+                styles.card,
+                gridColumns > 1 && styles.gridCard,
+                isWebWide && styles.webCard,
+                { borderColor: item.accent },
+              ]}
               onPress={() => handleOptionPress(item)}
             >
               <View style={[styles.cardIcon, { backgroundColor: `${item.accent}22` }]}>
@@ -427,7 +488,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                 <Ionicons name="chevron-forward" size={18} color={appColors.textSoft} />
             </TouchableOpacity>
           )}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, isWideLayout && styles.listContentWide]}
         />
 
         {activeTab === 'bienestar' ? (
@@ -440,30 +501,61 @@ export function MenuPrincipalScreen({ navigation }: Props) {
           </TouchableOpacity>
         ) : null}
 
+        {!isWebWide ? (
         <View style={styles.navbar}>
           {tabMeta.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
               <TouchableOpacity
                 key={tab.key}
-                style={styles.navItem}
+                style={[styles.navItem, isWebWide && styles.webNavItem, isActive && isWebWide && styles.webNavItemActive]}
                 onPress={() => setActiveTab(tab.key)}
                 accessibilityRole="button"
                 accessibilityLabel={tab.label}
               >
-                <View style={[styles.iconCircle, isActive && styles.iconCircleActive]}>
+                <View style={[styles.iconCircle, isWebWide && styles.webIconCircle, isActive && styles.iconCircleActive]}>
                   <Ionicons
                     name={tab.icon}
                     size={22}
                     color={isActive ? appColors.info : appColors.background}
                   />
                 </View>
-                <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>{tab.label}</Text>
+                <Text style={[styles.navLabel, isWebWide && styles.webNavLabel, isActive && styles.navLabelActive]}>{tab.label}</Text>
               </TouchableOpacity>
             );
           })}
         </View>
+        ) : null}
+        </View>
       </View>
+      <Modal
+        transparent
+        visible={logoutModalVisible}
+        animationType="fade"
+        onRequestClose={cancelWebLogout}
+      >
+        <View style={styles.logoutOverlay}>
+          <View style={styles.logoutCard}>
+            <View style={styles.logoutIconWrap}>
+              <Ionicons name="log-out-outline" size={30} color={appColors.accent} />
+            </View>
+            <Text style={styles.logoutTitle}>Cerrar sesion</Text>
+            <Text style={styles.logoutMessage}>
+              Vas a salir de la cuenta {user?.username ?? 'actual'}. Podras volver a entrar cuando
+              quieras con tus credenciales.
+            </Text>
+            <View style={styles.logoutActions}>
+              <TouchableOpacity style={styles.logoutSecondaryButton} onPress={cancelWebLogout}>
+                <Text style={styles.logoutSecondaryText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.logoutPrimaryButton} onPress={acceptWebLogout}>
+                <Text style={styles.logoutPrimaryText}>Salir</Text>
+                <Ionicons name="arrow-forward" size={18} color={appColors.background} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -479,6 +571,22 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 12,
     backgroundColor: appColors.background,
+    alignItems: 'center',
+  },
+  webContainer: {
+    paddingHorizontal: 36,
+    paddingTop: 28,
+    paddingBottom: 24,
+  },
+  contentShell: {
+    flex: 1,
+    width: '100%',
+  },
+  contentShellWide: {
+    maxWidth: 1120,
+  },
+  webContentShell: {
+    maxWidth: 1360,
   },
   heroCard: {
     backgroundColor: appColors.surfaceStrong,
@@ -487,6 +595,13 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     borderWidth: 1,
     borderColor: appColors.borderStrong,
+  },
+  webHeroCard: {
+    borderRadius: 22,
+    padding: 28,
+    marginBottom: 18,
+    backgroundColor: '#10203A',
+    borderColor: '#2E5F8A',
   },
   heroTopRow: {
     flexDirection: 'row',
@@ -519,10 +634,95 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: appColors.border,
   },
+  logoutOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: colorAlpha(appColors.overlay, 'B8'),
+  },
+  logoutCard: {
+    width: '100%',
+    maxWidth: 430,
+    borderRadius: 26,
+    padding: 26,
+    alignItems: 'center',
+    backgroundColor: appColors.surfaceStrong,
+    borderWidth: 1,
+    borderColor: appColors.border,
+    shadowColor: appColors.overlay,
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 18 },
+    elevation: 16,
+  },
+  logoutIconWrap: {
+    width: 68,
+    height: 68,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colorAlpha(appColors.accent, '18'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.accent, '55'),
+    marginBottom: 18,
+  },
+  logoutTitle: {
+    color: appColors.text,
+    fontSize: 26,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  logoutMessage: {
+    color: appColors.textSoft,
+    fontSize: 15,
+    lineHeight: 23,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  logoutActions: {
+    width: '100%',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  logoutSecondaryButton: {
+    flex: 1,
+    minHeight: 50,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: appColors.surface,
+    borderWidth: 1,
+    borderColor: appColors.border,
+  },
+  logoutSecondaryText: {
+    color: appColors.textSoft,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  logoutPrimaryButton: {
+    flex: 1,
+    minHeight: 50,
+    borderRadius: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: appColors.accent,
+  },
+  logoutPrimaryText: {
+    color: appColors.background,
+    fontSize: 15,
+    fontWeight: '900',
+  },
   pageTitle: {
     color: appColors.text,
     fontSize: 24,
     fontWeight: '800',
+  },
+  webPageTitle: {
+    fontSize: 34,
   },
   userLabel: {
     color: appColors.info,
@@ -536,11 +736,39 @@ const styles = StyleSheet.create({
     marginTop: 6,
     lineHeight: 21,
   },
+  webPageSubtitle: {
+    maxWidth: 680,
+    fontSize: 15,
+    lineHeight: 23,
+  },
+  webSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  webSectionTitle: {
+    color: appColors.text,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  webSectionMeta: {
+    color: appColors.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
+  },
   listContent: {
     paddingBottom: 120,
   },
+  listContentWide: {
+    paddingBottom: 28,
+  },
   list: {
     flex: 1,
+    width: '100%',
+  },
+  cardRow: {
+    gap: 14,
   },
   card: {
     backgroundColor: appColors.surface,
@@ -551,6 +779,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
+  },
+  webCard: {
+    minHeight: 118,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    backgroundColor: '#102039',
+  },
+  gridCard: {
+    flex: 1,
   },
   cardIcon: {
     width: 46,
@@ -700,10 +938,28 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 8,
   },
+  webNavbar: {
+    borderRadius: 18,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    marginTop: 0,
+    marginBottom: 18,
+    gap: 8,
+  },
   navItem: {
     flex: 1,
     alignItems: 'center',
     gap: 6,
+  },
+  webNavItem: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  webNavItemActive: {
+    backgroundColor: colorAlpha(appColors.info, '18'),
   },
   iconCircle: {
     width: 44,
@@ -717,6 +973,11 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
   },
+  webIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+  },
   iconCircleActive: {
     backgroundColor: colorAlpha(appColors.info, '30'),
   },
@@ -724,6 +985,9 @@ const styles = StyleSheet.create({
     color: appColors.textMuted,
     fontSize: 11,
     fontWeight: '700',
+  },
+  webNavLabel: {
+    fontSize: 13,
   },
   navLabelActive: {
     color: appColors.info,

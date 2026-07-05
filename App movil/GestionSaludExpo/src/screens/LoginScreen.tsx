@@ -3,11 +3,14 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -68,6 +71,9 @@ const formatErrorMessage = (error: unknown): string => {
 };
 
 export function LoginScreen({ navigation }: Props) {
+  const { width } = useWindowDimensions();
+  const isWideLayout = width >= 760;
+  const isWebWide = Platform.OS === 'web' && width >= 920;
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -85,6 +91,9 @@ export function LoginScreen({ navigation }: Props) {
   );
 
   const fingerprintStatusMessage = useMemo(() => {
+    if (Platform.OS === 'web') {
+      return 'La huella digital esta disponible en la app movil.';
+    }
     if (!biometricAvailable) {
       return 'Activa la biometría en tu dispositivo para usar esta función.';
     }
@@ -100,6 +109,11 @@ export function LoginScreen({ navigation }: Props) {
   const sanitizeUsername = (value: string) => value.replace(/[^a-zA-Z0-9._-]/g, '');
 
   useEffect(() => {
+    if (Platform.OS === 'web') {
+      setBiometricAvailable(false);
+      return;
+    }
+
     const checkBiometrics = async () => {
       try {
         const hasHardware = await LocalAuthentication.hasHardwareAsync();
@@ -190,6 +204,12 @@ export function LoginScreen({ navigation }: Props) {
 
   const handleFingerprintLogin = async () => {
     setFeedback(null);
+    if (Platform.OS === 'web') {
+      const message = 'La huella digital esta disponible en la app movil.';
+      setFeedback({ type: 'error', message });
+      Alert.alert('Opcion movil', message);
+      return;
+    }
     if (!username) {
       const message = 'Ingresa el usuario asociado a la huella.';
       setFeedback({ type: 'error', message });
@@ -230,10 +250,42 @@ export function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.root}>
+    <ScrollView
+      style={styles.scrollRoot}
+      contentContainerStyle={[styles.root, isWideLayout && styles.rootWide]}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={[styles.circle, styles.blueCircle]} />
       <View style={[styles.circle, styles.orangeCircle]} />
-      <View style={styles.card}>
+      <View style={[styles.authShell, isWebWide && styles.authShellWide]}>
+        {isWebWide ? (
+          <View style={styles.webBrandPanel}>
+            <View style={styles.webBrandBadge}>
+              <Ionicons name="medkit-outline" size={18} color="#071120" />
+              <Text style={styles.webBrandBadgeText}>Gestion Salud</Text>
+            </View>
+            <Text style={styles.webBrandTitle}>Tu panel clinico en un solo lugar</Text>
+            <Text style={styles.webBrandCopy}>
+              Organiza pacientes, consultas, recordatorios y seguimiento de bienestar desde una
+              experiencia preparada para escritorio.
+            </Text>
+            <View style={styles.webHighlights}>
+              <View style={styles.webHighlightItem}>
+                <Ionicons name="shield-checkmark-outline" size={22} color="#38F28E" />
+                <Text style={styles.webHighlightText}>Acceso seguro</Text>
+              </View>
+              <View style={styles.webHighlightItem}>
+                <Ionicons name="calendar-outline" size={22} color="#29B6FF" />
+                <Text style={styles.webHighlightText}>Agenda y controles</Text>
+              </View>
+              <View style={styles.webHighlightItem}>
+                <Ionicons name="analytics-outline" size={22} color="#FF4D73" />
+                <Text style={styles.webHighlightText}>Seguimiento continuo</Text>
+              </View>
+            </View>
+          </View>
+        ) : null}
+      <View style={[styles.card, isWideLayout && styles.cardWide, isWebWide && styles.webCard]}>
         <Text style={styles.welcome}>Bienvenido</Text>
         <Text style={styles.subtitle}>Nos alegra tenerte de vuelta</Text>
         <FeedbackBanner feedback={feedback} />
@@ -283,10 +335,11 @@ export function LoginScreen({ navigation }: Props) {
           <TouchableOpacity
             style={[
               styles.fingerprintAction,
-              (!fingerprintReady || fingerprintLoading) && styles.fingerprintActionDisabled,
+              (Platform.OS === 'web' || !fingerprintReady || fingerprintLoading) &&
+                styles.fingerprintActionDisabled,
             ]}
             onPress={handleFingerprintLogin}
-            disabled={!fingerprintReady || fingerprintLoading}
+            disabled={Platform.OS === 'web' || !fingerprintReady || fingerprintLoading}
             accessibilityLabel="Iniciar sesión con huella digital"
           >
             {fingerprintLoading ? (
@@ -295,7 +348,8 @@ export function LoginScreen({ navigation }: Props) {
               <Text
                 style={[
                   styles.fingerprintActionText,
-                  !fingerprintReady && styles.fingerprintActionTextDisabled,
+                  (Platform.OS === 'web' || !fingerprintReady) &&
+                    styles.fingerprintActionTextDisabled,
                 ]}
               >
                 {fingerprintReady ? 'Ingresar con huella' : 'Huella no disponible'}
@@ -310,6 +364,7 @@ export function LoginScreen({ navigation }: Props) {
             Registrarme
           </Text>
         </Text>
+      </View>
       </View>
       <Modal
         transparent
@@ -336,19 +391,101 @@ export function LoginScreen({ navigation }: Props) {
           </View>
         </View>
       </Modal>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  scrollRoot: {
     flex: 1,
+    backgroundColor: '#F4F8FF',
+  },
+  root: {
+    flexGrow: 1,
     backgroundColor: '#F4F8FF',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 24,
+  },
+  rootWide: {
+    paddingVertical: 48,
+  },
+  authShell: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  authShellWide: {
+    maxWidth: 1180,
+    minHeight: 640,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    justifyContent: 'center',
+    gap: 28,
+  },
+  webBrandPanel: {
+    flex: 1,
+    maxWidth: 560,
+    borderRadius: 28,
+    padding: 36,
+    backgroundColor: '#071120',
+    justifyContent: 'space-between',
+    shadowColor: '#000000',
+    shadowOpacity: 0.16,
+    shadowRadius: 26,
+    shadowOffset: { width: 0, height: 18 },
+  },
+  webBrandBadge: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: '#F4F8FF',
+  },
+  webBrandBadgeText: {
+    color: '#071120',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  webBrandTitle: {
+    color: '#F4F8FF',
+    fontSize: 44,
+    fontWeight: '900',
+    lineHeight: 50,
+    marginTop: 72,
+  },
+  webBrandCopy: {
+    color: '#C9D7E8',
+    fontSize: 17,
+    lineHeight: 27,
+    marginTop: 18,
+    maxWidth: 470,
+  },
+  webHighlights: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 42,
+  },
+  webHighlightItem: {
+    flex: 1,
+    minHeight: 104,
+    borderRadius: 18,
+    padding: 16,
+    justifyContent: 'space-between',
+    backgroundColor: '#132238',
+    borderWidth: 1,
+    borderColor: '#27496D',
+  },
+  webHighlightText: {
+    color: '#F4F8FF',
+    fontSize: 13,
+    fontWeight: '800',
   },
   card: {
-    width: '80%',
+    width: '100%',
+    maxWidth: 440,
     borderRadius: 20,
     padding: 24,
     backgroundColor: '#F4F8FF',
@@ -357,6 +494,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 10 },
+  },
+  cardWide: {
+    padding: 28,
+  },
+  webCard: {
+    alignSelf: 'center',
+    maxWidth: 460,
+    borderRadius: 28,
+    padding: 36,
+    backgroundColor: '#FFFFFF',
+    shadowOpacity: 0.12,
+    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 18 },
   },
   welcome: {
     fontSize: 24,

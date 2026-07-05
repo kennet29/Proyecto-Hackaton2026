@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -56,6 +58,9 @@ const formatErrorMessage = (error: unknown): string => {
 };
 
 export function RegistroScreen({ navigation }: Props) {
+  const { width } = useWindowDimensions();
+  const isWideLayout = width >= 760;
+  const isWebWide = Platform.OS === 'web' && width >= 980;
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
@@ -78,6 +83,11 @@ export function RegistroScreen({ navigation }: Props) {
   const sanitizeEmail = (value: string) => value.replace(/\s/g, '').toLowerCase();
 
   useEffect(() => {
+    if (Platform.OS === 'web') {
+      setBiometricAvailable(false);
+      return;
+    }
+
     const checkBiometrics = async () => {
       try {
         const hasHardware = await LocalAuthentication.hasHardwareAsync();
@@ -110,6 +120,10 @@ export function RegistroScreen({ navigation }: Props) {
 
   const handleRegisterFingerprint = async () => {
     try {
+      if (Platform.OS === 'web') {
+        Alert.alert('Opcion movil', 'La huella digital esta disponible en la app movil.');
+        return;
+      }
       if (!biometricAvailable) {
         Alert.alert(
           'Biometría no disponible',
@@ -205,8 +219,23 @@ export function RegistroScreen({ navigation }: Props) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.card}>
+    <ScrollView contentContainerStyle={[styles.container, isWideLayout && styles.containerWide, isWebWide && styles.webContainer]}>
+      <View style={[styles.authShell, isWebWide && styles.webAuthShell]}>
+        {isWebWide ? (
+          <View style={styles.webIntroPanel}>
+            <View style={styles.webIntroIcon}>
+              <Text style={styles.webIntroIconText}>GS</Text>
+            </View>
+            <Text style={styles.webIntroTitle}>Crea tu expediente digital</Text>
+            <Text style={styles.webIntroCopy}>
+              Registra tu cuenta para administrar pacientes asociados, historial clinico y
+              recordatorios desde una vista web mas amplia.
+            </Text>
+            <View style={styles.webIntroLine} />
+            <Text style={styles.webIntroNote}>Acceso web y movil con la misma cuenta.</Text>
+          </View>
+        ) : null}
+      <View style={[styles.card, isWideLayout && styles.cardWide, isWebWide && styles.webCard]}>
         <Text style={styles.title}>Crear cuenta</Text>
         <Text style={styles.subtitle}>
           Completa tus datos para registrarte en Gestión Salud.
@@ -321,7 +350,9 @@ export function RegistroScreen({ navigation }: Props) {
           </View>
         ) : (
           <Text style={styles.fingerprintWarning}>
-            Configura la huella en tu teléfono para habilitar esta opción.
+            {Platform.OS === 'web'
+              ? 'La huella digital esta disponible en la app movil.'
+              : 'Configura la huella en tu teléfono para habilitar esta opción.'}
           </Text>
         )}
 
@@ -342,6 +373,7 @@ export function RegistroScreen({ navigation }: Props) {
           <Text style={styles.secondaryLabel}>Ya tengo cuenta</Text>
         </TouchableOpacity>
       </View>
+      </View>
     </ScrollView>
   );
 }
@@ -353,7 +385,69 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: '#071120',
   },
+  containerWide: {
+    paddingVertical: 48,
+    alignItems: 'center',
+  },
+  webContainer: {
+    backgroundColor: '#F4F8FF',
+  },
+  authShell: {
+    width: '100%',
+  },
+  webAuthShell: {
+    maxWidth: 1180,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 28,
+  },
+  webIntroPanel: {
+    flex: 1,
+    maxWidth: 460,
+    borderRadius: 28,
+    padding: 34,
+    backgroundColor: '#071120',
+    justifyContent: 'center',
+  },
+  webIntroIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#29B6FF',
+    marginBottom: 28,
+  },
+  webIntroIconText: {
+    color: '#071120',
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  webIntroTitle: {
+    color: '#F4F8FF',
+    fontSize: 36,
+    fontWeight: '900',
+    lineHeight: 42,
+  },
+  webIntroCopy: {
+    color: '#C9D7E8',
+    fontSize: 16,
+    lineHeight: 25,
+    marginTop: 16,
+  },
+  webIntroLine: {
+    height: 1,
+    backgroundColor: '#27496D',
+    marginVertical: 28,
+  },
+  webIntroNote: {
+    color: '#38F28E',
+    fontSize: 14,
+    fontWeight: '800',
+  },
   card: {
+    width: '100%',
+    maxWidth: 560,
     backgroundColor: '#F4F8FF',
     borderRadius: 20,
     padding: 24,
@@ -362,6 +456,16 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 12 },
     elevation: 8,
+  },
+  cardWide: {
+    padding: 28,
+  },
+  webCard: {
+    flex: 1,
+    maxWidth: 620,
+    borderRadius: 28,
+    padding: 32,
+    backgroundColor: '#FFFFFF',
   },
   title: {
     fontSize: 26,

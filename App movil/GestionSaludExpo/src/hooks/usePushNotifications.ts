@@ -27,6 +27,10 @@ const getProjectId = (): string | undefined => {
 };
 
 const getPushRegistrationBlocker = (): string | null => {
+  if (Platform.OS === 'web') {
+    return 'Las notificaciones push remotas estan disponibles solo en la app movil.';
+  }
+
   if (Platform.OS === 'android' && Constants.executionEnvironment === 'storeClient') {
     return 'Las notificaciones push remotas no funcionan en Expo Go para Android. Usa un development build.';
   }
@@ -116,6 +120,11 @@ export const usePushNotifications = (authToken?: string | null, userId?: number 
   const responseListener = useRef<Notifications.Subscription | null>(null);
 
   useEffect(() => {
+    if (Platform.OS === 'web') {
+      setRegistrationError('Las notificaciones push remotas estan disponibles solo en la app movil.');
+      return;
+    }
+
     let mounted = true;
 
     const setup = async () => {
@@ -156,6 +165,10 @@ export const usePushNotifications = (authToken?: string | null, userId?: number 
   }, [authToken, userId]);
 
   useEffect(() => {
+    if (Platform.OS === 'web') {
+      return;
+    }
+
     notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
       console.log('[notifications] recibida en foreground', notification);
     });
