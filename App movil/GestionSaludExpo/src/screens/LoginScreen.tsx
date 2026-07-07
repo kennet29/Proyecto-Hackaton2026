@@ -262,7 +262,7 @@ export function LoginScreen({ navigation }: Props) {
           <View style={styles.webBrandPanel}>
             <View style={styles.webBrandBadge}>
               <Ionicons name="medkit-outline" size={18} color="#071120" />
-              <Text style={styles.webBrandBadgeText}>Gestion Salud</Text>
+              <Text style={styles.webBrandBadgeText}>NicaPlus</Text>
             </View>
             <Text style={styles.webBrandTitle}>Tu panel clinico en un solo lugar</Text>
             <Text style={styles.webBrandCopy}>

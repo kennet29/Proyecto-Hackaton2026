@@ -168,6 +168,22 @@ export class UsersService {
   }
 
   /**
+   * Find by username or email.
+   * @param identifier Usuario o correo asociado a la cuenta.
+   * @returns Resultado de la operacion.
+   */
+  async findByUsernameOrEmail(identifier: string): Promise<Usuario | null> {
+    const value = identifier.trim();
+    try {
+      return await this.usuarioRepository.findOne({
+        where: [{ username: value }, { creadoPor: value }],
+      });
+    } catch (error) {
+      return this.handleDbError(error, "consultar");
+    }
+  }
+
+  /**
    * Register login.
    * @param id Identificador del registro objetivo.
    * @returns La operación se completa sin devolver contenido.
@@ -213,6 +229,7 @@ export class UsersService {
       const fingerprintHash = this.hashFingerprint(payload.fingerprintTemplate);
       const entity = this.usuarioRepository.create({
         username: payload.username,
+        creadoPor: payload.email,
         city: payload.city,
         country: payload.country,
         pacienteId: payload.pacienteId,

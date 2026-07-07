@@ -6,6 +6,7 @@ describe("AuthService", () => {
   const buildService = () => {
     const usersService = {
       findByUsername: jest.fn(),
+      findByUsernameOrEmail: jest.fn(),
       registerLogin: jest.fn(),
       update: jest.fn(),
     };

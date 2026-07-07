@@ -175,7 +175,8 @@ export class AuthService {
    * @returns Resultado de la operación.
    */
   async requestPasswordReset(payload: RequestResetDto) {
-    const user = await this.usersService.findByUsername(payload.username);
+    const user =
+      await this.usersService.findByUsernameOrEmail(payload.username);
     if (!user) {
       throw new NotFoundException("usuario no encontrado");
     }

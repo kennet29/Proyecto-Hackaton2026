@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Modal, Platform, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -328,6 +328,34 @@ const optionsByTab: Record<MenuTabKey, OptionItem[]> = {
   gestion: managementOptions,
 };
 
+const WEB_SCROLL_STYLE_ID = 'menu-principal-scrollbar-style';
+const WEB_SCROLLBAR_CSS = `
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #29B6FF #071120;
+  }
+
+  *::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: #071120;
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #29B6FF 0%, #1B78D8 100%);
+    border: 3px solid #071120;
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #38F28E 0%, #29B6FF 100%);
+  }
+`;
+
 function WellnessAssistantIcon() {
   return (
     <View style={styles.assistantIconShell}>
@@ -363,6 +391,23 @@ export function MenuPrincipalScreen({ navigation }: Props) {
   );
 
   const activeOptions = useMemo(() => optionsByTab[activeTab] ?? [], [activeTab]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') {
+      return undefined;
+    }
+
+    if (!document.getElementById(WEB_SCROLL_STYLE_ID)) {
+      const style = document.createElement('style');
+      style.id = WEB_SCROLL_STYLE_ID;
+      style.textContent = WEB_SCROLLBAR_CSS;
+      document.head.appendChild(style);
+    }
+
+    return () => {
+      document.getElementById(WEB_SCROLL_STYLE_ID)?.remove();
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -413,6 +458,38 @@ export function MenuPrincipalScreen({ navigation }: Props) {
     navigation.navigate(item.navigateTo as never);
   };
 
+  const heroContent = (
+    <View style={[styles.heroCard, isWebWide && styles.webHeroCard]}>
+      <View style={[styles.heroTopRow, isWebWide && styles.webHeroTopRow]}>
+        <View style={[styles.heroBadge, isWebWide && styles.webHeroBadge]}>
+          <Ionicons name={activeMeta.icon} size={16} color="#29B6FF" />
+          <Text style={styles.heroBadgeText}>{activeMeta.label}</Text>
+        </View>
+        <TouchableOpacity
+          style={[styles.logoutButton, isWebWide && styles.webLogoutButton]}
+          onPress={confirmLogout}
+        >
+          <Ionicons name="log-out-outline" size={18} color="#F4F8FF" />
+        </TouchableOpacity>
+      </View>
+      <Text style={[styles.pageTitle, isWebWide && styles.webPageTitle]}>{activeMeta.title}</Text>
+      <Text style={[styles.userLabel, isWebWide && styles.webUserLabel]}>
+        Sesion activa: {user?.username ?? 'usuario'}{user?.role ? ` - ${user.role}` : ''}
+      </Text>
+      <Text style={[styles.pageSubtitle, isWebWide && styles.webPageSubtitle]}>{activeMeta.subtitle}</Text>
+    </View>
+  );
+
+  const webListHeader = (
+    <>
+      {heroContent}
+      <View style={styles.webSectionHeader}>
+        <Text style={styles.webSectionTitle}>Accesos del modulo</Text>
+        <Text style={styles.webSectionMeta}>{activeOptions.length} opciones disponibles</Text>
+      </View>
+    </>
+  );
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={[styles.container, isWebWide && styles.webContainer]}>
@@ -442,32 +519,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
             })}
           </View>
         ) : null}
-        <View style={[styles.heroCard, isWebWide && styles.webHeroCard]}>
-          <View style={styles.heroTopRow}>
-            <View style={styles.heroBadge}>
-              <Ionicons name={activeMeta.icon} size={16} color="#29B6FF" />
-              <Text style={styles.heroBadgeText}>{activeMeta.label}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.logoutButton}
-              onPress={confirmLogout}
-            >
-              <Ionicons name="log-out-outline" size={18} color="#F4F8FF" />
-            </TouchableOpacity>
-          </View>
-          <Text style={[styles.pageTitle, isWebWide && styles.webPageTitle]}>{activeMeta.title}</Text>
-          <Text style={styles.userLabel}>
-            Sesion activa: {user?.username ?? 'usuario'}{user?.role ? ` - ${user.role}` : ''}
-          </Text>
-          <Text style={[styles.pageSubtitle, isWebWide && styles.webPageSubtitle]}>{activeMeta.subtitle}</Text>
-        </View>
-
-        {isWebWide ? (
-          <View style={styles.webSectionHeader}>
-            <Text style={styles.webSectionTitle}>Accesos del modulo</Text>
-            <Text style={styles.webSectionMeta}>{activeOptions.length} opciones disponibles</Text>
-          </View>
-        ) : null}
+        {!isWebWide ? heroContent : null}
 
         <FlatList
           data={activeOptions}
@@ -476,6 +528,8 @@ export function MenuPrincipalScreen({ navigation }: Props) {
           style={styles.list}
           numColumns={gridColumns}
           columnWrapperStyle={gridColumns > 1 ? styles.cardRow : undefined}
+          ListHeaderComponent={isWebWide ? webListHeader : null}
+          showsVerticalScrollIndicator
           renderItem={({ item }) => (
             <TouchableOpacity
               style={[
@@ -493,10 +547,14 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                 <Text style={styles.cardLabel}>{item.label}</Text>
                 <Text style={styles.cardDescription}>{item.description}</Text>
               </View>
-                <Ionicons name="chevron-forward" size={18} color={appColors.textSoft} />
+              <Ionicons name="chevron-forward" size={18} color={appColors.textSoft} />
             </TouchableOpacity>
           )}
-          contentContainerStyle={[styles.listContent, isWideLayout && styles.listContentWide]}
+          contentContainerStyle={[
+            styles.listContent,
+            isWideLayout && styles.listContentWide,
+            isWebWide && styles.webListContent,
+          ]}
         />
 
         {activeTab === 'bienestar' ? (
@@ -605,9 +663,10 @@ const styles = StyleSheet.create({
     borderColor: appColors.borderStrong,
   },
   webHeroCard: {
-    borderRadius: 22,
-    padding: 28,
-    marginBottom: 18,
+    borderRadius: 18,
+    paddingHorizontal: 22,
+    paddingVertical: 16,
+    marginBottom: 16,
     backgroundColor: '#10203A',
     borderColor: '#2E5F8A',
   },
@@ -615,6 +674,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  webHeroTopRow: {
+    marginBottom: 4,
   },
   heroBadge: {
     alignSelf: 'flex-start',
@@ -626,6 +688,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginBottom: 12,
+  },
+  webHeroBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 0,
   },
   heroBadgeText: {
     color: appColors.textSoft,
@@ -641,6 +708,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: appColors.border,
+  },
+  webLogoutButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
   },
   logoutOverlay: {
     flex: 1,
@@ -730,13 +802,16 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   webPageTitle: {
-    fontSize: 34,
+    fontSize: 28,
   },
   userLabel: {
     color: appColors.info,
     fontSize: 12,
     fontWeight: '700',
     marginTop: 8,
+  },
+  webUserLabel: {
+    marginTop: 4,
   },
   pageSubtitle: {
     color: appColors.textSoft,
@@ -746,8 +821,8 @@ const styles = StyleSheet.create({
   },
   webPageSubtitle: {
     maxWidth: 680,
-    fontSize: 15,
-    lineHeight: 23,
+    fontSize: 14,
+    lineHeight: 20,
   },
   webSectionHeader: {
     flexDirection: 'row',
@@ -774,6 +849,10 @@ const styles = StyleSheet.create({
   list: {
     flex: 1,
     width: '100%',
+  },
+  webListContent: {
+    paddingBottom: 48,
+    paddingRight: 10,
   },
   cardRow: {
     gap: 14,
