@@ -21,6 +21,7 @@ import { API_URL } from '../config/api';
 import type { RootStackParamList } from '../navigation/types';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
+import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 
 type DesparasitacionRecord = {
   desparasitacionId: number;
@@ -361,6 +362,9 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
   };
 
   const openDatePicker = (key: 'fecha' | 'proximafecha') => {
+    if (openWebDateTimePicker('date', form[key], (value) => handleDateConfirm(key, parseDateForPicker(value)))) {
+      return;
+    }
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
         value: parseDateForPicker(form[key]),

@@ -5,7 +5,7 @@ import { z } from "zod";
  * Esquema Zod para validar la creación de recordatoriocita.
  */
 export const createRecordatoriocitaSchema = z.object({
-  citaId: z.number().int(),
+  citaId: z.number().int().nullable().optional(),
   pacienteId: z.number().int(),
   fecharecordatorio: z.coerce.date(),
   mensaje: z.string(),
@@ -36,7 +36,7 @@ export class CreateRecordatoriocitaDto extends createZodDto(
  */
 export const updateRecordatoriocitaSchema = z
   .object({
-    citaId: z.number().int(),
+    citaId: z.number().int().nullable().optional(),
     pacienteId: z.number().int(),
     fecharecordatorio: z.coerce.date(),
     mensaje: z.string(),

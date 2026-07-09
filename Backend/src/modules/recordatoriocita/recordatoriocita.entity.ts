@@ -14,8 +14,8 @@ export class Recordatoriocita {
   /**
    * Identificador persistido para `citaId`.
    */
-  @Column({ name: "citaid", type: "int", precision: 10 })
-  citaId!: number;
+  @Column({ name: "citaid", type: "int", precision: 10, nullable: true })
+  citaId?: number | null;
 
   /**
    * Identificador persistido para `pacienteId`.

@@ -282,17 +282,9 @@ const managementOptions: OptionItem[] = [
   {
     key: 'recordatorios',
     label: 'Recordatorios',
-    description: 'Configura alertas y canales',
+    description: 'Consulta el listado completo de avisos programados',
     icon: 'notifications-outline',
     accent: '#FF4D73',
-    navigateTo: 'RecordatorioForm',
-  },
-  {
-    key: 'recordatorios-list',
-    label: 'Ver Recordatorios',
-    description: 'Consulta el cronograma completo',
-    icon: 'timer-outline',
-    accent: '#29B6FF',
     navigateTo: 'RecordatorioList',
   },
   {

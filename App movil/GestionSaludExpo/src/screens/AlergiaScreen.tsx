@@ -21,6 +21,7 @@ import { API_URL } from '../config/api';
 import type { RootStackParamList } from '../navigation/types';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
+import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 
 type AlergiaRecord = {
   alergiaId: number;
@@ -302,6 +303,9 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
   }, [filteredRecords]);
 
   const openDatePicker = () => {
+    if (openWebDateTimePicker('date', form.fechadiagnostico, (value) => handleChange('fechadiagnostico', value))) {
+      return;
+    }
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
         value: parseDateForPicker(form.fechadiagnostico),

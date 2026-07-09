@@ -18,6 +18,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { invalidateLinkedPatientsCache } from '../utils/linkedPatients';
+import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PacienteEditor'>;
 
@@ -136,6 +137,9 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
   }, [loadPatient]);
 
   const showBirthDatePicker = () => {
+    if (openWebDateTimePicker('date', form.fechaNacimiento, (value) => handleChange('fechaNacimiento', value))) {
+      return;
+    }
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
         value: parseDateForPicker(form.fechaNacimiento),

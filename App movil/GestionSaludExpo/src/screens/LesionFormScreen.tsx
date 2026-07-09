@@ -21,6 +21,7 @@ import { API_URL } from '../config/api';
 import type { RootStackParamList } from '../navigation/types';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
+import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 
 type LesionRecord = {
   lesionId: number;
@@ -248,6 +249,9 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
   }, [filterPatientId, patientNameById]);
 
   const showDatePicker = () => {
+    if (openWebDateTimePicker('date', form.fecha, (value) => handleChange('fecha', value))) {
+      return;
+    }
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
         value: parseDateForPicker(form.fecha),

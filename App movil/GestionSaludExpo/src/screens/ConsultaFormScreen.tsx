@@ -17,6 +17,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
+import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ConsultaForm'>;
 type DatePickerField = 'consulta-date' | 'consulta-time' | 'notification-date' | 'notification-time';
@@ -200,6 +201,29 @@ export function ConsultaFormScreen({ route }: Props) {
     const isNotificationField = field.startsWith('notification');
     const dateValue = isNotificationField ? notificationDate : consultaDate;
     const timeValue = isNotificationField ? notificationTime : consultaTime;
+
+    if (Platform.OS === 'web') {
+      const handled = openWebDateTimePicker(
+        isDateField ? 'date' : 'time',
+        isDateField ? dateValue : timeValue,
+        (value) => {
+          if (isDateField) {
+            if (isNotificationField) {
+              setNotificationDate(value);
+            } else {
+              setConsultaDate(value);
+            }
+            return;
+          }
+          if (isNotificationField) {
+            setNotificationTime(value);
+          } else {
+            setConsultaTime(value);
+          }
+        },
+      );
+      if (handled) return;
+    }
 
     if (Platform.OS === 'android') {
       if (isDateField) {

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,10 +10,29 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
+
+type DateFieldKey = 'fechaEvento' | 'fechaSeguimiento' | 'proximoControl';
+
+const webDateInputStyle = {
+  flex: 1,
+  minWidth: 0,
+  minHeight: 52,
+  borderRadius: 14,
+  border: '1px solid #27496D',
+  backgroundColor: '#0D1B2A',
+  color: '#F4F8FF',
+  padding: '0 14px',
+  fontFamily: 'Inter, "Segoe UI", Roboto, Arial, sans-serif',
+  fontSize: 15,
+  fontWeight: 700,
+  outline: 'none',
+  colorScheme: 'dark',
+};
 
 type LinkedPatient = {
   pacienteId: number;
@@ -39,6 +59,32 @@ type FollowUpEntry = {
 };
 
 const todayString = () => new Date().toISOString().slice(0, 10);
+
+const toDateOnlyString = (input?: Date | string | null): string => {
+  if (!input) return '';
+  if (input instanceof Date) {
+    if (Number.isNaN(input.getTime())) return '';
+    return [
+      input.getFullYear(),
+      String(input.getMonth() + 1).padStart(2, '0'),
+      String(input.getDate()).padStart(2, '0'),
+    ].join('-');
+  }
+  const match = input.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (match) return match[1];
+  const parsed = new Date(input);
+  return Number.isNaN(parsed.getTime()) ? '' : toDateOnlyString(parsed);
+};
+
+const parseDateForPicker = (value?: string) => {
+  if (value) {
+    const segments = value.split('-').map((segment) => Number(segment));
+    if (segments.length === 3 && segments.every((segment) => Number.isFinite(segment))) {
+      return new Date(segments[0], segments[1] - 1, segments[2]);
+    }
+  }
+  return new Date();
+};
 
 const formatDate = (value?: string | null) => {
   if (!value) {
@@ -100,13 +146,14 @@ export function SeguimientoPosteventoScreen() {
   const [operationOptions, setOperationOptions] = useState<RelatedEventOption[]>([]);
   const [lesionOptions, setLesionOptions] = useState<RelatedEventOption[]>([]);
   const [recentEntries, setRecentEntries] = useState<FollowUpEntry[]>([]);
-  const [compartirConMedico, setCompartirConMedico] = useState(true);
+  const [compartirConMedico, setCompartirConMedico] = useState(false);
   const [requiereAtencion, setRequiereAtencion] = useState(false);
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [loadingEntries, setLoadingEntries] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [screenError, setScreenError] = useState<string | null>(null);
+  const [iosDateField, setIosDateField] = useState<DateFieldKey | null>(null);
 
   const selectedPatientId = Number(form.pacienteId);
   const hasValidPatient = Number.isFinite(selectedPatientId) && selectedPatientId > 0;
@@ -114,6 +161,60 @@ export function SeguimientoPosteventoScreen() {
   const handleChange = (key: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
+
+  const openDatePicker = (key: DateFieldKey) => {
+    if (Platform.OS === 'android') {
+      DateTimePickerAndroid.open({
+        value: parseDateForPicker(form[key]),
+        mode: 'date',
+        is24Hour: true,
+        onChange: (event, selected) => {
+          if (event.type === 'set' && selected) {
+            handleChange(key, toDateOnlyString(selected));
+          }
+        },
+      });
+      return;
+    }
+
+    setIosDateField(key);
+  };
+
+  const renderDateField = (key: DateFieldKey, label: string) => (
+    <>
+      <Text style={styles.label}>{label}</Text>
+      {Platform.OS === 'web' ? (
+        React.createElement('input', {
+          type: 'date',
+          value: form[key],
+          onChange: (event: any) => handleChange(key, event.target.value),
+          style: webDateInputStyle,
+          'aria-label': label,
+        })
+      ) : (
+        <TouchableOpacity style={styles.dateButton} onPress={() => openDatePicker(key)}>
+          <Text style={styles.dateButtonText}>{form[key] ? formatDate(form[key]) : 'Selecciona fecha'}</Text>
+        </TouchableOpacity>
+      )}
+      {Platform.OS === 'ios' && iosDateField === key ? (
+        <View style={styles.iosPickerCard}>
+          <DateTimePicker
+            mode="date"
+            display="spinner"
+            value={parseDateForPicker(form[key])}
+            onChange={(_, selected) => {
+              if (selected) {
+                handleChange(key, toDateOnlyString(selected));
+              }
+            }}
+          />
+          <TouchableOpacity style={styles.iosPickerDoneBtn} onPress={() => setIosDateField(null)}>
+            <Text style={styles.iosPickerDoneText}>Listo</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+    </>
+  );
 
   const fetchPatients = useCallback(async () => {
     if (!token) {
@@ -361,7 +462,7 @@ export function SeguimientoPosteventoScreen() {
       notas: '',
       proximoControl: '',
     }));
-    setCompartirConMedico(true);
+    setCompartirConMedico(false);
     setRequiereAtencion(false);
   };
 
@@ -402,7 +503,7 @@ export function SeguimientoPosteventoScreen() {
           medicacionActual: form.medicacionActual.trim() || undefined,
           cuidadosHogar: form.cuidadosHogar.trim() || undefined,
           notas: form.notas.trim() || undefined,
-          compartirConMedico,
+          compartirConMedico: false,
           requiereAtencion,
           proximoControl: form.proximoControl.trim() || undefined,
           creadoPor: user?.username ?? undefined,
@@ -417,9 +518,7 @@ export function SeguimientoPosteventoScreen() {
       } else {
         Alert.alert(
           'Seguimiento guardado',
-          compartirConMedico
-            ? 'La nota quedo registrada y marcada para compartir con el medico.'
-            : 'La nota quedo registrada en el historial del caso.',
+          'La nota quedo registrada en el historial del caso.',
         );
         fetchEntries();
       }
@@ -523,24 +622,10 @@ export function SeguimientoPosteventoScreen() {
 
       <View style={styles.row}>
         <View style={styles.fieldGroupHalf}>
-          <Text style={styles.label}>Fecha del evento</Text>
-          <TextInput
-            style={[styles.input, styles.halfInput]}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor="#F4F8FF"
-            value={form.fechaEvento}
-            onChangeText={(value) => handleChange('fechaEvento', value)}
-          />
+          {renderDateField('fechaEvento', 'Fecha del evento')}
         </View>
         <View style={styles.fieldGroupHalf}>
-          <Text style={styles.label}>Fecha de seguimiento</Text>
-          <TextInput
-            style={[styles.input, styles.halfInput]}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor="#F4F8FF"
-            value={form.fechaSeguimiento}
-            onChangeText={(value) => handleChange('fechaSeguimiento', value)}
-          />
+          {renderDateField('fechaSeguimiento', 'Fecha de seguimiento')}
         </View>
       </View>
 
@@ -617,24 +702,15 @@ export function SeguimientoPosteventoScreen() {
         onChangeText={(value) => handleChange('notas', value)}
       />
 
-      <Text style={styles.label}>Proximo control</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="YYYY-MM-DD"
-        placeholderTextColor="#F4F8FF"
-        value={form.proximoControl}
-        onChangeText={(value) => handleChange('proximoControl', value)}
-      />
+      {renderDateField('proximoControl', 'Proximo control')}
 
       <Text style={styles.label}>Visibilidad y prioridad</Text>
       <View style={styles.toggleRow}>
         <TouchableOpacity
-          style={[styles.toggleChip, compartirConMedico && styles.toggleChipActive]}
-          onPress={() => setCompartirConMedico((current) => !current)}
+          style={[styles.toggleChip, styles.toggleChipDisabled]}
+          disabled
         >
-          <Text style={[styles.toggleChipText, compartirConMedico && styles.toggleChipTextActive]}>
-            {compartirConMedico ? 'Compartido con medico' : 'Privado'}
-          </Text>
+          <Text style={styles.toggleChipText}>Compartir con medico desactivado</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.toggleChip, requiereAtencion && styles.toggleChipWarn]}
@@ -735,6 +811,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: 12,
+    marginBottom: 12,
   },
   halfInput: {
     flex: 1,
@@ -742,6 +819,40 @@ const styles = StyleSheet.create({
   fieldGroupHalf: {
     flex: 1,
     gap: 8,
+  },
+  dateButton: {
+    minHeight: 52,
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    backgroundColor: '#0D1B2A',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  dateButtonText: {
+    color: '#F4F8FF',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  iosPickerCard: {
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#0D1B2A',
+    marginBottom: 12,
+  },
+  iosPickerDoneBtn: {
+    borderTopWidth: 1,
+    borderTopColor: '#27496D',
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: '#132238',
+  },
+  iosPickerDoneText: {
+    color: '#29B6FF',
+    fontWeight: '800',
   },
   multiline: {
     minHeight: 90,
@@ -764,6 +875,9 @@ const styles = StyleSheet.create({
   toggleChipActive: {
     borderColor: '#29B6FF',
     backgroundColor: '#29B6FF18',
+  },
+  toggleChipDisabled: {
+    opacity: 0.55,
   },
   toggleChipWarn: {
     borderColor: '#FF4D73',

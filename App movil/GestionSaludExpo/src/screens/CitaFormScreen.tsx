@@ -36,6 +36,7 @@ import { useAuth } from "../context/AuthContext";
 
 import { API_URL } from "../config/api";
 import { submitJsonWithOfflineFallback } from "../utils/offlineWriteQueue";
+import { openWebDateTimePicker } from "../utils/webDateTimePicker";
 
 
 
@@ -640,6 +641,13 @@ export function CitaFormScreen() {
 
     const baseDate = parseDateForPicker(formDate || selectedDate);
 
+    if (openWebDateTimePicker("date", formDate || selectedDate, (value) => {
+      setFormDate(value);
+      setSelectedDate(value);
+    })) {
+      return;
+    }
+
     if (Platform.OS === "android") {
 
       DateTimePickerAndroid.open({
@@ -679,6 +687,10 @@ export function CitaFormScreen() {
   const openTimePicker = () => {
 
     const baseTime = parseTimeForPicker(formTime);
+
+    if (openWebDateTimePicker("time", formTime, setFormTime)) {
+      return;
+    }
 
     if (Platform.OS === "android") {
 

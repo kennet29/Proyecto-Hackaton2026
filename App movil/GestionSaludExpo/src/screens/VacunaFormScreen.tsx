@@ -9,6 +9,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
@@ -18,6 +19,23 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
+import { openWebDateTimePicker } from '../utils/webDateTimePicker';
+
+const webPickerInputStyle = {
+  flex: 1,
+  minWidth: 0,
+  minHeight: 52,
+  borderRadius: 14,
+  border: '1px solid #27496D',
+  backgroundColor: '#0D1B2A',
+  color: '#F4F8FF',
+  padding: '0 14px',
+  fontFamily: 'Inter, "Segoe UI", Roboto, Arial, sans-serif',
+  fontSize: 15,
+  fontWeight: 700,
+  outline: 'none',
+  colorScheme: 'dark',
+};
 
 type PickerField = 'fecha' | 'proximaDosis' | 'notificationDate' | 'notificationTime';
 
@@ -146,6 +164,8 @@ const composeDateTime = (dateValue?: string, timeValue?: string) => {
 const todayString = () => toDateOnlyString(new Date());
 
 export function VacunaFormScreen() {
+  const { width } = useWindowDimensions();
+  const isWideLayout = width >= 900;
   const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
   const [form, setForm] = useState({
     pacienteId: '',
@@ -398,6 +418,25 @@ export function VacunaFormScreen() {
     const currentDateValue = isNotificationField ? notificationDate : form[field];
     const currentTimeValue = notificationTime;
 
+    if (Platform.OS === 'web') {
+      const handled = openWebDateTimePicker(
+        isTimeField ? 'time' : 'date',
+        isTimeField ? currentTimeValue : currentDateValue,
+        (value) => {
+          if (isTimeField) {
+            setNotificationTime(value);
+            return;
+          }
+          if (field === 'notificationDate') {
+            setNotificationDate(value);
+          } else {
+            handleChange(field, value);
+          }
+        },
+      );
+      if (handled) return;
+    }
+
     if (Platform.OS === 'android') {
       if (!isTimeField) {
         DateTimePickerAndroid.open({
@@ -590,7 +629,7 @@ export function VacunaFormScreen() {
     <View style={styles.screen}>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, isWideLayout && styles.contentWide]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
       >
         <View style={styles.heroCard}>
@@ -855,28 +894,60 @@ export function VacunaFormScreen() {
               onChangeText={(value) => handleChange('nombre', value)}
             />
 
-            <Text style={styles.label}>Fecha de aplicacion</Text>
-            <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('fecha')}>
-              <Text style={styles.dateButtonText}>{formatDisplayDate(form.fecha)}</Text>
-            </TouchableOpacity>
-            {renderIOSPicker('fecha')}
+            <View style={[styles.formGrid, isWideLayout && styles.formGridWide]}>
+              <View style={styles.formField}>
+                <Text style={styles.label}>Fecha de aplicacion</Text>
+                {Platform.OS === 'web' ? (
+                  React.createElement('input', {
+                    type: 'date',
+                    value: form.fecha,
+                    onChange: (event: any) => handleChange('fecha', event.target.value),
+                    style: webPickerInputStyle,
+                    'aria-label': 'Fecha de aplicacion',
+                  })
+                ) : (
+                  <>
+                    <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('fecha')}>
+                      <Text style={styles.dateButtonText}>{formatDisplayDate(form.fecha)}</Text>
+                    </TouchableOpacity>
+                    {renderIOSPicker('fecha')}
+                  </>
+                )}
+              </View>
 
-            <Text style={styles.label}>Lote</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Lote"
-              placeholderTextColor="#9FB3C8"
-              value={form.lote}
-              onChangeText={(value) => handleChange('lote', value)}
-            />
+              <View style={styles.formField}>
+                <Text style={styles.label}>Lote</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Lote"
+                  placeholderTextColor="#9FB3C8"
+                  value={form.lote}
+                  onChangeText={(value) => handleChange('lote', value)}
+                />
+              </View>
 
-            <Text style={styles.label}>Proxima dosis</Text>
-            <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('proximaDosis')}>
-              <Text style={styles.dateButtonText}>
-                {form.proximaDosis ? formatDisplayDate(form.proximaDosis) : 'Opcional'}
-              </Text>
-            </TouchableOpacity>
-            {renderIOSPicker('proximaDosis')}
+              <View style={styles.formField}>
+                <Text style={styles.label}>Proxima dosis</Text>
+                {Platform.OS === 'web' ? (
+                  React.createElement('input', {
+                    type: 'date',
+                    value: form.proximaDosis,
+                    onChange: (event: any) => handleChange('proximaDosis', event.target.value),
+                    style: webPickerInputStyle,
+                    'aria-label': 'Proxima dosis',
+                  })
+                ) : (
+                  <>
+                    <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('proximaDosis')}>
+                      <Text style={styles.dateButtonText}>
+                        {form.proximaDosis ? formatDisplayDate(form.proximaDosis) : 'Opcional'}
+                      </Text>
+                    </TouchableOpacity>
+                    {renderIOSPicker('proximaDosis')}
+                  </>
+                )}
+              </View>
+            </View>
 
             {form.proximaDosis ? (
               <View style={styles.inlineNotificationCard}>
@@ -932,12 +1003,33 @@ export function VacunaFormScreen() {
 
                 <Text style={styles.label}>Fecha y hora del aviso</Text>
                 <View style={styles.dateTimeRow}>
-                  <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('notificationDate')}>
-                    <Text style={styles.dateButtonText}>{formatDisplayDate(notificationDate)}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('notificationTime')}>
-                    <Text style={styles.dateButtonText}>{formatDisplayTime(notificationTime)}</Text>
-                  </TouchableOpacity>
+                  {Platform.OS === 'web' ? (
+                    <>
+                      {React.createElement('input', {
+                        type: 'date',
+                        value: notificationDate,
+                        onChange: (event: any) => setNotificationDate(event.target.value),
+                        style: webPickerInputStyle,
+                        'aria-label': 'Fecha del aviso',
+                      })}
+                      {React.createElement('input', {
+                        type: 'time',
+                        value: notificationTime,
+                        onChange: (event: any) => setNotificationTime(event.target.value),
+                        style: webPickerInputStyle,
+                        'aria-label': 'Hora del aviso',
+                      })}
+                    </>
+                  ) : (
+                    <>
+                      <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('notificationDate')}>
+                        <Text style={styles.dateButtonText}>{formatDisplayDate(notificationDate)}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('notificationTime')}>
+                        <Text style={styles.dateButtonText}>{formatDisplayTime(notificationTime)}</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
                 </View>
                 {renderIOSPicker('notificationDate')}
                 {renderIOSPicker('notificationTime')}
@@ -952,7 +1044,7 @@ export function VacunaFormScreen() {
       </ScrollView>
 
       <TouchableOpacity style={styles.fab} onPress={() => setShowForm((prev) => !prev)}>
-        <Text style={styles.fabText}>{showForm ? 'Ãƒâ€”' : '+'}</Text>
+        <Text style={styles.fabText}>{showForm ? 'x' : '+'}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -972,10 +1064,17 @@ const styles = StyleSheet.create({
     paddingBottom: 110,
     gap: 16,
   },
+  contentWide: {
+    width: '100%',
+    maxWidth: 1180,
+    alignSelf: 'center',
+    paddingHorizontal: 30,
+    paddingTop: 26,
+  },
   heroCard: {
-    backgroundColor: '#182A44',
-    borderRadius: 26,
-    padding: 22,
+    backgroundColor: '#101D31',
+    borderRadius: 18,
+    padding: 20,
     borderWidth: 1,
     borderColor: '#1B3355',
   },
@@ -1001,16 +1100,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   filterCard: {
-    backgroundColor: '#132238',
-    borderRadius: 16,
+    backgroundColor: '#101D31',
+    borderRadius: 14,
     padding: 16,
     gap: 10,
     borderWidth: 1,
     borderColor: '#27496D',
   },
   calendarCard: {
-    backgroundColor: '#132238',
-    borderRadius: 20,
+    backgroundColor: '#101D31',
+    borderRadius: 16,
     padding: 18,
     gap: 12,
     borderWidth: 1,
@@ -1025,18 +1124,18 @@ const styles = StyleSheet.create({
     borderColor: '#27496D',
   },
   recordsSection: {
-    backgroundColor: '#132238',
-    borderRadius: 20,
+    backgroundColor: '#101D31',
+    borderRadius: 16,
     padding: 18,
     gap: 12,
     borderWidth: 1,
     borderColor: '#27496D',
   },
   formCard: {
-    backgroundColor: '#132238',
-    borderRadius: 20,
-    padding: 18,
-    gap: 12,
+    backgroundColor: '#101D31',
+    borderRadius: 18,
+    padding: 22,
+    gap: 14,
     borderWidth: 1,
     borderColor: '#27496D',
   },
@@ -1102,6 +1201,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#F4F8FF',
+  },
+  formGrid: {
+    gap: 12,
+  },
+  formGridWide: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  formField: {
+    flex: 1,
+    minWidth: 240,
+    gap: 8,
   },
   pickerWrapper: {
     borderWidth: 1,
@@ -1169,11 +1280,17 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: '#27496D',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 14,
     fontSize: 16,
     backgroundColor: '#0D1B2A',
     color: '#F4F8FF',
+  },
+  webDateInput: {
+    minHeight: 52,
+  },
+  webDateTimeInput: {
+    minHeight: 52,
   },
   multiline: {
     minHeight: 92,
@@ -1183,9 +1300,11 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     borderColor: '#27496D',
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: 14,
+    minHeight: 52,
+    paddingHorizontal: 14,
     backgroundColor: '#0D1B2A',
+    justifyContent: 'center',
   },
   dateButtonText: {
     fontSize: 16,
@@ -1197,10 +1316,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   primaryBtn: {
-    backgroundColor: '#38F28E',
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginTop: 4,
+    backgroundColor: '#1FBF78',
+    minHeight: 54,
+    borderRadius: 14,
+    marginTop: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   btnText: {
     color: '#F4F8FF',
@@ -1209,10 +1330,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   notificationBtn: {
-    backgroundColor: '#38F28E',
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: '#1FBF78',
+    minHeight: 52,
+    borderRadius: 14,
     marginTop: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   notificationBtnText: {
     color: '#F4F8FF',

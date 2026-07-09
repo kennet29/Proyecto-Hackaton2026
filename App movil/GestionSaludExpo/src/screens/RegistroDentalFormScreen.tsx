@@ -21,6 +21,7 @@ import { API_URL } from '../config/api';
 import type { RootStackParamList } from '../navigation/types';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
+import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 
 type RegistroDentalRecord = {
   registrodentalId: number;
@@ -370,6 +371,32 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
   }, [filteredRecords]);
 
   const showPicker = (field: DatePickerField) => {
+    if (Platform.OS === 'web') {
+      const isDateField = field === 'date' || field === 'notification-date';
+      const handled = openWebDateTimePicker(
+        isDateField ? 'date' : 'time',
+        isDateField
+          ? field === 'date'
+            ? dateValue
+            : notificationDate
+          : field === 'time'
+            ? timeValue
+            : notificationTime,
+        (value) => {
+          if (field === 'date') {
+            setDateValue(value);
+          } else if (field === 'notification-date') {
+            setNotificationDate(value);
+          } else if (field === 'time') {
+            setTimeValue(value);
+          } else {
+            setNotificationTime(value);
+          }
+        },
+      );
+      if (handled) return;
+    }
+
     if (Platform.OS === 'android') {
       if (field === 'date' || field === 'notification-date') {
         DateTimePickerAndroid.open({

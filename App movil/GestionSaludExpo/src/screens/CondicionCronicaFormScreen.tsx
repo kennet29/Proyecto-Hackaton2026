@@ -20,6 +20,7 @@ import { API_URL } from '../config/api';
 import type { RootStackParamList } from '../navigation/types';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
+import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 
 type TipoCondicion = {
   tipocondicionId: number;
@@ -313,6 +314,9 @@ export function CondicionCronicaFormScreen({
   }, [form.condicionNombre, form.tipocondicionId, typeNameById]);
 
   const showDatePicker = (field: 'fechadiagnostico' | 'proximoseguimiento') => {
+    if (openWebDateTimePicker('date', form[field], (value) => handleChange(field, value))) {
+      return;
+    }
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
         value: parseDateForPicker(form[field]),

@@ -19,6 +19,21 @@ import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
 
+const webDateInputStyle = {
+  flex: 1,
+  minWidth: 0,
+  height: 48,
+  borderRadius: 14,
+  border: `1px solid ${appColors.border}`,
+  backgroundColor: appColors.backgroundMuted,
+  color: appColors.text,
+  padding: '0 13px',
+  fontSize: 14,
+  fontWeight: 700,
+  outline: 'none',
+  colorScheme: 'dark',
+};
+
 type AppointmentRecord = {
   citaId: number;
   pacienteId: number;
@@ -530,12 +545,33 @@ export function RecordatorioFormScreen() {
 
         <Text style={styles.label}>Fecha y hora</Text>
         <View style={styles.dateTimeRow}>
-          <TouchableOpacity style={styles.dateButton} onPress={() => openPicker('date')}>
-            <Text style={styles.dateButtonText}>{formatDateLabel(notificationDate)}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.dateButton} onPress={() => openPicker('time')}>
-            <Text style={styles.dateButtonText}>{formatTimeLabel(notificationTime)}</Text>
-          </TouchableOpacity>
+          {Platform.OS === 'web' ? (
+            <>
+              {React.createElement('input', {
+                type: 'date',
+                value: notificationDate,
+                onChange: (event: any) => setNotificationDate(event.target.value),
+                style: webDateInputStyle,
+                'aria-label': 'Fecha del aviso',
+              })}
+              {React.createElement('input', {
+                type: 'time',
+                value: notificationTime,
+                onChange: (event: any) => setNotificationTime(event.target.value),
+                style: webDateInputStyle,
+                'aria-label': 'Hora del aviso',
+              })}
+            </>
+          ) : (
+            <>
+              <TouchableOpacity style={styles.dateButton} onPress={() => openPicker('date')}>
+                <Text style={styles.dateButtonText}>{formatDateLabel(notificationDate)}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.dateButton} onPress={() => openPicker('time')}>
+                <Text style={styles.dateButtonText}>{formatTimeLabel(notificationTime)}</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
         {Platform.OS === 'ios' && showIOSDatePicker ? (

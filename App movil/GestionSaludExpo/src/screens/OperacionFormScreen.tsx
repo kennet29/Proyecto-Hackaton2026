@@ -21,6 +21,7 @@ import { API_URL } from '../config/api';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import type { RootStackParamList } from '../navigation/types';
+import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 
 type TipoOperacion = {
   tipooperacionId: number;
@@ -356,6 +357,9 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
   };
 
   const showDatePicker = () => {
+    if (openWebDateTimePicker('date', form.fecha, (value) => handleChange('fecha', value))) {
+      return;
+    }
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
         value: parseDateForPicker(form.fecha),

@@ -19,6 +19,7 @@ import * as Print from 'expo-print';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
+import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 
 type ConsultationOption = {
   consultaId: number;
@@ -431,6 +432,9 @@ export function ExamenClinicoScreen() {
     field === 'exam-date' ? form.fechaExamen : form.fechaResultado;
 
   const showDatePicker = (field: DatePickerField) => {
+    if (openWebDateTimePicker('date', getDateFieldValue(field), (value) => setDateFieldValue(field, value))) {
+      return;
+    }
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
         value: parseDateForPicker(getDateFieldValue(field)),

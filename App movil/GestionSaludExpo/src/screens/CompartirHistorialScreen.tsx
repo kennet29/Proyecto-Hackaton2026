@@ -66,6 +66,10 @@ const DEFAULT_SECTIONS: ShareSectionKey[] = [
   'medicaciones',
 ];
 
+const TEST_DOCTOR_USERNAME = 'medico.prueba';
+const TEST_DOCTOR_PASSWORD = 'Medico123!';
+const TEST_DOCTOR_SQL = 'Base de datos/medico_prueba.sql';
+
 const SHARE_DURATION_OPTIONS = [
   { value: 30, label: '30 min' },
   { value: 60, label: '1 hora' },
@@ -108,10 +112,13 @@ const extractShareToken = (shareUrl: string, fallbackToken?: string | null) => {
 };
 
 const buildDoctorLabel = (doctor: DoctorRegistry) => {
-  return `Medico #${doctor.usuarioId}`;
+  const title = doctor.titulo ?? 'Medico registrado';
+  return `${title} #${doctor.usuarioId}`;
 };
 
 const buildDoctorSummary = (doctor: DoctorRegistry) => {
+  const summary = [doctor.especialidadprincipal, doctor.hospitaltrabajo].filter(Boolean).join(' - ');
+  if (summary) return summary;
   return [doctor.especialidadprincipal, doctor.hospitaltrabajo].filter(Boolean).join(' · ') || 'Sin detalles';
 };
 
@@ -311,7 +318,7 @@ export function CompartirHistorialScreen({ route }: Props) {
       }
 
       const doctorLabel = selectedDoctor
-        ? `${buildDoctorLabel(selectedDoctor)}${selectedDoctor.especialidadprincipal ? ` · ${selectedDoctor.especialidadprincipal}` : ''}`
+        ? `${buildDoctorLabel(selectedDoctor)}${selectedDoctor.especialidadprincipal ? ` - ${selectedDoctor.especialidadprincipal}` : ''}`
         : `Medico #${effectiveDoctorId}`;
       const shareUrl = String(sharePayload?.shareUrl ?? '');
       const shareToken = extractShareToken(shareUrl, sharePayload?.token);
@@ -395,6 +402,17 @@ export function CompartirHistorialScreen({ route }: Props) {
             <Text style={styles.helperText}>
               Toca un medico disponible o escribe el ID de un usuario con permiso de medico.
             </Text>
+            <View style={styles.testDoctorBox}>
+              <View style={styles.testDoctorHeader}>
+                <Ionicons name="flask-outline" size={18} color={appColors.info} />
+                <Text style={styles.testDoctorTitle}>Medico de prueba</Text>
+              </View>
+              <Text style={styles.testDoctorText}>Usuario: {TEST_DOCTOR_USERNAME}</Text>
+              <Text style={styles.testDoctorText}>Clave: {TEST_DOCTOR_PASSWORD}</Text>
+              <Text style={styles.testDoctorHint}>
+                Cargalo con {TEST_DOCTOR_SQL}; quedara con rol medico y registro aprobado.
+              </Text>
+            </View>
 
             {doctors.length > 0 ? (
               <View style={styles.doctorList}>
@@ -418,7 +436,7 @@ export function CompartirHistorialScreen({ route }: Props) {
                         ) : null}
                       </View>
                       <Text style={styles.doctorSubtitle}>
-                        {doctor.titulo ?? 'Medico registrado'}
+                        Usuario ID: {doctor.usuarioId}
                       </Text>
                       <Text style={styles.doctorMeta}>{buildDoctorSummary(doctor)}</Text>
                       {doctor.numerolicencia ? (
@@ -696,6 +714,37 @@ const styles = StyleSheet.create({
   },
   personChipTextActive: {
     color: appColors.info,
+  },
+  testDoctorBox: {
+    borderRadius: 18,
+    padding: 14,
+    backgroundColor: colorAlpha(appColors.info, '10'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '45'),
+    marginBottom: 14,
+    gap: 4,
+  },
+  testDoctorHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  testDoctorTitle: {
+    color: appColors.text,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  testDoctorText: {
+    color: appColors.text,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  testDoctorHint: {
+    color: appColors.textSoft,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 4,
   },
   doctorList: {
     gap: 12,

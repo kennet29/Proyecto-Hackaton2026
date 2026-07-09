@@ -15,6 +15,7 @@ import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/d
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
+import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 
 type FeedbackState = { type: 'success' | 'error'; message: string } | null;
 
@@ -264,6 +265,9 @@ export function EmbarazoScreen() {
   };
 
   const openDatePicker = (key: 'fechainicio' | 'fechaprobableparto') => {
+    if (openWebDateTimePicker('date', form[key], (value) => handleDateConfirm(key, parseDateForPicker(value)))) {
+      return;
+    }
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
         value: parseDateForPicker(form[key]),

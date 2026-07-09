@@ -1,5 +1,5 @@
-import React from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import { LinkingOptions, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
@@ -61,6 +61,54 @@ import { AppErrorBoundary } from './src/components/AppErrorBoundary';
 import { appColors } from './src/theme/colors';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const WEB_FORM_STYLE_ID = 'gestion-salud-web-form-styles';
+const WEB_FORM_CSS = `
+  html,
+  body,
+  #root,
+  * {
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+
+  select {
+    width: 100%;
+    min-height: 46px;
+    border: 0;
+    border-radius: 12px;
+    background-color: #0D1B2A;
+    color: #F4F8FF;
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0;
+    padding: 0 14px;
+    outline: none;
+    color-scheme: dark;
+  }
+
+  select:focus {
+    box-shadow: 0 0 0 2px rgba(41, 182, 255, 0.45);
+  }
+
+  select option {
+    background-color: #0D1B2A;
+    color: #F4F8FF;
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  select option:checked,
+  select option:hover {
+    background-color: #1B78D8;
+    color: #F4F8FF;
+  }
+
+  input[type="date"],
+  input[type="time"] {
+    color-scheme: dark;
+  }
+`;
 
 const sharedScreenOptions = {
   headerStyle: { backgroundColor: appColors.background },
@@ -107,7 +155,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       DocumentoForm: 'documentos',
       CompartirHistorial: 'compartir-historial',
       HistorialCompartido: 'historial-compartido/:token?',
-      RecordatorioForm: 'recordatorios',
+      RecordatorioForm: 'recordatorios/nuevo',
       RegistroDentalForm: 'registro-dental',
       RegistroDentalCreate: 'registro-dental/nuevo',
       Alergia: 'alergias',
@@ -118,7 +166,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       Educacion: 'educacion',
       EducacionNivel: 'educacion/nivel',
       EducacionTema: 'educacion/tema',
-      RecordatorioList: 'recordatorios/listado',
+      RecordatorioList: 'recordatorios',
       SobreNosotros: 'sobre-nosotros',
       Contacto: 'contacto',
     },
@@ -391,6 +439,21 @@ const RootNavigator = () => {
 };
 
 export default function App() {
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') {
+      return undefined;
+    }
+
+    if (!document.getElementById(WEB_FORM_STYLE_ID)) {
+      const style = document.createElement('style');
+      style.id = WEB_FORM_STYLE_ID;
+      style.textContent = WEB_FORM_CSS;
+      document.head.appendChild(style);
+    }
+
+    return () => undefined;
+  }, []);
+
   return (
     <AuthProvider>
       <AppErrorBoundary>

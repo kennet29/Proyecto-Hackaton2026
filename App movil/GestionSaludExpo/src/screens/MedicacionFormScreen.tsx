@@ -27,6 +27,7 @@ import type { RootStackParamList } from '../navigation/types';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
+import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 
 type PickerField =
   | 'fechaInicio'
@@ -582,6 +583,36 @@ export function MedicacionFormScreen({
   }, [hasHistoryRecords, showHistorySection]);
 
   const showPicker = (field: PickerField) => {
+    if (Platform.OS === 'web') {
+      if (field === 'horaMedicacion' || field === 'notificationTime') {
+        const currentTimeValue =
+          field === 'horaMedicacion' ? normalizeTimeString(form.horaMedicacion) : normalizeTimeString(notificationTime);
+        const handled = openWebDateTimePicker('time', currentTimeValue, (value) => {
+          if (field === 'horaMedicacion') {
+            handleChange('horaMedicacion', value);
+          } else {
+            setNotificationTime(value);
+          }
+        });
+        if (handled) return;
+      }
+
+      const currentDateValue =
+        field === 'notificationDate'
+          ? notificationDate
+          : field === 'fechaInicio'
+            ? form.fechaInicio
+            : form.fechaFin;
+      const handled = openWebDateTimePicker('date', currentDateValue, (value) => {
+        if (field === 'notificationDate') {
+          setNotificationDate(value);
+        } else if (field === 'fechaInicio' || field === 'fechaFin') {
+          handleChange(field, value);
+        }
+      });
+      if (handled) return;
+    }
+
     if (Platform.OS === 'android') {
       if (field === 'horaMedicacion' || field === 'notificationTime') {
         const currentTimeValue =
