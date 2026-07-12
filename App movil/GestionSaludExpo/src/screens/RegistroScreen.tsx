@@ -22,6 +22,11 @@ import {
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Registro'>;
 type FeedbackState = { type: 'success' | 'error'; message: string } | null;
+const SECURITY_QUESTIONS = [
+  { id: 'pet', label: '¿Cómo se llamaba tu primera mascota?' },
+  { id: 'school', label: '¿Cuál fue el nombre de tu primera escuela?' },
+  { id: 'city', label: '¿En qué ciudad naciste?' },
+] as const;
 
 const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => {
   if (!feedback) {
@@ -68,6 +73,8 @@ export function RegistroScreen({ navigation }: Props) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [securityQuestion, setSecurityQuestion] = useState<'pet' | 'school' | 'city'>('pet');
+  const [securityAnswer, setSecurityAnswer] = useState('');
   const [loading, setLoading] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [fingerprintTemplate, setFingerprintTemplate] = useState<string | null>(null);
@@ -162,7 +169,7 @@ export function RegistroScreen({ navigation }: Props) {
       Alert.alert('Registro no disponible', message);
       return;
     }
-    if (!fullName || !email || !city || !country || !username || !password || !confirmPassword) {
+    if (!fullName || !email || !city || !country || !username || !password || !confirmPassword || !securityAnswer.trim()) {
       const message = 'Completa todos los datos para continuar.';
       setFeedback({ type: 'error', message });
       Alert.alert('Campos incompletos', message);
@@ -188,6 +195,8 @@ export function RegistroScreen({ navigation }: Props) {
           username,
           password,
           fingerprintTemplate: fingerprintTemplate ?? undefined,
+          securityQuestion,
+          securityAnswer: securityAnswer.trim(),
         }),
       });
       const body = await response.json().catch(() => null);
@@ -322,6 +331,14 @@ export function RegistroScreen({ navigation }: Props) {
           value={confirmPassword}
           onChangeText={(text) => setConfirmPassword(sanitizePassword(text))}
         />
+
+        <Text style={styles.label}>Pregunta de seguridad</Text>
+        {SECURITY_QUESTIONS.map((question) => (
+          <TouchableOpacity key={question.id} style={[styles.questionOption, securityQuestion === question.id && styles.questionOptionActive]} onPress={() => setSecurityQuestion(question.id)} disabled={loading}>
+            <Text style={styles.questionOptionText}>{question.label}</Text>
+          </TouchableOpacity>
+        ))}
+        <TextInput style={styles.input} placeholder="Tu respuesta" placeholderTextColor="#9FB3C8" value={securityAnswer} onChangeText={setSecurityAnswer} />
 
         {biometricAvailable ? (
           <View style={styles.fingerprintBox}>
@@ -538,6 +555,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: '#F4F8FF',
   },
+  questionOption: { borderWidth: 1, borderColor: '#C9D7E8', borderRadius: 10, padding: 11, marginBottom: 8 },
+  questionOptionActive: { borderColor: '#29B6FF', backgroundColor: '#EAF7FF' },
+  questionOptionText: { color: '#071120', fontSize: 14 },
   fingerprintHint: {
     fontSize: 12,
     color: '#9FB3C8',

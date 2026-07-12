@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req } from "@nestjs/common";
+import { Body, Controller, Get, Post, Req } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
 import { RequestResetDto } from "./dto/request-reset.dto";
@@ -23,6 +23,12 @@ export class AuthController {
   @Post("login")
   login(@Body() payload: LoginDto) {
     return this.authService.login(payload);
+  }
+
+  @Public()
+  @Get("captcha")
+  captcha() {
+    return this.authService.createCaptcha();
   }
 
   /**

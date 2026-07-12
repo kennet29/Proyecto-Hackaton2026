@@ -227,6 +227,10 @@ export class UsersService {
     try {
       const hashed = await bcrypt.hash(payload.password, 10);
       const fingerprintHash = this.hashFingerprint(payload.fingerprintTemplate);
+      const securityAnswerHash = await bcrypt.hash(
+        this.normalizeSecurityAnswer(payload.securityAnswer),
+        10,
+      );
       const entity = this.usuarioRepository.create({
         username: payload.username,
         creadoPor: payload.email,
@@ -237,6 +241,8 @@ export class UsersService {
         activo,
         hashPassword: Buffer.from(hashed, "utf8"),
         fingerprintHash,
+        securityQuestion: payload.securityQuestion,
+        securityAnswerHash,
       });
       return await this.usuarioRepository.save(entity);
     } catch (error) {
@@ -247,6 +253,10 @@ export class UsersService {
       }
       return this.handleDbError(error, "crear");
     }
+  }
+
+  private normalizeSecurityAnswer(value: string): string {
+    return value.trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }
 
   /**

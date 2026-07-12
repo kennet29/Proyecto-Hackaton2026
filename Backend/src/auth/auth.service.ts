@@ -7,7 +7,7 @@ import {
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { InjectRepository } from "@nestjs/typeorm";
-import { randomBytes, createHash, timingSafeEqual } from "crypto";
+import { randomBytes, randomInt, createHash, timingSafeEqual } from "crypto";
 import { Repository } from "typeorm";
 import { UsersService } from "../users/users.service";
 import { LoginDto } from "./dto/login.dto";
@@ -175,16 +175,29 @@ export class AuthService {
    * @returns Resultado de la operación.
    */
   async requestPasswordReset(payload: RequestResetDto) {
+    await this.validateCaptcha(payload.captchaToken, payload.captchaAnswer);
     const user =
       await this.usersService.findByUsernameOrEmail(payload.username);
     if (!user) {
       throw new NotFoundException("usuario no encontrado");
     }
+    if (!user.securityQuestion || !user.securityAnswerHash) {
+      throw new UnauthorizedException("la cuenta no tiene una pregunta de seguridad configurada");
+    }
+    const answerIsValid =
+      user.securityQuestion === payload.securityQuestion &&
+      (await bcrypt.compare(
+        this.normalizeSecurityAnswer(payload.securityAnswer),
+        user.securityAnswerHash,
+      ));
+    if (!answerIsValid) {
+      throw new UnauthorizedException("respuesta de seguridad incorrecta");
+    }
     await this.resetRepository.update(
       { usuarioId: user.id, used: false },
       { used: true, usedOn: new Date() },
     );
-    const tokenValue = randomBytes(32).toString("hex");
+    const tokenValue = this.generateRecoveryCode();
     const expiresAt = new Date(Date.now() + 1000 * 60 * 30);
     const entity = this.resetRepository.create({
       token: tokenValue,
@@ -193,19 +206,44 @@ export class AuthService {
     });
     await this.resetRepository.save(entity);
     const response = {
-      message: "token generado, usa este codigo para restablecer tu contrasena",
+      message: "codigo generado, usalo para restablecer tu contrasena",
       token: tokenValue,
       expira: expiresAt.toISOString(),
     };
-    const email = this.resolveUserEmail(user);
-    if (email) {
-      await this.mailService.sendPasswordResetMail(
-        email,
-        tokenValue,
-        expiresAt,
-      );
-    }
     return response;
+  }
+
+  private generateRecoveryCode(): string {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    return Array.from(
+      { length: 4 },
+      () => alphabet[randomInt(0, alphabet.length)],
+    ).join("");
+  }
+
+  async createCaptcha() {
+    const left = Math.floor(Math.random() * 9) + 1;
+    const right = Math.floor(Math.random() * 9) + 1;
+    const captchaToken = await this.jwtService.signAsync(
+      { purpose: "password-reset-captcha", answer: String(left + right) },
+      { expiresIn: "5m" },
+    );
+    return { question: `${left} + ${right} = ?`, captchaToken };
+  }
+
+  private async validateCaptcha(token: string, answer: string): Promise<void> {
+    try {
+      const payload = await this.jwtService.verifyAsync<{ purpose: string; answer: string }>(token);
+      if (payload.purpose !== "password-reset-captcha" || payload.answer !== answer) {
+        throw new Error("invalid");
+      }
+    } catch {
+      throw new UnauthorizedException("captcha invalido o expirado");
+    }
+  }
+
+  private normalizeSecurityAnswer(value: string): string {
+    return value.trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }
 
   /**

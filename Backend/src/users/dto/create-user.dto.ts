@@ -15,6 +15,8 @@ export const createUserSchema = z.object({
   role: z.string().min(3).max(40).optional(),
   activo: z.boolean().optional(),
   fingerprintTemplate: fingerprintTemplateSchema.optional(),
+  securityQuestion: z.enum(["pet", "school", "city"]),
+  securityAnswer: z.string().trim().min(2).max(100),
 });
 
 /**

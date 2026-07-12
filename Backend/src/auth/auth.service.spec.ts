@@ -12,6 +12,7 @@ describe("AuthService", () => {
     };
     const jwtService = {
       signAsync: jest.fn().mockResolvedValue("signed-token"),
+      verifyAsync: jest.fn(),
     };
     const resetRepository = {
       update: jest.fn(),
@@ -127,5 +128,74 @@ describe("AuthService", () => {
     await expect(
       service.logout({ userId: 9, username: "user" }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it("completes password recovery with captcha and security answer", async () => {
+    const { service, usersService, jwtService, resetRepository } =
+      buildService();
+    jwtService.verifyAsync.mockResolvedValue({
+      purpose: "password-reset-captcha",
+      answer: "12",
+    });
+    usersService.findByUsernameOrEmail.mockResolvedValue({
+      id: 21,
+      username: "ana@example.com",
+      securityQuestion: "pet",
+      securityAnswerHash: await bcrypt.hash("firulais", 4),
+    });
+
+    const requested = await service.requestPasswordReset({
+      username: "ana@example.com",
+      securityQuestion: "pet",
+      securityAnswer: "Fírulais",
+      captchaAnswer: "12",
+      captchaToken: "valid-captcha-token",
+    });
+
+    expect(requested.token).toMatch(/^[A-HJ-NP-Z2-9]{4}$/);
+    expect(resetRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ usuarioId: 21, token: requested.token }),
+    );
+
+    const tokenRecord = {
+      usuarioId: 21,
+      token: requested.token,
+      expiresAt: new Date(Date.now() + 60_000),
+      used: false,
+    };
+    resetRepository.findOne.mockResolvedValue(tokenRecord);
+
+    await expect(
+      service.resetPassword({ token: requested.token, password: "NuevaClave123" }),
+    ).resolves.toEqual({ message: "contrasena actualizada" });
+    expect(usersService.update).toHaveBeenCalledWith(21, {
+      password: "NuevaClave123",
+    });
+    expect(tokenRecord.used).toBe(true);
+  });
+
+  it("rejects password recovery when the security answer is wrong", async () => {
+    const { service, usersService, jwtService, resetRepository } = buildService();
+    jwtService.verifyAsync.mockResolvedValue({
+      purpose: "password-reset-captcha",
+      answer: "7",
+    });
+    usersService.findByUsernameOrEmail.mockResolvedValue({
+      id: 22,
+      username: "luis@example.com",
+      securityQuestion: "city",
+      securityAnswerHash: await bcrypt.hash("managua", 4),
+    });
+
+    await expect(
+      service.requestPasswordReset({
+        username: "luis@example.com",
+        securityQuestion: "city",
+        securityAnswer: "Leon",
+        captchaAnswer: "7",
+        captchaToken: "valid-captcha-token",
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(resetRepository.save).not.toHaveBeenCalled();
   });
 });

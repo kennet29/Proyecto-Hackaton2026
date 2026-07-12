@@ -6,6 +6,10 @@ import { z } from "zod";
  */
 export const requestResetSchema = z.object({
   username: z.string().min(3).max(60),
+  securityQuestion: z.enum(["pet", "school", "city"]),
+  securityAnswer: z.string().trim().min(2).max(100),
+  captchaAnswer: z.string().trim().regex(/^\d{1,3}$/),
+  captchaToken: z.string().min(10).max(1000),
 });
 
 /**
