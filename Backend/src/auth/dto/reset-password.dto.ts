@@ -5,7 +5,7 @@ import { z } from "zod";
  * Esquema Zod utilizado por reset password.
  */
 export const resetPasswordSchema = z.object({
-  token: z.string().min(10).max(100),
+  token: z.string().trim().min(4).max(100),
   password: z.string().min(6).max(128),
 });
 
