@@ -58,10 +58,20 @@ export class Usuario {
   })
   fingerprintHash?: Buffer | null;
 
-  @Column({ name: "campoprueba01", type: "nvarchar", length: 200, nullable: true })
+  @Column({
+    name: "preguntaseguridad",
+    type: "nvarchar",
+    length: 200,
+    nullable: true,
+  })
   securityQuestion?: string | null;
 
-  @Column({ name: "campoprueba02", type: "nvarchar", length: 200, nullable: true })
+  @Column({
+    name: "respuestaseguridadhash",
+    type: "nvarchar",
+    length: 200,
+    nullable: true,
+  })
   securityAnswerHash?: string | null;
 
   /**

@@ -1437,6 +1437,8 @@ CREATE TABLE [dbo].[usuario](
 	[pais] [nvarchar](100) NULL,
 	[hashpassword] [varbinary](256) NOT NULL,
 	[huelladigitalhash] [varbinary](64) NULL,
+	[preguntaseguridad] [nvarchar](200) NULL,
+	[respuestaseguridadhash] [nvarchar](200) NULL,
 	[rolprincipal] [nvarchar](40) NOT NULL,
 	[activo] [bit] NOT NULL,
 	[ultimoingreso] [datetime2](7) NULL,
