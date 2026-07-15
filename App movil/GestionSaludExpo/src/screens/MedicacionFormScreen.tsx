@@ -6,6 +6,7 @@ import {
   Platform,
   RefreshControl,
   ScrollView,
+  Switch,
   StyleSheet,
   Text,
   TextInput,
@@ -125,6 +126,8 @@ const normalizeTimeString = (value?: string | null): string => {
   return '';
 };
 
+const isDailyMedicationSchedule = (value?: string | null) => value?.trim().toLowerCase() === 'diaria';
+
 const parseDateForPicker = (value?: string) => {
   if (value) {
     const parsed = new Date(value);
@@ -229,6 +232,9 @@ export function MedicacionFormScreen({
     fechaFin: toDateOnlyString(initialMedication?.fechaFin) || '',
     horaMedicacion: normalizeTimeString(initialMedication?.horaMedicacion) || '',
   });
+  const [isPermanentMedication, setIsPermanentMedication] = useState(
+    !toDateOnlyString(initialMedication?.fechaFin) && isDailyMedicationSchedule(initialMedication?.frecuencia),
+  );
   const [filterPacienteId, setFilterPacienteId] = useState('');
   const [notificationForm, setNotificationForm] = useState({
     mensaje: 'Recordatorio de finalizacion del tratamiento',
@@ -427,7 +433,14 @@ export function MedicacionFormScreen({
       fechaFin: toDateOnlyString(initialMedication.fechaFin) || '',
       horaMedicacion: normalizeTimeString(initialMedication.horaMedicacion) || '',
     });
-    setNotificationDate(toDateOnlyString(initialMedication.fechaFin) || '');
+    setIsPermanentMedication(
+      !toDateOnlyString(initialMedication.fechaFin) && isDailyMedicationSchedule(initialMedication.frecuencia),
+    );
+    setNotificationDate(
+      isDailyMedicationSchedule(initialMedication.frecuencia)
+        ? ''
+        : toDateOnlyString(initialMedication.fechaFin) || '',
+    );
     setNotificationTime(normalizeTimeString(initialMedication.horaMedicacion) || '08:00');
     setAttachment(null);
     setRemoveExistingAttachment(false);
@@ -466,6 +479,20 @@ export function MedicacionFormScreen({
       setNotificationTime(normalizeTimeString(form.horaMedicacion) || '08:00');
     }
   }, [form.fechaFin, form.horaMedicacion]);
+
+  useEffect(() => {
+    if (!isPermanentMedication) {
+      return;
+    }
+
+    if (form.fechaFin) {
+      handleChange('fechaFin', '');
+    }
+
+    setShowNotificationForm(false);
+    setNotificationDate('');
+    setNotificationTime(normalizeTimeString(form.horaMedicacion) || '08:00');
+  }, [form.fechaFin, form.horaMedicacion, isPermanentMedication]);
 
   const readFileAsBase64 = useCallback(async (uri: string) => {
     const file = new FileSystem.File(uri);
@@ -846,6 +873,14 @@ export function MedicacionFormScreen({
       return;
     }
 
+    if (isPermanentMedication && !form.horaMedicacion) {
+      Alert.alert(
+        'Hora requerida',
+        'Si el medicamento es permanente, define la hora de toma para activar el recordatorio diario.',
+      );
+      return;
+    }
+
     try {
       const medicationBody: Record<string, unknown> = {
         pacienteId: Number(form.pacienteId),
@@ -854,7 +889,8 @@ export function MedicacionFormScreen({
         viaadministracion: form.via.trim() || undefined,
         indicaciones: form.indicaciones.trim() || undefined,
         fechainicio: form.fechaInicio,
-        fechafin: form.fechaFin || undefined,
+        fechafin: isPermanentMedication ? null : form.fechaFin || undefined,
+        campoprueba01: isPermanentMedication ? 'permanente' : null,
         modificadopor: user?.username ?? undefined,
         creadopor: isEditing ? undefined : user?.username ?? undefined,
       };
@@ -911,16 +947,25 @@ export function MedicacionFormScreen({
               body: {
                 medicacionId: savedMedicationId,
                 horaprogramada: scheduleDateTime,
-                generarecordatorio: false,
-                estadorecordatorio: 'pendiente',
+                frecuencia: isPermanentMedication ? 'diaria' : null,
+                generarecordatorio: isPermanentMedication,
+                proximaalarma: isPermanentMedication ? scheduleDateTime : null,
+                estadorecordatorio: isPermanentMedication ? 'activo' : 'pendiente',
+                observaciones: isPermanentMedication
+                  ? 'Medicamento permanente con recordatorio diario.'
+                  : null,
                 modificadopor: user?.username ?? undefined,
                 creadoen: new Date().toISOString(),
                 creadopor: user?.username ?? undefined,
               },
             });
             message = isEditing
-              ? 'La medicacion y su hora programada fueron actualizadas.'
-              : 'La medicacion y su hora programada fueron guardadas.';
+              ? isPermanentMedication
+                ? 'La medicacion permanente y su recordatorio diario fueron actualizados.'
+                : 'La medicacion y su hora programada fueron actualizadas.'
+              : isPermanentMedication
+                ? 'La medicacion permanente y su recordatorio diario fueron guardados.'
+                : 'La medicacion y su hora programada fueron guardadas.';
           } else if (isEditing && initialMedication?.horariomedicamentoId) {
             await submitJsonWithOfflineFallback({
               token,
@@ -946,6 +991,7 @@ export function MedicacionFormScreen({
         fechaFin: '',
         horaMedicacion: '',
       });
+      setIsPermanentMedication(false);
       setAttachment(null);
       setExistingAttachment(null);
       setRemoveExistingAttachment(false);
@@ -970,6 +1016,7 @@ export function MedicacionFormScreen({
     removeExistingAttachment,
     token,
     user?.username,
+    isPermanentMedication,
   ]);
 
   const handleCreateNotification = async () => {
@@ -993,6 +1040,7 @@ export function MedicacionFormScreen({
           fechaprogramada: scheduledAt,
           medio: 'push',
           entidadorigen: 'medicacion',
+          campoprueba03: `Medicacion: ${form.nombre.trim() || 'Fin de tratamiento'}`.slice(0, 200),
           creadopor: user?.username ?? undefined,
         },
       });
@@ -1244,6 +1292,12 @@ export function MedicacionFormScreen({
                         ) : (
                           <Text style={styles.medicationDetail}>Hora programada: Sin hora definida</Text>
                         )}
+                        {isDailyMedicationSchedule(record.frecuencia) && !record.fechafin ? (
+                          <Text style={styles.medicationDetail}>
+                            Tratamiento:{' '}
+                            <Text style={styles.medicationHighlight}>Permanente con recordatorio diario</Text>
+                          </Text>
+                        ) : null}
                         <Text style={styles.medicationDetail}>
                           Receta adjunta:{' '}
                           <Text style={styles.medicationHighlight}>
@@ -1264,6 +1318,7 @@ export function MedicacionFormScreen({
                                 fechaInicio: record.fechainicio ?? null,
                                 fechaFin: record.fechafin ?? null,
                                 horaMedicacion: record.horaprogramada ?? null,
+                                frecuencia: record.frecuencia ?? null,
                                 horariomedicamentoId: record.horariomedicamentoId ?? null,
                                 nombreArchivoReceta: record.nombreArchivoReceta ?? null,
                                 mimeArchivoReceta: record.mimeArchivoReceta ?? null,
@@ -1416,7 +1471,9 @@ export function MedicacionFormScreen({
                 </View>
                 <View style={styles.stepCopy}>
                   <Text style={styles.stepTitle}>3. Duracion y horario</Text>
-                  <Text style={styles.stepHint}>Define inicio, hora de toma y fin del tratamiento.</Text>
+                  <Text style={styles.stepHint}>
+                    Define inicio, hora de toma y si el tratamiento es temporal o permanente.
+                  </Text>
                 </View>
               </View>
 
@@ -1443,18 +1500,54 @@ export function MedicacionFormScreen({
               </View>
 
               <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Finalizacion</Text>
-                <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('fechaFin')}>
-                  <Ionicons name="flag-outline" size={18} color={appColors.info} />
-                  <Text style={styles.dateButtonText}>
-                    {form.fechaFin ? formatDisplayDate(form.fechaFin) : 'Selecciona una fecha opcional'}
-                  </Text>
-                </TouchableOpacity>
-                <Text style={styles.fieldHint}>
-                  Agregala si quieres dejar definido hasta cuando debe tomarse el medicamento.
-                </Text>
+                <Text style={styles.label}>Tratamiento permanente</Text>
+                <View style={[styles.toggleCard, isPermanentMedication && styles.toggleCardActive]}>
+                  <TouchableOpacity
+                    style={styles.toggleCopy}
+                    activeOpacity={0.85}
+                    onPress={() => setIsPermanentMedication((prev) => !prev)}
+                  >
+                    <Text style={styles.toggleTitle}>Activar medicacion permanente</Text>
+                    <Text style={styles.toggleDescription}>
+                      Si la activas, no se pedira fecha de finalizacion y la hora de toma quedara como recordatorio diario.
+                    </Text>
+                  </TouchableOpacity>
+                  <Switch
+                    value={isPermanentMedication}
+                    onValueChange={setIsPermanentMedication}
+                    trackColor={{ false: '#27496D', true: colorAlpha(appColors.success, '66') }}
+                    thumbColor={isPermanentMedication ? appColors.success : '#F4F8FF'}
+                  />
+                </View>
               </View>
-              {renderIOSPicker('fechaFin')}
+
+              {!isPermanentMedication ? (
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.label}>Finalizacion</Text>
+                  <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('fechaFin')}>
+                    <Ionicons name="flag-outline" size={18} color={appColors.info} />
+                    <Text style={styles.dateButtonText}>
+                      {form.fechaFin ? formatDisplayDate(form.fechaFin) : 'Selecciona una fecha opcional'}
+                    </Text>
+                  </TouchableOpacity>
+                  <Text style={styles.fieldHint}>
+                    Agregala si quieres dejar definido hasta cuando debe tomarse el medicamento.
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.permanentInfoCard}>
+                  <Ionicons name="repeat-outline" size={18} color={appColors.success} />
+                  <View style={styles.toggleCopy}>
+                    <Text style={styles.permanentInfoTitle}>Recordatorio diario</Text>
+                    <Text style={styles.permanentInfoText}>
+                      {form.horaMedicacion
+                        ? `La medicacion quedara activa todos los dias a las ${formatDisplayTime(form.horaMedicacion)}.`
+                        : 'Selecciona una hora de toma para activar el recordatorio diario.'}
+                    </Text>
+                  </View>
+                </View>
+              )}
+              {!isPermanentMedication ? renderIOSPicker('fechaFin') : null}
             </View>
 
             <View style={styles.attachmentCard}>
@@ -1523,7 +1616,19 @@ export function MedicacionFormScreen({
               )}
             </View>
 
-            {form.fechaFin ? (
+            {isPermanentMedication ? (
+              <View style={styles.permanentInfoCard}>
+                <Ionicons name="notifications-outline" size={18} color={appColors.success} />
+                <View style={styles.toggleCopy}>
+                  <Text style={styles.permanentInfoTitle}>Medicacion diaria</Text>
+                  <Text style={styles.permanentInfoText}>
+                    {form.horaMedicacion
+                      ? 'Al guardar, se activara el recordatorio diario de esta medicacion.'
+                      : 'Define una hora de toma para que el recordatorio diario quede activo.'}
+                  </Text>
+                </View>
+              </View>
+            ) : form.fechaFin ? (
               <View style={styles.inlineNotificationCard}>
                 <View style={styles.inlineNotificationIcon}>
                   <Ionicons name="notifications-outline" size={20} color={appColors.info} />
@@ -1531,7 +1636,7 @@ export function MedicacionFormScreen({
                 <View style={styles.inlineNotificationCopy}>
                   <Text style={styles.inlineNotificationTitle}>Notificacion del tratamiento</Text>
                   <Text style={styles.inlineNotificationHint}>
-                    Programa un aviso push para recordar la finalizacion del tratamiento.
+                    Programa un aviso para recordar la finalizacion del tratamiento.
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -1568,14 +1673,8 @@ export function MedicacionFormScreen({
                   </View>
                   <View style={styles.stepCopy}>
                     <Text style={styles.stepTitle}>Notificacion del tratamiento</Text>
-                    <Text style={styles.stepHint}>El canal queda fijo como notificacion push.</Text>
+                    <Text style={styles.stepHint}>Se programara una notificacion push para la fecha elegida.</Text>
                   </View>
-                </View>
-
-                <Text style={styles.label}>Canal</Text>
-                <View style={styles.fixedChannelCard}>
-                  <Ionicons name="phone-portrait-outline" size={18} color={appColors.info} />
-                  <Text style={styles.fixedChannelText}>Notificacion push</Text>
                 </View>
 
                 <Text style={styles.label}>Mensaje del recordatorio</Text>
@@ -1909,7 +2008,7 @@ const styles = StyleSheet.create({
   picker: {
     color: '#F4F8FF',
   },
-  fixedChannelCard: {
+  toggleCard: {
     borderWidth: 1,
     borderColor: '#27496D',
     borderRadius: 14,
@@ -1919,11 +2018,44 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    justifyContent: 'space-between',
   },
-  fixedChannelText: {
+  toggleCardActive: {
+    borderColor: colorAlpha(appColors.success, '66'),
+    backgroundColor: colorAlpha(appColors.success, '12'),
+  },
+  toggleCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  toggleTitle: {
     color: '#F4F8FF',
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  toggleDescription: {
+    color: '#C9D7E8',
+    lineHeight: 18,
+  },
+  permanentInfoCard: {
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.success, '46'),
+    borderRadius: 16,
+    padding: 14,
+    backgroundColor: colorAlpha(appColors.success, '10'),
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  permanentInfoTitle: {
+    color: '#F4F8FF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  permanentInfoText: {
+    color: '#C9D7E8',
+    lineHeight: 18,
   },
   inlineNotificationCard: {
     marginTop: 4,

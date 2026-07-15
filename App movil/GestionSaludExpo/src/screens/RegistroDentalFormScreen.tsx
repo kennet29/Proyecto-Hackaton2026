@@ -560,7 +560,8 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
             fechaprogramada: fechaNotificacion,
             medio: 'push',
             entidadorigen: 'registrodental',
-            entidadid: Number.isFinite(createdId) ? createdId : undefined,
+            entidadId: Number.isFinite(createdId) ? createdId : undefined,
+            campoprueba03: `Dental: ${form.procedimiento.trim() || 'Seguimiento'}`.slice(0, 200),
             creadopor: user?.username ?? undefined,
           },
         });

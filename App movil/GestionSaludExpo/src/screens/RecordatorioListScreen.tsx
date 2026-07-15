@@ -36,7 +36,8 @@ const webDateInputStyle = {
 };
 
 type ReminderRecord = {
-  recordatoriocitaId: number;
+  reminderId: number;
+  reminderType: 'recordatoriocita' | 'notificacion';
   citaId: number | null;
   pacienteId: number;
   fecharecordatorio: string;
@@ -267,39 +268,78 @@ const mapSourceRecords = (payload: any[], definition: SourceDefinition): SourceR
     })
     .filter((item): item is SourceRecord => Boolean(item));
 
-const mapReminders = (payload: any[]): ReminderRecord[] =>
-  payload
-    .map((item) => {
-      const recordatoriocitaId = Number(item?.recordatoriocitaId ?? item?.recordatoriocitaid ?? item?.id);
-      const citaIdRaw = item?.citaId ?? item?.citaid;
-      const citaId = citaIdRaw === null || citaIdRaw === undefined ? null : Number(citaIdRaw);
-      const pacienteId = Number(item?.pacienteId ?? item?.pacienteid);
-      const fecharecordatorio = normalizeText(item?.fecharecordatorio);
-      const mensaje = normalizeText(item?.mensaje);
+const mapRecordatorioCitas = (payload: any[]): ReminderRecord[] => {
+  const items: ReminderRecord[] = [];
 
-      if (
-        !Number.isFinite(recordatoriocitaId) ||
-        !Number.isFinite(pacienteId) ||
-        !fecharecordatorio ||
-        !mensaje
-      ) {
-        return null;
-      }
+  payload.forEach((item) => {
+    const recordatoriocitaId = Number(item?.recordatoriocitaId ?? item?.recordatoriocitaid ?? item?.id);
+    const citaIdRaw = item?.citaId ?? item?.citaid;
+    const citaId = citaIdRaw === null || citaIdRaw === undefined ? null : Number(citaIdRaw);
+    const pacienteId = Number(item?.pacienteId ?? item?.pacienteid);
+    const fecharecordatorio = normalizeText(item?.fecharecordatorio);
+    const mensaje = normalizeText(item?.mensaje);
 
-      return {
-        recordatoriocitaId,
-        citaId: Number.isFinite(citaId) ? citaId : null,
-        pacienteId,
-        fecharecordatorio,
-        mensaje,
-        canal: normalizeText(item?.canal),
-        estado: normalizeText(item?.estado),
-        sourceType: normalizeText(item?.campoprueba01),
-        sourceId: normalizeText(item?.campoprueba02),
-        sourceLabel: normalizeText(item?.campoprueba03),
-      } satisfies ReminderRecord;
-    })
-    .filter((item): item is ReminderRecord => Boolean(item));
+    if (!Number.isFinite(recordatoriocitaId) || !Number.isFinite(pacienteId) || !fecharecordatorio || !mensaje) {
+      return;
+    }
+
+    items.push({
+      reminderId: recordatoriocitaId,
+      reminderType: 'recordatoriocita',
+      citaId: Number.isFinite(citaId) ? citaId : null,
+      pacienteId,
+      fecharecordatorio,
+      mensaje,
+      canal: normalizeText(item?.canal),
+      estado: normalizeText(item?.estado),
+      sourceType: normalizeText(item?.campoprueba01),
+      sourceId: normalizeText(item?.campoprueba02),
+      sourceLabel: normalizeText(item?.campoprueba03),
+    });
+  });
+
+  return items;
+};
+
+const mapNotifications = (payload: any[]): ReminderRecord[] => {
+  const items: ReminderRecord[] = [];
+
+  payload.forEach((item) => {
+    const notificacionId = Number(item?.notificacionId ?? item?.notificacionid ?? item?.id);
+    const pacienteId = Number(item?.pacienteId ?? item?.pacienteid);
+    const fechaprogramada = normalizeText(item?.fechaprogramada);
+    const mensaje = normalizeText(item?.mensaje);
+    const entidadId =
+      item?.entidadId === null || item?.entidadId === undefined
+        ? null
+        : Number(item?.entidadId ?? item?.entidadid);
+    const entidadOrigen = normalizeText(item?.entidadorigen);
+    const tipo = normalizeText(item?.tipo);
+    const sourceLabel =
+      normalizeText(item?.campoprueba03) ??
+      (entidadOrigen && tipo ? `${entidadOrigen}: ${tipo}` : tipo ?? entidadOrigen);
+
+    if (!Number.isFinite(notificacionId) || !Number.isFinite(pacienteId) || !fechaprogramada || !mensaje) {
+      return;
+    }
+
+    items.push({
+      reminderId: notificacionId,
+      reminderType: 'notificacion',
+      citaId: null,
+      pacienteId,
+      fecharecordatorio: fechaprogramada,
+      mensaje,
+      canal: normalizeText(item?.medio),
+      estado: typeof item?.enviada === 'boolean' ? (item.enviada ? 'enviada' : 'pendiente') : 'pendiente',
+      sourceType: entidadOrigen,
+      sourceId: Number.isFinite(entidadId) ? String(entidadId) : null,
+      sourceLabel,
+    });
+  });
+
+  return items;
+};
 
 export function RecordatorioListScreen() {
   const { token, user } = useAuth();
@@ -330,22 +370,43 @@ export function RecordatorioListScreen() {
     setLoading(true);
     setError(null);
     try {
-      const [remindersResult, patientsResult, ...sourceResults] = await Promise.allSettled([
+      const [recordatoriosResult, notificationsResult, patientsResult, ...sourceResults] = await Promise.allSettled([
         fetch(`${API_URL}/recordatoriocita`, { headers }),
+        fetch(`${API_URL}/notificacion`, { headers }),
         fetchLinkedPatients(headers, { forceRefresh: true }),
         ...SOURCE_DEFINITIONS.map((definition) => fetch(`${API_URL}${definition.endpoint}`, { headers })),
       ]);
 
-      if (remindersResult.status !== 'fulfilled') {
-        throw remindersResult.reason;
+      const reminderErrors: string[] = [];
+      const mergedReminders: ReminderRecord[] = [];
+
+      if (recordatoriosResult.status === 'fulfilled') {
+        const remindersPayload = await recordatoriosResult.value.json().catch(() => null);
+        if (recordatoriosResult.value.ok) {
+          mergedReminders.push(
+            ...mapRecordatorioCitas(Array.isArray(remindersPayload) ? remindersPayload : []),
+          );
+        } else {
+          reminderErrors.push(remindersPayload?.message ?? 'No se pudieron cargar los recordatorios manuales');
+        }
+      } else {
+        reminderErrors.push('No se pudieron cargar los recordatorios manuales');
       }
 
-      const remindersPayload = await remindersResult.value.json().catch(() => null);
-      if (!remindersResult.value.ok) {
-        throw new Error(remindersPayload?.message ?? 'No se pudieron cargar los recordatorios');
+      if (notificationsResult.status === 'fulfilled') {
+        const notificationsPayload = await notificationsResult.value.json().catch(() => null);
+        if (notificationsResult.value.ok) {
+          mergedReminders.push(
+            ...mapNotifications(Array.isArray(notificationsPayload) ? notificationsPayload : []),
+          );
+        } else {
+          reminderErrors.push(notificationsPayload?.message ?? 'No se pudieron cargar las notificaciones automaticas');
+        }
+      } else {
+        reminderErrors.push('No se pudieron cargar las notificaciones automaticas');
       }
 
-      setReminders(mapReminders(Array.isArray(remindersPayload) ? remindersPayload : []));
+      setReminders(mergedReminders);
       setPatients(patientsResult.status === 'fulfilled' ? patientsResult.value : []);
 
       const loadedSources = await Promise.all(
@@ -356,6 +417,7 @@ export function RecordatorioListScreen() {
         }),
       );
       setSourceRecords(loadedSources.flat());
+      setError(reminderErrors.length > 0 ? reminderErrors.join(' | ') : null);
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : 'No se pudo cargar la informacion');
       setReminders([]);
@@ -472,10 +534,10 @@ export function RecordatorioListScreen() {
     const sourceLabel =
       item.sourceLabel ??
       source?.title ??
-      (item.citaId ? `Cita #${item.citaId}` : 'Registro vinculado');
+      (item.citaId ? `Cita #${item.citaId}` : item.reminderType === 'notificacion' ? 'Notificacion programada' : 'Registro vinculado');
 
     return (
-      <View key={item.recordatoriocitaId} style={styles.card}>
+      <View key={`${item.reminderType}-${item.reminderId}`} style={styles.card}>
         <View style={styles.cardHeader}>
           <View style={styles.personRow}>
             <View style={[styles.personIcon, { backgroundColor: colorAlpha(source?.accent ?? appColors.info, '18') }]}>
@@ -506,7 +568,9 @@ export function RecordatorioListScreen() {
             <Ionicons name="send-outline" size={14} color={appColors.success} />
             <Text style={styles.footerPillText}>{item.canal ?? 'Sin canal'}</Text>
           </View>
-          <Text style={styles.footerId}>#{item.recordatoriocitaId}</Text>
+          <Text style={styles.footerId}>
+            {item.reminderType === 'notificacion' ? 'Notif' : 'Rec'} #{item.reminderId}
+          </Text>
         </View>
       </View>
     );
@@ -670,7 +734,7 @@ export function RecordatorioListScreen() {
         <View style={styles.panelHeader}>
           <View>
             <Text style={styles.panelTitle}>Listado</Text>
-            <Text style={styles.panelSubtitle}>{sortedReminders.length} recordatorios registrados</Text>
+            <Text style={styles.panelSubtitle}>{sortedReminders.length} recordatorios y notificaciones registradas</Text>
           </View>
         </View>
 

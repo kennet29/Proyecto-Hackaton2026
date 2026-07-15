@@ -29,6 +29,7 @@ export type RootStackParamList = {
           fechaInicio?: string | null;
           fechaFin?: string | null;
           horaMedicacion?: string | null;
+          frecuencia?: string | null;
           horariomedicamentoId?: number | null;
           indicaciones?: string | null;
           nombreArchivoReceta?: string | null;

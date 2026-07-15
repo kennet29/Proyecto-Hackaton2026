@@ -546,6 +546,7 @@ export function VacunaFormScreen() {
           fechaprogramada: scheduledAt,
           medio: 'push',
           entidadorigen: 'vacuna',
+          campoprueba03: `Vacuna: ${form.nombre.trim() || 'Proxima dosis'}`.slice(0, 200),
           creadopor: user?.username ?? undefined,
         },
       });

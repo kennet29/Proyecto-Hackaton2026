@@ -364,6 +364,7 @@ export function ConsultaFormScreen({ route }: Props) {
         medio: 'push',
         entidadorigen: 'consultamedica',
         entidadId: consultaId,
+        campoprueba03: `Consulta: ${form.motivo.trim() || 'Seguimiento medico'}`.slice(0, 200),
         creadopor: user?.username ?? undefined,
       },
     });
@@ -481,6 +482,7 @@ export function ConsultaFormScreen({ route }: Props) {
           medio: 'push',
           entidadorigen: 'consultamedica',
           entidadId: currentConsultaId ?? consulta?.consultaId ?? undefined,
+          campoprueba03: `Consulta: ${form.motivo.trim() || 'Seguimiento medico'}`.slice(0, 200),
           creadopor: user?.username ?? undefined,
         },
       });
