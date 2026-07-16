@@ -6,6 +6,9 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /api/v1/health
+    envVars:
+      - key: ALTCHA_HMAC_SECRET
+        generateValue: true
     buildFilter:
       paths:
         - Backend/**

@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
+import { WebTimeInput } from '../components/WebTimeInput';
 
 type FeedbackState = { type: 'success' | 'error'; message: string } | null;
 
@@ -916,9 +917,17 @@ export function ControlCronicoScreen() {
           ) : null}
 
           <Text style={styles.label}>Hora del control</Text>
-          <TouchableOpacity style={styles.dateButton} onPress={openTimePicker}>
-            <Text style={styles.dateButtonText}>{formatDisplayTime(form.horacontrol)}</Text>
-          </TouchableOpacity>
+          {Platform.OS === 'web' ? (
+            <WebTimeInput
+              value={form.horacontrol}
+              onChange={(value) => handleChange('horacontrol', value)}
+              ariaLabel="Hora del control cronico"
+            />
+          ) : (
+            <TouchableOpacity style={styles.dateButton} onPress={openTimePicker}>
+              <Text style={styles.dateButtonText}>{formatDisplayTime(form.horacontrol)}</Text>
+            </TouchableOpacity>
+          )}
           {Platform.OS === 'ios' && showIOSControlTimePicker ? (
             <View style={styles.iosPickerWrapper}>
               <DateTimePicker

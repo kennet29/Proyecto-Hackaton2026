@@ -133,10 +133,7 @@ describe("AuthService", () => {
   it("completes password recovery with captcha and security answer", async () => {
     const { service, usersService, jwtService, resetRepository } =
       buildService();
-    jwtService.verifyAsync.mockResolvedValue({
-      purpose: "password-reset-captcha",
-      answer: "12",
-    });
+    jest.spyOn(service as any, "validateAltcha").mockResolvedValue(undefined);
     usersService.findByUsernameOrEmail.mockResolvedValue({
       id: 21,
       username: "ana@example.com",
@@ -148,8 +145,7 @@ describe("AuthService", () => {
       username: "ana@example.com",
       securityQuestion: "pet",
       securityAnswer: "Fírulais",
-      captchaAnswer: "12",
-      captchaToken: "valid-captcha-token",
+      altchaPayload: "valid-altcha-payload-value",
     });
 
     expect(requested.token).toMatch(/^[A-HJ-NP-Z2-9]{4}$/);
@@ -176,10 +172,7 @@ describe("AuthService", () => {
 
   it("rejects password recovery when the security answer is wrong", async () => {
     const { service, usersService, jwtService, resetRepository } = buildService();
-    jwtService.verifyAsync.mockResolvedValue({
-      purpose: "password-reset-captcha",
-      answer: "7",
-    });
+    jest.spyOn(service as any, "validateAltcha").mockResolvedValue(undefined);
     usersService.findByUsernameOrEmail.mockResolvedValue({
       id: 22,
       username: "luis@example.com",
@@ -192,8 +185,7 @@ describe("AuthService", () => {
         username: "luis@example.com",
         securityQuestion: "city",
         securityAnswer: "Leon",
-        captchaAnswer: "7",
-        captchaToken: "valid-captcha-token",
+        altchaPayload: "valid-altcha-payload-value",
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
     expect(resetRepository.save).not.toHaveBeenCalled();

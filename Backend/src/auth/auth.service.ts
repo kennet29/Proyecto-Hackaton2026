@@ -8,6 +8,27 @@ import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { InjectRepository } from "@nestjs/typeorm";
 import { randomBytes, randomInt, createHash, timingSafeEqual } from "crypto";
+const {
+  createChallenge,
+  verifySolution,
+  randomInt: altchaRandomInt,
+} = require("altcha-lib") as {
+  createChallenge: (options: Record<string, unknown>) => Promise<AltchaChallenge>;
+  verifySolution: (options: Record<string, unknown>) => Promise<{ verified: boolean; expired: boolean }>;
+  randomInt: (min: number, max: number) => number;
+};
+const { deriveKey: derivePbkdf2Key } = require("altcha-lib/algorithms/pbkdf2") as {
+  deriveKey: (...args: unknown[]) => Promise<unknown>;
+};
+
+type AltchaChallenge = {
+  parameters: { nonce: string; expiresAt?: number; [key: string]: unknown };
+  signature?: string;
+};
+type AltchaPayload = {
+  challenge: AltchaChallenge;
+  solution: { counter: number; derivedKey: string; time?: number };
+};
 import { Repository } from "typeorm";
 import { UsersService } from "../users/users.service";
 import { LoginDto } from "./dto/login.dto";
@@ -58,6 +79,7 @@ export interface AuthenticatedUser {
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly usedAltchaChallenges = new Map<string, number>();
 
   constructor(
     private readonly usersService: UsersService,
@@ -175,7 +197,7 @@ export class AuthService {
    * @returns Resultado de la operación.
    */
   async requestPasswordReset(payload: RequestResetDto) {
-    await this.validateCaptcha(payload.captchaToken, payload.captchaAnswer);
+    await this.validateAltcha(payload.altchaPayload);
     const user =
       await this.usersService.findByUsernameOrEmail(payload.username);
     if (!user) {
@@ -221,25 +243,60 @@ export class AuthService {
     ).join("");
   }
 
-  async createCaptcha() {
-    const left = Math.floor(Math.random() * 9) + 1;
-    const right = Math.floor(Math.random() * 9) + 1;
-    const captchaToken = await this.jwtService.signAsync(
-      { purpose: "password-reset-captcha", answer: String(left + right) },
-      { expiresIn: "5m" },
-    );
-    return { question: `${left} + ${right} = ?`, captchaToken };
+  async createAltchaChallenge() {
+    const expiresAt = new Date(Date.now() + 20 * 60 * 1000);
+    return createChallenge({
+      algorithm: "PBKDF2/SHA-256",
+      cost: 5000,
+      counter: altchaRandomInt(5000, 10000),
+      deriveKey: derivePbkdf2Key,
+      expiresAt,
+      hmacSignatureSecret: this.getAltchaSecret(),
+    });
   }
 
-  private async validateCaptcha(token: string, answer: string): Promise<void> {
+  private async validateAltcha(encodedPayload: string): Promise<void> {
     try {
-      const payload = await this.jwtService.verifyAsync<{ purpose: string; answer: string }>(token);
-      if (payload.purpose !== "password-reset-captcha" || payload.answer !== answer) {
-        throw new Error("invalid");
+      const decoded = Buffer.from(encodedPayload, "base64").toString("utf8");
+      const payload = JSON.parse(decoded) as AltchaPayload;
+      if (!payload?.challenge?.parameters?.nonce || !payload.solution) {
+        throw new Error("payload incompleto");
       }
-    } catch {
-      throw new UnauthorizedException("captcha invalido o expirado");
+
+      const replayKey = createHash("sha256")
+        .update(`${payload.challenge.parameters.nonce}:${payload.challenge.signature ?? ""}`)
+        .digest("hex");
+      const now = Date.now();
+      for (const [key, expiresAt] of this.usedAltchaChallenges) {
+        if (expiresAt <= now) this.usedAltchaChallenges.delete(key);
+      }
+      if (this.usedAltchaChallenges.has(replayKey)) throw new Error("reto reutilizado");
+
+      const result = await verifySolution({
+        challenge: payload.challenge,
+        solution: payload.solution,
+        deriveKey: derivePbkdf2Key,
+        hmacSignatureSecret: this.getAltchaSecret(),
+      });
+      if (!result.verified || result.expired) throw new Error("solucion invalida");
+
+      this.usedAltchaChallenges.set(replayKey, now + 20 * 60 * 1000);
+      if (this.usedAltchaChallenges.size > 5000) {
+        const oldest = this.usedAltchaChallenges.keys().next().value;
+        if (oldest) this.usedAltchaChallenges.delete(oldest);
+      }
+    } catch (error) {
+      this.logger.warn(`ALTCHA rechazo la solicitud: ${error instanceof Error ? error.message : "error desconocido"}`);
+      throw new UnauthorizedException("verificacion de seguridad invalida o expirada");
     }
+  }
+
+  private getAltchaSecret(): string {
+    const secret = process.env.ALTCHA_HMAC_SECRET ?? process.env.JWT_SECRET;
+    if (!secret || secret.length < 16) {
+      throw new Error("ALTCHA_HMAC_SECRET o JWT_SECRET debe tener al menos 16 caracteres");
+    }
+    return secret;
   }
 
   private normalizeSecurityAnswer(value: string): string {

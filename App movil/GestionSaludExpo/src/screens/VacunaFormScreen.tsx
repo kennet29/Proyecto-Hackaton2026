@@ -20,6 +20,7 @@ import { API_URL } from '../config/api';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
+import { WebTimeInput } from '../components/WebTimeInput';
 
 const webPickerInputStyle = {
   flex: 1,
@@ -1013,13 +1014,11 @@ export function VacunaFormScreen() {
                         style: webPickerInputStyle,
                         'aria-label': 'Fecha del aviso',
                       })}
-                      {React.createElement('input', {
-                        type: 'time',
-                        value: notificationTime,
-                        onChange: (event: any) => setNotificationTime(event.target.value),
-                        style: webPickerInputStyle,
-                        'aria-label': 'Hora del aviso',
-                      })}
+                      <WebTimeInput
+                        value={notificationTime}
+                        onChange={setNotificationTime}
+                        ariaLabel="Hora del aviso de vacunacion"
+                      />
                     </>
                   ) : (
                     <>

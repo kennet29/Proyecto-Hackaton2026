@@ -19,6 +19,7 @@ import { API_URL } from '../config/api';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
+import { WebTimeInput } from '../components/WebTimeInput';
 
 const webDateInputStyle = {
   flex: 1,
@@ -676,13 +677,11 @@ export function RecordatorioListScreen() {
                 style: webDateInputStyle,
                 'aria-label': 'Fecha del aviso',
               })}
-              {React.createElement('input', {
-                type: 'time',
-                value: notificationTime,
-                onChange: (event: any) => setNotificationTime(event.target.value),
-                style: webDateInputStyle,
-                'aria-label': 'Hora del aviso',
-              })}
+              <WebTimeInput
+                value={notificationTime}
+                onChange={setNotificationTime}
+                ariaLabel="Hora del aviso"
+              />
             </>
           ) : (
             <>

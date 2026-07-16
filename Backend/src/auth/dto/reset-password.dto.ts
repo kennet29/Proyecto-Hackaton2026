@@ -6,7 +6,11 @@ import { z } from "zod";
  */
 export const resetPasswordSchema = z.object({
   token: z.string().trim().min(4).max(100),
-  password: z.string().min(6).max(128),
+  password: z.string()
+    .min(8)
+    .max(128)
+    .regex(/[A-ZÁÉÍÓÚÑ]/, "incluye al menos una mayuscula")
+    .regex(/\d/, "incluye al menos un numero"),
 });
 
 /**

@@ -29,6 +29,7 @@ import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
+import { WebTimeInput } from '../components/WebTimeInput';
 
 type PickerField =
   | 'fechaInicio'
@@ -1489,12 +1490,20 @@ export function MedicacionFormScreen({
 
                 <View style={styles.dateGridItem}>
                   <Text style={styles.label}>Hora de toma</Text>
-                  <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('horaMedicacion')}>
-                    <Ionicons name="alarm-outline" size={18} color={appColors.info} />
-                    <Text style={styles.dateButtonText}>
-                      {form.horaMedicacion ? formatDisplayTime(form.horaMedicacion) : 'Opcional'}
-                    </Text>
-                  </TouchableOpacity>
+                  {Platform.OS === 'web' ? (
+                    <WebTimeInput
+                      value={normalizeTimeString(form.horaMedicacion)}
+                      onChange={(value) => handleChange('horaMedicacion', value)}
+                      ariaLabel="Hora de toma del medicamento"
+                    />
+                  ) : (
+                    <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('horaMedicacion')}>
+                      <Ionicons name="alarm-outline" size={18} color={appColors.info} />
+                      <Text style={styles.dateButtonText}>
+                        {form.horaMedicacion ? formatDisplayTime(form.horaMedicacion) : 'Opcional'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                   {renderIOSPicker('horaMedicacion')}
                 </View>
               </View>
@@ -1695,12 +1704,20 @@ export function MedicacionFormScreen({
                   >
                     <Text style={styles.dateButtonText}>{formatDisplayDate(notificationDate)}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.dateButton, styles.dateTimeButton]}
-                    onPress={() => showPicker('notificationTime')}
-                  >
-                    <Text style={styles.dateButtonText}>{formatDisplayTime(notificationTime)}</Text>
-                  </TouchableOpacity>
+                  {Platform.OS === 'web' ? (
+                    <WebTimeInput
+                      value={normalizeTimeString(notificationTime)}
+                      onChange={setNotificationTime}
+                      ariaLabel="Hora del aviso"
+                    />
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.dateButton, styles.dateTimeButton]}
+                      onPress={() => showPicker('notificationTime')}
+                    >
+                      <Text style={styles.dateButtonText}>{formatDisplayTime(notificationTime)}</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
                 {renderIOSPicker('notificationDate')}
                 {renderIOSPicker('notificationTime')}

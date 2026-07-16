@@ -1,59 +1,63 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
-  ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { apiFetch, buildJsonHeaders, parseJsonResponse } from '../utils/apiClient';
+import { appColors, colorAlpha } from '../theme/colors';
+import { AltchaWidget } from '../components/AltchaWidget';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CambiarContrasena'>;
-type ApiMessage = { message?: string; token?: string };
-type CaptchaResponse = { question?: string; captchaToken?: string; message?: string };
-const SECURITY_QUESTIONS = [
-  { id: 'pet', label: '¿Cómo se llamaba tu primera mascota?' },
-  { id: 'school', label: '¿Cuál fue el nombre de tu primera escuela?' },
-  { id: 'city', label: '¿En qué ciudad naciste?' },
-] as const;
+type ApiMessage = { message?: string; token?: string; expira?: string };
+type SecurityQuestion = 'pet' | 'school' | 'city';
+
+const SECURITY_QUESTIONS: Array<{ id: SecurityQuestion; label: string; icon: keyof typeof Ionicons.glyphMap }> = [
+  { id: 'pet', label: '¿Cómo se llamaba tu primera mascota?', icon: 'paw-outline' },
+  { id: 'school', label: '¿Cuál fue el nombre de tu primera escuela?', icon: 'school-outline' },
+  { id: 'city', label: '¿En qué ciudad naciste?', icon: 'location-outline' },
+];
 
 export function CambiarContrasenaScreen({ navigation }: Props) {
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 980;
+  const [step, setStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [securityQuestion, setSecurityQuestion] = useState<'pet' | 'school' | 'city'>('pet');
+  const [securityQuestion, setSecurityQuestion] = useState<SecurityQuestion>('pet');
   const [securityAnswer, setSecurityAnswer] = useState('');
-  const [captchaQuestion, setCaptchaQuestion] = useState('Cargando...');
-  const [captchaToken, setCaptchaToken] = useState('');
-  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [altchaPayload, setAltchaPayload] = useState('');
+  const [altchaResetKey, setAltchaResetKey] = useState(0);
+  const [recoveryExpiresAt, setRecoveryExpiresAt] = useState('');
 
-  const loadCaptcha = useCallback(async () => {
-    try {
-      const response = await apiFetch('/auth/captcha');
-      const body = await parseJsonResponse<CaptchaResponse>(response);
-      if (!response.ok || !body?.captchaToken || !body.question) throw new Error(body?.message ?? 'No se pudo cargar el captcha.');
-      setCaptchaQuestion(body.question);
-      setCaptchaToken(body.captchaToken);
-      setCaptchaAnswer('');
-    } catch (error) {
-      setCaptchaQuestion('No disponible');
-      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo cargar el captcha.');
-    }
-  }, []);
+  const handleAltchaPayload = useCallback((payload: string) => setAltchaPayload(payload), []);
 
-  useEffect(() => { void loadCaptcha(); }, [loadCaptcha]);
+  const passwordChecks = useMemo(() => [
+    { label: '8 caracteres', valid: newPassword.length >= 8 },
+    { label: 'Una mayúscula', valid: /[A-ZÁÉÍÓÚÑ]/.test(newPassword) },
+    { label: 'Un número', valid: /\d/.test(newPassword) },
+  ], [newPassword]);
+  const passwordIsStrong = passwordChecks.every((check) => check.valid);
 
   const requestCode = async () => {
     const accountEmail = email.trim().toLowerCase();
-    if (!accountEmail || !securityAnswer.trim() || !captchaAnswer.trim() || !captchaToken) {
-      Alert.alert('Faltan datos', 'Completa el correo, la pregunta de seguridad y el captcha.');
+    if (!accountEmail || !securityAnswer.trim() || !altchaPayload) {
+      Alert.alert('Faltan datos', 'Completa tu correo, la respuesta de seguridad y la verificación.');
       return;
     }
 
@@ -62,30 +66,40 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
       const response = await apiFetch('/auth/forgot-password', {
         method: 'POST',
         headers: buildJsonHeaders(),
-        body: JSON.stringify({ username: accountEmail, securityQuestion, securityAnswer: securityAnswer.trim(), captchaAnswer: captchaAnswer.trim(), captchaToken }),
+        body: JSON.stringify({
+          username: accountEmail,
+          securityQuestion,
+          securityAnswer: securityAnswer.trim(),
+          altchaPayload,
+        }),
       });
       const body = await parseJsonResponse<ApiMessage>(response);
-      if (!response.ok) {
-        throw new Error(body?.message ?? 'No se pudo enviar el codigo.');
-      }
-      if (!body?.token) throw new Error('El servidor no devolvio el codigo.');
+      if (!response.ok) throw new Error(body?.message ?? 'No se pudo generar el código.');
+      if (!body?.token) throw new Error('El servidor no devolvió el código.');
       setCode(body.token);
-      Alert.alert('Codigo generado', `Tu codigo de recuperacion es: ${body.token}`);
+      setRecoveryExpiresAt(body.expira ?? '');
+      setStep(2);
     } catch (error) {
-      Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'No se pudo enviar el codigo.',
-      );
-      void loadCaptcha();
+      Alert.alert('No se pudo continuar', error instanceof Error ? error.message : 'Inténtalo nuevamente.');
+      setAltchaPayload('');
+      setAltchaResetKey((current) => current + 1);
     } finally {
       setSendingCode(false);
     }
   };
 
   const onSubmit = async () => {
-    const trimmedCode = code.trim();
-    if (!trimmedCode || !newPassword) {
-      Alert.alert('Faltan datos', 'Codigo y nueva contrasena son requeridos.');
+    const trimmedCode = code.trim().toUpperCase();
+    if (!trimmedCode || !newPassword || !confirmPassword) {
+      Alert.alert('Faltan datos', 'Completa el código y confirma tu nueva contraseña.');
+      return;
+    }
+    if (!passwordIsStrong) {
+      Alert.alert('Contraseña débil', 'Usa al menos 8 caracteres, una mayúscula y un número.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Las contraseñas no coinciden', 'Revisa la confirmación e inténtalo nuevamente.');
       return;
     }
 
@@ -94,149 +108,331 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
       const response = await apiFetch('/auth/reset-password', {
         method: 'POST',
         headers: buildJsonHeaders(),
-        body: JSON.stringify({
-          token: trimmedCode,
-          password: newPassword,
-        }),
+        body: JSON.stringify({ token: trimmedCode, password: newPassword }),
       });
       const body = await parseJsonResponse<ApiMessage>(response);
-      if (!response.ok) {
-        throw new Error(body?.message ?? 'No se pudo cambiar la contrasena.');
-      }
-      Alert.alert('Contrasena actualizada', 'Ya puedes iniciar sesion.', [
-        { text: 'Ir al login', onPress: () => navigation.goBack() },
+      if (!response.ok) throw new Error(body?.message ?? 'No se pudo cambiar la contraseña.');
+      Alert.alert('Contraseña actualizada', 'Ya puedes iniciar sesión con tu nueva contraseña.', [
+        { text: 'Ir al inicio de sesión', onPress: () => navigation.goBack() },
       ]);
     } catch (error) {
-      Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'No se pudo cambiar la contrasena.',
-      );
+      Alert.alert('No se pudo guardar', error instanceof Error ? error.message : 'Inténtalo nuevamente.');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Cambiar contrasena</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Correo"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        placeholderTextColor="#9FB3C8"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <Text style={styles.label}>Pregunta de seguridad</Text>
-      {SECURITY_QUESTIONS.map((question) => (
-        <TouchableOpacity key={question.id} style={[styles.questionOption, securityQuestion === question.id && styles.questionOptionActive]} onPress={() => setSecurityQuestion(question.id)}>
-          <Text style={styles.questionOptionText}>{question.label}</Text>
-        </TouchableOpacity>
-      ))}
-      <TextInput style={styles.input} placeholder="Respuesta de seguridad" placeholderTextColor="#9FB3C8" value={securityAnswer} onChangeText={setSecurityAnswer} />
-      <View style={styles.captchaRow}>
-        <Text style={styles.captchaText}>{captchaQuestion}</Text>
-        <TouchableOpacity onPress={() => void loadCaptcha()}><Text style={styles.refreshText}>Cambiar</Text></TouchableOpacity>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.scrollContent}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={[styles.shell, isDesktop && styles.shellDesktop]}>
+        <View style={[styles.hero, isDesktop && styles.heroDesktop]}>
+          <View style={styles.heroIcon}>
+            <Ionicons name="key-outline" size={30} color={appColors.info} />
+          </View>
+          <Text style={styles.eyebrow}>SEGURIDAD DE LA CUENTA</Text>
+          <Text style={styles.heroTitle}>Recupera el acceso de forma segura</Text>
+          <Text style={styles.heroText}>
+            Verificaremos tu identidad antes de permitir que establezcas una contraseña nueva.
+          </Text>
+          <View style={styles.trustList}>
+            {[
+              ['shield-checkmark-outline', 'Verificación protegida contra bots'],
+              ['timer-outline', 'Código válido durante 30 minutos'],
+              ['lock-closed-outline', 'Tu contraseña nunca se muestra'],
+            ].map(([icon, text]) => (
+              <View key={text} style={styles.trustItem}>
+                <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={18} color={appColors.success} />
+                <Text style={styles.trustText}>{text}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={[styles.card, isDesktop && styles.cardDesktop]}>
+          <View style={styles.progressHeader}>
+            <View style={styles.progressCopy}>
+              <Text style={styles.cardTitle}>{step === 1 ? 'Verifica tu identidad' : 'Crea tu contraseña'}</Text>
+              <Text style={styles.cardSubtitle}>Paso {step} de 2</Text>
+            </View>
+            <View style={styles.steps}>
+              {[1, 2].map((item) => (
+                <View key={item} style={[styles.stepDot, step >= item && styles.stepDotActive]}>
+                  {step > item ? (
+                    <Ionicons name="checkmark" size={14} color={appColors.background} />
+                  ) : (
+                    <Text style={[styles.stepNumber, step >= item && styles.stepNumberActive]}>{item}</Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {step === 1 ? (
+            <View style={styles.form}>
+              <View>
+                <Text style={styles.label}>Correo de la cuenta</Text>
+                <View style={styles.inputWrap}>
+                  <Ionicons name="mail-outline" size={19} color={appColors.textMuted} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="nombre@correo.com"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    placeholderTextColor={appColors.textMuted}
+                    value={email}
+                    onChangeText={setEmail}
+                  />
+                </View>
+              </View>
+
+              <View>
+                <Text style={styles.label}>Pregunta de seguridad</Text>
+                <View style={styles.questionGrid}>
+                  {SECURITY_QUESTIONS.map((question) => {
+                    const selected = securityQuestion === question.id;
+                    return (
+                      <TouchableOpacity
+                        key={question.id}
+                        accessibilityRole="radio"
+                        accessibilityState={{ checked: selected }}
+                        style={[styles.questionOption, selected && styles.questionOptionActive]}
+                        onPress={() => setSecurityQuestion(question.id)}
+                      >
+                        <Ionicons name={question.icon} size={18} color={selected ? appColors.info : appColors.textMuted} />
+                        <Text style={[styles.questionText, selected && styles.questionTextActive]}>{question.label}</Text>
+                        <View style={[styles.radio, selected && styles.radioActive]}>
+                          {selected ? <View style={styles.radioCenter} /> : null}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View>
+                <Text style={styles.label}>Tu respuesta</Text>
+                <View style={styles.inputWrap}>
+                  <Ionicons name="chatbubble-ellipses-outline" size={19} color={appColors.textMuted} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Escribe la respuesta que registraste"
+                    placeholderTextColor={appColors.textMuted}
+                    value={securityAnswer}
+                    onChangeText={setSecurityAnswer}
+                  />
+                </View>
+                <Text style={styles.helperText}>No distingue entre mayúsculas, minúsculas ni acentos.</Text>
+              </View>
+
+              <AltchaWidget onPayload={handleAltchaPayload} resetKey={altchaResetKey} />
+
+              <TouchableOpacity
+                style={[styles.primaryButton, sendingCode && styles.disabled]}
+                onPress={requestCode}
+                disabled={sendingCode}
+              >
+                {sendingCode ? <ActivityIndicator color={appColors.background} /> : (
+                  <>
+                    <Text style={styles.primaryButtonText}>Continuar</Text>
+                    <Ionicons name="arrow-forward" size={18} color={appColors.background} />
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.form}>
+              <View style={styles.successBanner}>
+                <Ionicons name="checkmark-circle" size={23} color={appColors.success} />
+                <View style={styles.bannerCopy}>
+                  <Text style={styles.successTitle}>Identidad verificada</Text>
+                  <Text style={styles.successText}>Usa el código generado para {email.trim().toLowerCase()}.</Text>
+                </View>
+              </View>
+
+              <View>
+                <Text style={styles.label}>Código de recuperación</Text>
+                <View style={styles.codeInputWrap}>
+                  <TextInput
+                    style={styles.codeInput}
+                    placeholder="AB12"
+                    placeholderTextColor={appColors.textMuted}
+                    value={code}
+                    onChangeText={setCode}
+                    autoCapitalize="characters"
+                    maxLength={4}
+                  />
+                </View>
+                <Text style={styles.helperText}>
+                  {recoveryExpiresAt ? 'Este código expira en 30 minutos.' : 'Ingresa el código de cuatro caracteres.'}
+                </Text>
+              </View>
+
+              <View>
+                <Text style={styles.label}>Nueva contraseña</Text>
+                <View style={styles.inputWrap}>
+                  <Ionicons name="lock-closed-outline" size={19} color={appColors.textMuted} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Escribe una contraseña segura"
+                    placeholderTextColor={appColors.textMuted}
+                    secureTextEntry={!showPassword}
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    autoComplete="new-password"
+                  />
+                  <TouchableOpacity onPress={() => setShowPassword((current) => !current)}>
+                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={appColors.textMuted} />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.requirements}>
+                  {passwordChecks.map((check) => (
+                    <View key={check.label} style={styles.requirement}>
+                      <Ionicons
+                        name={check.valid ? 'checkmark-circle' : 'ellipse-outline'}
+                        size={15}
+                        color={check.valid ? appColors.success : appColors.textMuted}
+                      />
+                      <Text style={[styles.requirementText, check.valid && styles.requirementValid]}>{check.label}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              <View>
+                <Text style={styles.label}>Confirma tu contraseña</Text>
+                <View style={styles.inputWrap}>
+                  <Ionicons name="lock-closed-outline" size={19} color={appColors.textMuted} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Repite la contraseña"
+                    placeholderTextColor={appColors.textMuted}
+                    secureTextEntry={!showPassword}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    autoComplete="new-password"
+                  />
+                  {confirmPassword ? (
+                    <Ionicons
+                      name={newPassword === confirmPassword ? 'checkmark-circle' : 'close-circle'}
+                      size={20}
+                      color={newPassword === confirmPassword ? appColors.success : appColors.accent}
+                    />
+                  ) : null}
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.primaryButton, saving && styles.disabled]}
+                onPress={onSubmit}
+                disabled={saving}
+              >
+                {saving ? <ActivityIndicator color={appColors.background} /> : (
+                  <>
+                    <Ionicons name="shield-checkmark" size={18} color={appColors.background} />
+                    <Text style={styles.primaryButtonText}>Actualizar contraseña</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.backButton} onPress={() => setStep(1)}>
+                <Ionicons name="arrow-back" size={17} color={appColors.textMuted} />
+                <Text style={styles.backButtonText}>Cambiar datos de verificación</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </View>
-      <TextInput style={styles.input} placeholder="Resultado del captcha" placeholderTextColor="#9FB3C8" keyboardType="number-pad" value={captchaAnswer} onChangeText={setCaptchaAnswer} />
-      <TouchableOpacity
-        style={[styles.secondaryBtn, sendingCode && styles.disabledBtn]}
-        onPress={requestCode}
-        disabled={sendingCode}
-      >
-        {sendingCode ? (
-          <ActivityIndicator color="#0A6FA8" />
-        ) : (
-          <Text style={styles.secondaryText}>Enviar codigo</Text>
-        )}
-      </TouchableOpacity>
-      <TextInput
-        style={styles.input}
-        placeholder="Codigo"
-        placeholderTextColor="#9FB3C8"
-        value={code}
-        onChangeText={setCode}
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Nueva contrasena"
-        placeholderTextColor="#9FB3C8"
-        secureTextEntry
-        value={newPassword}
-        onChangeText={setNewPassword}
-      />
-      <TouchableOpacity
-        style={[styles.primaryBtn, saving && styles.disabledBtn]}
-        onPress={onSubmit}
-        disabled={saving}
-      >
-        {saving ? (
-          <ActivityIndicator color="#F4F8FF" />
-        ) : (
-          <Text style={styles.btnText}>Guardar</Text>
-        )}
-      </TouchableOpacity>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    backgroundColor: '#F4F8FF',
+  screen: { flex: 1, backgroundColor: appColors.background },
+  scrollContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  shell: { width: '100%', maxWidth: 760, gap: 18 },
+  shellDesktop: { maxWidth: 1180, flexDirection: 'row', alignItems: 'stretch', gap: 28 },
+  hero: { padding: 8 },
+  heroDesktop: { flex: 0.8, justifyContent: 'center', padding: 38 },
+  heroIcon: {
+    width: 62, height: 62, borderRadius: 20, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colorAlpha(appColors.info, '14'), borderWidth: 1, borderColor: colorAlpha(appColors.info, '44'),
+    marginBottom: 24,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginVertical: 18,
-    color: '#071120',
+  eyebrow: { color: appColors.info, fontSize: 12, fontWeight: '900', letterSpacing: 1.3, marginBottom: 10 },
+  heroTitle: { color: appColors.text, fontSize: 38, lineHeight: 44, fontWeight: '900', maxWidth: 460 },
+  heroText: { color: appColors.textMuted, fontSize: 16, lineHeight: 25, marginTop: 14, maxWidth: 480 },
+  trustList: { marginTop: 30, gap: 14 },
+  trustItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  trustText: { color: appColors.textSoft, fontSize: 14 },
+  card: {
+    padding: 22, borderRadius: 24, borderWidth: 1, borderColor: appColors.border,
+    backgroundColor: appColors.surface, shadowColor: '#000', shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.25, shadowRadius: 30, elevation: 16,
   },
-  label: { fontSize: 13, fontWeight: '600', color: '#486581', marginBottom: 8 },
-  questionOption: { borderWidth: 1, borderColor: '#C9D7E8', borderRadius: 10, padding: 11, marginBottom: 8 },
-  questionOptionActive: { borderColor: '#29B6FF', backgroundColor: '#EAF7FF' },
-  questionOptionText: { color: '#071120' },
-  captchaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14, borderRadius: 12, backgroundColor: '#EAF7FF', marginBottom: 10 },
-  captchaText: { color: '#071120', fontSize: 18, fontWeight: '700' },
-  refreshText: { color: '#0A6FA8', fontWeight: '600' },
-  input: {
-    borderWidth: 1,
-    borderColor: '#C9D7E8',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 14,
-    fontSize: 16,
-    color: '#071120',
+  cardDesktop: { flex: 1.2, padding: 30 },
+  progressHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 16,
+    paddingBottom: 22, borderBottomWidth: 1, borderBottomColor: appColors.border,
   },
-  primaryBtn: {
-    backgroundColor: '#29B6FF',
-    paddingVertical: 15,
-    borderRadius: 12,
-    marginTop: 8,
+  progressCopy: { flex: 1 },
+  cardTitle: { color: appColors.text, fontSize: 23, fontWeight: '900' },
+  cardSubtitle: { color: appColors.textMuted, fontSize: 13, marginTop: 4 },
+  steps: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  stepDot: {
+    width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted,
   },
-  secondaryBtn: {
-    borderWidth: 1,
-    borderColor: '#29B6FF',
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginBottom: 14,
-    backgroundColor: '#EAF7FF',
+  stepDotActive: { backgroundColor: appColors.info, borderColor: appColors.info },
+  stepNumber: { color: appColors.textMuted, fontSize: 12, fontWeight: '900' },
+  stepNumberActive: { color: appColors.background },
+  form: { paddingTop: 22, gap: 18 },
+  label: { color: appColors.textSoft, fontSize: 13, fontWeight: '800', marginBottom: 8 },
+  inputWrap: {
+    minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14,
+    borderRadius: 14, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted,
   },
-  disabledBtn: {
-    opacity: 0.65,
+  input: { flex: 1, minWidth: 0, color: appColors.text, fontSize: 15, paddingVertical: 13, outlineStyle: 'none' } as any,
+  helperText: { color: appColors.textMuted, fontSize: 11, marginTop: 7 },
+  questionGrid: { gap: 8 },
+  questionOption: {
+    minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 13,
+    borderRadius: 13, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted,
   },
-  btnText: {
-    color: '#F4F8FF',
-    textAlign: 'center',
-    fontWeight: '600',
-    fontSize: 16,
+  questionOptionActive: { borderColor: appColors.info, backgroundColor: colorAlpha(appColors.info, '10') },
+  questionText: { flex: 1, color: appColors.textMuted, fontSize: 13, fontWeight: '600' },
+  questionTextActive: { color: appColors.text },
+  radio: { width: 17, height: 17, borderRadius: 9, borderWidth: 1, borderColor: appColors.textMuted, alignItems: 'center', justifyContent: 'center' },
+  radioActive: { borderColor: appColors.info },
+  radioCenter: { width: 9, height: 9, borderRadius: 5, backgroundColor: appColors.info },
+  primaryButton: {
+    minHeight: 52, borderRadius: 14, backgroundColor: appColors.info, flexDirection: 'row',
+    alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 18,
   },
-  secondaryText: {
-    color: '#0A6FA8',
-    textAlign: 'center',
-    fontWeight: '600',
-    fontSize: 16,
+  primaryButtonText: { color: appColors.background, fontSize: 15, fontWeight: '900' },
+  disabled: { opacity: 0.6 },
+  successBanner: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 11, padding: 14, borderRadius: 14,
+    borderWidth: 1, borderColor: colorAlpha(appColors.success, '44'), backgroundColor: colorAlpha(appColors.success, '0D'),
   },
+  bannerCopy: { flex: 1 },
+  successTitle: { color: appColors.success, fontSize: 14, fontWeight: '900' },
+  successText: { color: appColors.textMuted, fontSize: 12, marginTop: 3, lineHeight: 17 },
+  codeInputWrap: {
+    minHeight: 62, borderRadius: 14, borderWidth: 1, borderColor: appColors.info,
+    backgroundColor: colorAlpha(appColors.info, '0A'), alignItems: 'center', justifyContent: 'center',
+  },
+  codeInput: {
+    width: '100%', color: appColors.text, textAlign: 'center', fontSize: 25, fontWeight: '900',
+    letterSpacing: 12, paddingVertical: 12, outlineStyle: 'none',
+  } as any,
+  requirements: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 9 },
+  requirement: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  requirementText: { color: appColors.textMuted, fontSize: 11 },
+  requirementValid: { color: appColors.success },
+  backButton: { minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  backButtonText: { color: appColors.textMuted, fontSize: 13, fontWeight: '700' },
 });
