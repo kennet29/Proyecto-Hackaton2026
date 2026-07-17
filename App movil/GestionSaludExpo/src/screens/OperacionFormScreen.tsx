@@ -149,7 +149,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
     cirujano: '',
     resultado: '',
     complicaciones: '',
-    estado: 'Registrada',
+    estado: 'programada',
   });
 
   const authHeaders = useMemo<Record<string, string>>(() => {
@@ -173,7 +173,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
       cirujano: '',
       resultado: '',
       complicaciones: '',
-      estado: 'Registrada',
+      estado: 'programada',
     }));
   }, []);
 
@@ -338,20 +338,6 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
     return patientSummaries;
   }, [patientSummaries, selectedPatientId]);
 
-  const metrics = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    return {
-      total: filteredRecords.length,
-      patients: new Set(filteredRecords.map((record) => record.pacienteId)).size,
-      complications: filteredRecords.filter((record) => Boolean(normalizeText(record.complicaciones)))
-        .length,
-      thisYear: filteredRecords.filter((record) => {
-        const parsed = new Date(record.fechaoperacion);
-        return !Number.isNaN(parsed.getTime()) && parsed.getFullYear() === currentYear;
-      }).length,
-    };
-  }, [filteredRecords]);
-
   const handleTypeChange = (value: string) => {
     const selected = typeOptions.find((item) => String(item.tipooperacionId) === value);
     setForm((prev) => ({ ...prev, tipooperacionId: value, tipo: selected?.nombre ?? prev.tipo }));
@@ -398,7 +384,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
           cirujano: form.cirujano.trim() || undefined,
           resultado: form.resultado.trim() || undefined,
           complicaciones: form.complicaciones.trim() || undefined,
-          estado: form.estado.trim() || 'Registrada',
+          estado: form.estado || 'programada',
           creadopor: user?.username ?? undefined,
         },
       });
@@ -437,25 +423,6 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
 
         {!isCreateMode ? (
           <>
-            <View style={styles.metricsRow}>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.total}</Text>
-                <Text style={styles.metricLabel}>Operaciones</Text>
-              </View>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.patients}</Text>
-                <Text style={styles.metricLabel}>Pacientes</Text>
-              </View>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.complications}</Text>
-                <Text style={styles.metricLabel}>Con complicaciones</Text>
-              </View>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.thisYear}</Text>
-                <Text style={styles.metricLabel}>Este ano</Text>
-              </View>
-            </View>
-
             <View style={styles.filterCard}>
               <Text style={styles.label}>Filtrar por paciente</Text>
               <View style={styles.pickerWrapper}>
@@ -607,7 +574,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                         ]}
                       >
                         <Text style={[styles.statusPillText, { color: statusColors.color }]}>
-                          {normalizeText(record.estado) ?? 'Registrada'}
+                          {normalizeText(record.estado) ?? 'programada'}
                         </Text>
                       </View>
                     </View>
@@ -746,13 +713,20 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
               value={form.cirujano}
               onChangeText={(value) => handleChange('cirujano', value)}
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Estado"
-              placeholderTextColor="#9FB3C8"
-              value={form.estado}
-              onChangeText={(value) => handleChange('estado', value)}
-            />
+            <Text style={styles.label}>Estado</Text>
+            <View style={styles.pickerWrapper}>
+              <Picker
+                style={styles.picker}
+                selectedValue={form.estado}
+                onValueChange={(value) => handleChange('estado', String(value))}
+                dropdownIconColor="#F4F8FF"
+              >
+                <Picker.Item label="Programada" value="programada" color={pickerItemColor} />
+                <Picker.Item label="En curso" value="en curso" color={pickerItemColor} />
+                <Picker.Item label="Completada" value="completada" color={pickerItemColor} />
+                <Picker.Item label="Cancelada" value="cancelada" color={pickerItemColor} />
+              </Picker>
+            </View>
             <TextInput
               style={styles.input}
               placeholder="Resultado"
@@ -838,27 +812,6 @@ const styles = StyleSheet.create({
     color: '#C9D7E8',
     fontSize: 15,
     lineHeight: 22,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 18,
-    marginHorizontal: -5,
-  },
-  metricCard: {
-    width: '50%',
-    paddingHorizontal: 5,
-    marginBottom: 10,
-  },
-  metricValue: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#F4F8FF',
-  },
-  metricLabel: {
-    marginTop: 6,
-    color: '#C9D7E8',
-    fontSize: 13,
   },
   filterCard: {
     backgroundColor: '#071120',

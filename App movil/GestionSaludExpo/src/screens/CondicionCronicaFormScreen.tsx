@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -13,6 +14,9 @@ import {
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
@@ -28,6 +32,23 @@ type TipoCondicion = {
   nombre: string;
 };
 
+type TipoDocumento = {
+  tipodocumentoId: number;
+  nombre: string;
+};
+
+type ConditionAttachment = {
+  id: string;
+  uri: string;
+  base64Data: string;
+  name: string;
+  mimeType: string;
+  kind: 'image' | 'pdf';
+  size?: number;
+};
+
+const MAX_ATTACHMENT_BYTES = 3 * 1024 * 1024;
+
 type CondicionRecord = {
   condicioncronicaId: number;
   pacienteId: number;
@@ -36,7 +57,6 @@ type CondicionRecord = {
   estado?: string | null;
   severidad?: string | null;
   tratamientoprincipal?: string | null;
-  proveedorlider?: string | null;
   proximoseguimiento?: string | null;
   notas?: string | null;
 };
@@ -112,6 +132,9 @@ export function CondicionCronicaFormScreen({
   const { token, user } = useAuth();
   const [patientOptions, setPatientOptions] = useState<LinkedPatient[]>([]);
   const [typeOptions, setTypeOptions] = useState<TipoCondicion[]>([]);
+  const [documentTypes, setDocumentTypes] = useState<TipoDocumento[]>([]);
+  const [attachmentTypeId, setAttachmentTypeId] = useState('');
+  const [attachments, setAttachments] = useState<ConditionAttachment[]>([]);
   const [records, setRecords] = useState<CondicionRecord[]>([]);
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [loadingRecords, setLoadingRecords] = useState(true);
@@ -125,7 +148,6 @@ export function CondicionCronicaFormScreen({
     estado: 'Activa',
     severidad: '',
     tratamientoprincipal: '',
-    proveedorlider: '',
     proximoseguimiento: '',
     notas: '',
   });
@@ -154,10 +176,10 @@ export function CondicionCronicaFormScreen({
       estado: 'Activa',
       severidad: '',
       tratamientoprincipal: '',
-      proveedorlider: '',
       proximoseguimiento: '',
       notas: '',
     }));
+    setAttachments([]);
   }, []);
 
   const fetchPatients = useCallback(async () => {
@@ -206,6 +228,25 @@ export function CondicionCronicaFormScreen({
     }
   }, [authHeaders]);
 
+  const fetchDocumentTypes = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/tipodocumentoclinico`, { headers: authHeaders });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(body?.message ?? 'No se pudieron cargar los tipos de documento');
+      const normalized = (Array.isArray(body) ? body : [])
+        .map((item: any) => ({
+          tipodocumentoId: Number(item?.tipodocumentoId ?? item?.tipodocumentoid ?? item?.id ?? 0),
+          nombre: String(item?.nombre ?? '').trim(),
+        }))
+        .filter((item: TipoDocumento) => item.tipodocumentoId > 0 && item.nombre.length > 0)
+        .sort((a: TipoDocumento, b: TipoDocumento) => a.nombre.localeCompare(b.nombre, 'es'));
+      setDocumentTypes(normalized);
+      setAttachmentTypeId((current) => current || String(normalized[0]?.tipodocumentoId ?? ''));
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Fallo al cargar tipos de documento');
+    }
+  }, [authHeaders]);
+
   const fetchRecords = useCallback(async () => {
     if (!token) return;
     setLoadingRecords(true);
@@ -224,7 +265,6 @@ export function CondicionCronicaFormScreen({
             estado: item?.estado ?? null,
             severidad: item?.severidad ?? null,
             tratamientoprincipal: item?.tratamientoprincipal ?? null,
-            proveedorlider: item?.proveedorlider ?? null,
             proximoseguimiento: item?.proximoseguimiento ?? null,
             notas: item?.notas ?? null,
           }))
@@ -246,8 +286,9 @@ export function CondicionCronicaFormScreen({
   useEffect(() => {
     fetchPatients();
     fetchTypes();
+    fetchDocumentTypes();
     fetchRecords();
-  }, [fetchPatients, fetchTypes, fetchRecords]);
+  }, [fetchDocumentTypes, fetchPatients, fetchTypes, fetchRecords]);
 
   useEffect(() => {
     if (selectedTipoCondicion?.tipocondicionId) {
@@ -389,9 +430,226 @@ export function CondicionCronicaFormScreen({
     return createdType.tipocondicionId;
   }, [form.condicionNombre, form.tipocondicionId, headers, typeOptions, user?.username]);
 
+  const validateAttachmentSize = (size?: number | null) => {
+    if (size && size > MAX_ATTACHMENT_BYTES) {
+      Alert.alert('Archivo muy grande', 'Cada imagen o PDF puede pesar hasta 3 MB.');
+      return false;
+    }
+    return true;
+  };
+
+  const readNativeFileAsDataUrl = async (uri: string, mimeType: string) => {
+    const file = new FileSystem.File(uri);
+    const base64 = await file.base64();
+    return `data:${mimeType};base64,${base64}`;
+  };
+
+  const readWebFile = (file: File, kind: ConditionAttachment['kind']) =>
+    new Promise<ConditionAttachment>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64Data = typeof reader.result === 'string' ? reader.result : '';
+        if (!base64Data) {
+          reject(new Error('No se pudo leer el archivo seleccionado'));
+          return;
+        }
+        resolve({
+          id: `${Date.now()}-${Math.random()}`,
+          uri: kind === 'image' ? base64Data : '',
+          base64Data,
+          name: file.name || `resultado-${Date.now()}.${kind === 'pdf' ? 'pdf' : 'jpg'}`,
+          mimeType: file.type || (kind === 'pdf' ? 'application/pdf' : 'image/jpeg'),
+          kind,
+          size: file.size,
+        });
+      };
+      reader.onerror = () => reject(new Error('No se pudo leer el archivo seleccionado'));
+      reader.readAsDataURL(file);
+    });
+
+  const pickWebAttachments = (accept: string, kind: ConditionAttachment['kind']) => {
+    if (typeof document === 'undefined') return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept;
+    input.multiple = true;
+    input.onchange = async () => {
+      try {
+        const files = Array.from(input.files ?? []).filter((file) => validateAttachmentSize(file.size));
+        const selected = await Promise.all(files.map((file) => readWebFile(file, kind)));
+        setAttachments((current) => [...current, ...selected]);
+      } catch (error) {
+        Alert.alert('Error', error instanceof Error ? error.message : 'No se pudieron leer los archivos');
+      }
+    };
+    input.click();
+  };
+
+  const handlePickImages = async () => {
+    if (Platform.OS === 'web') {
+      pickWebAttachments('image/jpeg,image/png,image/webp', 'image');
+      return;
+    }
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permiso requerido', 'Debes permitir acceso a tus imágenes.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsMultipleSelection: true,
+        quality: 0.5,
+        base64: true,
+      });
+      if (result.canceled) return;
+      const selected = await Promise.all(
+        result.assets
+          .filter((asset) => validateAttachmentSize(asset.fileSize))
+          .map(async (asset) => {
+            const mimeType = asset.mimeType ?? 'image/jpeg';
+            return {
+              id: `${Date.now()}-${Math.random()}`,
+              uri: asset.uri,
+              base64Data: asset.base64
+                ? `data:${mimeType};base64,${asset.base64}`
+                : await readNativeFileAsDataUrl(asset.uri, mimeType),
+              name: asset.fileName ?? `resultado-${Date.now()}.jpg`,
+              mimeType,
+              kind: 'image' as const,
+              size: asset.fileSize,
+            };
+          }),
+      );
+      setAttachments((current) => [...current, ...selected]);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudieron elegir las imágenes');
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    if (Platform.OS === 'web') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.setAttribute('capture', 'environment');
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        if (!file || !validateAttachmentSize(file.size)) return;
+        try {
+          const selected = await readWebFile(file, 'image');
+          setAttachments((current) => [...current, selected]);
+        } catch (error) {
+          Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo leer la fotografía');
+        }
+      };
+      input.click();
+      return;
+    }
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permiso requerido', 'Debes permitir acceso a la cámara.');
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: 'images',
+        quality: 0.5,
+        base64: true,
+      });
+      if (result.canceled || !result.assets.length) return;
+      const asset = result.assets[0];
+      if (!validateAttachmentSize(asset.fileSize)) return;
+      const mimeType = asset.mimeType ?? 'image/jpeg';
+      const base64Data = asset.base64
+        ? `data:${mimeType};base64,${asset.base64}`
+        : await readNativeFileAsDataUrl(asset.uri, mimeType);
+      setAttachments((current) => [
+        ...current,
+        {
+          id: `${Date.now()}-${Math.random()}`,
+          uri: asset.uri,
+          base64Data,
+          name: asset.fileName ?? `foto-resultado-${Date.now()}.jpg`,
+          mimeType,
+          kind: 'image',
+          size: asset.fileSize,
+        },
+      ]);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo tomar la fotografía');
+    }
+  };
+
+  const handlePickPdfs = async () => {
+    if (Platform.OS === 'web') {
+      pickWebAttachments('application/pdf,.pdf', 'pdf');
+      return;
+    }
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/pdf',
+        multiple: true,
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled) return;
+      const selected = await Promise.all(
+        result.assets
+          .filter((asset) => validateAttachmentSize(asset.size))
+          .map(async (asset) => {
+            const mimeType = asset.mimeType ?? 'application/pdf';
+            return {
+              id: `${Date.now()}-${Math.random()}`,
+              uri: asset.uri,
+              base64Data: await readNativeFileAsDataUrl(asset.uri, mimeType),
+              name: asset.name ?? `resultado-${Date.now()}.pdf`,
+              mimeType,
+              kind: 'pdf' as const,
+              size: asset.size,
+            };
+          }),
+      );
+      setAttachments((current) => [...current, ...selected]);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudieron elegir los PDF');
+    }
+  };
+
+  const uploadConditionAttachments = async (
+    conditionId: number,
+    patientId: number,
+    conditionName: string,
+  ) => {
+    for (const attachment of attachments) {
+      const response = await fetch(`${API_URL}/documentoclinico`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          pacienteId: patientId,
+          tipodocumentoId: Number(attachmentTypeId),
+          entidadorigen: 'condicioncronica',
+          entidadId: conditionId,
+          archivoBase64: attachment.base64Data,
+          nombreArchivo: attachment.name,
+          mimeArchivo: attachment.mimeType,
+          notas: `Resultado o diagnóstico asociado a ${conditionName}`,
+          creadopor: user?.username ?? undefined,
+        }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body?.message ?? `No se pudo guardar ${attachment.name}`);
+      }
+    }
+  };
+
   const handleSubmit = useCallback(async () => {
     if (!form.pacienteId || !form.condicionNombre.trim()) {
       Alert.alert('Faltan Datos', 'Paciente y condicion clinica son obligatorios');
+      return;
+    }
+    if (attachments.length > 0 && !attachmentTypeId) {
+      Alert.alert('Falta tipo de documento', 'Selecciona el tipo de los resultados o diagnósticos adjuntos.');
       return;
     }
     try {
@@ -406,17 +664,34 @@ export function CondicionCronicaFormScreen({
           estado: form.estado.trim() || 'Activa',
           severidad: form.severidad.trim() || undefined,
           tratamientoprincipal: form.tratamientoprincipal.trim() || undefined,
-          proveedorlider: form.proveedorlider.trim() || undefined,
           proximoseguimiento: form.proximoseguimiento || undefined,
           notas: form.notas.trim() || undefined,
           creadopor: user?.username ?? undefined,
         }),
       });
+      const body = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
         throw new Error(body?.message ?? 'No se pudo guardar la condicion cronica');
       }
-      Alert.alert('Condicion guardada', 'La condicion cronica fue registrada correctamente');
+      const conditionId = Number(
+        body?.condicioncronicaId ?? body?.condicioncronicaid ?? body?.id ?? 0,
+      );
+      if (attachments.length > 0) {
+        if (!Number.isFinite(conditionId) || conditionId <= 0) {
+          throw new Error('La condición se guardó, pero no fue posible vincular sus archivos');
+        }
+        await uploadConditionAttachments(
+          conditionId,
+          Number(form.pacienteId),
+          selectedConditionName || form.condicionNombre.trim(),
+        );
+      }
+      Alert.alert(
+        'Condición guardada',
+        attachments.length > 0
+          ? `La condición y ${attachments.length} archivo${attachments.length === 1 ? '' : 's'} se guardaron correctamente`
+          : 'La condición crónica fue registrada correctamente',
+      );
       resetForm();
       if (isCreateMode && navigation.canGoBack()) {
         navigation.goBack();
@@ -425,7 +700,19 @@ export function CondicionCronicaFormScreen({
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Fallo la peticion');
     }
-  }, [fetchRecords, form, headers, isCreateMode, navigation, resetForm, resolveTipoCondicionId, user?.username]);
+  }, [
+    attachmentTypeId,
+    attachments,
+    fetchRecords,
+    form,
+    headers,
+    isCreateMode,
+    navigation,
+    resetForm,
+    resolveTipoCondicionId,
+    selectedConditionName,
+    user?.username,
+  ]);
 
   return (
     <View style={styles.screen}>
@@ -546,7 +833,6 @@ export function CondicionCronicaFormScreen({
                   <Text style={styles.cardText}>Estado: {record.estado || 'Sin dato'}</Text>
                   <Text style={styles.cardText}>Severidad: {record.severidad || 'Sin dato'}</Text>
                   <Text style={styles.cardText}>Tratamiento: {record.tratamientoprincipal || 'Sin dato'}</Text>
-                  <Text style={styles.cardText}>Proveedor: {record.proveedorlider || 'Sin dato'}</Text>
                   <Text style={styles.cardText}>Seguimiento: {formatRecordDate(record.proximoseguimiento)}</Text>
                   {record.notas ? <Text style={styles.cardText}>Notas: {record.notas}</Text> : null}
                 </View>
@@ -655,13 +941,6 @@ export function CondicionCronicaFormScreen({
               value={form.tratamientoprincipal}
               onChangeText={(value) => handleChange('tratamientoprincipal', value)}
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Proveedor lider"
-              placeholderTextColor="#9FB3C8"
-              value={form.proveedorlider}
-              onChangeText={(value) => handleChange('proveedorlider', value)}
-            />
 
             <Text style={styles.label}>Proximo seguimiento</Text>
             <TouchableOpacity style={styles.dateButton} onPress={() => showDatePicker('proximoseguimiento')}>
@@ -683,6 +962,103 @@ export function CondicionCronicaFormScreen({
                 </TouchableOpacity>
               </View>
             ) : null}
+
+            <View style={styles.attachmentsCard}>
+              <View style={styles.attachmentsHeader}>
+                <View style={styles.attachmentsHeaderIcon}>
+                  <Ionicons name="document-attach-outline" size={22} color={appColors.info} />
+                </View>
+                <View style={styles.attachmentsHeaderCopy}>
+                  <Text style={styles.attachmentsTitle}>Resultados y diagnósticos</Text>
+                  <Text style={styles.attachmentsHint}>
+                    Adjunta imágenes o PDF de hasta 3 MB por archivo.
+                  </Text>
+                </View>
+                {attachments.length > 0 ? (
+                  <View style={styles.attachmentsCount}>
+                    <Text style={styles.attachmentsCountText}>{attachments.length}</Text>
+                  </View>
+                ) : null}
+              </View>
+
+              <View style={styles.attachmentActions}>
+                <TouchableOpacity style={styles.attachmentAction} onPress={handlePickImages}>
+                  <Ionicons name="images-outline" size={19} color={appColors.info} />
+                  <Text style={styles.attachmentActionText}>Imágenes</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.attachmentAction} onPress={handleTakePhoto}>
+                  <Ionicons name="camera-outline" size={19} color={appColors.info} />
+                  <Text style={styles.attachmentActionText}>Tomar foto</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.attachmentAction} onPress={handlePickPdfs}>
+                  <Ionicons name="document-text-outline" size={19} color={appColors.info} />
+                  <Text style={styles.attachmentActionText}>Subir PDF</Text>
+                </TouchableOpacity>
+              </View>
+
+              {attachments.length > 0 ? (
+                <>
+                  <Text style={styles.attachmentTypeLabel}>Tipo de documento</Text>
+                  <View style={styles.attachmentTypePicker}>
+                    <Picker
+                      style={styles.picker}
+                      selectedValue={attachmentTypeId}
+                      onValueChange={(value) => setAttachmentTypeId(String(value))}
+                      dropdownIconColor={appColors.text}
+                    >
+                      <Picker.Item label="Selecciona el tipo" value="" />
+                      {documentTypes.map((type) => (
+                        <Picker.Item
+                          key={type.tipodocumentoId}
+                          label={type.nombre}
+                          value={String(type.tipodocumentoId)}
+                        />
+                      ))}
+                    </Picker>
+                  </View>
+
+                  <View style={styles.attachmentsList}>
+                    {attachments.map((attachment) => (
+                      <View key={attachment.id} style={styles.attachmentItem}>
+                        {attachment.kind === 'image' ? (
+                          <Image source={{ uri: attachment.uri }} style={styles.attachmentThumb} />
+                        ) : (
+                          <View style={styles.pdfThumb}>
+                            <Ionicons name="document-text" size={25} color={appColors.accent} />
+                          </View>
+                        )}
+                        <View style={styles.attachmentItemCopy}>
+                          <Text style={styles.attachmentName} numberOfLines={1}>
+                            {attachment.name}
+                          </Text>
+                          <Text style={styles.attachmentMeta}>
+                            {attachment.size
+                              ? `${(attachment.size / 1024 / 1024).toFixed(2)} MB`
+                              : attachment.mimeType}
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.removeAttachment}
+                          onPress={() =>
+                            setAttachments((current) =>
+                              current.filter((item) => item.id !== attachment.id),
+                            )
+                          }
+                          accessibilityLabel={`Quitar ${attachment.name}`}
+                        >
+                          <Ionicons name="trash-outline" size={19} color={appColors.accent} />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              ) : (
+                <View style={styles.attachmentsEmpty}>
+                  <Ionicons name="cloud-upload-outline" size={20} color={appColors.textMuted} />
+                  <Text style={styles.attachmentsEmptyText}>No hay archivos seleccionados</Text>
+                </View>
+              )}
+            </View>
 
             <TextInput
               style={[styles.input, styles.multiline]}
@@ -883,6 +1259,154 @@ const styles = StyleSheet.create({
     fontSize: 15,
     backgroundColor: '#0D1B2A',
     color: '#F4F8FF',
+  },
+  attachmentsCard: {
+    gap: 12,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '45'),
+    borderRadius: 18,
+    backgroundColor: colorAlpha(appColors.info, '0A'),
+  },
+  attachmentsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  attachmentsHeaderIcon: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 13,
+    backgroundColor: colorAlpha(appColors.info, '16'),
+  },
+  attachmentsHeaderCopy: {
+    flex: 1,
+  },
+  attachmentsTitle: {
+    color: appColors.text,
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  attachmentsHint: {
+    color: appColors.textMuted,
+    marginTop: 2,
+    lineHeight: 17,
+  },
+  attachmentsCount: {
+    minWidth: 32,
+    height: 32,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    backgroundColor: appColors.info,
+  },
+  attachmentsCountText: {
+    color: appColors.background,
+    fontWeight: '900',
+  },
+  attachmentActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  attachmentAction: {
+    flex: 1,
+    minWidth: 115,
+    minHeight: 46,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '55'),
+    borderRadius: 13,
+    backgroundColor: appColors.backgroundMuted,
+  },
+  attachmentActionText: {
+    color: appColors.text,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  attachmentTypeLabel: {
+    color: appColors.textSoft,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  attachmentTypePicker: {
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: appColors.border,
+    borderRadius: 13,
+    backgroundColor: appColors.backgroundMuted,
+  },
+  attachmentsList: {
+    gap: 8,
+  },
+  attachmentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.success, '40'),
+    borderRadius: 14,
+    backgroundColor: colorAlpha(appColors.success, '0C'),
+  },
+  attachmentThumb: {
+    width: 52,
+    height: 52,
+    borderRadius: 10,
+    backgroundColor: appColors.backgroundMuted,
+  },
+  pdfThumb: {
+    width: 52,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    backgroundColor: colorAlpha(appColors.accent, '14'),
+  },
+  attachmentItemCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  attachmentName: {
+    color: appColors.text,
+    fontWeight: '800',
+  },
+  attachmentMeta: {
+    color: appColors.textMuted,
+    fontSize: 12,
+    marginTop: 3,
+  },
+  removeAttachment: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 11,
+    backgroundColor: colorAlpha(appColors.accent, '10'),
+  },
+  attachmentsEmpty: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: appColors.border,
+    borderRadius: 13,
+    backgroundColor: appColors.backgroundMuted,
+  },
+  attachmentsEmptyText: {
+    color: appColors.textMuted,
+    fontWeight: '700',
   },
   multiline: {
     minHeight: 96,

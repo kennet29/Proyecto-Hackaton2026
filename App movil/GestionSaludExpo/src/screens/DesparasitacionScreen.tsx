@@ -263,20 +263,6 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
     return records.filter((record) => record.pacienteId === pacienteId);
   }, [records, selectedPatientId]);
 
-  const metrics = useMemo(() => {
-    const upcomingCount = visibleRecords.filter((record) => {
-      const nextDate = toDateOnlyString(record.proximafecha);
-      return nextDate && nextDate >= toDateOnlyString(new Date());
-    }).length;
-
-    return {
-      total: visibleRecords.length,
-      patients: new Set(visibleRecords.map((record) => record.pacienteId)).size,
-      withNextDate: visibleRecords.filter((record) => Boolean(record.proximafecha)).length,
-      upcomingCount,
-    };
-  }, [visibleRecords]);
-
   const nextUpcomingRecord = useMemo(() => {
     return visibleRecords
       .filter((record) => Boolean(toDateOnlyString(record.proximafecha)))
@@ -595,25 +581,6 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
           </View>
         ) : (
           <>
-            <View style={styles.metricsRow}>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.total}</Text>
-                <Text style={styles.metricLabel}>Controles</Text>
-              </View>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.patients}</Text>
-                <Text style={styles.metricLabel}>Pacientes</Text>
-              </View>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.withNextDate}</Text>
-                <Text style={styles.metricLabel}>Con proxima fecha</Text>
-              </View>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.upcomingCount}</Text>
-                <Text style={styles.metricLabel}>Pendientes</Text>
-              </View>
-            </View>
-
             <View style={styles.filterCard}>
               <Text style={styles.label}>Filtrar por paciente</Text>
               <View style={styles.pickerWrapper}>
@@ -825,27 +792,6 @@ const styles = StyleSheet.create({
     color: '#C9D7E8',
     fontSize: 15,
     lineHeight: 22,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 18,
-    marginHorizontal: -5,
-  },
-  metricCard: {
-    width: '50%',
-    paddingHorizontal: 5,
-    marginBottom: 10,
-  },
-  metricValue: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#F4F8FF',
-  },
-  metricLabel: {
-    marginTop: 6,
-    color: '#C9D7E8',
-    fontSize: 13,
   },
   filterCard: {
     backgroundColor: '#071120',

@@ -55,20 +55,6 @@ const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => 
   );
 };
 
-const StatCard: React.FC<{ label: string; value: string; accent: string }> = ({
-  label,
-  value,
-  accent,
-}) => (
-  <View style={[styles.statCard, { borderColor: `${accent}40`, backgroundColor: `${accent}12` }]}>
-    <View style={[styles.statAccentBar, { backgroundColor: accent }]} />
-    <Text style={[styles.statValue, { color: accent }]} numberOfLines={2}>
-      {value}
-    </Text>
-    <Text style={styles.statLabel}>{label}</Text>
-  </View>
-);
-
 export function ExpedienteGestionScreen({ navigation }: Props) {
   const { user, token } = useAuth();
   const [linkedPatients, setLinkedPatients] = useState<LinkedPerson[]>([]);
@@ -100,9 +86,6 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
       esPrincipal: linkedPatients.length === 0,
     }));
   }, [linkedPatients.length]);
-
-  const displayName = user?.username?.split('@')[0] ?? 'Paciente';
-  const principalCount = linkedPatients.filter((person) => person.esPrincipal).length;
 
   const authHeaders = useCallback(
     (extra?: Record<string, string>) => ({
@@ -262,24 +245,6 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
         <Text style={styles.heroSubtitle}>
           Crea y administra familiares o pacientes vinculados a tu cuenta desde una sola vista.
         </Text>
-
-        <View style={styles.statsRow}>
-          <StatCard
-            label="Personas"
-            value={String(linkedPatients.length)}
-            accent="#29B6FF"
-          />
-          <StatCard
-            label="Principal"
-            value={principalCount > 0 ? String(principalCount) : '0'}
-            accent="#38F28E"
-          />
-          <StatCard
-            label="Usuario"
-            value={displayName.slice(0, 10) || 'Paciente'}
-            accent="#FF4D73"
-          />
-        </View>
       </View>
 
       <View style={styles.panelCard}>
@@ -582,35 +547,6 @@ const styles = StyleSheet.create({
     color: appColors.textSoft,
     fontSize: 14,
     lineHeight: 21,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  statCard: {
-    flexGrow: 1,
-    flexBasis: '31%',
-    minWidth: 92,
-    borderRadius: 20,
-    padding: 14,
-    borderWidth: 1,
-  },
-  statAccentBar: {
-    width: 36,
-    height: 4,
-    borderRadius: 999,
-    marginBottom: 10,
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  statLabel: {
-    color: '#9FB3C8',
-    fontSize: 12,
-    fontWeight: '700',
   },
   panelCard: {
     backgroundColor: appColors.surface,

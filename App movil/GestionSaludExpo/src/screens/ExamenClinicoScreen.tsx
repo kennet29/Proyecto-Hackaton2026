@@ -411,16 +411,6 @@ export function ExamenClinicoScreen() {
     return patientNameById[selectedPatientId] ?? `Paciente #${selectedPatientId}`;
   }, [hasValidPatient, patientNameById, selectedPatientId]);
 
-  const metrics = useMemo(
-    () => ({
-      total: recentExams.length,
-      withPdf: recentExams.filter((exam) => exam.tieneArchivoPdf).length,
-      linked: recentExams.filter((exam) => Number(exam.consultaId) > 0).length,
-      draftPages: pdfState?.pageCount ?? photos.length,
-    }),
-    [pdfState?.pageCount, photos.length, recentExams],
-  );
-
   const setDateFieldValue = useCallback((field: DatePickerField, value: string) => {
     if (field === 'exam-date') {
       handleChange('fechaExamen', value);
@@ -667,25 +657,6 @@ export function ExamenClinicoScreen() {
             <Text style={styles.errorText}>{screenError}</Text>
           </View>
         ) : null}
-
-        <View style={styles.metricsRow}>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.total}</Text>
-            <Text style={styles.metricLabel}>Examenes</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.withPdf}</Text>
-            <Text style={styles.metricLabel}>Con PDF</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.linked}</Text>
-            <Text style={styles.metricLabel}>Con consulta</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.draftPages}</Text>
-            <Text style={styles.metricLabel}>Hojas cargadas</Text>
-          </View>
-        </View>
 
         <View style={styles.formCard}>
           <Text style={styles.formTitle}>Registrar examen</Text>
@@ -1038,27 +1009,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#FF4D73',
     lineHeight: 20,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 18,
-    marginHorizontal: -5,
-  },
-  metricCard: {
-    width: '50%',
-    paddingHorizontal: 5,
-    marginBottom: 10,
-  },
-  metricValue: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#F4F8FF',
-  },
-  metricLabel: {
-    marginTop: 6,
-    color: '#C9D7E8',
-    fontSize: 13,
   },
   formCard: {
     backgroundColor: '#071120',

@@ -488,16 +488,6 @@ export function ControlCronicoScreen() {
     );
   }, [form.pacienteId, patientOptions]);
 
-  const upcomingControlsCount = useMemo(() => {
-    const today = toDateOnlyString(new Date());
-    return filteredRecords.filter((record) => {
-      if (!record.proximocontrol) {
-        return false;
-      }
-      return record.proximocontrol >= today;
-    }).length;
-  }, [filteredRecords]);
-
   const handleChange = (key: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -727,21 +717,6 @@ export function ControlCronicoScreen() {
       </View>
 
       <FeedbackBanner feedback={feedback} />
-
-      <View style={styles.metricsRow}>
-        <View style={styles.metricCard}>
-          <Text style={styles.metricValue}>{patientCondiciones.length}</Text>
-          <Text style={styles.metricLabel}>Condiciones activas</Text>
-        </View>
-        <View style={styles.metricCard}>
-          <Text style={styles.metricValue}>{filteredRecords.length}</Text>
-          <Text style={styles.metricLabel}>Controles registrados</Text>
-        </View>
-        <View style={styles.metricCard}>
-          <Text style={styles.metricValue}>{upcomingControlsCount}</Text>
-          <Text style={styles.metricLabel}>Proximos controles</Text>
-        </View>
-      </View>
 
       <View style={styles.filterCard}>
         <Text style={styles.label}>Paciente</Text>
@@ -1159,30 +1134,6 @@ const styles = StyleSheet.create({
   },
   feedbackTextError: {
     color: '#FF4D73',
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  metricCard: {
-    flex: 1,
-    backgroundColor: '#132238',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#27496D',
-    alignItems: 'center',
-    gap: 4,
-  },
-  metricValue: {
-    color: '#F4F8FF',
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  metricLabel: {
-    color: '#29B6FF',
-    fontSize: 12,
-    textAlign: 'center',
   },
   filterCard: {
     backgroundColor: '#132238',

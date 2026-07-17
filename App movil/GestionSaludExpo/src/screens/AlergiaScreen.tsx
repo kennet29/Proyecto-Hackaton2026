@@ -289,19 +289,6 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
     return patientSummaries;
   }, [patientSummaries, selectedPatientId]);
 
-  const metrics = useMemo(() => {
-    const severeCount = filteredRecords.filter((record) => {
-      const severity = (normalizeText(record.severidad) ?? '').toLowerCase();
-      return severity.includes('grave') || severity.includes('alta') || severity.includes('severa');
-    }).length;
-    return {
-      total: filteredRecords.length,
-      patients: new Set(filteredRecords.map((record) => record.pacienteId)).size,
-      active: filteredRecords.filter((record) => (normalizeText(record.estado) ?? 'activa').toLowerCase() !== 'inactiva').length,
-      severe: severeCount,
-    };
-  }, [filteredRecords]);
-
   const openDatePicker = () => {
     if (openWebDateTimePicker('date', form.fechadiagnostico, (value) => handleChange('fechadiagnostico', value))) {
       return;
@@ -541,25 +528,6 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
           </Text>
         </View>
 
-        <View style={styles.metricsRow}>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.total}</Text>
-            <Text style={styles.metricLabel}>Registros</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.patients}</Text>
-            <Text style={styles.metricLabel}>Pacientes</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.active}</Text>
-            <Text style={styles.metricLabel}>Activas</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.severe}</Text>
-            <Text style={styles.metricLabel}>Severas</Text>
-          </View>
-        </View>
-
         <View style={styles.filterCard}>
           <Text style={styles.label}>Filtrar por paciente</Text>
           <View style={styles.pickerWrapper}>
@@ -784,27 +752,6 @@ const styles = StyleSheet.create({
     color: '#C9D7E8',
     fontSize: 15,
     lineHeight: 22,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 18,
-    marginHorizontal: -5,
-  },
-  metricCard: {
-    width: '50%',
-    paddingHorizontal: 5,
-    marginBottom: 10,
-  },
-  metricValue: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#F4F8FF',
-  },
-  metricLabel: {
-    marginTop: 6,
-    color: '#C9D7E8',
-    fontSize: 13,
   },
   filterCard: {
     backgroundColor: '#071120',

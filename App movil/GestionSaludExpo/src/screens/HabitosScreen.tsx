@@ -209,7 +209,6 @@ export function HabitosScreen(_: Props) {
 
   const insights = useMemo(() => {
     const total = visibleRecords.length;
-    const uniqueTypes = new Set(visibleRecords.map((record) => record.tipohabitoId)).size;
     const riskCount = visibleRecords.filter((record) => {
       const normalized = (record.impactosalud ?? '').toLowerCase();
       return normalized.includes('alto') || normalized.includes('severo') || normalized.includes('riesgo');
@@ -229,10 +228,6 @@ export function HabitosScreen(_: Props) {
       : 'Aun no hay suficientes registros para construir una lectura util.';
 
     return {
-      total,
-      uniqueTypes,
-      riskCount,
-      healthyCount,
       latest,
       summaryText,
     };
@@ -437,28 +432,6 @@ export function HabitosScreen(_: Props) {
         <View style={styles.sectionHeader}>
           <Text style={styles.cardTitle}>Lectura rapida</Text>
           <Text style={styles.cardSubtitle}>Resumen util de la informacion capturada.</Text>
-        </View>
-
-        <View style={styles.metricsRow}>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricLabel}>Registros</Text>
-            <Text style={styles.metricValue}>{insights.total}</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricLabel}>Tipos unicos</Text>
-            <Text style={styles.metricValue}>{insights.uniqueTypes}</Text>
-          </View>
-        </View>
-
-        <View style={styles.metricsRow}>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricLabel}>Con riesgo</Text>
-            <Text style={styles.metricValue}>{insights.riskCount}</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricLabel}>Favorables</Text>
-            <Text style={styles.metricValue}>{insights.healthyCount}</Text>
-          </View>
         </View>
 
         <View style={styles.insightBox}>
@@ -686,29 +659,6 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     color: '#F4F8FF',
     fontSize: 15,
-    fontWeight: '800',
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  metricCard: {
-    flex: 1,
-    backgroundColor: '#071120',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#27496D',
-    padding: 12,
-    gap: 4,
-  },
-  metricLabel: {
-    color: '#9FB3C8',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  metricValue: {
-    color: '#F4F8FF',
-    fontSize: 22,
     fontWeight: '800',
   },
   insightBox: {

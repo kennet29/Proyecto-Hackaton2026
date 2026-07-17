@@ -232,15 +232,6 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
     return records;
   }, [filterPatientId, records]);
 
-  const metrics = useMemo(() => {
-    return {
-      total: filteredRecords.length,
-      patients: new Set(filteredRecords.map((record) => record.pacienteId)).size,
-      recovered: filteredRecords.filter((record) => record.recuperado).length,
-      active: filteredRecords.filter((record) => record.recuperado === false).length,
-    };
-  }, [filteredRecords]);
-
   const selectedPatientName = useMemo(() => {
     const activePatientId = Number(filterPatientId);
     if (!Number.isFinite(activePatientId) || activePatientId <= 0) {
@@ -452,25 +443,6 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
           </View>
         ) : (
           <>
-            <View style={styles.metricsRow}>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.total}</Text>
-                <Text style={styles.metricLabel}>Lesiones</Text>
-              </View>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.patients}</Text>
-                <Text style={styles.metricLabel}>Pacientes</Text>
-              </View>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.recovered}</Text>
-                <Text style={styles.metricLabel}>Recuperadas</Text>
-              </View>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.active}</Text>
-                <Text style={styles.metricLabel}>En seguimiento</Text>
-              </View>
-            </View>
-
             <View style={styles.filterCard}>
               <Text style={styles.label}>Filtrar por paciente</Text>
               <View style={styles.pickerWrapper}>
@@ -613,27 +585,6 @@ const styles = StyleSheet.create({
     color: '#C9D7E8',
     fontSize: 15,
     lineHeight: 22,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 18,
-    marginHorizontal: -5,
-  },
-  metricCard: {
-    width: '50%',
-    paddingHorizontal: 5,
-    marginBottom: 10,
-  },
-  metricValue: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#F4F8FF',
-  },
-  metricLabel: {
-    marginTop: 6,
-    color: '#C9D7E8',
-    fontSize: 13,
   },
   filterCard: {
     backgroundColor: '#071120',

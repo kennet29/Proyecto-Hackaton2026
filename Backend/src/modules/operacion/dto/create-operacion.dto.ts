@@ -1,6 +1,19 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 
+const normalizeEstadoOperacion = (value: unknown) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+  const normalized = value.trim().toLowerCase();
+  return normalized === "registrada" ? "programada" : normalized;
+};
+
+const estadoOperacionSchema = z.preprocess(
+  normalizeEstadoOperacion,
+  z.enum(["programada", "en curso", "completada", "cancelada"]),
+);
+
 /**
  * Esquema Zod para validar la creación de operacion.
  */
@@ -13,7 +26,7 @@ export const createOperacionSchema = z.object({
   cirujano: z.string().nullable().optional(),
   resultado: z.string().nullable().optional(),
   complicaciones: z.string().nullable().optional(),
-  estado: z.string().optional(),
+  estado: estadoOperacionSchema.default("programada"),
   creadopor: z.string().nullable().optional(),
   creadoen: z.coerce.date().optional(),
   modificadopor: z.string().nullable().optional(),
@@ -42,7 +55,7 @@ export const updateOperacionSchema = z
     cirujano: z.string().nullable().optional(),
     resultado: z.string().nullable().optional(),
     complicaciones: z.string().nullable().optional(),
-    estado: z.string().optional(),
+    estado: estadoOperacionSchema.optional(),
     creadopor: z.string().nullable().optional(),
     creadoen: z.coerce.date().optional(),
     modificadopor: z.string().nullable().optional(),

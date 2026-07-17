@@ -558,17 +558,6 @@ export function SaludMentalScreen() {
           </View>
         ) : (
           <>
-            <View style={styles.metricsRow}>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricCardLabel}>Registros</Text>
-                <Text style={styles.metricCardValue}>{historial?.totalRegistros ?? 0}</Text>
-              </View>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricCardLabel}>Alertas</Text>
-                <Text style={styles.metricCardValue}>{alerts?.totalAlertas ?? 0}</Text>
-              </View>
-            </View>
-
             {latestRecord ? (
               <View style={styles.latestRecordBox}>
                 <Text style={styles.latestRecordTitle}>Ultimo registro</Text>
@@ -814,29 +803,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#FF4D73',
     lineHeight: 20,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  metricCard: {
-    flex: 1,
-    backgroundColor: '#071120',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#27496D',
-    padding: 12,
-    gap: 4,
-  },
-  metricCardLabel: {
-    color: '#9FB3C8',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  metricCardValue: {
-    color: '#F4F8FF',
-    fontSize: 22,
-    fontWeight: '800',
   },
   latestRecordBox: {
     backgroundColor: '#38F28E18',
