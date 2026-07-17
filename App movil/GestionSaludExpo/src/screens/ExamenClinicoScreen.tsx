@@ -20,6 +20,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
+import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
 
 type ConsultationOption = {
   consultaId: number;
@@ -53,7 +54,7 @@ type PdfState = {
 
 type DatePickerField = 'exam-date' | 'result-date';
 
-const todayString = () => new Date().toISOString().slice(0, 10);
+const todayString = () => toLocalDateOnlyString();
 
 const toDateOnlyString = (input?: Date | string | null): string => {
   if (!input) return '';
@@ -91,8 +92,8 @@ const formatDisplayDate = (value?: string | null) => {
 
 const formatRecordDate = (value?: string | null) => {
   if (!value) return 'Sin fecha';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return String(value);
+  const parsed = parseCalendarDate(value);
+  if (!parsed) return String(value);
   return parsed.toLocaleDateString('es-NI', {
     year: 'numeric',
     month: 'short',

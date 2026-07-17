@@ -15,6 +15,7 @@ import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
+import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
 
 type DateFieldKey = 'fechaEvento' | 'fechaSeguimiento' | 'proximoControl';
 
@@ -58,7 +59,7 @@ type FollowUpEntry = {
   notas: string | null;
 };
 
-const todayString = () => new Date().toISOString().slice(0, 10);
+const todayString = () => toLocalDateOnlyString();
 
 const toDateOnlyString = (input?: Date | string | null): string => {
   if (!input) return '';
@@ -90,8 +91,8 @@ const formatDate = (value?: string | null) => {
   if (!value) {
     return 'Sin fecha';
   }
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
+  const parsed = parseCalendarDate(value);
+  if (!parsed) {
     return value;
   }
   return parsed.toLocaleDateString('es-NI', {

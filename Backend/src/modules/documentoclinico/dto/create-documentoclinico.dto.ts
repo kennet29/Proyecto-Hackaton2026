@@ -1,6 +1,8 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 
+const nullableString = z.string().trim().nullable().optional();
+
 /**
  * Esquema Zod para validar la creación de documentoclinico.
  */
@@ -11,6 +13,9 @@ export const createDocumentoclinicoSchema = z.object({
   entidadId: z.number().int().nullable().optional(),
   rutaarchivo: z.string().nullable().optional(),
   urlexterna: z.string().nullable().optional(),
+  archivoBase64: nullableString,
+  nombreArchivo: z.string().trim().max(200).nullable().optional(),
+  mimeArchivo: z.string().trim().max(100).nullable().optional(),
   fechadocumento: z.coerce.date().nullable().optional(),
   notas: z.string().nullable().optional(),
   creadopor: z.string().nullable().optional(),
@@ -41,6 +46,9 @@ export const updateDocumentoclinicoSchema = z
     entidadId: z.number().int().nullable().optional(),
     rutaarchivo: z.string().nullable().optional(),
     urlexterna: z.string().nullable().optional(),
+    archivoBase64: nullableString,
+    nombreArchivo: z.string().trim().max(200).nullable().optional(),
+    mimeArchivo: z.string().trim().max(100).nullable().optional(),
     fechadocumento: z.coerce.date().nullable().optional(),
     notas: z.string().nullable().optional(),
     creadopor: z.string().nullable().optional(),

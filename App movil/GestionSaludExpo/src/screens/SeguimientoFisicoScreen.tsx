@@ -19,6 +19,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { RootStackParamList } from '../navigation/types';
+import { toLocalDateOnlyString } from '../utils/localDate';
 
 type SeguimientoRecord = {
   seguimientoFisicoId: number;
@@ -136,7 +137,7 @@ const CHART_SIDE_PADDING = 18;
 const CHART_POINT_GAP = 58;
 const CHART_LINE_THICKNESS = 3;
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => toLocalDateOnlyString();
 
 const parseDateOnly = (value?: string | null) => {
   if (!value) return null;

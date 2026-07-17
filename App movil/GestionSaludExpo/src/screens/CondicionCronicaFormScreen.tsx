@@ -21,6 +21,7 @@ import type { RootStackParamList } from '../navigation/types';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
+import { parseCalendarDate } from '../utils/localDate';
 
 type TipoCondicion = {
   tipocondicionId: number;
@@ -76,8 +77,8 @@ const formatDisplayDate = (value?: string) => {
 
 const formatRecordDate = (value?: string | null) => {
   if (!value) return 'Sin fecha';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return String(value);
+  const parsed = parseCalendarDate(value);
+  if (!parsed) return String(value);
   return parsed.toLocaleDateString('es-NI', {
     year: 'numeric',
     month: 'short',

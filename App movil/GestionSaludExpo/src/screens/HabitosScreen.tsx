@@ -17,6 +17,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
+import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Habitos'>;
 
@@ -40,12 +41,12 @@ type Habito = {
   observaciones?: string | null;
 };
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => toLocalDateOnlyString();
 
 const formatDate = (value?: string | null) => {
   if (!value) return 'Sin fecha';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('es-NI');
+  const date = parseCalendarDate(value);
+  return date ? date.toLocaleDateString('es-NI') : value;
 };
 
 const getImpactAccent = (value?: string | null) => {

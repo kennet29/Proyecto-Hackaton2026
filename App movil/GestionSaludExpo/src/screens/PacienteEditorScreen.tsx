@@ -19,6 +19,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { invalidateLinkedPatientsCache } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
+import { parseCalendarDate } from '../utils/localDate';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PacienteEditor'>;
 
@@ -44,15 +45,7 @@ const toDateOnlyString = (input?: Date | string | null): string => {
 };
 
 const parseDateForPicker = (value?: string) => {
-  if (value) {
-    const parsed = new Date(value);
-    if (!Number.isNaN(parsed.getTime())) return parsed;
-    const segments = value.split('-').map((segment) => Number(segment));
-    if (segments.length === 3 && segments.every((segment) => !Number.isNaN(segment))) {
-      return new Date(segments[0], segments[1] - 1, segments[2]);
-    }
-  }
-  return new Date();
+  return parseCalendarDate(value) ?? new Date();
 };
 
 const formatDisplayDate = (value?: string) => {

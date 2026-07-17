@@ -15,6 +15,7 @@ import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
+import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
 
 type SaludMentalRecord = {
   saludmentalId: number;
@@ -49,7 +50,7 @@ type SaludMentalAlerts = {
   alertas: string[];
 };
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => toLocalDateOnlyString();
 
 const scoreOptions = [
   { label: '1 - Muy bajo', value: '1' },
@@ -61,8 +62,8 @@ const scoreOptions = [
 
 const formatDate = (value?: string | null) => {
   if (!value) return 'Sin fecha';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
+  const parsed = parseCalendarDate(value);
+  if (!parsed) return value;
   return parsed.toLocaleDateString('es-NI', {
     year: 'numeric',
     month: 'short',

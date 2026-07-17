@@ -16,6 +16,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
+import { parseCalendarDate } from '../utils/localDate';
 
 type Consulta = {
   consultaId: number;
@@ -66,8 +67,8 @@ const formatDateLabel = (value?: string | null) => {
     return 'Sin fecha';
   }
 
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
+  const parsed = parseCalendarDate(value);
+  if (!parsed) {
     return value;
   }
 

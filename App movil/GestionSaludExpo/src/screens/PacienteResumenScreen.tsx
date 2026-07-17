@@ -20,6 +20,7 @@ import {
   writeClinicalSummaryCache,
 } from '../utils/clinicalSummaryCache';
 import { appColors, colorAlpha } from '../theme/colors';
+import { parseCalendarDate } from '../utils/localDate';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PacienteResumen'>;
 
@@ -82,8 +83,8 @@ type ClinicalSummary = {
 
 const formatDate = (value?: string | null) => {
   if (!value) return 'Sin fecha';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return String(value);
+  const parsed = parseCalendarDate(value);
+  if (!parsed) return String(value);
   return parsed.toLocaleDateString('es-NI', {
     year: 'numeric',
     month: 'short',

@@ -1,7 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
+  Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +14,9 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
@@ -21,6 +27,17 @@ type TipoDocumento = {
   nombre: string;
   descripcion?: string | null;
 };
+
+type DocumentAttachment = {
+  uri: string;
+  base64Data: string;
+  name: string;
+  mimeType: string;
+  kind: 'image' | 'pdf';
+  size?: number;
+};
+
+const MAX_ATTACHMENT_BYTES = 3 * 1024 * 1024;
 
 const originOptions = [
   { value: 'general', label: 'General', icon: 'folder-open-outline' },
@@ -45,6 +62,9 @@ export function DocumentoFormScreen() {
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [loadingTypes, setLoadingTypes] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [attachment, setAttachment] = useState<DocumentAttachment | null>(null);
+  const [webCameraStream, setWebCameraStream] = useState<MediaStream | null>(null);
+  const webVideoRef = useRef<HTMLVideoElement | null>(null);
   const { token, user } = useAuth();
 
   const authHeaders = useMemo<Record<string, string>>(() => {
@@ -143,6 +163,235 @@ export function DocumentoFormScreen() {
       url: '',
       notas: '',
     }));
+    setAttachment(null);
+  };
+
+  useEffect(() => {
+    const video = webVideoRef.current;
+    if (webCameraStream && video) {
+      video.srcObject = webCameraStream;
+      void video.play().catch(() => undefined);
+    }
+
+    return () => {
+      webCameraStream?.getTracks().forEach((track) => track.stop());
+    };
+  }, [webCameraStream]);
+
+  const validateFileSize = (size?: number | null) => {
+    if (size && size > MAX_ATTACHMENT_BYTES) {
+      Alert.alert('Archivo muy grande', 'La imagen o PDF no puede superar 3 MB.');
+      return false;
+    }
+    return true;
+  };
+
+  const setWebFile = (
+    accept: string,
+    kind: DocumentAttachment['kind'],
+    capture = false,
+  ) => {
+    if (typeof document === 'undefined') return;
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept;
+    if (capture) {
+      input.setAttribute('capture', 'environment');
+    }
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file || !validateFileSize(file.size)) return;
+      const mimeType =
+        file.type || (kind === 'pdf' ? 'application/pdf' : 'image/jpeg');
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64Data = typeof reader.result === 'string' ? reader.result : '';
+        if (!base64Data) {
+          Alert.alert('Error', 'No se pudo leer el archivo seleccionado.');
+          return;
+        }
+        setAttachment({
+          uri: kind === 'image' ? base64Data : '',
+          base64Data,
+          name:
+            file.name ||
+            `documento-${Date.now()}.${kind === 'pdf' ? 'pdf' : 'jpg'}`,
+          mimeType,
+          kind,
+          size: file.size,
+        });
+      };
+      reader.onerror = () =>
+        Alert.alert('Error', 'No se pudo leer el archivo seleccionado.');
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  };
+
+  const readNativeFileAsDataUrl = async (uri: string, mimeType: string) => {
+    const file = new FileSystem.File(uri);
+    const base64 = await file.base64();
+    return `data:${mimeType};base64,${base64}`;
+  };
+
+  const handleTakePhoto = async () => {
+    if (Platform.OS === 'web') {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setWebFile('image/*', 'image', true);
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false,
+        });
+        setWebCameraStream(stream);
+      } catch {
+        Alert.alert(
+          'Cámara no disponible',
+          'No se pudo abrir la cámara. Revisa el permiso del navegador o elige una imagen.',
+        );
+      }
+      return;
+    }
+
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permiso requerido', 'Debes permitir acceso a la cámara.');
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: 'images',
+        allowsEditing: false,
+        quality: 0.5,
+        base64: true,
+      });
+      if (result.canceled || !result.assets?.length) return;
+      const asset = result.assets[0];
+      if (!validateFileSize(asset.fileSize)) return;
+      const mimeType = asset.mimeType ?? 'image/jpeg';
+      const base64Data = asset.base64
+        ? `data:${mimeType};base64,${asset.base64}`
+        : await readNativeFileAsDataUrl(asset.uri, mimeType);
+      setAttachment({
+        uri: asset.uri,
+        base64Data,
+        name: asset.fileName ?? `documento-${Date.now()}.jpg`,
+        mimeType,
+        kind: 'image',
+        size: asset.fileSize,
+      });
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo abrir la cámara');
+    }
+  };
+
+  const handlePickImage = async () => {
+    if (Platform.OS === 'web') {
+      setWebFile('image/*', 'image');
+      return;
+    }
+
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permiso requerido', 'Debes permitir acceso a tus imágenes.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsEditing: false,
+        quality: 0.5,
+        base64: true,
+      });
+      if (result.canceled || !result.assets?.length) return;
+      const asset = result.assets[0];
+      if (!validateFileSize(asset.fileSize)) return;
+      const mimeType = asset.mimeType ?? 'image/jpeg';
+      const base64Data = asset.base64
+        ? `data:${mimeType};base64,${asset.base64}`
+        : await readNativeFileAsDataUrl(asset.uri, mimeType);
+      setAttachment({
+        uri: asset.uri,
+        base64Data,
+        name: asset.fileName ?? `documento-${Date.now()}.jpg`,
+        mimeType,
+        kind: 'image',
+        size: asset.fileSize,
+      });
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo elegir la imagen');
+    }
+  };
+
+  const handlePickPdf = async () => {
+    if (Platform.OS === 'web') {
+      setWebFile('application/pdf,.pdf', 'pdf');
+      return;
+    }
+
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/pdf',
+        multiple: false,
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled || !result.assets?.length) return;
+      const asset = result.assets[0];
+      if (!validateFileSize(asset.size)) return;
+      const mimeType = asset.mimeType ?? 'application/pdf';
+      setAttachment({
+        uri: asset.uri,
+        base64Data: await readNativeFileAsDataUrl(asset.uri, mimeType),
+        name: asset.name ?? `documento-${Date.now()}.pdf`,
+        mimeType,
+        kind: 'pdf',
+        size: asset.size,
+      });
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo elegir el PDF');
+    }
+  };
+
+  const closeWebCamera = () => {
+    webCameraStream?.getTracks().forEach((track) => track.stop());
+    setWebCameraStream(null);
+  };
+
+  const captureWebPhoto = () => {
+    const video = webVideoRef.current;
+    if (!video?.videoWidth || !video.videoHeight) {
+      Alert.alert('Espera un momento', 'La cámara todavía se está preparando.');
+      return;
+    }
+
+    const maxWidth = 1280;
+    const scale = Math.min(1, maxWidth / video.videoWidth);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
+    const context = canvas.getContext('2d');
+    if (!context) {
+      Alert.alert('Error', 'No se pudo capturar la fotografía.');
+      return;
+    }
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const base64Data = canvas.toDataURL('image/jpeg', 0.82);
+    const size = Math.ceil((base64Data.length - base64Data.indexOf(',') - 1) * 0.75);
+    if (!validateFileSize(size)) return;
+
+    setAttachment({
+      uri: base64Data,
+      base64Data,
+      name: `foto-documento-${Date.now()}.jpg`,
+      mimeType: 'image/jpeg',
+      kind: 'image',
+      size,
+    });
+    closeWebCamera();
   };
 
   const handleSubmit = async () => {
@@ -150,10 +399,10 @@ export function DocumentoFormScreen() {
       Alert.alert('Faltan datos', 'Persona asociada y tipo de documento son obligatorios.');
       return;
     }
-    if (!form.url.trim() && !form.rutaArchivo.trim()) {
+    if (!attachment && !form.url.trim() && !form.rutaArchivo.trim()) {
       Alert.alert(
-        'Falta referencia',
-        'Agrega una URL externa o una ruta del archivo. Esta vista registra la referencia del documento.',
+        'Falta documento',
+        'Elige una imagen, toma una foto, sube un PDF o agrega una referencia externa.',
       );
       return;
     }
@@ -170,6 +419,9 @@ export function DocumentoFormScreen() {
           entidadId: form.entidadId ? Number(form.entidadId) : undefined,
           rutaarchivo: form.rutaArchivo.trim() || undefined,
           urlexterna: form.url.trim() || undefined,
+          archivoBase64: attachment?.base64Data,
+          nombreArchivo: attachment?.name,
+          mimeArchivo: attachment?.mimeType,
           notas: form.notas.trim() || undefined,
           creadopor: user?.username ?? undefined,
         }),
@@ -178,7 +430,12 @@ export function DocumentoFormScreen() {
         const body = await response.json().catch(() => ({}));
         throw new Error(body?.message ?? 'No se pudo registrar el documento');
       }
-      Alert.alert('Documento guardado', 'La referencia quedó adjunta al expediente clínico.');
+      Alert.alert(
+        'Documento guardado',
+        attachment
+          ? 'El archivo quedó adjunto al expediente clínico.'
+          : 'La referencia quedó adjunta al expediente clínico.',
+      );
       resetForm();
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Falló la petición');
@@ -188,30 +445,70 @@ export function DocumentoFormScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <>
+      <Modal
+        visible={Platform.OS === 'web' && Boolean(webCameraStream)}
+        transparent
+        animationType="fade"
+        onRequestClose={closeWebCamera}
+      >
+        <View style={styles.cameraBackdrop}>
+          <View style={styles.cameraCard}>
+            <View style={styles.cameraHeader}>
+              <View>
+                <Text style={styles.cameraTitle}>Tomar fotografía</Text>
+                <Text style={styles.cameraHint}>Coloca el documento dentro del encuadre.</Text>
+              </View>
+              <TouchableOpacity style={styles.cameraCloseButton} onPress={closeWebCamera}>
+                <Ionicons name="close" size={24} color={appColors.text} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.cameraViewport}>
+              {React.createElement('video', {
+                ref: webVideoRef,
+                autoPlay: true,
+                playsInline: true,
+                muted: true,
+                style: {
+                  display: 'block',
+                  width: '100%',
+                  maxHeight: 520,
+                  objectFit: 'cover',
+                  backgroundColor: appColors.overlay,
+                },
+              })}
+            </View>
+            <TouchableOpacity style={styles.captureButton} onPress={captureWebPhoto}>
+              <Ionicons name="camera" size={22} color={appColors.background} />
+              <Text style={styles.captureButtonText}>Capturar foto</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.heroCard}>
         <View style={styles.heroTopRow}>
           <View style={styles.heroIcon}>
             <Ionicons name="folder-open-outline" size={30} color={appColors.text} />
           </View>
           <View style={styles.heroPill}>
-            <Ionicons name="link-outline" size={14} color={appColors.info} />
-            <Text style={styles.heroPillText}>Referencias clínicas</Text>
+            <Ionicons name="cloud-upload-outline" size={14} color={appColors.info} />
+            <Text style={styles.heroPillText}>Archivos clínicos</Text>
           </View>
         </View>
         <Text style={styles.kicker}>ESPACIOS CLÍNICOS</Text>
         <Text style={styles.title}>Documentos clínicos</Text>
         <Text style={styles.subtitle}>
-          Centraliza enlaces, rutas y referencias de archivos vinculados al expediente del paciente.
+          Adjunta imágenes, fotografías, PDF o referencias vinculadas al expediente del paciente.
         </Text>
       </View>
 
       <View style={styles.infoCard}>
         <Ionicons name="information-circle-outline" size={22} color={appColors.info} />
         <View style={styles.infoCopy}>
-          <Text style={styles.infoTitle}>Sobre imágenes y PDF</Text>
+          <Text style={styles.infoTitle}>Adjunta el documento</Text>
           <Text style={styles.infoText}>
-            Esta vista registra URL o ruta del archivo. Los adjuntos binarios ya existen en módulos específicos como medicación y exámenes clínicos.
+            Puedes elegir una imagen, usar la cámara o subir un PDF de hasta 3 MB. También puedes guardar una URL o ruta externa.
           </Text>
         </View>
       </View>
@@ -316,7 +613,65 @@ export function DocumentoFormScreen() {
       </View>
 
       <View style={styles.formCard}>
-        <Text style={styles.sectionTitle}>Referencia del archivo</Text>
+        <Text style={styles.sectionTitle}>Archivo o referencia</Text>
+        <Text style={styles.label}>Archivo adjunto</Text>
+        <Text style={styles.fieldHint}>Elige cómo deseas agregar el documento clínico.</Text>
+
+        <View style={styles.attachmentActions}>
+          <TouchableOpacity style={styles.attachmentButton} onPress={handlePickImage}>
+            <Ionicons name="image-outline" size={20} color={appColors.info} />
+            <Text style={styles.attachmentButtonText}>Elegir imagen</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.attachmentButton} onPress={handleTakePhoto}>
+            <Ionicons name="camera-outline" size={20} color={appColors.info} />
+            <Text style={styles.attachmentButtonText}>Tomar foto</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.attachmentButton} onPress={handlePickPdf}>
+            <Ionicons name="document-attach-outline" size={20} color={appColors.info} />
+            <Text style={styles.attachmentButtonText}>Subir PDF</Text>
+          </TouchableOpacity>
+        </View>
+
+        {attachment ? (
+          <View style={styles.attachmentPreview}>
+            {attachment.kind === 'image' ? (
+              <Image source={{ uri: attachment.uri }} style={styles.attachmentImage} />
+            ) : (
+              <View style={styles.pdfIcon}>
+                <Ionicons name="document-text" size={31} color={appColors.accent} />
+              </View>
+            )}
+            <View style={styles.attachmentInfo}>
+              <Text style={styles.attachmentTitle}>
+                {attachment.kind === 'pdf' ? 'PDF seleccionado' : 'Imagen seleccionada'}
+              </Text>
+              <Text style={styles.attachmentName} numberOfLines={1}>{attachment.name}</Text>
+              <Text style={styles.attachmentMeta}>
+                {attachment.size ? `${(attachment.size / 1024 / 1024).toFixed(2)} MB · ` : ''}
+                {attachment.mimeType}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.removeAttachmentButton}
+              onPress={() => setAttachment(null)}
+              accessibilityLabel="Quitar archivo adjunto"
+            >
+              <Ionicons name="trash-outline" size={20} color={appColors.accent} />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.emptyAttachment}>
+            <Ionicons name="cloud-upload-outline" size={22} color={appColors.textMuted} />
+            <Text style={styles.emptyAttachmentText}>Aún no has seleccionado un archivo</Text>
+          </View>
+        )}
+
+        <View style={styles.referenceDivider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>o usa una referencia externa</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
         <Text style={styles.label}>URL externa</Text>
         <TextInput
           style={styles.input}
@@ -362,7 +717,8 @@ export function DocumentoFormScreen() {
           <Text style={styles.btnText}>{submitting ? 'Guardando...' : 'Guardar documento'}</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </>
   );
 }
 
@@ -498,6 +854,176 @@ const styles = StyleSheet.create({
   fieldHint: {
     color: appColors.textMuted,
     lineHeight: 18,
+  },
+  attachmentActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  cameraBackdrop: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: colorAlpha(appColors.overlay, 'CC'),
+  },
+  cameraCard: {
+    width: '100%',
+    maxWidth: 760,
+    gap: 16,
+    padding: 18,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: appColors.border,
+    backgroundColor: appColors.surface,
+  },
+  cameraHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  cameraTitle: {
+    color: appColors.text,
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  cameraHint: {
+    color: appColors.textMuted,
+    marginTop: 3,
+  },
+  cameraCloseButton: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    backgroundColor: appColors.backgroundMuted,
+  },
+  cameraViewport: {
+    overflow: 'hidden',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: appColors.border,
+    backgroundColor: appColors.overlay,
+  },
+  captureButton: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: 15,
+    backgroundColor: appColors.info,
+  },
+  captureButtonText: {
+    color: appColors.background,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  attachmentButton: {
+    flex: 1,
+    minWidth: 150,
+    minHeight: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '55'),
+    backgroundColor: colorAlpha(appColors.info, '0D'),
+  },
+  attachmentButtonText: {
+    color: appColors.text,
+    fontWeight: '800',
+  },
+  attachmentPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.success, '55'),
+    backgroundColor: colorAlpha(appColors.success, '10'),
+  },
+  attachmentImage: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+    backgroundColor: appColors.backgroundMuted,
+  },
+  pdfIcon: {
+    width: 72,
+    height: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    backgroundColor: colorAlpha(appColors.accent, '14'),
+  },
+  attachmentInfo: {
+    flex: 1,
+    minWidth: 0,
+    gap: 3,
+  },
+  attachmentTitle: {
+    color: appColors.success,
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  attachmentName: {
+    color: appColors.text,
+    fontWeight: '800',
+  },
+  attachmentMeta: {
+    color: appColors.textMuted,
+    fontSize: 12,
+  },
+  removeAttachmentButton: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.accent, '45'),
+    backgroundColor: colorAlpha(appColors.accent, '10'),
+  },
+  emptyAttachment: {
+    minHeight: 62,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 9,
+    padding: 14,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: appColors.border,
+    borderRadius: 14,
+    backgroundColor: appColors.backgroundMuted,
+  },
+  emptyAttachmentText: {
+    color: appColors.textMuted,
+    fontWeight: '700',
+  },
+  referenceDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginVertical: 6,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: appColors.border,
+  },
+  dividerText: {
+    color: appColors.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
   },
   originGrid: {
     flexDirection: 'row',

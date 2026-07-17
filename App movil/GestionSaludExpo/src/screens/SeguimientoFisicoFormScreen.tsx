@@ -15,6 +15,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
+import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SeguimientoFisicoForm'>;
 
@@ -68,12 +69,12 @@ const intensidadOptions = [
   { label: 'Intensa', value: 'intensa' },
 ];
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => toLocalDateOnlyString();
 
 const formatDate = (value?: string | null) => {
   if (!value) return 'Sin fecha';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
+  const parsed = parseCalendarDate(value);
+  if (!parsed) return value;
   return parsed.toLocaleDateString('es-NI', {
     year: 'numeric',
     month: 'short',

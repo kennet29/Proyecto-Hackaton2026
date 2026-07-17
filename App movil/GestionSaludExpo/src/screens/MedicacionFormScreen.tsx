@@ -29,6 +29,7 @@ import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
+import { parseCalendarDate } from '../utils/localDate';
 import { WebTimeInput } from '../components/WebTimeInput';
 
 type PickerField =
@@ -130,17 +131,7 @@ const normalizeTimeString = (value?: string | null): string => {
 const isDailyMedicationSchedule = (value?: string | null) => value?.trim().toLowerCase() === 'diaria';
 
 const parseDateForPicker = (value?: string) => {
-  if (value) {
-    const parsed = new Date(value);
-    if (!Number.isNaN(parsed.getTime())) {
-      return parsed;
-    }
-    const segments = value.split('-').map((segment) => Number(segment));
-    if (segments.length === 3 && segments.every((segment) => !Number.isNaN(segment))) {
-      return new Date(segments[0], segments[1] - 1, segments[2]);
-    }
-  }
-  return new Date();
+  return parseCalendarDate(value) ?? new Date();
 };
 
 const parseTimeForPicker = (value?: string) => {
@@ -160,17 +151,8 @@ const formatDisplayDate = (value?: string, fallbackLabel = 'Selecciona fecha') =
   if (!value) {
     return fallbackLabel;
   }
-  const segments = value.split('-').map((segment) => Number(segment));
-  if (segments.length === 3 && segments.every((segment) => !Number.isNaN(segment))) {
-    const parsed = new Date(segments[0], segments[1] - 1, segments[2]);
-    return parsed.toLocaleDateString('es-NI', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  }
-  const parsed = new Date(value);
-  if (!Number.isNaN(parsed.getTime())) {
+  const parsed = parseCalendarDate(value);
+  if (parsed) {
     return parsed.toLocaleDateString('es-NI', {
       year: 'numeric',
       month: 'long',

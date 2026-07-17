@@ -20,6 +20,7 @@ import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
 import { WebTimeInput } from '../components/WebTimeInput';
+import { toLocalDateOnlyString } from '../utils/localDate';
 
 const webDateInputStyle = {
   flex: 1,
@@ -48,6 +49,12 @@ type ReminderRecord = {
   sourceType: string | null;
   sourceId: string | null;
   sourceLabel: string | null;
+};
+
+type ReminderDisplayStatus = {
+  key: 'pending' | 'overdue' | 'completed';
+  label: string;
+  color: string;
 };
 
 type SourceTypeKey =
@@ -248,6 +255,31 @@ const composeDateTime = (date: string, time: string) => {
   return `${date}T${time}`;
 };
 
+const COMPLETED_STATUSES = new Set([
+  'realizada',
+  'realizado',
+  'completada',
+  'completado',
+  'hecha',
+  'hecho',
+]);
+
+const isReminderCompleted = (item: ReminderRecord) =>
+  COMPLETED_STATUSES.has((item.estado ?? '').trim().toLowerCase());
+
+const getReminderDisplayStatus = (item: ReminderRecord): ReminderDisplayStatus => {
+  if (isReminderCompleted(item)) {
+    return { key: 'completed', label: 'Realizada', color: appColors.success };
+  }
+
+  const scheduledAt = new Date(item.fecharecordatorio);
+  if (!Number.isNaN(scheduledAt.getTime()) && scheduledAt.getTime() < Date.now()) {
+    return { key: 'overdue', label: 'Vencida', color: appColors.accent };
+  }
+
+  return { key: 'pending', label: 'Pendiente', color: appColors.info };
+};
+
 const mapSourceRecords = (payload: any[], definition: SourceDefinition): SourceRecord[] =>
   payload
     .map((item) => {
@@ -332,7 +364,14 @@ const mapNotifications = (payload: any[]): ReminderRecord[] => {
       fecharecordatorio: fechaprogramada,
       mensaje,
       canal: normalizeText(item?.medio),
-      estado: typeof item?.enviada === 'boolean' ? (item.enviada ? 'enviada' : 'pendiente') : 'pendiente',
+      estado:
+        normalizeText(item?.campoprueba05)?.toLowerCase() === 'realizada'
+          ? 'realizada'
+          : typeof item?.enviada === 'boolean'
+            ? item.enviada
+              ? 'enviada'
+              : 'pendiente'
+            : 'pendiente',
       sourceType: entidadOrigen,
       sourceId: Number.isFinite(entidadId) ? String(entidadId) : null,
       sourceLabel,
@@ -365,6 +404,11 @@ export function RecordatorioListScreen() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [updatingReminderKey, setUpdatingReminderKey] = useState<string | null>(null);
+  const [reschedulingReminder, setReschedulingReminder] = useState<ReminderRecord | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState('');
+  const [rescheduleTime, setRescheduleTime] = useState('08:00');
+  const [rescheduling, setRescheduling] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -528,7 +572,146 @@ export function RecordatorioListScreen() {
     }
   };
 
+  const handleMarkAsCompleted = async (item: ReminderRecord) => {
+    const reminderKey = `${item.reminderType}-${item.reminderId}`;
+    if (updatingReminderKey || isReminderCompleted(item)) return;
+
+    setUpdatingReminderKey(reminderKey);
+    try {
+      const isNotification = item.reminderType === 'notificacion';
+      const result = await submitJsonWithOfflineFallback({
+        token,
+        path: `/${isNotification ? 'notificacion' : 'recordatoriocita'}/${item.reminderId}`,
+        method: 'PATCH',
+        description: 'marcar recordatorio como realizado',
+        body: {
+          ...(isNotification ? { campoprueba05: 'realizada' } : { estado: 'realizada' }),
+          modificadopor: user?.username ?? undefined,
+          modificadoen: new Date().toISOString(),
+        },
+      });
+
+      setReminders((current) =>
+        current.map((reminder) =>
+          reminder.reminderId === item.reminderId &&
+          reminder.reminderType === item.reminderType
+            ? { ...reminder, estado: 'realizada' }
+            : reminder,
+        ),
+      );
+
+      if (result.status === 'queued') {
+        Alert.alert(
+          'Cambio guardado',
+          'No hay conexión. Se marcará como realizada cuando vuelva la red.',
+        );
+      }
+    } catch (updateError) {
+      Alert.alert(
+        'Error',
+        updateError instanceof Error
+          ? updateError.message
+          : 'No se pudo marcar el recordatorio como realizado',
+      );
+    } finally {
+      setUpdatingReminderKey(null);
+    }
+  };
+
+  const openReschedulePanel = (item: ReminderRecord) => {
+    const currentKey = reschedulingReminder
+      ? `${reschedulingReminder.reminderType}-${reschedulingReminder.reminderId}`
+      : null;
+    const nextKey = `${item.reminderType}-${item.reminderId}`;
+    if (currentKey === nextKey) {
+      setReschedulingReminder(null);
+      return;
+    }
+
+    setReschedulingReminder(item);
+    setRescheduleDate(extractDatePortion(item.fecharecordatorio));
+    setRescheduleTime(extractTimePortion(item.fecharecordatorio));
+  };
+
+  const handleReschedule = async () => {
+    if (!reschedulingReminder || rescheduling) return;
+
+    const nextScheduledDate = composeDateTime(rescheduleDate.trim(), rescheduleTime.trim());
+    const parsedDate = new Date(nextScheduledDate);
+    if (!nextScheduledDate || Number.isNaN(parsedDate.getTime())) {
+      Alert.alert('Fecha inválida', 'Selecciona una fecha y hora válidas.');
+      return;
+    }
+    if (parsedDate.getTime() <= Date.now()) {
+      Alert.alert('Fecha vencida', 'La nueva fecha debe estar en el futuro.');
+      return;
+    }
+
+    const item = reschedulingReminder;
+    const isNotification = item.reminderType === 'notificacion';
+    setRescheduling(true);
+    try {
+      const result = await submitJsonWithOfflineFallback({
+        token,
+        path: `/${isNotification ? 'notificacion' : 'recordatoriocita'}/${item.reminderId}`,
+        method: 'PATCH',
+        description: 'reprogramar recordatorio',
+        body: {
+          ...(isNotification
+            ? {
+                fechaprogramada: nextScheduledDate,
+                enviada: false,
+                campoprueba05: null,
+              }
+            : {
+                fecharecordatorio: nextScheduledDate,
+                estado: 'pendiente',
+              }),
+          modificadopor: user?.username ?? undefined,
+          modificadoen: new Date().toISOString(),
+        },
+      });
+
+      setReminders((current) =>
+        current.map((reminder) =>
+          reminder.reminderId === item.reminderId &&
+          reminder.reminderType === item.reminderType
+            ? {
+                ...reminder,
+                fecharecordatorio: nextScheduledDate,
+                estado: 'pendiente',
+              }
+            : reminder,
+        ),
+      );
+      setReschedulingReminder(null);
+
+      Alert.alert(
+        result.status === 'queued' ? 'Reprogramación guardada' : 'Recordatorio reprogramado',
+        result.status === 'queued'
+          ? 'No hay conexión. La nueva fecha se sincronizará cuando vuelva la red.'
+          : 'La nueva fecha y hora quedaron guardadas.',
+      );
+    } catch (rescheduleError) {
+      Alert.alert(
+        'Error',
+        rescheduleError instanceof Error
+          ? rescheduleError.message
+          : 'No se pudo reprogramar el recordatorio',
+      );
+    } finally {
+      setRescheduling(false);
+    }
+  };
+
   const renderReminder = (item: ReminderRecord) => {
+    const reminderKey = `${item.reminderType}-${item.reminderId}`;
+    const displayStatus = getReminderDisplayStatus(item);
+    const isCompleted = displayStatus.key === 'completed';
+    const isUpdating = updatingReminderKey === reminderKey;
+    const isRescheduleOpen =
+      reschedulingReminder?.reminderId === item.reminderId &&
+      reschedulingReminder?.reminderType === item.reminderType;
     const sourceKey = item.sourceType && item.sourceId ? `${item.sourceType}:${item.sourceId}` : '';
     const source = sourceKey ? sourceByKey[sourceKey] : null;
     const patientName = patientNameById[item.pacienteId] ?? `Paciente #${item.pacienteId}`;
@@ -538,7 +721,14 @@ export function RecordatorioListScreen() {
       (item.citaId ? `Cita #${item.citaId}` : item.reminderType === 'notificacion' ? 'Notificacion programada' : 'Registro vinculado');
 
     return (
-      <View key={`${item.reminderType}-${item.reminderId}`} style={styles.card}>
+      <View
+        key={reminderKey}
+        style={[
+          styles.card,
+          displayStatus.key === 'overdue' ? styles.cardOverdue : null,
+          isCompleted ? styles.cardCompleted : null,
+        ]}
+      >
         <View style={styles.cardHeader}>
           <View style={styles.personRow}>
             <View style={[styles.personIcon, { backgroundColor: colorAlpha(source?.accent ?? appColors.info, '18') }]}>
@@ -549,8 +739,15 @@ export function RecordatorioListScreen() {
               <Text style={styles.personSubtext}>{sourceLabel}</Text>
             </View>
           </View>
-          <View style={styles.stateBadge}>
-            <Text style={styles.stateBadgeText}>{item.estado ?? 'pendiente'}</Text>
+          <View
+            style={[
+              styles.stateBadge,
+              { backgroundColor: colorAlpha(displayStatus.color, '18') },
+            ]}
+          >
+            <Text style={[styles.stateBadgeText, { color: displayStatus.color }]}>
+              {displayStatus.label}
+            </Text>
           </View>
         </View>
 
@@ -564,10 +761,138 @@ export function RecordatorioListScreen() {
           <Text style={styles.messageText}>{item.mensaje}</Text>
         </View>
 
+        {isRescheduleOpen ? (
+          <View style={styles.reschedulePanel}>
+            <View style={styles.rescheduleHeader}>
+              <View style={styles.personTextWrap}>
+                <Text style={styles.rescheduleTitle}>Reprogramar aviso</Text>
+                <Text style={styles.rescheduleHint}>
+                  Elige una fecha y hora futuras para volver a dejarlo pendiente.
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.rescheduleCloseButton}
+                onPress={() => setReschedulingReminder(null)}
+                accessibilityLabel="Cerrar reprogramación"
+              >
+                <Ionicons name="close" size={19} color={appColors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.rescheduleDateTimeRow}>
+              {Platform.OS === 'web' ? (
+                <>
+                  {React.createElement('input', {
+                    type: 'date',
+                    value: rescheduleDate,
+                    min: toLocalDateOnlyString(),
+                    onChange: (event: any) => setRescheduleDate(event.target.value),
+                    style: webDateInputStyle,
+                    'aria-label': 'Nueva fecha del aviso',
+                  })}
+                  <WebTimeInput
+                    value={rescheduleTime}
+                    onChange={setRescheduleTime}
+                    ariaLabel="Nueva hora del aviso"
+                    includeQuickTimes={false}
+                  />
+                </>
+              ) : (
+                <>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor={appColors.textMuted}
+                    value={rescheduleDate}
+                    onChangeText={setRescheduleDate}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="HH:MM"
+                    placeholderTextColor={appColors.textMuted}
+                    value={rescheduleTime}
+                    onChangeText={setRescheduleTime}
+                  />
+                </>
+              )}
+            </View>
+
+            <View style={styles.rescheduleActions}>
+              <TouchableOpacity
+                style={styles.rescheduleCancelButton}
+                onPress={() => setReschedulingReminder(null)}
+                disabled={rescheduling}
+              >
+                <Text style={styles.rescheduleCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.rescheduleSaveButton,
+                  rescheduling ? styles.buttonDisabled : null,
+                ]}
+                onPress={() => void handleReschedule()}
+                disabled={rescheduling}
+              >
+                {rescheduling ? (
+                  <ActivityIndicator size="small" color={appColors.background} />
+                ) : (
+                  <Ionicons name="calendar-outline" size={17} color={appColors.background} />
+                )}
+                <Text style={styles.rescheduleSaveText}>Guardar nueva fecha</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : null}
+
         <View style={styles.footerRow}>
-          <View style={styles.footerPill}>
-            <Ionicons name="send-outline" size={14} color={appColors.success} />
-            <Text style={styles.footerPillText}>{item.canal ?? 'Sin canal'}</Text>
+          <View style={styles.reminderActions}>
+            <TouchableOpacity
+              style={[
+                styles.completeButton,
+                isCompleted ? styles.completeButtonCompleted : null,
+                isUpdating ? styles.buttonDisabled : null,
+              ]}
+              onPress={() => void handleMarkAsCompleted(item)}
+              disabled={isCompleted || Boolean(updatingReminderKey) || rescheduling}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isCompleted ? 'Recordatorio realizado' : 'Marcar recordatorio como realizado'
+              }
+            >
+              {isUpdating ? (
+                <ActivityIndicator size="small" color={appColors.text} />
+              ) : (
+                <Ionicons
+                  name={isCompleted ? 'checkmark-circle' : 'checkmark-circle-outline'}
+                  size={17}
+                  color={isCompleted ? appColors.success : appColors.text}
+                />
+              )}
+              <Text
+                style={[
+                  styles.completeButtonText,
+                  isCompleted ? styles.completeButtonTextCompleted : null,
+                ]}
+              >
+                {isCompleted ? 'Realizada' : 'Marcar como realizada'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.rescheduleButton,
+                isRescheduleOpen ? styles.rescheduleButtonActive : null,
+              ]}
+              onPress={() => openReschedulePanel(item)}
+              disabled={rescheduling}
+              accessibilityRole="button"
+              accessibilityLabel="Reprogramar recordatorio"
+            >
+              <Ionicons name="calendar-outline" size={17} color={appColors.info} />
+              <Text style={styles.rescheduleButtonText}>
+                {isRescheduleOpen ? 'Cerrar' : 'Reprogramar'}
+              </Text>
+            </TouchableOpacity>
           </View>
           <Text style={styles.footerId}>
             {item.reminderType === 'notificacion' ? 'Notif' : 'Rec'} #{item.reminderId}
@@ -950,6 +1275,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: appColors.border,
   },
+  cardOverdue: {
+    borderColor: colorAlpha(appColors.accent, '80'),
+  },
+  cardCompleted: {
+    borderColor: colorAlpha(appColors.success, '55'),
+    opacity: 0.88,
+  },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1023,26 +1355,142 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 8,
   },
+  reschedulePanel: {
+    marginTop: 14,
+    borderRadius: 16,
+    padding: 14,
+    backgroundColor: colorAlpha(appColors.info, '0D'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '55'),
+    zIndex: 20,
+  },
+  rescheduleHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 14,
+  },
+  rescheduleTitle: {
+    color: appColors.text,
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  rescheduleHint: {
+    color: appColors.textSoft,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 4,
+  },
+  rescheduleCloseButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colorAlpha(appColors.text, '0D'),
+  },
+  rescheduleDateTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  rescheduleActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+    marginTop: 14,
+  },
+  rescheduleCancelButton: {
+    minHeight: 42,
+    paddingHorizontal: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: appColors.border,
+    backgroundColor: appColors.backgroundMuted,
+  },
+  rescheduleCancelText: {
+    color: appColors.textSoft,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  rescheduleSaveButton: {
+    minHeight: 42,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    backgroundColor: appColors.info,
+  },
+  rescheduleSaveText: {
+    color: appColors.background,
+    fontSize: 12,
+    fontWeight: '900',
+  },
   footerRow: {
     marginTop: 14,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
   },
-  footerPill: {
+  reminderActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+  },
+  completeButton: {
+    minHeight: 40,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    backgroundColor: colorAlpha(appColors.success, '12'),
+    justifyContent: 'center',
+    gap: 7,
+    borderRadius: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    backgroundColor: appColors.info,
+    borderWidth: 1,
+    borderColor: appColors.info,
   },
-  footerPillText: {
-    color: appColors.success,
+  completeButtonCompleted: {
+    backgroundColor: colorAlpha(appColors.success, '12'),
+    borderColor: colorAlpha(appColors.success, '55'),
+  },
+  completeButtonText: {
+    color: appColors.text,
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '900',
+  },
+  completeButtonTextCompleted: {
+    color: appColors.success,
+  },
+  rescheduleButton: {
+    minHeight: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    borderRadius: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    backgroundColor: colorAlpha(appColors.info, '0D'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '66'),
+  },
+  rescheduleButtonActive: {
+    backgroundColor: colorAlpha(appColors.info, '22'),
+    borderColor: appColors.info,
+  },
+  rescheduleButtonText: {
+    color: appColors.info,
+    fontSize: 12,
+    fontWeight: '900',
   },
   footerId: {
     color: appColors.textMuted,

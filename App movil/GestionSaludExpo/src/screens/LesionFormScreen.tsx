@@ -22,6 +22,7 @@ import type { RootStackParamList } from '../navigation/types';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
+import { parseCalendarDate } from '../utils/localDate';
 
 type LesionRecord = {
   lesionId: number;
@@ -75,8 +76,8 @@ const formatDisplayDate = (value?: string | null) => {
 
 const formatRecordDate = (value?: string | null) => {
   if (!value) return 'Sin fecha';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return String(value);
+  const parsed = parseCalendarDate(value);
+  if (!parsed) return String(value);
   return parsed.toLocaleDateString('es-NI', {
     year: 'numeric',
     month: 'short',
