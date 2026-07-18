@@ -25,7 +25,6 @@ import { appColors, colorAlpha } from '../theme/colors';
 type TipoDocumento = {
   tipodocumentoId: number;
   nombre: string;
-  descripcion?: string | null;
 };
 
 type DocumentAttachment = {
@@ -37,34 +36,44 @@ type DocumentAttachment = {
   size?: number;
 };
 
+type OriginRecordOption = {
+  id: string;
+  label: string;
+};
+
 const MAX_ATTACHMENT_BYTES = 3 * 1024 * 1024;
 
 const originOptions = [
-  { value: 'general', label: 'General', icon: 'folder-open-outline' },
-  { value: 'consultamedica', label: 'Consulta', icon: 'chatbubbles-outline' },
-  { value: 'medicacion', label: 'Medicación', icon: 'medkit-outline' },
-  { value: 'condicioncronica', label: 'Condición', icon: 'heart-outline' },
-  { value: 'examenclinico', label: 'Examen', icon: 'document-text-outline' },
+  { value: 'general', label: 'General', icon: 'folder-open-outline', endpoint: null, idKeys: [], titleKeys: [], dateKeys: [] },
+  { value: 'consultamedica', label: 'Consulta', icon: 'chatbubbles-outline', endpoint: 'consultamedica', idKeys: ['consultaId', 'consultamedicaId', 'consultamedicaid', 'id'], titleKeys: ['motivo', 'motivoconsulta', 'diagnostico'], dateKeys: ['fecha', 'fechaconsulta'] },
+  { value: 'medicacion', label: 'Medicación', icon: 'medkit-outline', endpoint: 'medicacion', idKeys: ['medicacionId', 'medicacionid', 'id'], titleKeys: ['nombremedicamento', 'medicamento', 'nombre', 'dosis'], dateKeys: ['fechainicio', 'fecha'] },
+  { value: 'condicioncronica', label: 'Condición', icon: 'heart-outline', endpoint: 'condicioncronica', idKeys: ['condicioncronicaId', 'condicioncronicaid', 'id'], titleKeys: ['condicionNombre', 'nombre', 'tratamientoprincipal', 'estado'], dateKeys: ['fechadiagnostico', 'creadoen'] },
+  { value: 'examenclinico', label: 'Examen', icon: 'document-text-outline', endpoint: 'examenclinico', idKeys: ['examenclinicoId', 'examenclinicoid', 'examenId', 'id'], titleKeys: ['nombreExamen', 'nombreexamen', 'tipoExamen', 'tipoexamen', 'resultadoTexto', 'resultado'], dateKeys: ['fechaExamen', 'fechaexamen', 'fechaResultado', 'fecharesultado', 'fecha'] },
+  { value: 'operacion', label: 'Operación', icon: 'bandage-outline', endpoint: 'operacion', idKeys: ['operacionId', 'operacionid', 'id'], titleKeys: ['tipo', 'hospital', 'resultado'], dateKeys: ['fechaoperacion', 'fecha'] },
+  { value: 'alergia', label: 'Alergia', icon: 'warning-outline', endpoint: 'alergia', idKeys: ['alergiaId', 'alergiaid', 'id'], titleKeys: ['tipo', 'desencadenante', 'reaccion'], dateKeys: ['fechadiagnostico', 'fecha'] },
+  { value: 'lesion', label: 'Lesión', icon: 'body-outline', endpoint: 'lesion', idKeys: ['lesionId', 'lesionid', 'id'], titleKeys: ['tipo', 'partecuerpo', 'tratamiento'], dateKeys: ['fechalesion', 'fecha'] },
+  { value: 'registrodental', label: 'Dental', icon: 'medical-outline', endpoint: 'registrodental', idKeys: ['registrodentalId', 'registrodentalid', 'id'], titleKeys: ['procedimiento', 'diagnostico', 'odontologo'], dateKeys: ['fechaatencion', 'fecha'] },
+  { value: 'vacuna', label: 'Vacuna', icon: 'shield-checkmark-outline', endpoint: 'vacuna', idKeys: ['vacunaId', 'vacunaid', 'id'], titleKeys: ['nombre', 'vacuna', 'fabricante'], dateKeys: ['fechaaplicacion', 'fecha'] },
+  { value: 'desparasitacion', label: 'Desparasitación', icon: 'calendar-outline', endpoint: 'desparasitacion', idKeys: ['desparasitacionId', 'desparasitacionid', 'id'], titleKeys: ['producto', 'medicamento', 'dosis'], dateKeys: ['fecha', 'proximafecha'] },
 ] as const;
 
 export function DocumentoFormScreen() {
   const [form, setForm] = useState({
     pacienteId: '',
-    tipoDocumentoId: '',
     entidadOrigen: 'general',
     entidadId: '',
-    rutaArchivo: '',
-    url: '',
     notas: '',
   });
   const [patientOptions, setPatientOptions] = useState<LinkedPatient[]>([]);
   const [documentTypes, setDocumentTypes] = useState<TipoDocumento[]>([]);
   const [loadingPatients, setLoadingPatients] = useState(false);
-  const [loadingTypes, setLoadingTypes] = useState(false);
+  const [loadingOriginRecords, setLoadingOriginRecords] = useState(false);
+  const [originRecords, setOriginRecords] = useState<OriginRecordOption[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [attachment, setAttachment] = useState<DocumentAttachment | null>(null);
   const [webCameraStream, setWebCameraStream] = useState<MediaStream | null>(null);
   const webVideoRef = useRef<HTMLVideoElement | null>(null);
+  const originRequestRef = useRef(0);
   const { token, user } = useAuth();
 
   const authHeaders = useMemo<Record<string, string>>(() => {
@@ -84,15 +93,40 @@ export function DocumentoFormScreen() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const selectedType = useMemo(
-    () => documentTypes.find((item) => String(item.tipodocumentoId) === form.tipoDocumentoId),
-    [documentTypes, form.tipoDocumentoId],
-  );
-
   const selectedPatient = useMemo(
     () => patientOptions.find((item) => String(item.pacienteId) === form.pacienteId),
     [patientOptions, form.pacienteId],
   );
+
+  const selectedOrigin = useMemo(
+    () => originOptions.find((item) => item.value === form.entidadOrigen) ?? originOptions[0],
+    [form.entidadOrigen],
+  );
+
+  const automaticDocumentType = useMemo(() => {
+    const keywordsByOrigin: Record<string, string[]> = {
+      general: attachment?.kind === 'pdf' ? ['documento', 'pdf', 'informe'] : ['imagen', 'documento'],
+      consultamedica: ['consulta', 'informe'],
+      medicacion: ['receta', 'medicacion', 'medicamento'],
+      condicioncronica: ['diagnostico', 'condicion', 'informe'],
+      examenclinico: ['examen', 'resultado', 'laboratorio'],
+      operacion: ['operacion', 'cirugia', 'informe'],
+      alergia: ['alergia', 'diagnostico', 'informe'],
+      lesion: ['lesion', 'imagen', 'informe'],
+      registrodental: ['dental', 'odontologico', 'imagen'],
+      vacuna: ['vacuna', 'certificado', 'documento'],
+      desparasitacion: ['desparasitacion', 'receta', 'documento'],
+    };
+    const normalize = (value: string) =>
+      value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const keywords = keywordsByOrigin[form.entidadOrigen] ?? ['documento'];
+    return (
+      documentTypes.find((type) => {
+        const normalizedName = normalize(type.nombre);
+        return keywords.some((keyword) => normalizedName.includes(keyword));
+      }) ?? documentTypes[0]
+    );
+  }, [attachment?.kind, documentTypes, form.entidadOrigen]);
 
   const fetchPatients = useCallback(async () => {
     if (!token) {
@@ -122,7 +156,6 @@ export function DocumentoFormScreen() {
   }, [authHeaders, form.pacienteId, token, user?.pacienteId, user?.username]);
 
   const fetchDocumentTypes = useCallback(async () => {
-    setLoadingTypes(true);
     try {
       const response = await fetch(`${API_URL}/tipodocumentoclinico`, { headers: authHeaders });
       const body = await response.json().catch(() => null);
@@ -133,34 +166,90 @@ export function DocumentoFormScreen() {
         .map((item: any) => ({
           tipodocumentoId: Number(item?.tipodocumentoId ?? item?.tipodocumentoid ?? item?.id ?? 0),
           nombre: String(item?.nombre ?? '').trim(),
-          descripcion: item?.descripcion ?? null,
         }))
         .filter((item: TipoDocumento) => item.tipodocumentoId > 0 && item.nombre.length > 0)
         .sort((a: TipoDocumento, b: TipoDocumento) => a.nombre.localeCompare(b.nombre, 'es'));
       setDocumentTypes(normalized);
-      if (!form.tipoDocumentoId && normalized.length > 0) {
-        setForm((prev) => ({ ...prev, tipoDocumentoId: String(normalized[0].tipodocumentoId) }));
-      }
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'No se pudieron cargar los tipos');
-    } finally {
-      setLoadingTypes(false);
     }
-  }, [authHeaders, form.tipoDocumentoId]);
+  }, [authHeaders]);
+
+  const fetchOriginRecords = useCallback(async () => {
+    const requestId = ++originRequestRef.current;
+    const origin = originOptions.find((item) => item.value === form.entidadOrigen);
+    if (!origin?.endpoint || !form.pacienteId) {
+      setOriginRecords([]);
+      setLoadingOriginRecords(false);
+      return;
+    }
+
+    setLoadingOriginRecords(true);
+    try {
+      const response = await fetch(`${API_URL}/${origin.endpoint}`, { headers: authHeaders });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(body?.message ?? `No se pudieron cargar los registros de ${origin.label}`);
+      }
+      const patientId = Number(form.pacienteId);
+      const records = (Array.isArray(body) ? body : [])
+        .filter((item: any) => {
+          const itemPatientId = Number(item?.pacienteId ?? item?.pacienteid ?? 0);
+          return itemPatientId === patientId;
+        })
+        .map((item: any): OriginRecordOption | null => {
+          const rawId = origin.idKeys.map((key) => item?.[key]).find((value) => value != null);
+          const id = String(rawId ?? '').trim();
+          if (!id) return null;
+          const title = origin.titleKeys
+            .map((key) => item?.[key])
+            .find((value) => typeof value === 'string' && value.trim());
+          const rawDate = origin.dateKeys.map((key) => item?.[key]).find((value) => value);
+          const dateMatch = String(rawDate ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+          const dateLabel = dateMatch ? `${dateMatch[3]}/${dateMatch[2]}/${dateMatch[1]}` : '';
+          return {
+            id,
+            label: [
+              `${origin.label} #${id}`,
+              typeof title === 'string' ? title.trim() : '',
+              dateLabel,
+            ].filter(Boolean).join(' · '),
+          };
+        })
+        .filter((item: OriginRecordOption | null): item is OriginRecordOption => Boolean(item))
+        .sort((a: OriginRecordOption, b: OriginRecordOption) =>
+          Number(b.id) - Number(a.id),
+        );
+      if (requestId === originRequestRef.current) {
+        setOriginRecords(records);
+      }
+    } catch (error) {
+      if (requestId === originRequestRef.current) {
+        setOriginRecords([]);
+        Alert.alert('Error', error instanceof Error ? error.message : 'No se pudieron cargar los registros');
+      }
+    } finally {
+      if (requestId === originRequestRef.current) {
+        setLoadingOriginRecords(false);
+      }
+    }
+  }, [authHeaders, form.entidadOrigen, form.pacienteId]);
 
   useEffect(() => {
     fetchPatients();
     fetchDocumentTypes();
   }, [fetchPatients, fetchDocumentTypes]);
 
+  useEffect(() => {
+    setForm((prev) => ({ ...prev, entidadId: '' }));
+    fetchOriginRecords();
+  }, [fetchOriginRecords]);
+
   const resetForm = () => {
     setForm((prev) => ({
       pacienteId: prev.pacienteId,
-      tipoDocumentoId: prev.tipoDocumentoId,
       entidadOrigen: 'general',
       entidadId: '',
-      rutaArchivo: '',
-      url: '',
       notas: '',
     }));
     setAttachment(null);
@@ -395,14 +484,25 @@ export function DocumentoFormScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!form.pacienteId || !form.tipoDocumentoId) {
-      Alert.alert('Faltan datos', 'Persona asociada y tipo de documento son obligatorios.');
+    if (!form.pacienteId) {
+      Alert.alert('Faltan datos', 'La persona asociada es obligatoria.');
       return;
     }
-    if (!attachment && !form.url.trim() && !form.rutaArchivo.trim()) {
+    if (!automaticDocumentType) {
+      Alert.alert('Configuración incompleta', 'No hay tipos de documento disponibles para guardar el archivo.');
+      return;
+    }
+    if (!attachment) {
       Alert.alert(
-        'Falta documento',
-        'Elige una imagen, toma una foto, sube un PDF o agrega una referencia externa.',
+        'Falta el archivo',
+        'Elige una imagen, toma una foto o sube un PDF.',
+      );
+      return;
+    }
+    if (form.entidadOrigen !== 'general' && !form.entidadId) {
+      Alert.alert(
+        'Falta el registro',
+        `Selecciona el registro de ${selectedOrigin.label.toLowerCase()} al que pertenece el documento.`,
       );
       return;
     }
@@ -414,11 +514,9 @@ export function DocumentoFormScreen() {
         headers: jsonHeaders,
         body: JSON.stringify({
           pacienteId: Number(form.pacienteId),
-          tipodocumentoId: Number(form.tipoDocumentoId),
+          tipodocumentoId: automaticDocumentType.tipodocumentoId,
           entidadorigen: form.entidadOrigen,
           entidadId: form.entidadId ? Number(form.entidadId) : undefined,
-          rutaarchivo: form.rutaArchivo.trim() || undefined,
-          urlexterna: form.url.trim() || undefined,
           archivoBase64: attachment?.base64Data,
           nombreArchivo: attachment?.name,
           mimeArchivo: attachment?.mimeType,
@@ -432,9 +530,7 @@ export function DocumentoFormScreen() {
       }
       Alert.alert(
         'Documento guardado',
-        attachment
-          ? 'El archivo quedó adjunto al expediente clínico.'
-          : 'La referencia quedó adjunta al expediente clínico.',
+        'El archivo quedó adjunto al expediente clínico.',
       );
       resetForm();
     } catch (error) {
@@ -499,7 +595,7 @@ export function DocumentoFormScreen() {
         <Text style={styles.kicker}>ESPACIOS CLÍNICOS</Text>
         <Text style={styles.title}>Documentos clínicos</Text>
         <Text style={styles.subtitle}>
-          Adjunta imágenes, fotografías, PDF o referencias vinculadas al expediente del paciente.
+          Adjunta imágenes, fotografías o PDF vinculados al expediente del paciente.
         </Text>
       </View>
 
@@ -508,7 +604,7 @@ export function DocumentoFormScreen() {
         <View style={styles.infoCopy}>
           <Text style={styles.infoTitle}>Adjunta el documento</Text>
           <Text style={styles.infoText}>
-            Puedes elegir una imagen, usar la cámara o subir un PDF de hasta 3 MB. También puedes guardar una URL o ruta externa.
+            Puedes elegir una imagen, usar la cámara o subir un PDF de hasta 3 MB.
           </Text>
         </View>
       </View>
@@ -548,38 +644,12 @@ export function DocumentoFormScreen() {
           </View>
         ) : null}
 
-        <Text style={styles.label}>Tipo de documento</Text>
-        {loadingTypes ? (
-          <View style={styles.loadingRow}>
-            <ActivityIndicator color={appColors.info} />
-            <Text style={styles.loadingText}>Cargando tipos...</Text>
-          </View>
-        ) : (
-          <View style={styles.pickerWrapper}>
-            <Picker
-              style={styles.picker}
-              selectedValue={form.tipoDocumentoId}
-              onValueChange={(value) => handleChange('tipoDocumentoId', String(value))}
-              dropdownIconColor={appColors.text}
-            >
-              <Picker.Item label="Selecciona un tipo" value="" />
-              {documentTypes.map((type) => (
-                <Picker.Item
-                  key={type.tipodocumentoId}
-                  label={type.nombre}
-                  value={String(type.tipodocumentoId)}
-                />
-              ))}
-            </Picker>
-          </View>
-        )}
-        {selectedType?.descripcion ? <Text style={styles.fieldHint}>{selectedType.descripcion}</Text> : null}
       </View>
 
       <View style={styles.formCard}>
         <Text style={styles.sectionTitle}>Origen del documento</Text>
         <Text style={styles.fieldHint}>
-          Indica a qué módulo pertenece. Si tienes el ID del registro origen, puedes guardarlo también.
+          Indica a qué módulo pertenece y selecciona el registro de la persona.
         </Text>
         <View style={styles.originGrid}>
           {originOptions.map((origin) => {
@@ -601,19 +671,46 @@ export function DocumentoFormScreen() {
           })}
         </View>
 
-        <Text style={styles.label}>ID del registro origen opcional</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ej. ID de consulta, medicación o condición"
-          placeholderTextColor={appColors.textMuted}
-          keyboardType="numeric"
-          value={form.entidadId}
-          onChangeText={(value) => handleChange('entidadId', value)}
-        />
+        {form.entidadOrigen !== 'general' ? (
+          <>
+            <Text style={styles.label}>{`Seleccionar ${selectedOrigin.label.toLowerCase()}`}</Text>
+            {loadingOriginRecords ? (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator color={appColors.info} />
+                <Text style={styles.loadingText}>Cargando registros...</Text>
+              </View>
+            ) : originRecords.length > 0 ? (
+              <View style={styles.pickerWrapper}>
+                <Picker
+                  style={styles.picker}
+                  selectedValue={form.entidadId}
+                  onValueChange={(value) => handleChange('entidadId', String(value))}
+                  dropdownIconColor={appColors.text}
+                >
+                  <Picker.Item label={`Selecciona ${selectedOrigin.label.toLowerCase()}`} value="" />
+                  {originRecords.map((record) => (
+                    <Picker.Item key={record.id} label={record.label} value={record.id} />
+                  ))}
+                </Picker>
+              </View>
+            ) : (
+              <View style={styles.emptyOriginRecords}>
+                <Ionicons name="file-tray-outline" size={20} color={appColors.textMuted} />
+                <Text style={styles.emptyOriginRecordsText}>
+                  {`Esta persona no tiene registros de ${selectedOrigin.label.toLowerCase()}.`}
+                </Text>
+              </View>
+            )}
+          </>
+        ) : (
+          <Text style={styles.fieldHint}>
+            Usa General cuando el archivo no pertenece a un registro específico.
+          </Text>
+        )}
       </View>
 
       <View style={styles.formCard}>
-        <Text style={styles.sectionTitle}>Archivo o referencia</Text>
+        <Text style={styles.sectionTitle}>Archivo clínico</Text>
         <Text style={styles.label}>Archivo adjunto</Text>
         <Text style={styles.fieldHint}>Elige cómo deseas agregar el documento clínico.</Text>
 
@@ -665,33 +762,6 @@ export function DocumentoFormScreen() {
             <Text style={styles.emptyAttachmentText}>Aún no has seleccionado un archivo</Text>
           </View>
         )}
-
-        <View style={styles.referenceDivider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>o usa una referencia externa</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        <Text style={styles.label}>URL externa</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="https://drive.google.com/... o enlace del laboratorio"
-          placeholderTextColor={appColors.textMuted}
-          value={form.url}
-          autoCapitalize="none"
-          keyboardType="url"
-          onChangeText={(value) => handleChange('url', value)}
-        />
-
-        <Text style={styles.label}>Ruta del archivo</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ej. expediente/consulta-12/reporte.pdf"
-          placeholderTextColor={appColors.textMuted}
-          value={form.rutaArchivo}
-          autoCapitalize="none"
-          onChangeText={(value) => handleChange('rutaArchivo', value)}
-        />
 
         <Text style={styles.label}>Notas</Text>
         <TextInput
@@ -855,6 +925,24 @@ const styles = StyleSheet.create({
     color: appColors.textMuted,
     lineHeight: 18,
   },
+  emptyOriginRecords: {
+    minHeight: 58,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 9,
+    padding: 13,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: appColors.border,
+    borderRadius: 14,
+    backgroundColor: appColors.backgroundMuted,
+  },
+  emptyOriginRecordsText: {
+    flex: 1,
+    color: appColors.textMuted,
+    fontWeight: '700',
+  },
   attachmentActions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1007,22 +1095,6 @@ const styles = StyleSheet.create({
   },
   emptyAttachmentText: {
     color: appColors.textMuted,
-    fontWeight: '700',
-  },
-  referenceDivider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginVertical: 6,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: appColors.border,
-  },
-  dividerText: {
-    color: appColors.textMuted,
-    fontSize: 12,
     fontWeight: '700',
   },
   originGrid: {
