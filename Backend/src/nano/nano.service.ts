@@ -9,6 +9,7 @@ import https from "node:https";
 import { z } from "zod";
 import { decodeBase64Image, validateImageMimeType } from "../common/utils/base64-image.util";
 import { AnalyzeMealDto } from "./dto/analyze-meal.dto";
+import { optimizeNanoImage } from "./nano-image.optimizer";
 
 type OpenAIResponseContent = {
   type?: string;
@@ -102,9 +103,8 @@ export class NanoService {
       throw new BadRequestException("imageBase64 no contiene datos validos");
     }
 
-    const imageMimeType =
-      validateImageMimeType(payload.imageMimeType, "imageMimeType") ||
-      "image/jpeg";
+    validateImageMimeType(payload.imageMimeType, "imageMimeType");
+    const optimizedImage = await optimizeNanoImage(imageBuffer);
 
     const response = await this.createOpenAIResponse({
       model: this.model,
@@ -118,7 +118,7 @@ export class NanoService {
             },
             {
               type: "input_image",
-              image_url: `data:${imageMimeType};base64,${imageBuffer.toString("base64")}`,
+              image_url: `data:${optimizedImage.mimeType};base64,${optimizedImage.buffer.toString("base64")}`,
             },
           ],
         },
