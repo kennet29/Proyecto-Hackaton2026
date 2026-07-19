@@ -8,7 +8,7 @@ export type RootStackParamList = {
   Contacto: undefined;
   MenuLoading: undefined;
   MenuPrincipal: undefined;
-  PacienteResumen: undefined;
+  PacienteResumen: { pacienteId?: number } | undefined;
   ExpedienteGestion: undefined;
   PacienteForm: undefined;
   PacienteEditor: { pacienteId?: number } | undefined;

@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
@@ -40,14 +41,31 @@ type SaludMentalHistorial = {
 };
 
 type SaludMentalStats = {
-  promedioSemanal?: Array<Record<string, unknown>>;
-  tendenciaMensual?: Array<Record<string, unknown>>;
-  relacionSuenoAnimo?: Array<Record<string, unknown>>;
+  promedioSemanal?: {
+    registros: number;
+    estadoAnimo: number | null;
+    estres: number | null;
+    ansiedad: number | null;
+    horasSueno: number | null;
+  };
+  tendenciaMensual?: Array<{
+    mes: string;
+    registros: number;
+    estadoAnimoPromedio: number | null;
+    estresPromedio: number | null;
+    ansiedadPromedio: number | null;
+    horasSuenoPromedio: number | null;
+  }>;
 };
 
 type SaludMentalAlerts = {
   totalAlertas: number;
-  alertas: string[];
+  alertas: Array<{
+    tipo: string;
+    severidad: 'media' | 'alta';
+    fecha: string;
+    detalle: string;
+  }>;
 };
 
 const today = () => toLocalDateOnlyString();
@@ -76,13 +94,25 @@ const getScoreLabel = (value?: string | number | null) => {
   return scoreOptions.find((item) => item.value === normalized)?.label ?? '3 - Medio';
 };
 
-const getScoreColor = (value?: string | number | null) => {
-  const normalized = String(value ?? '3');
-  if (normalized === '1') return '#FF4D73';
-  if (normalized === '2') return '#FF4D73';
-  if (normalized === '3') return '#FF4D73';
-  if (normalized === '4') return '#38F28E';
+const getScoreColor = (value?: string | number | null, inverse = false) => {
+  const score = Number(value ?? 3);
+  if (inverse) {
+    if (score >= 4) return '#FF4D73';
+    if (score === 3) return '#F9A826';
+    return '#38F28E';
+  }
+  if (score <= 2) return '#FF4D73';
+  if (score === 3) return '#F9A826';
   return '#38F28E';
+};
+
+const formatAlertTitle = (value: string) => {
+  const labels: Record<string, string> = {
+    estres_alto: 'Estrés alto',
+    poco_sueno: 'Descanso insuficiente',
+    cambio_fuerte_animo: 'Cambio marcado de ánimo',
+  };
+  return labels[value] ?? value.replace(/_/g, ' ');
 };
 
 export function SaludMentalScreen() {
@@ -97,6 +127,7 @@ export function SaludMentalScreen() {
   const [loadingData, setLoadingData] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [patientError, setPatientError] = useState<string | null>(null);
   const [dataError, setDataError] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -268,7 +299,7 @@ export function SaludMentalScreen() {
         throw new Error(body?.message ?? 'No se pudo guardar el registro');
       }
 
-      Alert.alert('Registro creado', 'La entrada de salud mental se guardo correctamente');
+      Alert.alert('Registro creado', 'La entrada de salud mental se guardó correctamente');
       setForm((prev) => ({
         ...prev,
         fecha: today(),
@@ -283,6 +314,7 @@ export function SaludMentalScreen() {
         pausasDigitales: '',
         notaPersonal: '',
       }));
+      setShowForm(false);
       await loadData(form.pacienteId, true);
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo guardar');
@@ -292,7 +324,7 @@ export function SaludMentalScreen() {
   };
 
   const statsSummary = useMemo(() => {
-    const weekly = Array.isArray(stats?.promedioSemanal) ? stats.promedioSemanal[0] : null;
+    const weekly = stats?.promedioSemanal ?? null;
     const monthly = Array.isArray(stats?.tendenciaMensual)
       ? stats.tendenciaMensual[stats.tendenciaMensual.length - 1]
       : null;
@@ -303,6 +335,7 @@ export function SaludMentalScreen() {
 
   return (
     <ScrollView
+      style={styles.screen}
       contentContainerStyle={styles.container}
       refreshControl={
         <RefreshControl
@@ -313,20 +346,28 @@ export function SaludMentalScreen() {
       }
     >
       <View style={styles.hero}>
-        <View style={styles.heroBadge}>
-          <Text style={styles.heroBadgeText}>Registro diario</Text>
+        <View style={styles.heroIcon}>
+          <Ionicons name="happy-outline" size={26} color="#A78BFA" />
         </View>
-        <Text style={styles.heroTitle}>Modulo de Salud Mental</Text>
-        <Text style={styles.heroText}>
-          Registra animo, estres, ansiedad, sueno y habitos diarios desde un solo lugar.
-        </Text>
+        <View style={styles.heroCopy}>
+          <Text style={styles.heroEyebrow}>BIENESTAR EMOCIONAL</Text>
+          <Text style={styles.heroTitle}>Salud mental</Text>
+          <Text style={styles.heroText}>
+            Estado de ánimo, descanso y hábitos diarios en una sola vista.
+          </Text>
+        </View>
+        <TouchableOpacity style={styles.heroAction} onPress={() => setShowForm((current) => !current)}>
+          <Ionicons name={showForm ? 'close' : 'add'} size={20} color="#071120" />
+          <Text style={styles.heroActionText}>{showForm ? 'Cerrar' : 'Nuevo registro'}</Text>
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.card}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Paciente</Text>
-          <Text style={styles.sectionSubtitle}>Selecciona a quien pertenece el registro.</Text>
+      <View style={styles.patientSelectorCard}>
+        <View style={styles.patientSelectorIcon}>
+          <Ionicons name="person-outline" size={20} color="#A78BFA" />
         </View>
+        <View style={styles.patientSelectorCopy}>
+          <Text style={styles.fieldEyebrow}>PACIENTE</Text>
         {loadingPatients ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color="#38F28E" />
@@ -356,23 +397,41 @@ export function SaludMentalScreen() {
           </View>
         )}
         {patientError ? <Text style={styles.errorText}>{patientError}</Text> : null}
+        </View>
       </View>
 
       <View style={styles.card}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Nuevo registro diario</Text>
-          <Text style={styles.sectionSubtitle}>
-            Completa cada bloque para guardar mejor contexto emocional y de habitos.
-          </Text>
-        </View>
+        <TouchableOpacity
+          style={styles.formToggle}
+          onPress={() => setShowForm((current) => !current)}
+          activeOpacity={0.82}
+        >
+          <View style={styles.formToggleIcon}>
+            <Ionicons name="create-outline" size={20} color="#A78BFA" />
+          </View>
+          <View style={styles.formToggleCopy}>
+            <Text style={styles.sectionTitle}>Nuevo registro diario</Text>
+            <Text style={styles.sectionSubtitle}>
+              Añade contexto emocional, descanso y hábitos.
+            </Text>
+          </View>
+          <Ionicons
+            name={showForm ? 'chevron-up' : 'chevron-down'}
+            size={20}
+            color="#9FB3C8"
+          />
+        </TouchableOpacity>
 
+        {showForm ? (
+          <>
         <View style={styles.formSection}>
           <Text style={styles.formSectionTitle}>Fecha</Text>
-          <Text style={styles.fieldLabel}>Dia del registro</Text>
+          <Text style={styles.fieldLabel}>Día del registro</Text>
           <TextInput
             style={styles.input}
             value={form.fecha}
             onChangeText={(value) => handleChange('fecha', value)}
+            placeholderTextColor="#9FB3C8"
             placeholder="Fecha (YYYY-MM-DD)"
             autoCapitalize="none"
           />
@@ -381,12 +440,12 @@ export function SaludMentalScreen() {
         <View style={styles.formSection}>
           <Text style={styles.formSectionTitle}>Estado emocional</Text>
           <Text style={styles.scaleHint}>
-            Usa la escala del 1 al 5 para registrar como se sintio la persona hoy.
+            Usa la escala del 1 al 5 para registrar cómo se sintió la persona hoy.
           </Text>
           <View style={styles.row}>
             <View style={styles.fieldGroupHalf}>
               <View style={styles.fieldLabelRow}>
-                <Text style={styles.fieldLabel}>Animo</Text>
+                <Text style={styles.fieldLabel}>Ánimo</Text>
                 <View style={[styles.scorePill, { backgroundColor: getScoreColor(form.estadoAnimo) }]}>
                   <Text style={styles.scorePillText}>{getScoreLabel(form.estadoAnimo)}</Text>
                 </View>
@@ -404,8 +463,8 @@ export function SaludMentalScreen() {
             </View>
             <View style={styles.fieldGroupHalf}>
               <View style={styles.fieldLabelRow}>
-                <Text style={styles.fieldLabel}>Estres</Text>
-                <View style={[styles.scorePill, { backgroundColor: getScoreColor(form.estres) }]}>
+                <Text style={styles.fieldLabel}>Estrés</Text>
+                <View style={[styles.scorePill, { backgroundColor: getScoreColor(form.estres, true) }]}>
                   <Text style={styles.scorePillText}>{getScoreLabel(form.estres)}</Text>
                 </View>
               </View>
@@ -424,7 +483,7 @@ export function SaludMentalScreen() {
           <View style={styles.fieldGroup}>
             <View style={styles.fieldLabelRow}>
               <Text style={styles.fieldLabel}>Ansiedad</Text>
-              <View style={[styles.scorePill, { backgroundColor: getScoreColor(form.ansiedad) }]}>
+              <View style={[styles.scorePill, { backgroundColor: getScoreColor(form.ansiedad, true) }]}>
                 <Text style={styles.scorePillText}>{getScoreLabel(form.ansiedad)}</Text>
               </View>
             </View>
@@ -447,14 +506,15 @@ export function SaludMentalScreen() {
         </View>
 
         <View style={styles.formSection}>
-          <Text style={styles.formSectionTitle}>Sueno y descanso</Text>
+          <Text style={styles.formSectionTitle}>Sueño y descanso</Text>
           <View style={styles.row}>
             <View style={styles.fieldGroupHalf}>
-              <Text style={styles.fieldLabel}>Horas de sueno</Text>
+              <Text style={styles.fieldLabel}>Horas de sueño</Text>
               <TextInput
                 style={[styles.input, styles.halfInput]}
                 value={form.horasSueno}
                 onChangeText={(value) => handleChange('horasSueno', value)}
+                placeholderTextColor="#9FB3C8"
                 placeholder="Ej. 7.5"
                 keyboardType="decimal-pad"
               />
@@ -465,6 +525,7 @@ export function SaludMentalScreen() {
                 style={[styles.input, styles.halfInput]}
                 value={form.descansoHoras}
                 onChangeText={(value) => handleChange('descansoHoras', value)}
+                placeholderTextColor="#9FB3C8"
                 placeholder="Ej. 2"
                 keyboardType="decimal-pad"
               />
@@ -473,7 +534,7 @@ export function SaludMentalScreen() {
         </View>
 
         <View style={styles.formSection}>
-          <Text style={styles.formSectionTitle}>Habitos del dia</Text>
+          <Text style={styles.formSectionTitle}>Hábitos del día</Text>
           <View style={styles.row}>
             <View style={styles.fieldGroupHalf}>
               <Text style={styles.fieldLabel}>Ejercicio en minutos</Text>
@@ -481,6 +542,7 @@ export function SaludMentalScreen() {
                 style={[styles.input, styles.halfInput]}
                 value={form.ejercicioMinutos}
                 onChangeText={(value) => handleChange('ejercicioMinutos', value)}
+                placeholderTextColor="#9FB3C8"
                 placeholder="Ej. 30"
                 keyboardType="numeric"
               />
@@ -491,6 +553,7 @@ export function SaludMentalScreen() {
                 style={[styles.input, styles.halfInput]}
                 value={form.tiempoSocialMinutos}
                 onChangeText={(value) => handleChange('tiempoSocialMinutos', value)}
+                placeholderTextColor="#9FB3C8"
                 placeholder="Ej. 45"
                 keyboardType="numeric"
               />
@@ -498,11 +561,12 @@ export function SaludMentalScreen() {
           </View>
           <View style={styles.row}>
             <View style={styles.fieldGroupHalf}>
-              <Text style={styles.fieldLabel}>Hidratacion en litros</Text>
+              <Text style={styles.fieldLabel}>Hidratación en litros</Text>
               <TextInput
                 style={[styles.input, styles.halfInput]}
                 value={form.hidratacionLitros}
                 onChangeText={(value) => handleChange('hidratacionLitros', value)}
+                placeholderTextColor="#9FB3C8"
                 placeholder="Ej. 2"
                 keyboardType="decimal-pad"
               />
@@ -513,6 +577,7 @@ export function SaludMentalScreen() {
                 style={[styles.input, styles.halfInput]}
                 value={form.pausasDigitales}
                 onChangeText={(value) => handleChange('pausasDigitales', value)}
+                placeholderTextColor="#9FB3C8"
                 placeholder="Cantidad"
                 keyboardType="numeric"
               />
@@ -521,13 +586,14 @@ export function SaludMentalScreen() {
         </View>
 
         <View style={styles.formSection}>
-          <Text style={styles.formSectionTitle}>Reflexion personal</Text>
+          <Text style={styles.formSectionTitle}>Reflexión personal</Text>
           <Text style={styles.fieldLabel}>Nota personal</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
             value={form.notaPersonal}
             onChangeText={(value) => handleChange('notaPersonal', value)}
-            placeholder="Escribe observaciones, detonantes o algo importante del dia"
+            placeholderTextColor="#9FB3C8"
+            placeholder="Escribe observaciones, detonantes o algo importante del día"
             multiline
             textAlignVertical="top"
           />
@@ -544,49 +610,75 @@ export function SaludMentalScreen() {
             <Text style={styles.primaryBtnText}>Guardar registro</Text>
           )}
         </TouchableOpacity>
+          </>
+        ) : (
+          <View style={styles.formCollapsedHint}>
+            <Ionicons name="information-circle-outline" size={17} color="#9FB3C8" />
+            <Text style={styles.formCollapsedText}>
+              Abre esta sección cuando quieras registrar cómo se siente el paciente.
+            </Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.card}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Resumen</Text>
-          <Text style={styles.sectionSubtitle}>Vista rapida del seguimiento actual.</Text>
+        <View style={styles.summaryHeading}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Panorama emocional</Text>
+            <Text style={styles.sectionSubtitle}>Lectura rápida del seguimiento actual.</Text>
+          </View>
+          <View style={styles.recordBadge}>
+            <Text style={styles.recordBadgeValue}>{historial?.totalRegistros ?? 0}</Text>
+            <Text style={styles.recordBadgeLabel}>registros</Text>
+          </View>
         </View>
         {loadingData ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color="#38F28E" />
-            <Text style={styles.loadingText}>Cargando estadisticas...</Text>
+            <Text style={styles.loadingText}>Cargando estadísticas...</Text>
           </View>
         ) : (
           <>
             {latestRecord ? (
               <View style={styles.latestRecordBox}>
-                <Text style={styles.latestRecordTitle}>Ultimo registro</Text>
-                <Text style={styles.latestRecordText}>{formatDate(latestRecord.fecha)}</Text>
-                <Text style={styles.latestRecordText}>
-                  Animo {latestRecord.estadoAnimo} - Estres {latestRecord.estres} - Ansiedad {latestRecord.ansiedad}
-                </Text>
+                <View style={styles.latestRecordHeader}>
+                  <View>
+                    <Text style={styles.latestRecordEyebrow}>ÚLTIMO REGISTRO</Text>
+                    <Text style={styles.latestRecordTitle}>{formatDate(latestRecord.fecha)}</Text>
+                  </View>
+                  <Ionicons name="calendar-outline" size={20} color="#A78BFA" />
+                </View>
+                <View style={styles.mentalMetricGrid}>
+                  <MentalMetric label="Ánimo" value={latestRecord.estadoAnimo} color={getScoreColor(latestRecord.estadoAnimo)} />
+                  <MentalMetric label="Estrés" value={latestRecord.estres} color={getScoreColor(latestRecord.estres, true)} />
+                  <MentalMetric label="Ansiedad" value={latestRecord.ansiedad} color={getScoreColor(latestRecord.ansiedad, true)} />
+                  <MentalMetric label="Sueño" value={latestRecord.horasSueno ?? 'N/D'} suffix={latestRecord.horasSueno !== null ? ' h' : ''} color="#29B6FF" />
+                </View>
               </View>
             ) : null}
 
             {statsSummary.weekly ? (
-              <View style={styles.highlightBox}>
-                <Text style={styles.highlightTitle}>Promedio semanal</Text>
-                <Text style={styles.highlightText}>
-                  Animo: {String(statsSummary.weekly.promedioEstadoAnimo ?? 'N/D')}
-                </Text>
-                <Text style={styles.highlightText}>
-                  Estres: {String(statsSummary.weekly.promedioEstres ?? 'N/D')}
-                </Text>
-                <Text style={styles.highlightText}>
-                  Ansiedad: {String(statsSummary.weekly.promedioAnsiedad ?? 'N/D')}
-                </Text>
-              </View>
+              <>
+                <Text style={styles.subsectionTitle}>Promedio de los últimos 7 días</Text>
+                <View style={styles.mentalMetricGrid}>
+                  <MentalMetric label="Ánimo" value={statsSummary.weekly.estadoAnimo ?? 'N/D'} color={getScoreColor(statsSummary.weekly.estadoAnimo)} />
+                  <MentalMetric label="Estrés" value={statsSummary.weekly.estres ?? 'N/D'} color={getScoreColor(statsSummary.weekly.estres, true)} />
+                  <MentalMetric label="Ansiedad" value={statsSummary.weekly.ansiedad ?? 'N/D'} color={getScoreColor(statsSummary.weekly.ansiedad, true)} />
+                  <MentalMetric label="Sueño" value={statsSummary.weekly.horasSueno ?? 'N/D'} suffix={statsSummary.weekly.horasSueno !== null ? ' h' : ''} color="#29B6FF" />
+                </View>
+              </>
             ) : null}
 
             {statsSummary.monthly ? (
-              <Text style={styles.metricText}>
-                Ultima tendencia mensual: {JSON.stringify(statsSummary.monthly)}
-              </Text>
+              <View style={styles.monthlyBox}>
+                <Ionicons name="trending-up-outline" size={20} color="#38F28E" />
+                <View style={styles.monthlyCopy}>
+                  <Text style={styles.monthlyTitle}>Tendencia de {statsSummary.monthly.mes}</Text>
+                  <Text style={styles.monthlyText}>
+                    {statsSummary.monthly.registros} registros · ánimo {statsSummary.monthly.estadoAnimoPromedio ?? 'N/D'} · estrés {statsSummary.monthly.estresPromedio ?? 'N/D'} · ansiedad {statsSummary.monthly.ansiedadPromedio ?? 'N/D'}
+                  </Text>
+                </View>
+              </View>
             ) : null}
 
             {dataError ? <Text style={styles.errorText}>{dataError}</Text> : null}
@@ -601,37 +693,61 @@ export function SaludMentalScreen() {
         </View>
         {alerts?.alertas?.length ? (
           alerts.alertas.map((item, index) => (
-            <View key={`${item}-${index}`} style={styles.alertItem}>
-              <Text style={styles.alertText}>{item}</Text>
+            <View
+              key={`${item.tipo}-${item.fecha}-${index}`}
+              style={[
+                styles.alertItem,
+                item.severidad === 'alta' ? styles.alertHigh : styles.alertMedium,
+              ]}
+            >
+              <View style={styles.alertIcon}>
+                <Ionicons
+                  name="warning-outline"
+                  size={20}
+                  color={item.severidad === 'alta' ? '#FF4D73' : '#F9A826'}
+                />
+              </View>
+              <View style={styles.alertCopy}>
+                <View style={styles.alertHeader}>
+                  <Text style={styles.alertTitle}>
+                    {formatAlertTitle(item.tipo)}
+                  </Text>
+                  <Text style={styles.alertDate}>{formatDate(item.fecha)}</Text>
+                </View>
+                <Text style={styles.alertText}>{item.detalle}</Text>
+              </View>
             </View>
           ))
         ) : (
-          <Text style={styles.emptyText}>No hay alertas registradas por ahora.</Text>
+          <View style={styles.healthyState}>
+            <Ionicons name="checkmark-circle-outline" size={23} color="#38F28E" />
+            <Text style={styles.healthyText}>No hay alertas que requieran atención por ahora.</Text>
+          </View>
         )}
       </View>
 
       <View style={styles.card}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Historial reciente</Text>
-          <Text style={styles.sectionSubtitle}>Ultimas entradas registradas para este paciente.</Text>
+          <Text style={styles.sectionSubtitle}>Últimas entradas registradas para este paciente.</Text>
         </View>
         {historial?.historialPorFecha?.length ? (
           historial.historialPorFecha.slice(0, 6).map((item) => (
             <View key={item.saludmentalId} style={styles.listItem}>
               <Text style={styles.itemTitle}>{formatDate(item.fecha)}</Text>
+              <View style={styles.historyScoreRow}>
+                <HistoryScore label="Ánimo" value={item.estadoAnimo} color={getScoreColor(item.estadoAnimo)} />
+                <HistoryScore label="Estrés" value={item.estres} color={getScoreColor(item.estres, true)} />
+                <HistoryScore label="Ansiedad" value={item.ansiedad} color={getScoreColor(item.ansiedad, true)} />
+              </View>
               <Text style={styles.itemText}>
-                Animo: {item.estadoAnimo} - Estres: {item.estres} - Ansiedad: {item.ansiedad}
+                Sueño: {item.horasSueno ?? 'N/D'} h · Descanso: {item.descansoHoras ?? 'N/D'} h
               </Text>
               <Text style={styles.itemText}>
-                Sueno: {item.horasSueno ?? 'N/D'} h - Descanso: {item.descansoHoras ?? 'N/D'} h
+                Ejercicio: {item.ejercicioMinutos ?? 'N/D'} min · Hidratación: {item.hidratacionLitros ?? 'N/D'} L
               </Text>
               <Text style={styles.itemText}>
-                Ejercicio: {item.ejercicioMinutos ?? 'N/D'} min - Hidratacion:{' '}
-                {item.hidratacionLitros ?? 'N/D'} L
-              </Text>
-              <Text style={styles.itemText}>
-                Tiempo social: {item.tiempoSocialMinutos ?? 'N/D'} min - Pausas digitales:{' '}
-                {item.pausasDigitales ?? 'N/D'}
+                Tiempo social: {item.tiempoSocialMinutos ?? 'N/D'} min · Pausas digitales: {item.pausasDigitales ?? 'N/D'}
               </Text>
               {item.notaPersonal ? (
                 <Text style={styles.itemText}>Nota: {item.notaPersonal}</Text>
@@ -639,57 +755,156 @@ export function SaludMentalScreen() {
             </View>
           ))
         ) : (
-          <Text style={styles.emptyText}>Todavia no hay registros para este paciente.</Text>
+          <Text style={styles.emptyText}>Todavía no hay registros para este paciente.</Text>
         )}
       </View>
     </ScrollView>
   );
 }
 
+function MentalMetric({
+  label,
+  value,
+  suffix = '',
+  color,
+}: {
+  label: string;
+  value: string | number;
+  suffix?: string;
+  color: string;
+}) {
+  return (
+    <View style={styles.mentalMetric}>
+      <View style={[styles.mentalMetricAccent, { backgroundColor: color }]} />
+      <Text style={styles.mentalMetricValue}>{String(value)}{suffix}</Text>
+      <Text style={styles.mentalMetricLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function HistoryScore({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <View style={[styles.historyScore, { borderColor: `${color}55`, backgroundColor: `${color}12` }]}>
+      <Text style={[styles.historyScoreValue, { color }]}>{value}</Text>
+      <Text style={styles.historyScoreLabel}>{label}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#071120',
+  },
   container: {
     padding: 20,
-    paddingBottom: 32,
-    backgroundColor: '#071120',
+    paddingBottom: 42,
+    backgroundColor: '#0A1628',
     gap: 16,
+    width: '100%',
+    maxWidth: 1180,
+    alignSelf: 'center',
+    minHeight: '100%',
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: '#132B48',
   },
   hero: {
-    backgroundColor: '#38F28E18',
-    borderRadius: 22,
-    padding: 22,
+    backgroundColor: '#182A44',
+    borderRadius: 24,
+    padding: 20,
     borderWidth: 1,
-    borderColor: '#38F28E',
-    gap: 8,
+    borderColor: '#27496D',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 13,
   },
-  heroBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#38F28E',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+  heroIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 17,
+    backgroundColor: '#A78BFA18',
+    borderWidth: 1,
+    borderColor: '#A78BFA55',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  heroBadgeText: {
-    color: '#38F28E',
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  heroCopy: {
+    flex: 1,
+    minWidth: 220,
+  },
+  heroEyebrow: {
+    color: '#A78BFA',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1.4,
+    marginBottom: 2,
   },
   heroTitle: {
     color: '#F4F8FF',
     fontSize: 24,
-    fontWeight: '800',
+    lineHeight: 29,
+    fontWeight: '900',
   },
   heroText: {
-    color: '#38F28E',
-    fontSize: 14,
-    lineHeight: 20,
+    color: '#9FB3C8',
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 3,
+  },
+  heroAction: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    backgroundColor: '#A78BFA',
+    borderRadius: 14,
+    paddingHorizontal: 15,
+    paddingVertical: 11,
+  },
+  heroActionText: {
+    color: '#071120',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  patientSelectorCard: {
+    backgroundColor: '#132238',
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#27496D',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  patientSelectorIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: '#A78BFA18',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  patientSelectorCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  fieldEyebrow: {
+    color: '#9FB3C8',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1,
+    marginBottom: 6,
   },
   card: {
     backgroundColor: '#132238',
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 16,
     gap: 12,
+    borderWidth: 1,
+    borderColor: '#27496D',
   },
   sectionHeader: {
     gap: 4,
@@ -697,7 +912,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: '#F4F8FF',
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '900',
   },
   sectionSubtitle: {
     color: '#9FB3C8',
@@ -717,6 +932,38 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
   },
+  formToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
+  formToggleIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: '#A78BFA18',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  formToggleCopy: {
+    flex: 1,
+  },
+  formCollapsedHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#071120',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#1B3355',
+    padding: 12,
+  },
+  formCollapsedText: {
+    color: '#9FB3C8',
+    fontSize: 12,
+    lineHeight: 17,
+    flex: 1,
+  },
   scaleHint: {
     color: '#9FB3C8',
     fontSize: 12,
@@ -726,7 +973,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fieldGroupHalf: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 220,
     gap: 8,
   },
   fieldLabel: {
@@ -751,23 +1000,30 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   pickerWrapper: {
-    borderRadius: 12,
+    minHeight: 48,
+    borderRadius: 13,
     overflow: 'hidden',
-    backgroundColor: '#F4F8FF',
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#1B3355',
+    justifyContent: 'center',
   },
   input: {
-    backgroundColor: '#F4F8FF',
-    borderRadius: 12,
+    backgroundColor: '#071120',
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: '#1B3355',
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#071120',
+    color: '#F4F8FF',
   },
   textArea: {
     minHeight: 110,
   },
   row: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
     alignItems: 'flex-start',
   },
@@ -775,13 +1031,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   primaryBtn: {
-    backgroundColor: '#38F28E',
+    backgroundColor: '#A78BFA',
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#F4F8FF',
+    color: '#071120',
     fontSize: 15,
     fontWeight: '800',
   },
@@ -805,49 +1061,185 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   latestRecordBox: {
-    backgroundColor: '#38F28E18',
-    borderRadius: 14,
+    backgroundColor: '#071120',
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#38F28E',
+    borderColor: '#27496D',
     padding: 14,
-    gap: 4,
+    gap: 12,
+  },
+  latestRecordHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  latestRecordEyebrow: {
+    color: '#A78BFA',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
   latestRecordTitle: {
-    color: '#38F28E',
+    color: '#F4F8FF',
+    fontSize: 15,
+    fontWeight: '900',
+    marginTop: 2,
+  },
+  summaryHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  recordBadge: {
+    minWidth: 64,
+    borderRadius: 14,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#27496D',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    alignItems: 'center',
+  },
+  recordBadgeValue: {
+    color: '#F4F8FF',
+    fontSize: 17,
+    lineHeight: 20,
+    fontWeight: '900',
+  },
+  recordBadgeLabel: {
+    color: '#9FB3C8',
+    fontSize: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  subsectionTitle: {
+    color: '#F4F8FF',
+    fontSize: 13,
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  mentalMetricGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 9,
+  },
+  mentalMetric: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 120,
+    minHeight: 80,
+    backgroundColor: '#132238',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#1B3355',
+    padding: 11,
+  },
+  mentalMetricAccent: {
+    width: 22,
+    height: 4,
+    borderRadius: 999,
+    marginBottom: 8,
+  },
+  mentalMetricValue: {
+    color: '#F4F8FF',
+    fontSize: 18,
+    lineHeight: 21,
+    fontWeight: '900',
+  },
+  mentalMetricLabel: {
+    color: '#9FB3C8',
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: 2,
+  },
+  monthlyBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    backgroundColor: '#38F28E0D',
+    borderWidth: 1,
+    borderColor: '#38F28E45',
+    borderRadius: 15,
+    padding: 13,
+  },
+  monthlyCopy: {
+    flex: 1,
+  },
+  monthlyTitle: {
+    color: '#F4F8FF',
     fontSize: 13,
     fontWeight: '800',
   },
-  latestRecordText: {
-    color: '#38F28E',
-    fontSize: 13,
-  },
-  metricText: {
-    color: '#F4F8FF',
-    fontSize: 14,
-  },
-  highlightBox: {
-    backgroundColor: '#38F28E',
-    borderRadius: 14,
-    padding: 14,
-    gap: 4,
-  },
-  highlightTitle: {
-    color: '#F4F8FF',
-    fontWeight: '700',
-  },
-  highlightText: {
-    color: '#38F28E',
+  monthlyText: {
+    color: '#C9D7E8',
+    fontSize: 11,
+    lineHeight: 17,
+    marginTop: 3,
   },
   alertItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
     borderWidth: 1,
-    borderColor: '#38F28E18',
-    backgroundColor: '#38F28E18',
+    borderRadius: 15,
+    padding: 13,
+  },
+  alertHigh: {
+    borderColor: '#FF4D7355',
+    backgroundColor: '#FF4D7312',
+  },
+  alertMedium: {
+    borderColor: '#F9A82655',
+    backgroundColor: '#F9A82612',
+  },
+  alertIcon: {
+    width: 36,
+    height: 36,
     borderRadius: 12,
-    padding: 12,
+    backgroundColor: '#071120',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  alertCopy: {
+    flex: 1,
+  },
+  alertHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  alertTitle: {
+    color: '#F4F8FF',
+    fontSize: 12,
+    fontWeight: '900',
+    textTransform: 'capitalize',
+  },
+  alertDate: {
+    color: '#9FB3C8',
+    fontSize: 10,
   },
   alertText: {
-    color: '#38F28E',
-    lineHeight: 20,
+    color: '#C9D7E8',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 3,
+  },
+  healthyState: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    backgroundColor: '#38F28E0D',
+    borderWidth: 1,
+    borderColor: '#38F28E45',
+    borderRadius: 14,
+    padding: 13,
+  },
+  healthyText: {
+    color: '#C9D7E8',
+    fontSize: 12,
+    flex: 1,
   },
   listItem: {
     borderWidth: 1,
@@ -856,6 +1248,30 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 6,
     backgroundColor: '#071120',
+  },
+  historyScoreRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 7,
+    marginVertical: 3,
+  },
+  historyScore: {
+    minWidth: 72,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 5,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+  },
+  historyScoreValue: {
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  historyScoreLabel: {
+    color: '#C9D7E8',
+    fontSize: 10,
   },
   itemTitle: {
     color: '#F4F8FF',

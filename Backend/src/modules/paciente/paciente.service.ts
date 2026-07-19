@@ -4,12 +4,19 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { In, Repository } from "typeorm";
+import { In, Not, IsNull, Repository } from "typeorm";
 import { Citamedica } from "../citamedica/citamedica.entity";
+import { Condicioncronica } from "../condicioncronica/condicioncronica.entity";
 import { Consultamedica } from "../consultamedica/consultamedica.entity";
 import { Examenclinico } from "../examenclinico/examenclinico.entity";
+import { Estilovida } from "../estilovida/estilovida.entity";
+import { Habitoespecifico } from "../habitoespecifico/habitoespecifico.entity";
+import { Lesion } from "../lesion/lesion.entity";
 import { Medicacion } from "../medicacion/medicacion.entity";
+import { Operacion } from "../operacion/operacion.entity";
 import { Seguimientopostevento } from "../seguimientopostevento/seguimientopostevento.entity";
+import { Seguimientofisico } from "../seguimientofisico/seguimientofisico.entity";
+import { Tipocondicioncronica } from "../tipocondicioncronica/tipocondicioncronica.entity";
 import { CreatePacienteDto } from "./dto/create-paciente.dto";
 import { UpdatePacienteDto } from "./dto/update-paciente.dto";
 import { Paciente } from "./paciente.entity";
@@ -62,6 +69,20 @@ export class PacienteService {
     private readonly examenclinicoRepository: Repository<Examenclinico>,
     @InjectRepository(Seguimientopostevento)
     private readonly seguimientoRepository: Repository<Seguimientopostevento>,
+    @InjectRepository(Seguimientofisico)
+    private readonly seguimientoFisicoRepository: Repository<Seguimientofisico>,
+    @InjectRepository(Estilovida)
+    private readonly estiloVidaRepository: Repository<Estilovida>,
+    @InjectRepository(Habitoespecifico)
+    private readonly habitoRepository: Repository<Habitoespecifico>,
+    @InjectRepository(Condicioncronica)
+    private readonly condicionRepository: Repository<Condicioncronica>,
+    @InjectRepository(Tipocondicioncronica)
+    private readonly tipoCondicionRepository: Repository<Tipocondicioncronica>,
+    @InjectRepository(Lesion)
+    private readonly lesionRepository: Repository<Lesion>,
+    @InjectRepository(Operacion)
+    private readonly operacionRepository: Repository<Operacion>,
   ) {}
 
   /**
@@ -149,6 +170,12 @@ export class PacienteService {
       recentConsults,
       recentExams,
       recentFollowUps,
+      latestPhysicalRecord,
+      latestLifestyle,
+      habits,
+      activeConditions,
+      recentInjuries,
+      recentOperations,
     ] = await Promise.all([
       this.citamedicaRepository.findOne({
         where: {
@@ -177,7 +204,46 @@ export class PacienteService {
         order: { fechaSeguimiento: "DESC" },
         take: 4,
       }),
+      this.seguimientoFisicoRepository.findOne({
+        where: { pacienteId, peso: Not(IsNull()) },
+        order: { fecha: "DESC" },
+      }),
+      this.estiloVidaRepository.findOne({
+        where: { pacienteId },
+        order: { fecharegistro: "DESC" },
+      }),
+      this.habitoRepository.find({
+        where: { pacienteId },
+        order: { creadoen: "DESC" },
+        take: 5,
+      }),
+      this.condicionRepository.find({
+        where: { pacienteId, estado: In(["activa", "Activa"]) },
+        order: { creadoen: "DESC" },
+      }),
+      this.lesionRepository.find({
+        where: { pacienteId },
+        order: { fechalesion: "DESC" },
+        take: 3,
+      }),
+      this.operacionRepository.find({
+        where: { pacienteId },
+        order: { fechaoperacion: "DESC" },
+        take: 3,
+      }),
     ]);
+
+    const conditionTypeIds = [
+      ...new Set(activeConditions.map((item) => item.tipocondicionId)),
+    ];
+    const conditionTypes = conditionTypeIds.length
+      ? await this.tipoCondicionRepository.findBy({
+          tipocondicionId: In(conditionTypeIds),
+        })
+      : [];
+    const conditionNames = new Map(
+      conditionTypes.map((item) => [item.tipocondicionId, item.nombre]),
+    );
 
     const alerts = [
       overviewRow?.alergiasActivas > 0
@@ -299,6 +365,66 @@ export class PacienteService {
                 .proximoControl as Date,
             )
           : null,
+      },
+      clinicalDetails: {
+        latestWeight:
+          latestPhysicalRecord?.peso !== null &&
+          latestPhysicalRecord?.peso !== undefined
+            ? {
+                value: Number(latestPhysicalRecord.peso),
+                date: this.toIsoDate(latestPhysicalRecord.fecha),
+              }
+            : null,
+        lifestyle: latestLifestyle
+          ? {
+              date: this.toIsoDate(latestLifestyle.fecharegistro),
+              alimentacion: latestLifestyle.alimentacion ?? null,
+              actividadFisica: latestLifestyle.actividadfisica ?? null,
+              consumoAlcohol: latestLifestyle.consumoalcohol ?? null,
+              consumoTabaco: latestLifestyle.consumotabaco ?? null,
+              horasSueno:
+                latestLifestyle.horassueno !== undefined
+                  ? Number(latestLifestyle.horassueno)
+                  : null,
+              estres: latestLifestyle.estres ?? null,
+            }
+          : null,
+        habits: habits.map((item) => ({
+          habitoId: item.habitoId,
+          categoria: item.categoria ?? null,
+          nivel: item.nivel ?? null,
+          frecuencia: item.frecuencia ?? null,
+          cantidad:
+            item.cantidad !== undefined ? Number(item.cantidad) : null,
+          unidad: item.unidad ?? null,
+          impactoSalud: item.impactosalud ?? null,
+        })),
+        activeConditions: activeConditions.map((item) => ({
+          condicionId: item.condicioncronicaId,
+          nombre:
+            conditionNames.get(item.tipocondicionId) ??
+            `Condición #${item.tipocondicionId}`,
+          severidad: item.severidad ?? null,
+          tratamiento: item.tratamientoprincipal ?? null,
+          fechaDiagnostico: item.fechadiagnostico
+            ? this.toIsoDate(item.fechadiagnostico)
+            : null,
+        })),
+        recentInjuries: recentInjuries.map((item) => ({
+          lesionId: item.lesionId,
+          tipo: item.tipo,
+          parteCuerpo: item.partecuerpo ?? null,
+          severidad: item.severidad ?? null,
+          recuperado: item.recuperado,
+          fecha: this.toIsoDate(item.fechalesion),
+        })),
+        recentOperations: recentOperations.map((item) => ({
+          operacionId: item.operacionId,
+          tipo: item.tipo,
+          estado: item.estado,
+          hospital: item.hospital ?? null,
+          fecha: this.toIsoDate(item.fechaoperacion),
+        })),
       },
       recentTimeline,
       carePointers,

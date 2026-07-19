@@ -33,6 +33,15 @@ type LinkedPerson = {
   contacto?: string | null;
 };
 
+const getInitials = (name: string) =>
+  name
+    .replace(/\s*\(Principal\)\s*$/i, '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('') || 'P';
+
 const formatErrorMessage = (error: unknown) => {
   if (error instanceof Error) {
     return error.message;
@@ -135,7 +144,9 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               parentesco: relation.parentesco ?? linkedItem?.parentesco ?? null,
               esPrincipal: Boolean(relation.esPrincipal),
               notas: relation.notas ?? null,
-              nombreCompleto: linkedItem?.displayName ?? `Paciente #${pacienteId}`,
+              nombreCompleto:
+                linkedItem?.displayName?.replace(/\s*\(Principal\)\s*$/i, '') ??
+                `Paciente #${pacienteId}`,
               contacto: linkedItem?.contacto ?? null,
             } as LinkedPerson;
           })
@@ -234,27 +245,26 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.heroCard}>
-        <View style={styles.heroTopRow}>
-          <View style={styles.heroBadge}>
-            <Ionicons name="folder-open-outline" size={16} color="#29B6FF" />
-            <Text style={styles.heroBadgeText}>Expediente</Text>
+        <View style={styles.heroHeading}>
+          <View style={styles.heroIcon}>
+            <Ionicons name="people-outline" size={25} color={appColors.info} />
+          </View>
+          <View style={styles.heroCopy}>
+            <Text style={styles.heroEyebrow}>EXPEDIENTE FAMILIAR</Text>
+            <Text style={styles.heroTitle}>Personas asociadas</Text>
+            <Text style={styles.heroSubtitle}>
+              Administra los perfiles clínicos vinculados a tu cuenta.
+            </Text>
+          </View>
+          <View style={styles.totalBadge}>
+            <Text style={styles.totalValue}>{linkedPatients.length}</Text>
+            <Text style={styles.totalLabel}>
+              {linkedPatients.length === 1 ? 'persona' : 'personas'}
+            </Text>
           </View>
         </View>
 
-        <Text style={styles.heroTitle}>Personas asociadas al expediente</Text>
-        <Text style={styles.heroSubtitle}>
-          Crea y administra familiares o pacientes vinculados a tu cuenta desde una sola vista.
-        </Text>
-      </View>
-
-      <View style={styles.panelCard}>
-        <View style={styles.panelHeaderRow}>
-          <View style={styles.panelHeaderCopy}>
-            <Text style={styles.panelTitle}>Personas asociadas</Text>
-            <Text style={styles.panelHelper}>
-              Crea y administra familiares o pacientes vinculados a tu cuenta.
-            </Text>
-          </View>
+        <View style={styles.heroActions}>
           <TouchableOpacity
             style={[styles.primaryActionBtn, showPersonForm && styles.primaryActionBtnSecondary]}
             onPress={() => {
@@ -263,8 +273,8 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
             }}
           >
             <Ionicons
-              name={showPersonForm ? 'close-outline' : 'add-outline'}
-              size={18}
+              name={showPersonForm ? 'close-outline' : 'person-add-outline'}
+              size={19}
               color={showPersonForm ? appColors.text : appColors.background}
             />
             <Text
@@ -273,16 +283,27 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                 showPersonForm && styles.primaryActionTextSecondary,
               ]}
             >
-              {showPersonForm ? 'Cerrar' : 'Nueva persona'}
+              {showPersonForm ? 'Cerrar formulario' : 'Agregar persona'}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.shareHistoryBtn}
             onPress={() => navigation.navigate('CompartirHistorial')}
           >
-            <Ionicons name="share-social-outline" size={18} color={appColors.info} />
-            <Text style={styles.shareHistoryText}>Compartir historial con medico</Text>
+            <Ionicons name="share-social-outline" size={19} color={appColors.info} />
+            <Text style={styles.shareHistoryText}>Compartir expediente</Text>
           </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.panelCard}>
+        <View style={styles.panelHeaderRow}>
+          <View style={styles.panelHeaderCopy}>
+            <Text style={styles.panelTitle}>Directorio del expediente</Text>
+            <Text style={styles.panelHelper}>
+              Selecciona una persona para consultar o administrar su información clínica.
+            </Text>
+          </View>
         </View>
 
         <FeedbackBanner feedback={patientFeedback} />
@@ -307,7 +328,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               <View key={`${person.relationId}-${person.pacienteId}`} style={styles.personCard}>
                 <View style={styles.personMainRow}>
                   <View style={styles.personAvatar}>
-                    <Ionicons name="person-outline" size={20} color="#29B6FF" />
+                    <Text style={styles.personAvatarText}>{getInitials(person.nombreCompleto)}</Text>
                   </View>
                   <View style={styles.personCopy}>
                     <View style={styles.personTitleRow}>
@@ -318,28 +339,63 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                         </View>
                       ) : null}
                     </View>
-                    <Text style={styles.personMeta}>
-                      ID #{person.pacienteId}
-                      {person.parentesco ? ` - ${person.parentesco}` : ''}
-                    </Text>
-                    {person.contacto ? (
-                      <Text style={styles.personContact}>Contacto: {person.contacto}</Text>
-                    ) : null}
+                    <View style={styles.personDetails}>
+                      <View style={styles.personDetail}>
+                        <Ionicons name="finger-print-outline" size={14} color={appColors.textMuted} />
+                        <Text style={styles.personMeta}>ID #{person.pacienteId}</Text>
+                      </View>
+                      {person.parentesco ? (
+                        <View style={styles.personDetail}>
+                          <Ionicons name="people-outline" size={14} color={appColors.textMuted} />
+                          <Text style={styles.personMeta}>{person.parentesco}</Text>
+                        </View>
+                      ) : null}
+                      {person.contacto ? (
+                        <View style={styles.personDetail}>
+                          <Ionicons name="call-outline" size={14} color={appColors.textMuted} />
+                          <Text style={styles.personContact}>{person.contacto}</Text>
+                        </View>
+                      ) : null}
+                    </View>
                     {person.notas ? <Text style={styles.personNotes}>{person.notas}</Text> : null}
                   </View>
                 </View>
-                <TouchableOpacity
-                  activeOpacity={0.86}
-                  style={styles.personShareButton}
-                  onPress={() =>
-                    navigation.navigate('CompartirHistorial', {
-                      pacienteId: person.pacienteId,
-                    })
-                  }
-                >
-                  <Ionicons name="shield-checkmark-outline" size={18} color={appColors.success} />
-                  <Text style={styles.personShareText}>Compartir con usuario medico</Text>
-                </TouchableOpacity>
+                <View style={styles.personActions}>
+                  <TouchableOpacity
+                    activeOpacity={0.82}
+                    style={[styles.personAction, styles.personActionPrimary]}
+                    onPress={() =>
+                      navigation.navigate('PacienteResumen', {
+                        pacienteId: person.pacienteId,
+                      })
+                    }
+                  >
+                    <Ionicons name="pulse-outline" size={17} color={appColors.background} />
+                    <Text style={styles.personActionPrimaryText}>Ver resumen</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.82}
+                    style={styles.personAction}
+                    onPress={() =>
+                      navigation.navigate('PacienteEditor', { pacienteId: person.pacienteId })
+                    }
+                  >
+                    <Ionicons name="create-outline" size={17} color={appColors.info} />
+                    <Text style={styles.personActionText}>Editar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.82}
+                    style={styles.personActionIcon}
+                    accessibilityLabel={`Compartir expediente de ${person.nombreCompleto}`}
+                    onPress={() =>
+                      navigation.navigate('CompartirHistorial', {
+                        pacienteId: person.pacienteId,
+                      })
+                    }
+                  >
+                    <Ionicons name="share-social-outline" size={18} color={appColors.success} />
+                  </TouchableOpacity>
+                </View>
               </View>
             ))}
           </View>
@@ -505,48 +561,84 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
     gap: 16,
+    width: '100%',
+    maxWidth: 1180,
+    alignSelf: 'center',
   },
   heroCard: {
     backgroundColor: appColors.surfaceStrong,
     borderRadius: 24,
-    padding: 22,
+    padding: 20,
     borderWidth: 1,
     borderColor: appColors.borderStrong,
-    gap: 14,
+    gap: 18,
   },
-  heroTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  heroBadge: {
+  heroHeading: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: colorAlpha(appColors.info, '18'),
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '55'),
   },
-  heroBadgeText: {
+  heroIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 17,
+    backgroundColor: colorAlpha(appColors.info, '18'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.info, '45'),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 13,
+  },
+  heroCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  heroEyebrow: {
     color: appColors.info,
-    fontSize: 12,
-    fontWeight: '800',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1.4,
+    marginBottom: 2,
   },
   heroTitle: {
     color: appColors.text,
-    fontSize: 26,
-    fontWeight: '800',
-    lineHeight: 32,
+    fontSize: 24,
+    fontWeight: '900',
+    lineHeight: 29,
   },
   heroSubtitle: {
-    color: appColors.textSoft,
-    fontSize: 14,
-    lineHeight: 21,
+    color: appColors.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 3,
+  },
+  totalBadge: {
+    minWidth: 74,
+    minHeight: 56,
+    borderRadius: 17,
+    backgroundColor: appColors.backgroundMuted,
+    borderWidth: 1,
+    borderColor: appColors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
+    paddingHorizontal: 10,
+  },
+  totalValue: {
+    color: appColors.text,
+    fontSize: 20,
+    lineHeight: 23,
+    fontWeight: '900',
+  },
+  totalLabel: {
+    color: appColors.textMuted,
+    fontSize: 9,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  heroActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
   },
   panelCard: {
     backgroundColor: appColors.surface,
@@ -557,7 +649,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   panelHeaderRow: {
-    gap: 12,
+    marginBottom: 2,
   },
   panelHeaderCopy: {
     gap: 4,
@@ -573,7 +665,8 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   primaryActionBtn: {
-    alignSelf: 'stretch',
+    flex: 1,
+    minWidth: 210,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -597,7 +690,8 @@ const styles = StyleSheet.create({
     color: appColors.text,
   },
   shareHistoryBtn: {
-    alignSelf: 'stretch',
+    flex: 1,
+    minWidth: 210,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -622,10 +716,14 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   feedbackSuccess: {
-    backgroundColor: '#38F28E',
+    backgroundColor: colorAlpha(appColors.success, '14'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.success, '55'),
   },
   feedbackError: {
-    backgroundColor: '#FF4D73',
+    backgroundColor: colorAlpha(appColors.accent, '14'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.accent, '55'),
   },
   feedbackText: {
     flex: 1,
@@ -656,12 +754,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   peopleList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
+    alignItems: 'stretch',
   },
   personCard: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 360,
+    maxWidth: 560,
     backgroundColor: appColors.surfaceStrong,
-    borderRadius: 18,
-    padding: 14,
+    borderRadius: 20,
+    padding: 16,
     borderWidth: 1,
     borderColor: appColors.borderStrong,
     gap: 12,
@@ -671,12 +776,17 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   personAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 50,
+    height: 50,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colorAlpha(appColors.info, '20'),
+    backgroundColor: appColors.info,
+  },
+  personAvatarText: {
+    color: appColors.background,
+    fontSize: 16,
+    fontWeight: '900',
   },
   personCopy: {
     flex: 1,
@@ -707,32 +817,70 @@ const styles = StyleSheet.create({
   },
   personMeta: {
     color: appColors.textMuted,
-    fontSize: 13,
+    fontSize: 12,
   },
   personContact: {
     color: appColors.textSoft,
-    fontSize: 13,
+    fontSize: 12,
+  },
+  personDetails: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 2,
+  },
+  personDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   personNotes: {
     color: appColors.textMuted,
     fontSize: 12,
     lineHeight: 17,
   },
-  personShareButton: {
+  personActions: {
+    flexDirection: 'row',
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: appColors.borderStrong,
+    paddingTop: 12,
+  },
+  personAction: {
+    flex: 1,
     minHeight: 44,
-    borderRadius: 14,
-    backgroundColor: colorAlpha(appColors.success, '12'),
+    borderRadius: 13,
+    backgroundColor: colorAlpha(appColors.info, '10'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '45'),
+    borderColor: colorAlpha(appColors.info, '45'),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  personShareText: {
-    color: appColors.success,
-    fontSize: 13,
+  personActionPrimary: {
+    backgroundColor: appColors.success,
+    borderColor: appColors.success,
+  },
+  personActionText: {
+    color: appColors.info,
+    fontSize: 12,
     fontWeight: '800',
+  },
+  personActionPrimaryText: {
+    color: appColors.background,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  personActionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    backgroundColor: colorAlpha(appColors.success, '10'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.success, '45'),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   formCard: {
     backgroundColor: appColors.surfaceStrong,
@@ -756,13 +904,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   input: {
-    backgroundColor: appColors.text,
+    backgroundColor: appColors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: appColors.borderStrong,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 13,
-    color: appColors.background,
+    color: appColors.text,
     fontSize: 15,
   },
   multilineInput: {
