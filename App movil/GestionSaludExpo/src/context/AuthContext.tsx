@@ -1,5 +1,10 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { getTokenExpirationTime } from '../utils/jwt';
+import {
+  clearStoredSession,
+  readStoredSession,
+  writeStoredSession,
+} from '../utils/secureSessionStorage';
 
 type AuthUser = {
   id: number;
@@ -28,41 +33,8 @@ interface AuthContextValue {
   clearSessionMessage: () => void;
 }
 
-const SESSION_STORAGE_KEY = '@gs_auth_session';
 const EXPIRED_SESSION_MESSAGE = 'Tu sesion ha caducado. Inicia sesion nuevamente.';
 const INVALID_SESSION_MESSAGE = 'Tu sesion ya no es valida. Inicia sesion nuevamente.';
-
-const decodeBase64Url = (value: string): string => {
-  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
-  const padding =
-    normalized.length % 4 === 0 ? '' : '='.repeat(4 - (normalized.length % 4));
-  const decoder = globalThis.atob;
-
-  if (typeof decoder !== 'function') {
-    throw new Error('base64 decoder unavailable');
-  }
-
-  const binary = decoder(`${normalized}${padding}`);
-
-  return decodeURIComponent(
-    Array.from(binary)
-      .map((char) => `%${char.charCodeAt(0).toString(16).padStart(2, '0')}`)
-      .join(''),
-  );
-};
-
-const getTokenExpirationTime = (accessToken: string): number | null => {
-  try {
-    const [, payload] = accessToken.split('.');
-    if (!payload) {
-      return null;
-    }
-    const parsed = JSON.parse(decodeBase64Url(payload)) as { exp?: number };
-    return typeof parsed.exp === 'number' ? parsed.exp * 1000 : null;
-  } catch {
-    return null;
-  }
-};
 
 const AuthContext = createContext<AuthContextValue>({
   isHydrated: false,
@@ -89,20 +61,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     expirationTimeoutRef.current = null;
   };
 
-  const clearStoredSession = async () => {
-    try {
-      await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
-    } catch (error) {
-      console.warn('[auth] no se pudo limpiar la sesion local', error);
-    }
-  };
-
   const resetSession = (message?: string) => {
     clearExpirationTimeout();
     setToken(null);
     setUser(null);
     setSessionMessage(message ?? null);
-    void clearStoredSession();
+    void clearStoredSession().catch((error) => {
+      console.warn('[auth] no se pudo limpiar la sesion local', error);
+    });
   };
 
   const clearSessionMessage = () => {
@@ -114,11 +80,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const hydrateSession = async () => {
       try {
-        const raw = await AsyncStorage.getItem(SESSION_STORAGE_KEY);
-        if (!raw) {
+        const session = await readStoredSession();
+        if (!session) {
           return;
         }
-        const session = JSON.parse(raw) as LoginPayload | null;
         if (!session?.token || !session?.user) {
           await clearStoredSession();
           return;
@@ -206,7 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await clearStoredSession();
           return;
         }
-        await AsyncStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ token, user }));
+        await writeStoredSession({ token, user });
       } catch (error) {
         console.warn('[auth] no se pudo persistir la sesion local', error);
       }

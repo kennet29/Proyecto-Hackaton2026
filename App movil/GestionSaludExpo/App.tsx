@@ -58,6 +58,7 @@ import { SeguimientoPosteventoScreen } from './src/screens/SeguimientoPostevento
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 import { useOfflineWriteSync } from './src/hooks/useOfflineWriteSync';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
+import { OfflineStatusBanner } from './src/components/OfflineStatusBanner';
 import { appColors } from './src/theme/colors';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -176,10 +177,12 @@ const linking: LinkingOptions<RootStackParamList> = {
 const PrivateNavigator = () => {
   const { token, user } = useAuth();
   usePushNotifications(token, user?.id ?? null);
-  useOfflineWriteSync(token);
+  const offlineSync = useOfflineWriteSync(token, user?.id ?? null);
 
   return (
-    <Stack.Navigator initialRouteName="MenuPrincipal" screenOptions={sharedScreenOptions}>
+    <View style={styles.privateRoot}>
+      <OfflineStatusBanner state={offlineSync} />
+      <Stack.Navigator initialRouteName="MenuPrincipal" screenOptions={sharedScreenOptions}>
       <Stack.Screen
         name="MenuPrincipal"
         component={MenuPrincipalScreen}
@@ -390,7 +393,8 @@ const PrivateNavigator = () => {
         options={{ title: 'Sobre Nosotros' }}
       />
       <Stack.Screen name="Contacto" component={ContactoScreen} options={{ title: 'Contacto' }} />
-    </Stack.Navigator>
+      </Stack.Navigator>
+    </View>
   );
 };
 
@@ -475,6 +479,9 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     backgroundColor: appColors.background,
+  },
+  privateRoot: {
+    flex: 1,
   },
   loadingScreen: {
     flex: 1,

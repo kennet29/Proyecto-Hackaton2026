@@ -374,7 +374,8 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
 
   const fetchSummary = useCallback(async (patientIdValue: string, silent = false) => {
     const pacienteId = Number(patientIdValue);
-    if (!token || !Number.isFinite(pacienteId) || pacienteId <= 0) {
+    const ownerUserId = user?.id;
+    if (!token || !ownerUserId || !Number.isFinite(pacienteId) || pacienteId <= 0) {
       setSummary(null);
       setDataSource(null);
       return;
@@ -392,9 +393,12 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
       }
       setSummary(body);
       setDataSource('server');
-      await writeClinicalSummaryCache(pacienteId, body);
+      await writeClinicalSummaryCache(ownerUserId, pacienteId, body);
     } catch (fetchError) {
-      const cached = await readClinicalSummaryCache<ClinicalSummary>(pacienteId);
+      const cached = await readClinicalSummaryCache<ClinicalSummary>(
+        ownerUserId,
+        pacienteId,
+      );
       if (cached) {
         setSummary(cached);
         setDataSource('cache');
@@ -408,7 +412,7 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
       setLoadingSummary(false);
       setRefreshing(false);
     }
-  }, [authHeaders, token]);
+  }, [authHeaders, token, user?.id]);
 
   useEffect(() => {
     fetchPatients();

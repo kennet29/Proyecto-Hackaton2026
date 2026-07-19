@@ -29,7 +29,6 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "useNextNotificationsApi": true,
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ]
@@ -52,7 +51,9 @@
           "color": "#0f172a"
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-secure-store",
+      "expo-font"
     ],
     "extra": {
       "apiUrl": "https://proyecto-hackaton2026.onrender.com",
