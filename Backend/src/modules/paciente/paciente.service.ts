@@ -14,6 +14,7 @@ import { Habitoespecifico } from "../habitoespecifico/habitoespecifico.entity";
 import { Lesion } from "../lesion/lesion.entity";
 import { Medicacion } from "../medicacion/medicacion.entity";
 import { Operacion } from "../operacion/operacion.entity";
+import { Saludmental } from "../saludmental/saludmental.entity";
 import { Seguimientopostevento } from "../seguimientopostevento/seguimientopostevento.entity";
 import { Seguimientofisico } from "../seguimientofisico/seguimientofisico.entity";
 import { Tipocondicioncronica } from "../tipocondicioncronica/tipocondicioncronica.entity";
@@ -83,6 +84,8 @@ export class PacienteService {
     private readonly lesionRepository: Repository<Lesion>,
     @InjectRepository(Operacion)
     private readonly operacionRepository: Repository<Operacion>,
+    @InjectRepository(Saludmental)
+    private readonly saludmentalRepository: Repository<Saludmental>,
   ) {}
 
   /**
@@ -176,6 +179,7 @@ export class PacienteService {
       activeConditions,
       recentInjuries,
       recentOperations,
+      recentMentalHealth,
     ] = await Promise.all([
       this.citamedicaRepository.findOne({
         where: {
@@ -230,6 +234,11 @@ export class PacienteService {
         where: { pacienteId },
         order: { fechaoperacion: "DESC" },
         take: 3,
+      }),
+      this.saludmentalRepository.find({
+        where: { pacienteId },
+        order: { fecha: "DESC" },
+        take: 7,
       }),
     ]);
 
@@ -425,6 +434,31 @@ export class PacienteService {
           hospital: item.hospital ?? null,
           fecha: this.toIsoDate(item.fechaoperacion),
         })),
+        mentalHealth: recentMentalHealth.length
+          ? {
+              latest: {
+                date: this.toIsoDate(recentMentalHealth[0].fecha),
+                mood: recentMentalHealth[0].estadoAnimo,
+                stress: recentMentalHealth[0].estres,
+                anxiety: recentMentalHealth[0].ansiedad,
+                sleepHours:
+                  recentMentalHealth[0].horasSueno !== null &&
+                  recentMentalHealth[0].horasSueno !== undefined
+                    ? Number(recentMentalHealth[0].horasSueno)
+                    : null,
+              },
+              recentRecords: recentMentalHealth.length,
+              averageMood: this.average(
+                recentMentalHealth.map((item) => item.estadoAnimo),
+              ),
+              averageStress: this.average(
+                recentMentalHealth.map((item) => item.estres),
+              ),
+              averageAnxiety: this.average(
+                recentMentalHealth.map((item) => item.ansiedad),
+              ),
+            }
+          : null,
       },
       recentTimeline,
       carePointers,
@@ -579,6 +613,14 @@ export class PacienteService {
   private toIsoDate(value: Date | string): string {
     const date = value instanceof Date ? value : new Date(value);
     return date.toISOString().slice(0, 10);
+  }
+
+  /**
+   * Calcula un promedio con una cifra decimal.
+   */
+  private average(values: number[]): number {
+    const total = values.reduce((sum, value) => sum + Number(value), 0);
+    return Math.round((total / values.length) * 10) / 10;
   }
 
   /**

@@ -29,6 +29,56 @@ export class Embarazo {
   @Column({ name: "fechaprobableparto", type: "date", nullable: true })
   fechaprobableparto?: Date;
 
+  @Column({ name: "metodocalculofpp", type: "nvarchar", length: 80, nullable: true })
+  metodoCalculoFpp?: string;
+
+  @Column({ name: "fechaprimerultrasonido", type: "date", nullable: true })
+  fechaPrimerUltrasonido?: Date;
+
+  @Column({ name: "edadgestacionalprimerussemanas", type: "int", nullable: true })
+  edadGestacionalPrimerUsSemanas?: number;
+
+  @Column({ name: "edadgestacionalprimerusdias", type: "int", nullable: true })
+  edadGestacionalPrimerUsDias?: number;
+
+  @Column({ name: "numerofetos", type: "int", nullable: true })
+  numeroFetos?: number;
+
+  @Column({ name: "embarazoplanificado", type: "bit", nullable: true })
+  embarazoPlanificado?: boolean;
+
+  @Column({ name: "embarazosanteriores", type: "int", nullable: true })
+  embarazosAnteriores?: number;
+
+  @Column({ name: "partosanteriores", type: "int", nullable: true })
+  partosAnteriores?: number;
+
+  @Column({ name: "abortosanteriores", type: "int", nullable: true })
+  abortosAnteriores?: number;
+
+  @Column({ name: "cesareasanteriores", type: "int", nullable: true })
+  cesareasAnteriores?: number;
+
+  @Column({ name: "gruposanguineo", type: "nvarchar", length: 3, nullable: true })
+  grupoSanguineo?: string;
+
+  @Column({ name: "factorrh", type: "nvarchar", length: 8, nullable: true })
+  factorRh?: string;
+
+  @Column({
+    name: "antecedentesrelevantes",
+    type: "nvarchar",
+    length: "max",
+    nullable: true,
+  })
+  antecedentesRelevantes?: string;
+
+  @Column({ name: "medicoresponsable", type: "nvarchar", length: 150, nullable: true })
+  medicoResponsable?: string;
+
+  @Column({ name: "centromedico", type: "nvarchar", length: 200, nullable: true })
+  centroMedico?: string;
+
   /**
    * Campo de datos asociado a `numerocontrol`.
    */

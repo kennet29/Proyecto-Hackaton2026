@@ -10,6 +10,7 @@ import { Habitoespecifico } from "../habitoespecifico/habitoespecifico.entity";
 import { Lesion } from "../lesion/lesion.entity";
 import { Medicacion } from "../medicacion/medicacion.entity";
 import { Operacion } from "../operacion/operacion.entity";
+import { Saludmental } from "../saludmental/saludmental.entity";
 import { Paciente } from "./paciente.entity";
 import { PacienteService } from "./paciente.service";
 import { PacienteController } from "./paciente.controller";
@@ -37,6 +38,7 @@ import { Tipocondicioncronica } from "../tipocondicioncronica/tipocondicioncroni
       Tipocondicioncronica,
       Lesion,
       Operacion,
+      Saludmental,
     ]),
   ],
   controllers: [PacienteController],

@@ -53,6 +53,7 @@ import { PeriodoScreen } from './src/screens/PeriodoScreen';
 import { SaludMentalScreen } from './src/screens/SaludMentalScreen';
 import { NanoConsejeroScreen } from './src/screens/NanoConsejeroScreen';
 import { NanoHistorialScreen } from './src/screens/NanoHistorialScreen';
+import { NanoConfiguracionScreen } from './src/screens/NanoConfiguracionScreen';
 import { ExamenClinicoScreen } from './src/screens/ExamenClinicoScreen';
 import { SeguimientoPosteventoScreen } from './src/screens/SeguimientoPosteventoScreen';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
@@ -151,6 +152,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       SaludMental: 'salud-mental',
       NanoConsejero: 'nano',
       NanoHistorial: 'nano/historial',
+      NanoConfiguracion: 'nano/configuracion',
       ExamenClinico: 'examenes-clinicos',
       SeguimientoPostevento: 'seguimiento-caso',
       DocumentoForm: 'documentos',
@@ -309,6 +311,11 @@ const PrivateNavigator = () => {
         name="NanoHistorial"
         component={NanoHistorialScreen}
         options={{ title: 'Historial de Nano' }}
+      />
+      <Stack.Screen
+        name="NanoConfiguracion"
+        component={NanoConfiguracionScreen}
+        options={{ title: 'Configurar Nano' }}
       />
       <Stack.Screen
         name="ExamenClinico"

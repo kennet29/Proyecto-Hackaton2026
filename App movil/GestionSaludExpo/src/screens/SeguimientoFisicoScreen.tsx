@@ -166,6 +166,27 @@ const addYears = (date: Date, amount: number) => {
   return next;
 };
 
+const buildDemoRecords = (pacienteId: number, endDateValue: string): SeguimientoRecord[] => {
+  const endDate = parseDateOnly(endDateValue) ?? new Date();
+  const weights = [81.6, 81.3, 81.4, 81, 80.8, 80.9, 80.5, 80.3, 80.4, 80, 79.8, 79.9, 79.5, 79.3, 79.1];
+  const calories = [180, 240, 210, 320, 275, 360, 225, 410, 350, 290, 430, 380, 470, 420, 510];
+  const steps = [5200, 6800, 6100, 8400, 7300, 9100, 6400, 10200, 8800, 7600, 11000, 9400, 12100, 10500, 12800];
+
+  return weights.map((peso, index) => ({
+    seguimientoFisicoId: -(index + 1),
+    pacienteId,
+    fecha: toLocalDateOnlyString(addDays(endDate, index - (weights.length - 1))),
+    peso,
+    minutosEjercicio: 25 + (index % 5) * 8,
+    tipoEjercicio: index % 3 === 0 ? 'Caminata' : index % 3 === 1 ? 'Fuerza' : 'Bicicleta',
+    intensidad: index % 4 === 0 ? 'intensa' : index % 2 === 0 ? 'moderada' : 'leve',
+    pasos: steps[index] ?? null,
+    caloriasQuemadas: calories[index] ?? null,
+    distanciaKm: Math.round(((steps[index] ?? 0) * 0.00072) * 100) / 100,
+    notas: 'Dato temporal de demostración',
+  }));
+};
+
 const getTrendWindowStart = (endDate: Date, range: TrendRangeKey) => {
   if (range === '7d') return addDays(endDate, -6);
   if (range === '15d') return addDays(endDate, -14);
@@ -293,6 +314,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
   const [dataError, setDataError] = useState<string | null>(null);
   const [showPesoProgress, setShowPesoProgress] = useState(false);
   const [showHistorialReciente, setShowHistorialReciente] = useState(false);
+  const [showDemoData, setShowDemoData] = useState(false);
 
   useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -464,8 +486,18 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
     return (logros?.logros ?? []).filter((achievement) => achievement.unlocked);
   }, [logros?.logros]);
 
+  const demoRecords = useMemo(() => {
+    const newestDate = (historial?.registros ?? [])
+      .map((item) => item.fecha)
+      .filter(Boolean)
+      .sort((left, right) => left.localeCompare(right))
+      .at(-1) ?? today();
+    return buildDemoRecords(Number(selectedPatientId) || 0, newestDate);
+  }, [historial?.registros, selectedPatientId]);
+
   const chartData = useMemo(() => {
-    const sorted = (historial?.registros ?? []).slice().sort((a, b) => a.fecha.localeCompare(b.fecha));
+    const source = showDemoData ? demoRecords : (historial?.registros ?? []);
+    const sorted = source.slice().sort((a, b) => a.fecha.localeCompare(b.fecha));
     const endDate = parseDateOnly(sorted[sorted.length - 1]?.fecha) ?? parseDateOnly(today());
     if (!endDate) {
       return sorted;
@@ -478,7 +510,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
       }
       return itemDate >= startDate && itemDate <= endDate;
     });
-  }, [historial?.registros, trendRange]);
+  }, [demoRecords, historial?.registros, showDemoData, trendRange]);
 
   const trendRangeLabel = useMemo(() => {
     return trendRangeOptions.find((option) => option.value === trendRange)?.label ?? '7 días';
@@ -867,10 +899,35 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
         </View>
 
         <View style={[styles.card, styles.chartCard]}>
-          <Text style={styles.sectionTitle}>Tendencia en el tiempo</Text>
+          <View style={styles.chartHeading}>
+            <Text style={styles.sectionTitle}>Tendencia en el tiempo</Text>
+            <TouchableOpacity
+              style={[styles.demoButton, showDemoData && styles.demoButtonActive]}
+              onPress={() => setShowDemoData((previous) => !previous)}
+              accessibilityRole="button"
+              accessibilityLabel={showDemoData ? 'Volver a datos reales' : 'Probar gráfica con datos demo'}
+            >
+              <Ionicons
+                name={showDemoData ? 'server-outline' : 'flask-outline'}
+                size={16}
+                color={showDemoData ? '#071120' : '#F9A826'}
+              />
+              <Text style={[styles.demoButtonText, showDemoData && styles.demoButtonTextActive]}>
+                {showDemoData ? 'Datos reales' : 'Ver demo'}
+              </Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.chartSubtitle}>
             Selecciona el rango para ver la tendencia por fecha en 7 días, quincenal, mensual, semestral o anual.
           </Text>
+          {showDemoData ? (
+            <View style={styles.demoNotice}>
+              <Ionicons name="information-circle-outline" size={17} color="#F9A826" />
+              <Text style={styles.demoNoticeText}>
+                Modo demostración: estos 15 registros son temporales y no se guardan en el expediente.
+              </Text>
+            </View>
+          ) : null}
           <View style={styles.trendRangeRow}>
             {trendRangeOptions.map((option) => {
               const active = option.value === trendRange;
@@ -959,15 +1016,17 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                                 { left: item.x - 6, top: item.y - 6 },
                               ]}
                             />
-                            <Text
-                              style={[
-                                styles.lineChartValueLabel,
-                                styles.lineChartWeightLabel,
-                                { left: item.x - 30, top: Math.max(item.y - 28, 0) },
-                              ]}
-                            >
-                              P: {item.label}
-                            </Text>
+                            {item.showMarkerLabel ? (
+                              <Text
+                                style={[
+                                  styles.lineChartValueLabel,
+                                  styles.lineChartWeightLabel,
+                                  { left: item.x - 30, top: Math.max(item.y - 28, 0) },
+                                ]}
+                              >
+                                P: {item.label}
+                              </Text>
+                            ) : null}
                           </>
                         ) : null}
                       </View>
@@ -983,15 +1042,17 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                                 { left: item.x - 6, top: item.y - 6 },
                               ]}
                             />
-                            <Text
-                              style={[
-                                styles.lineChartValueLabel,
-                                styles.lineChartCaloriesLabel,
-                                { left: item.x - 30, top: Math.min(item.y + 12, CHART_PLOT_BOTTOM - 10) },
-                              ]}
-                            >
-                              C: {item.label}
-                            </Text>
+                            {item.showMarkerLabel ? (
+                              <Text
+                                style={[
+                                  styles.lineChartValueLabel,
+                                  styles.lineChartCaloriesLabel,
+                                  { left: item.x - 30, top: Math.min(item.y + 12, CHART_PLOT_BOTTOM - 10) },
+                                ]}
+                              >
+                                C: {item.label}
+                              </Text>
+                            ) : null}
                           </>
                         ) : null}
                       </View>
@@ -1680,11 +1741,56 @@ const styles = StyleSheet.create({
   chartCard: {
     marginTop: 2,
   },
+  chartHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
   chartSubtitle: {
     color: '#9FB3C8',
     fontSize: 13,
     lineHeight: 18,
     marginTop: 6,
+  },
+  demoButton: {
+    minHeight: 38,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 12,
+    paddingHorizontal: 11,
+    borderWidth: 1,
+    borderColor: '#F9A826',
+    backgroundColor: '#F9A82612',
+  },
+  demoButtonActive: {
+    backgroundColor: '#F9A826',
+  },
+  demoButtonText: {
+    color: '#F9A826',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  demoButtonTextActive: {
+    color: '#071120',
+  },
+  demoNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: '#F9A82612',
+    borderWidth: 1,
+    borderColor: '#F9A82645',
+    borderRadius: 12,
+    padding: 10,
+    marginTop: 2,
+  },
+  demoNoticeText: {
+    color: '#C9D7E8',
+    fontSize: 11,
+    lineHeight: 16,
+    flex: 1,
   },
   trendRangeRow: {
     flexDirection: 'row',

@@ -117,6 +117,19 @@ type ClinicalSummary = {
       hospital: string | null;
       fecha: string;
     }>;
+    mentalHealth: {
+      latest: {
+        date: string;
+        mood: number;
+        stress: number;
+        anxiety: number;
+        sleepHours: number | null;
+      };
+      recentRecords: number;
+      averageMood: number;
+      averageStress: number;
+      averageAnxiety: number;
+    } | null;
   };
   recentTimeline: Array<{
     type: string;
@@ -300,6 +313,30 @@ const buildPatientNarrative = (summary: ClinicalSummary) => {
   return { profile, records, weight, habits, clinicalStatus, recentHistory, schedule };
 };
 
+const buildMentalHealthSummary = (
+  mentalHealth: NonNullable<ClinicalSummary['clinicalDetails']>['mentalHealth'],
+) => {
+  if (!mentalHealth) {
+    return 'No hay registros recientes. Abre el módulo para iniciar el seguimiento.';
+  }
+
+  const observations: string[] = [];
+  if (mentalHealth.averageMood >= 4) observations.push('ánimo favorable');
+  if (mentalHealth.averageMood <= 2) observations.push('ánimo bajo');
+  if (mentalHealth.averageStress >= 4) observations.push('estrés elevado');
+  if (mentalHealth.averageAnxiety >= 4) observations.push('ansiedad elevada');
+  if (
+    mentalHealth.latest.sleepHours !== null &&
+    mentalHealth.latest.sleepHours < 6
+  ) {
+    observations.push('sueño corto en el último registro');
+  }
+
+  return observations.length
+    ? `La tendencia reciente muestra ${observations.join(', ')}.`
+    : 'Los indicadores recientes se mantienen en rangos intermedios.';
+};
+
 const clinicalAreas: ClinicalArea[] = [
   { title: 'Consultas', subtitle: 'Diagnósticos y tratamientos', route: 'ConsultaList', icon: 'document-text-outline' },
   { title: 'Citas', subtitle: 'Agenda médica', route: 'CitaForm', icon: 'calendar-outline' },
@@ -448,6 +485,8 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
       )
     : clinicalAreas;
   const patientNarrative = summary ? buildPatientNarrative(summary) : null;
+  const mentalHealth = summary?.clinicalDetails?.mentalHealth ?? null;
+  const mentalHealthSummary = buildMentalHealthSummary(mentalHealth);
 
   return (
     <ScrollView
@@ -601,6 +640,59 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
               <NarrativeLine label="Agenda" text={patientNarrative?.schedule ?? ''} last />
             </View>
           </View>
+
+          <SectionHeader
+            title="Salud mental"
+            subtitle="Resumen del seguimiento reciente"
+          />
+          <TouchableOpacity
+            style={styles.mentalHealthCard}
+            onPress={() => navigation.navigate('SaludMental')}
+            accessibilityRole="button"
+            accessibilityLabel="Abrir módulo de salud mental"
+          >
+            <View style={styles.mentalHealthHeader}>
+              <View style={styles.mentalHealthIcon}>
+                <Ionicons name="happy-outline" size={22} color="#C084FC" />
+              </View>
+              <View style={styles.mentalHealthHeaderCopy}>
+                <Text style={styles.mentalHealthTitle}>
+                  {mentalHealth
+                    ? `${mentalHealth.recentRecords} ${
+                        mentalHealth.recentRecords === 1 ? 'registro reciente' : 'registros recientes'
+                      }`
+                    : 'Sin registros recientes'}
+                </Text>
+                <Text style={styles.mentalHealthDate}>
+                  {mentalHealth
+                    ? `Último registro: ${formatDate(mentalHealth.latest.date)}`
+                    : 'Toca para registrar cómo te sientes'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={19} color={appColors.textMuted} />
+            </View>
+
+            {mentalHealth ? (
+              <View style={styles.mentalMetricRow}>
+                <View style={styles.mentalMetric}>
+                  <Text style={styles.mentalMetricValue}>{mentalHealth.averageMood}/5</Text>
+                  <Text style={styles.mentalMetricLabel}>Ánimo</Text>
+                </View>
+                <View style={styles.mentalMetricDivider} />
+                <View style={styles.mentalMetric}>
+                  <Text style={styles.mentalMetricValue}>{mentalHealth.averageStress}/5</Text>
+                  <Text style={styles.mentalMetricLabel}>Estrés</Text>
+                </View>
+                <View style={styles.mentalMetricDivider} />
+                <View style={styles.mentalMetric}>
+                  <Text style={styles.mentalMetricValue}>{mentalHealth.averageAnxiety}/5</Text>
+                  <Text style={styles.mentalMetricLabel}>Ansiedad</Text>
+                </View>
+              </View>
+            ) : null}
+
+            <Text style={styles.mentalHealthSummary}>{mentalHealthSummary}</Text>
+          </TouchableOpacity>
 
           <SectionHeader
             title="Atención prioritaria"
@@ -1092,6 +1184,53 @@ const styles = StyleSheet.create({
     color: appColors.textSoft,
     fontSize: 12,
     lineHeight: 18,
+  },
+  mentalHealthCard: {
+    backgroundColor: colorAlpha('#C084FC', '0F'),
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colorAlpha('#C084FC', '42'),
+    marginBottom: 24,
+  },
+  mentalHealthHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  mentalHealthIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    backgroundColor: colorAlpha('#C084FC', '1C'),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 11,
+  },
+  mentalHealthHeaderCopy: { flex: 1, minWidth: 0 },
+  mentalHealthTitle: { color: appColors.text, fontSize: 14, fontWeight: '800' },
+  mentalHealthDate: { color: appColors.textMuted, fontSize: 11, marginTop: 3 },
+  mentalMetricRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 14,
+    paddingVertical: 11,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colorAlpha('#C084FC', '2E'),
+  },
+  mentalMetric: { flex: 1, alignItems: 'center' },
+  mentalMetricValue: { color: appColors.text, fontSize: 15, fontWeight: '900' },
+  mentalMetricLabel: { color: appColors.textMuted, fontSize: 10, marginTop: 2 },
+  mentalMetricDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: colorAlpha('#C084FC', '2E'),
+  },
+  mentalHealthSummary: {
+    color: appColors.textSoft,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 11,
   },
   alertRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 15 },
   alertIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginRight: 11 },
