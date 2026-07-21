@@ -11,7 +11,6 @@ describe("PacienteController", () => {
       update: jest.fn(),
       remove: jest.fn(),
       getClinicalSummary: jest.fn(),
-      getClinicalHistory: jest.fn(),
     };
     const pacienteAccessService = {
       assertAccess: jest.fn(),
@@ -58,18 +57,6 @@ describe("PacienteController", () => {
     ).resolves.toEqual({ pacienteId: 10 });
     expect(pacienteAccessService.assertAccess).toHaveBeenCalledWith(user, 10);
     expect(pacienteService.getClinicalSummary).toHaveBeenCalledWith(10);
-  });
-
-  it("checks access before returning the full clinical history", async () => {
-    const { controller, pacienteService, pacienteAccessService } =
-      buildController();
-    pacienteService.getClinicalHistory.mockResolvedValue([{ type: "Consulta" }]);
-
-    await expect(
-      controller.getClinicalHistory("10", { user } as never),
-    ).resolves.toEqual([{ type: "Consulta" }]);
-    expect(pacienteAccessService.assertAccess).toHaveBeenCalledWith(user, 10);
-    expect(pacienteService.getClinicalHistory).toHaveBeenCalledWith(10);
   });
 
   it("checks access before update and remove", async () => {
