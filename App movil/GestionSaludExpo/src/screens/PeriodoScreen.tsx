@@ -17,6 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { appColors, colorAlpha } from '../theme/colors';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
+import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
 
 type PeriodoRecord = {
   periodoId: number;
@@ -55,7 +56,7 @@ type PeriodoPrediction = {
   ovulacionEstimada?: string | null;
 };
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => toLocalDateOnlyString();
 const PERIODO_EXTRA_PASSWORD =
   process.env.EXPO_PUBLIC_PERIODO_EXTRA_PASSWORD?.trim() || 'Periodo2026!';
 
@@ -66,8 +67,8 @@ const normalizeSexo = (value?: string | null) => {
 
 const formatDate = (value?: string | null) => {
   if (!value) return 'Sin fecha';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
+  const parsed = parseCalendarDate(value);
+  if (!parsed) return value;
   return parsed.toLocaleDateString('es-NI', {
     year: 'numeric',
     month: 'short',

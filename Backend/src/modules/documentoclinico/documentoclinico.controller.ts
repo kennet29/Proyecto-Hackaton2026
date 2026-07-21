@@ -39,6 +39,11 @@ export class DocumentoclinicoController {
     return this.documentoclinicoservice.findAll();
   }
 
+  @Get(":id/archivo")
+  getArchivo(@Param("id") id: string) {
+    return this.documentoclinicoservice.getArchivo(id);
+  }
+
   /**
    * Find one.
    * @param id Identificador del registro objetivo.

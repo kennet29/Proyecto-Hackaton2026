@@ -12,9 +12,11 @@ import {
 } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
+import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
 
 type DateFieldKey = 'fechaEvento' | 'fechaSeguimiento' | 'proximoControl';
 
@@ -58,7 +60,19 @@ type FollowUpEntry = {
   notas: string | null;
 };
 
-const todayString = () => new Date().toISOString().slice(0, 10);
+const eventTypeOptions = [
+  { value: 'operacion', label: 'Operación', icon: 'medkit-outline' },
+  { value: 'lesion', label: 'Lesión', icon: 'bandage-outline' },
+  { value: 'emergencia', label: 'Emergencia', icon: 'alert-circle-outline' },
+] as const;
+
+const statusOptions = [
+  { value: 'activo', label: 'Activo', color: '#29B6FF' },
+  { value: 'en observacion', label: 'En observación', color: '#FFB547' },
+  { value: 'cerrado', label: 'Cerrado', color: '#38F28E' },
+] as const;
+
+const todayString = () => toLocalDateOnlyString();
 
 const toDateOnlyString = (input?: Date | string | null): string => {
   if (!input) return '';
@@ -90,8 +104,8 @@ const formatDate = (value?: string | null) => {
   if (!value) {
     return 'Sin fecha';
   }
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
+  const parsed = parseCalendarDate(value);
+  if (!parsed) {
     return value;
   }
   return parsed.toLocaleDateString('es-NI', {
@@ -146,7 +160,6 @@ export function SeguimientoPosteventoScreen() {
   const [operationOptions, setOperationOptions] = useState<RelatedEventOption[]>([]);
   const [lesionOptions, setLesionOptions] = useState<RelatedEventOption[]>([]);
   const [recentEntries, setRecentEntries] = useState<FollowUpEntry[]>([]);
-  const [compartirConMedico, setCompartirConMedico] = useState(false);
   const [requiereAtencion, setRequiereAtencion] = useState(false);
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [loadingEvents, setLoadingEvents] = useState(false);
@@ -462,7 +475,6 @@ export function SeguimientoPosteventoScreen() {
       notas: '',
       proximoControl: '',
     }));
-    setCompartirConMedico(false);
     setRequiereAtencion(false);
   };
 
@@ -478,6 +490,11 @@ export function SeguimientoPosteventoScreen() {
     }
     if (form.tipoEvento === 'lesion' && !form.lesionId) {
       Alert.alert('Falta relacion', 'Selecciona la lesion a la que pertenece este seguimiento.');
+      return;
+    }
+    const painLevel = form.nivelDolor === '' ? null : Number(form.nivelDolor);
+    if (painLevel !== null && (!Number.isInteger(painLevel) || painLevel < 0 || painLevel > 10)) {
+      Alert.alert('Nivel de dolor inválido', 'Selecciona un nivel entre 0 y 10.');
       return;
     }
 
@@ -497,7 +514,7 @@ export function SeguimientoPosteventoScreen() {
           fechaEvento: form.fechaEvento.trim(),
           fechaSeguimiento: form.fechaSeguimiento.trim(),
           estado: form.estado,
-          nivelDolor: form.nivelDolor ? Number(form.nivelDolor) : undefined,
+          nivelDolor: painLevel ?? undefined,
           evolucion: form.evolucion.trim() || undefined,
           sintomas: form.sintomas.trim() || undefined,
           medicacionActual: form.medicacionActual.trim() || undefined,
@@ -533,11 +550,29 @@ export function SeguimientoPosteventoScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Seguimiento De Caso</Text>
-      <Text style={styles.subtitle}>
-        Registra la evolucion despues de una operacion, lesion o emergencia y define si el medico debe verla.
-      </Text>
+      <View style={styles.heroCard}>
+        <View style={styles.heroIcon}>
+          <Ionicons name="pulse-outline" size={28} color="#29B6FF" />
+        </View>
+        <View style={styles.heroCopy}>
+          <Text style={styles.kicker}>EVOLUCIÓN CLÍNICA</Text>
+          <Text style={styles.title}>Seguimiento de caso</Text>
+          <Text style={styles.subtitle}>
+            Registra cómo evoluciona una operación, lesión o emergencia y define el próximo paso.
+          </Text>
+        </View>
+      </View>
 
+      <View style={styles.formCard}>
+      <View style={styles.blockHeader}>
+        <View style={styles.blockIcon}>
+          <Ionicons name="folder-open-outline" size={20} color="#29B6FF" />
+        </View>
+        <View style={styles.blockHeaderCopy}>
+          <Text style={styles.blockTitle}>Caso relacionado</Text>
+          <Text style={styles.blockHint}>Selecciona la persona y el evento que deseas seguir.</Text>
+        </View>
+      </View>
       <Text style={styles.label}>Paciente</Text>
       <View style={styles.pickerWrapper}>
         <Picker
@@ -565,16 +600,26 @@ export function SeguimientoPosteventoScreen() {
       </View>
 
       <Text style={styles.label}>Tipo de evento</Text>
-      <View style={styles.pickerWrapper}>
-        <Picker
-          style={styles.picker}
-          selectedValue={form.tipoEvento}
-          onValueChange={(value) => handleTipoEventoChange(String(value))}
-        >
-          <Picker.Item label="Operacion" value="operacion" />
-          <Picker.Item label="Lesion" value="lesion" />
-          <Picker.Item label="Emergencia" value="emergencia" />
-        </Picker>
+      <View style={styles.optionGrid}>
+        {eventTypeOptions.map((option) => {
+          const active = form.tipoEvento === option.value;
+          return (
+            <TouchableOpacity
+              key={option.value}
+              style={[styles.eventOption, active && styles.eventOptionActive]}
+              onPress={() => handleTipoEventoChange(option.value)}
+            >
+              <Ionicons
+                name={option.icon}
+                size={20}
+                color={active ? '#071120' : '#29B6FF'}
+              />
+              <Text style={[styles.eventOptionText, active && styles.eventOptionTextActive]}>
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {form.tipoEvento !== 'emergencia' ? (
@@ -629,28 +674,60 @@ export function SeguimientoPosteventoScreen() {
         </View>
       </View>
 
+      <View style={styles.blockHeader}>
+        <View style={styles.blockIcon}>
+          <Ionicons name="analytics-outline" size={20} color="#29B6FF" />
+        </View>
+        <View style={styles.blockHeaderCopy}>
+          <Text style={styles.blockTitle}>Estado actual</Text>
+          <Text style={styles.blockHint}>Resume el avance y cualquier cambio observado.</Text>
+        </View>
+      </View>
       <Text style={styles.label}>Estado actual</Text>
-      <View style={styles.pickerWrapper}>
-        <Picker
-          style={styles.picker}
-          selectedValue={form.estado}
-          onValueChange={(value) => handleChange('estado', String(value))}
-        >
-          <Picker.Item label="Activo" value="activo" />
-          <Picker.Item label="En observacion" value="en observacion" />
-          <Picker.Item label="Cerrado" value="cerrado" />
-        </Picker>
+      <View style={styles.statusOptions}>
+        {statusOptions.map((status) => {
+          const active = form.estado === status.value;
+          return (
+            <TouchableOpacity
+              key={status.value}
+              style={[
+                styles.statusOption,
+                active && { borderColor: status.color, backgroundColor: `${status.color}18` },
+              ]}
+              onPress={() => handleChange('estado', status.value)}
+            >
+              <View style={[styles.statusDot, { backgroundColor: status.color }]} />
+              <Text style={[styles.statusOptionText, active && { color: status.color }]}>
+                {status.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <Text style={styles.label}>Nivel de dolor</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Valor entre 0 y 10"
-        placeholderTextColor="#F4F8FF"
-        keyboardType="numeric"
-        value={form.nivelDolor}
-        onChangeText={(value) => handleChange('nivelDolor', value)}
-      />
+      <View style={styles.painScale}>
+        {Array.from({ length: 11 }, (_, level) => {
+          const active = form.nivelDolor === String(level);
+          const color = level <= 3 ? '#38F28E' : level <= 6 ? '#FFB547' : '#FF4D73';
+          return (
+            <TouchableOpacity
+              key={level}
+              style={[
+                styles.painLevel,
+                active && { borderColor: color, backgroundColor: `${color}20` },
+              ]}
+              onPress={() => handleChange('nivelDolor', active ? '' : String(level))}
+            >
+              <Text style={[styles.painLevelText, active && { color }]}>{level}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+      <View style={styles.painLegend}>
+        <Text style={styles.painLegendText}>Sin dolor</Text>
+        <Text style={styles.painLegendText}>Dolor intenso</Text>
+      </View>
 
       <Text style={styles.label}>Evolucion general</Text>
       <TextInput
@@ -672,6 +749,15 @@ export function SeguimientoPosteventoScreen() {
         onChangeText={(value) => handleChange('sintomas', value)}
       />
 
+      <View style={styles.blockHeader}>
+        <View style={styles.blockIcon}>
+          <Ionicons name="home-outline" size={20} color="#29B6FF" />
+        </View>
+        <View style={styles.blockHeaderCopy}>
+          <Text style={styles.blockTitle}>Plan de seguimiento</Text>
+          <Text style={styles.blockHint}>Documenta el tratamiento y define si requiere atención.</Text>
+        </View>
+      </View>
       <Text style={styles.label}>Medicacion actual</Text>
       <TextInput
         style={[styles.input, styles.multiline]}
@@ -702,23 +788,30 @@ export function SeguimientoPosteventoScreen() {
         onChangeText={(value) => handleChange('notas', value)}
       />
 
-      {renderDateField('proximoControl', 'Proximo control')}
+      {renderDateField('proximoControl', 'Próximo control')}
 
-      <Text style={styles.label}>Visibilidad y prioridad</Text>
+      <Text style={styles.label}>Prioridad</Text>
       <View style={styles.toggleRow}>
         <TouchableOpacity
-          style={[styles.toggleChip, styles.toggleChipDisabled]}
-          disabled
-        >
-          <Text style={styles.toggleChipText}>Compartir con medico desactivado</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggleChip, requiereAtencion && styles.toggleChipWarn]}
+          style={[styles.attentionButton, requiereAtencion && styles.attentionButtonActive]}
           onPress={() => setRequiereAtencion((current) => !current)}
         >
-          <Text style={[styles.toggleChipText, requiereAtencion && styles.toggleChipTextWarn]}>
-            {requiereAtencion ? 'Requiere atencion' : 'Sin urgencia'}
-          </Text>
+          <Ionicons
+            name={requiereAtencion ? 'alert-circle' : 'checkmark-circle-outline'}
+            size={21}
+            color={requiereAtencion ? '#FF4D73' : '#38F28E'}
+          />
+          <View style={styles.attentionCopy}>
+            <Text style={[styles.attentionTitle, requiereAtencion && styles.attentionTitleActive]}>
+              {requiereAtencion ? 'Requiere atención médica' : 'Evolución sin urgencia'}
+            </Text>
+            <Text style={styles.attentionHint}>
+              {requiereAtencion
+                ? 'El caso quedará marcado como prioritario.'
+                : 'Toca aquí si el caso necesita revisión prioritaria.'}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#9FB3C8" />
         </TouchableOpacity>
       </View>
 
@@ -727,21 +820,51 @@ export function SeguimientoPosteventoScreen() {
         onPress={handleSubmit}
         disabled={submitting}
       >
+        {submitting ? (
+          <ActivityIndicator color="#071120" />
+        ) : (
+          <Ionicons name="save-outline" size={20} color="#071120" />
+        )}
         <Text style={styles.saveBtnText}>{submitting ? 'Guardando...' : 'Guardar seguimiento'}</Text>
       </TouchableOpacity>
+      </View>
 
-      <Text style={styles.sectionTitle}>Historial reciente</Text>
+      <View style={styles.historyHeader}>
+        <View>
+          <Text style={styles.sectionTitle}>Historial reciente</Text>
+          <Text style={styles.historyHint}>Últimas actualizaciones de la persona seleccionada.</Text>
+        </View>
+        <View style={styles.historyCount}>
+          <Text style={styles.historyCountText}>{recentEntries.length}</Text>
+        </View>
+      </View>
       {screenError ? <Text style={styles.errorText}>{screenError}</Text> : null}
       {loadingEntries ? (
         <ActivityIndicator color="#29B6FF" style={styles.loader} />
       ) : recentEntries.length ? (
         recentEntries.map((entry) => (
           <View key={entry.seguimientoPosteventoId} style={styles.entryCard}>
-            <Text style={styles.entryTitle}>{entry.tituloEvento}</Text>
+            <View style={styles.entryTopRow}>
+              <View style={styles.entryTopCopy}>
+                <Text style={styles.entryTitle}>{entry.tituloEvento}</Text>
+                <Text style={styles.entryType}>{entry.tipoEvento}</Text>
+              </View>
+              <View
+                style={[
+                  styles.entryStatus,
+                  entry.estado === 'cerrado'
+                    ? styles.entryStatusClosed
+                    : entry.estado === 'en observacion'
+                      ? styles.entryStatusObservation
+                      : styles.entryStatusActive,
+                ]}
+              >
+                <Text style={styles.entryStatusText}>{entry.estado}</Text>
+              </View>
+            </View>
             <Text style={styles.entryMeta}>
-              {entry.tipoEvento} - evento {formatDate(entry.fechaEvento)} - seguimiento {formatDate(entry.fechaSeguimiento)}
+              Evento {formatDate(entry.fechaEvento)} · Seguimiento {formatDate(entry.fechaSeguimiento)}
             </Text>
-            <Text style={styles.entryMeta}>{entry.estado}</Text>
             {buildEntryMeta(entry) ? <Text style={styles.entryHighlights}>{buildEntryMeta(entry)}</Text> : null}
             {entry.notas ? <Text style={styles.entryNotes}>{entry.notas}</Text> : null}
           </View>
@@ -762,18 +885,85 @@ export function SeguimientoPosteventoScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 24,
+    paddingBottom: 100,
     backgroundColor: '#071120',
+    gap: 16,
+  },
+  heroCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 22,
+    backgroundColor: '#182A44',
+  },
+  heroIcon: {
+    width: 56,
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 18,
+    backgroundColor: '#29B6FF18',
+  },
+  heroCopy: {
+    flex: 1,
+  },
+  kicker: {
+    color: '#29B6FF',
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 1.1,
+    marginBottom: 5,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 26,
+    fontWeight: '900',
     color: '#F4F8FF',
   },
   subtitle: {
-    marginTop: 8,
-    marginBottom: 18,
+    marginTop: 5,
     color: '#C9D7E8',
     lineHeight: 20,
+  },
+  formCard: {
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 22,
+    backgroundColor: '#132238',
+  },
+  blockHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 8,
+    marginBottom: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#27496D',
+  },
+  blockIcon: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 13,
+    backgroundColor: '#29B6FF12',
+  },
+  blockHeaderCopy: {
+    flex: 1,
+  },
+  blockTitle: {
+    color: '#F4F8FF',
+    fontSize: 17,
+    fontWeight: '900',
+  },
+  blockHint: {
+    color: '#9FB3C8',
+    fontSize: 12,
+    marginTop: 2,
   },
   sectionTitle: {
     fontSize: 18,
@@ -798,6 +988,37 @@ const styles = StyleSheet.create({
   picker: {
     color: '#F4F8FF',
   },
+  optionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 14,
+  },
+  eventOption: {
+    flex: 1,
+    minWidth: 140,
+    minHeight: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 14,
+    backgroundColor: '#0D1B2A',
+  },
+  eventOptionActive: {
+    borderColor: '#29B6FF',
+    backgroundColor: '#29B6FF',
+  },
+  eventOptionText: {
+    color: '#C9D7E8',
+    fontWeight: '800',
+  },
+  eventOptionTextActive: {
+    color: '#071120',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#27496D',
@@ -818,6 +1039,7 @@ const styles = StyleSheet.create({
   },
   fieldGroupHalf: {
     flex: 1,
+    minWidth: 220,
     gap: 8,
   },
   dateButton: {
@@ -858,71 +1080,186 @@ const styles = StyleSheet.create({
     minHeight: 90,
     textAlignVertical: 'top',
   },
-  toggleRow: {
+  statusOptions: {
     flexDirection: 'row',
-    gap: 12,
+    flexWrap: 'wrap',
+    gap: 10,
     marginBottom: 16,
   },
-  toggleChip: {
+  statusOption: {
     flex: 1,
-    borderRadius: 14,
+    minWidth: 135,
+    minHeight: 46,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     borderWidth: 1,
     borderColor: '#27496D',
-    backgroundColor: '#071120',
-    paddingVertical: 14,
-    paddingHorizontal: 12,
+    borderRadius: 14,
+    backgroundColor: '#0D1B2A',
   },
-  toggleChipActive: {
-    borderColor: '#29B6FF',
-    backgroundColor: '#29B6FF18',
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  toggleChipDisabled: {
-    opacity: 0.55,
-  },
-  toggleChipWarn: {
-    borderColor: '#FF4D73',
-    backgroundColor: '#FF4D7318',
-  },
-  toggleChipText: {
+  statusOptionText: {
     color: '#C9D7E8',
-    textAlign: 'center',
-    fontWeight: '700',
-    fontSize: 13,
+    fontWeight: '800',
   },
-  toggleChipTextActive: {
-    color: '#29B6FF',
+  painScale: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 7,
   },
-  toggleChipTextWarn: {
+  painLevel: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 12,
+    backgroundColor: '#0D1B2A',
+  },
+  painLevelText: {
+    color: '#C9D7E8',
+    fontWeight: '900',
+  },
+  painLegend: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 7,
+    marginBottom: 16,
+  },
+  painLegendText: {
+    color: '#9FB3C8',
+    fontSize: 11,
+  },
+  toggleRow: {
+    marginBottom: 16,
+  },
+  attentionButton: {
+    minHeight: 68,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    borderWidth: 1,
+    borderColor: '#38F28E55',
+    borderRadius: 15,
+    padding: 13,
+    backgroundColor: '#38F28E0C',
+  },
+  attentionButtonActive: {
+    borderColor: '#FF4D73',
+    backgroundColor: '#FF4D7312',
+  },
+  attentionCopy: {
+    flex: 1,
+  },
+  attentionTitle: {
+    color: '#38F28E',
+    fontWeight: '900',
+    fontSize: 14,
+  },
+  attentionTitleActive: {
     color: '#FF4D73',
   },
+  attentionHint: {
+    color: '#9FB3C8',
+    fontSize: 12,
+    marginTop: 3,
+  },
   saveBtn: {
+    minHeight: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     backgroundColor: '#29B6FF',
-    paddingVertical: 16,
     borderRadius: 14,
-    marginBottom: 18,
   },
   disabledBtn: {
     opacity: 0.6,
   },
   saveBtnText: {
-    color: '#F4F8FF',
+    color: '#071120',
     textAlign: 'center',
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 16,
   },
+  historyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  historyHint: {
+    color: '#9FB3C8',
+    fontSize: 12,
+  },
+  historyCount: {
+    minWidth: 36,
+    height: 36,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 18,
+    backgroundColor: '#29B6FF18',
+  },
+  historyCountText: {
+    color: '#29B6FF',
+    fontWeight: '900',
+  },
   entryCard: {
-    backgroundColor: '#071120',
-    borderRadius: 16,
-    padding: 14,
+    backgroundColor: '#132238',
+    borderRadius: 18,
+    padding: 16,
     borderWidth: 1,
-    borderColor: '#132238',
-    marginBottom: 12,
+    borderColor: '#27496D',
+  },
+  entryTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 8,
+  },
+  entryTopCopy: {
+    flex: 1,
   },
   entryTitle: {
     color: '#F4F8FF',
     fontWeight: '800',
     fontSize: 16,
-    marginBottom: 4,
+  },
+  entryType: {
+    color: '#29B6FF',
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'capitalize',
+    marginTop: 3,
+  },
+  entryStatus: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  entryStatusActive: {
+    backgroundColor: '#29B6FF18',
+  },
+  entryStatusObservation: {
+    backgroundColor: '#FFB54718',
+  },
+  entryStatusClosed: {
+    backgroundColor: '#38F28E18',
+  },
+  entryStatusText: {
+    color: '#F4F8FF',
+    fontSize: 11,
+    fontWeight: '900',
+    textTransform: 'capitalize',
   },
   entryMeta: {
     color: '#C9D7E8',

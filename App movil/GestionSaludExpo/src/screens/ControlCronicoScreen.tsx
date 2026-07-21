@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
@@ -211,6 +212,30 @@ const createMeasurementRow = (): MeasurementRow => ({
   resultado: '',
   expanded: true,
 });
+
+const measurementPresets = [
+  { label: 'Glucosa', unit: 'mg/dL' },
+  { label: 'Presión sistólica', unit: 'mmHg' },
+  { label: 'Presión diastólica', unit: 'mmHg' },
+  { label: 'Peso', unit: 'kg' },
+  { label: 'Frecuencia cardíaca', unit: 'lpm' },
+  { label: 'Saturación de oxígeno', unit: '%' },
+  { label: 'HbA1c', unit: '%' },
+  { label: 'Temperatura', unit: '°C' },
+] as const;
+
+const resultOptions = ['Controlado', 'Estable', 'Alto', 'Bajo', 'Requiere revisión'] as const;
+
+const getMeasurementSummary = (measurement: MeasurementRow) => {
+  const value = measurement.valor
+    ? `${measurement.valor}${measurement.unidad ? ` ${measurement.unidad}` : ''}`
+    : 'Sin valor';
+  return [
+    measurement.indicador || 'Selecciona un indicador',
+    value,
+    measurement.resultado,
+  ].filter(Boolean).join(' · ');
+};
 
 const normalizeCondicion = (item: Record<string, unknown>): CondicionRecord | null => {
   const condicioncronicaId = Number(item.condicioncronicaId ?? item.condicioncronicaid ?? item.id ?? 0);
@@ -488,16 +513,6 @@ export function ControlCronicoScreen() {
     );
   }, [form.pacienteId, patientOptions]);
 
-  const upcomingControlsCount = useMemo(() => {
-    const today = toDateOnlyString(new Date());
-    return filteredRecords.filter((record) => {
-      if (!record.proximocontrol) {
-        return false;
-      }
-      return record.proximocontrol >= today;
-    }).length;
-  }, [filteredRecords]);
-
   const handleChange = (key: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -521,7 +536,23 @@ export function ControlCronicoScreen() {
   };
 
   const addMeasurement = () => {
-    setMeasurements((prev) => [...prev, createMeasurementRow()]);
+    setMeasurements((prev) => [
+      ...prev.map((item) => ({ ...item, expanded: false })),
+      createMeasurementRow(),
+    ]);
+  };
+
+  const applyMeasurementPreset = (
+    id: string,
+    preset: (typeof measurementPresets)[number],
+  ) => {
+    setMeasurements((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, indicador: preset.label, unidad: preset.unit }
+          : item,
+      ),
+    );
   };
 
   const removeMeasurement = (id: string) => {
@@ -727,21 +758,6 @@ export function ControlCronicoScreen() {
       </View>
 
       <FeedbackBanner feedback={feedback} />
-
-      <View style={styles.metricsRow}>
-        <View style={styles.metricCard}>
-          <Text style={styles.metricValue}>{patientCondiciones.length}</Text>
-          <Text style={styles.metricLabel}>Condiciones activas</Text>
-        </View>
-        <View style={styles.metricCard}>
-          <Text style={styles.metricValue}>{filteredRecords.length}</Text>
-          <Text style={styles.metricLabel}>Controles registrados</Text>
-        </View>
-        <View style={styles.metricCard}>
-          <Text style={styles.metricValue}>{upcomingControlsCount}</Text>
-          <Text style={styles.metricLabel}>Proximos controles</Text>
-        </View>
-      </View>
 
       <View style={styles.filterCard}>
         <Text style={styles.label}>Paciente</Text>
@@ -950,86 +966,136 @@ export function ControlCronicoScreen() {
           ) : null}
 
           <View style={styles.measurementsHeader}>
-            <View>
+            <View style={styles.measurementsHeaderCopy}>
               <Text style={styles.formTitle}>Mediciones</Text>
               <Text style={styles.sectionSubtitle}>
                 {measurements.length === 1
-                  ? '1 medicion en este control'
+                  ? 'Agrega el valor principal de este control'
                   : `${measurements.length} mediciones en este control`}
               </Text>
             </View>
             <TouchableOpacity style={styles.addMeasurementBtn} onPress={addMeasurement}>
-              <Text style={styles.addMeasurementText}>+ Agregar valor</Text>
+              <Ionicons name="add" size={18} color="#29B6FF" />
+              <Text style={styles.addMeasurementText}>Agregar</Text>
             </TouchableOpacity>
           </View>
 
           {measurements.map((measurement, index) => (
-            <View key={measurement.id} style={styles.measurementCard}>
+            <View
+              key={measurement.id}
+              style={[
+                styles.measurementCard,
+                measurement.expanded && styles.measurementCardExpanded,
+              ]}
+            >
               <View style={styles.measurementTopRow}>
                 <TouchableOpacity
                   style={styles.measurementToggle}
                   onPress={() => toggleMeasurementExpanded(measurement.id)}
                   activeOpacity={0.85}
                 >
+                  <View style={styles.measurementNumber}>
+                    <Text style={styles.measurementNumberText}>{index + 1}</Text>
+                  </View>
                   <View style={styles.measurementToggleCopy}>
-                    <Text style={styles.measurementTitle}>Medicion {index + 1}</Text>
+                    <Text style={styles.measurementTitle}>
+                      {measurement.indicador || `Medición ${index + 1}`}
+                    </Text>
                     <Text style={styles.measurementSummary}>
-                      {measurement.indicador || 'Sin indicador'} Ãƒâ€šÃ‚Â· {measurement.valor || 'Sin valor'}{' '}
-                      {measurement.unidad || ''} {measurement.resultado ? `Ãƒâ€šÃ‚Â· ${measurement.resultado}` : ''}
+                      {getMeasurementSummary(measurement)}
                     </Text>
                   </View>
-                  <Text style={styles.measurementToggleIcon}>
-                    {measurement.expanded ? '-' : '+'}
-                  </Text>
+                  <Ionicons
+                    name={measurement.expanded ? 'chevron-up' : 'chevron-down'}
+                    size={20}
+                    color="#29B6FF"
+                  />
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.removeMeasurementBtn, measurements.length === 1 && styles.disabledBtn]}
                   onPress={() => removeMeasurement(measurement.id)}
                   disabled={measurements.length === 1}
                 >
-                  <Text style={styles.removeMeasurementText}>Quitar</Text>
+                  <Ionicons name="trash-outline" size={18} color="#FF4D73" />
                 </TouchableOpacity>
               </View>
 
               {measurement.expanded ? (
-                <>
+                <View style={styles.measurementBody}>
                   <Text style={styles.label}>Indicador</Text>
+                  <View style={styles.quickOptions}>
+                    {measurementPresets.map((preset) => {
+                      const active = measurement.indicador === preset.label;
+                      return (
+                        <TouchableOpacity
+                          key={preset.label}
+                          style={[styles.quickOption, active && styles.quickOptionActive]}
+                          onPress={() => applyMeasurementPreset(measurement.id, preset)}
+                        >
+                          <Text style={[styles.quickOptionText, active && styles.quickOptionTextActive]}>
+                            {preset.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
                   <TextInput
                     style={styles.input}
-                    placeholder="Ej. Glucosa, presion arterial"
+                    placeholder="Otro indicador"
                     placeholderTextColor="#9FB3C8"
                     value={measurement.indicador}
                     onChangeText={(value) => handleMeasurementChange(measurement.id, 'indicador', value)}
                   />
 
-                  <Text style={styles.label}>Valor</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Ej. 120"
-                    placeholderTextColor="#9FB3C8"
-                    value={measurement.valor}
-                    onChangeText={(value) => handleMeasurementChange(measurement.id, 'valor', value)}
-                    keyboardType="decimal-pad"
-                  />
-
-                  <Text style={styles.label}>Unidad</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="mg/dL, mmHg..."
-                    placeholderTextColor="#9FB3C8"
-                    value={measurement.unidad}
-                    onChangeText={(value) => handleMeasurementChange(measurement.id, 'unidad', value)}
-                  />
+                  <View style={styles.measurementFieldsRow}>
+                    <View style={styles.measurementField}>
+                      <Text style={styles.label}>Valor</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Ej. 120"
+                        placeholderTextColor="#9FB3C8"
+                        value={measurement.valor}
+                        onChangeText={(value) => handleMeasurementChange(measurement.id, 'valor', value)}
+                        keyboardType="decimal-pad"
+                      />
+                    </View>
+                    <View style={styles.measurementField}>
+                      <Text style={styles.label}>Unidad</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="mg/dL, mmHg..."
+                        placeholderTextColor="#9FB3C8"
+                        value={measurement.unidad}
+                        onChangeText={(value) => handleMeasurementChange(measurement.id, 'unidad', value)}
+                      />
+                    </View>
+                  </View>
 
                   <Text style={styles.label}>Resultado</Text>
+                  <View style={styles.quickOptions}>
+                    {resultOptions.map((result) => {
+                      const active = measurement.resultado === result;
+                      return (
+                        <TouchableOpacity
+                          key={result}
+                          style={[styles.resultOption, active && styles.resultOptionActive]}
+                          onPress={() => handleMeasurementChange(measurement.id, 'resultado', result)}
+                        >
+                          <Text style={[styles.resultOptionText, active && styles.resultOptionTextActive]}>
+                            {result}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
                   <TextInput
                     style={styles.input}
-                    placeholder="Controlado, alto, estable..."
+                    placeholder="Escribe otro resultado u observación"
                     placeholderTextColor="#9FB3C8"
                     value={measurement.resultado}
                     onChangeText={(value) => handleMeasurementChange(measurement.id, 'resultado', value)}
                   />
-                </>
+                </View>
               ) : null}
             </View>
           ))}
@@ -1159,30 +1225,6 @@ const styles = StyleSheet.create({
   },
   feedbackTextError: {
     color: '#FF4D73',
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  metricCard: {
-    flex: 1,
-    backgroundColor: '#132238',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#27496D',
-    alignItems: 'center',
-    gap: 4,
-  },
-  metricValue: {
-    color: '#F4F8FF',
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  metricLabel: {
-    color: '#29B6FF',
-    fontSize: 12,
-    textAlign: 'center',
   },
   filterCard: {
     backgroundColor: '#132238',
@@ -1358,7 +1400,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  measurementsHeaderCopy: {
+    flex: 1,
+  },
   addMeasurementBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     backgroundColor: '#0D1B2A',
     borderRadius: 999,
     paddingHorizontal: 14,
@@ -1373,19 +1421,38 @@ const styles = StyleSheet.create({
   measurementCard: {
     backgroundColor: '#0D1B2A',
     borderRadius: 16,
-    padding: 14,
+    padding: 12,
     borderWidth: 1,
     borderColor: '#27496D',
+  },
+  measurementCardExpanded: {
+    borderColor: '#29B6FF',
+    backgroundColor: '#0B1929',
   },
   measurementTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: 12,
+    alignItems: 'center',
+    gap: 8,
   },
   measurementToggle: {
     flex: 1,
-    gap: 4,
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  measurementNumber: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 11,
+    backgroundColor: '#29B6FF18',
+  },
+  measurementNumberText: {
+    color: '#29B6FF',
+    fontWeight: '900',
   },
   measurementToggleCopy: {
     flex: 1,
@@ -1401,23 +1468,76 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
   },
-  measurementToggleIcon: {
-    color: '#29B6FF',
-    fontSize: 22,
-    fontWeight: '700',
-    width: 20,
-    textAlign: 'center',
-  },
   removeMeasurementBtn: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#182A44',
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    backgroundColor: '#FF4D7310',
+    borderWidth: 1,
+    borderColor: '#FF4D7335',
   },
-  removeMeasurementText: {
+  measurementBody: {
+    marginTop: 12,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#27496D',
+  },
+  quickOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  quickOption: {
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#27496D',
+    backgroundColor: '#132238',
+  },
+  quickOptionActive: {
+    borderColor: '#29B6FF',
+    backgroundColor: '#29B6FF',
+  },
+  quickOptionText: {
     color: '#C9D7E8',
-    fontWeight: '700',
     fontSize: 12,
+    fontWeight: '700',
+  },
+  quickOptionTextActive: {
+    color: '#071120',
+  },
+  measurementFieldsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  measurementField: {
+    flex: 1,
+    minWidth: 180,
+  },
+  resultOption: {
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#27496D',
+    backgroundColor: '#132238',
+  },
+  resultOptionActive: {
+    borderColor: '#38F28E',
+    backgroundColor: '#38F28E18',
+  },
+  resultOptionText: {
+    color: '#C9D7E8',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  resultOptionTextActive: {
+    color: '#38F28E',
   },
   input: {
     borderWidth: 1,

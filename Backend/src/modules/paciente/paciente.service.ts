@@ -4,12 +4,32 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { In, Repository } from "typeorm";
+import { In, Not, IsNull, Repository } from "typeorm";
+import { Alergia } from "../alergia/alergia.entity";
+import { Antecedentefamiliar } from "../antecedentefamiliar/antecedentefamiliar.entity";
 import { Citamedica } from "../citamedica/citamedica.entity";
+import { Condicioncronica } from "../condicioncronica/condicioncronica.entity";
 import { Consultamedica } from "../consultamedica/consultamedica.entity";
+import { Desparasitacion } from "../desparasitacion/desparasitacion.entity";
+import { Documentoclinico } from "../documentoclinico/documentoclinico.entity";
+import { Embarazo } from "../embarazo/embarazo.entity";
 import { Examenclinico } from "../examenclinico/examenclinico.entity";
+import { Estilovida } from "../estilovida/estilovida.entity";
+import { Evaluacionsaludhabito } from "../evaluacionsaludhabito/evaluacionsaludhabito.entity";
+import { Habitoespecifico } from "../habitoespecifico/habitoespecifico.entity";
+import { Lesion } from "../lesion/lesion.entity";
 import { Medicacion } from "../medicacion/medicacion.entity";
+import { Operacion } from "../operacion/operacion.entity";
+import { Periodo } from "../periodo/periodo.entity";
+import { Puntajeriesgo } from "../puntajeriesgo/puntajeriesgo.entity";
+import { Recordatoriocita } from "../recordatoriocita/recordatoriocita.entity";
+import { Registrodental } from "../registrodental/registrodental.entity";
+import { Registromensual } from "../registromensual/registromensual.entity";
+import { Saludmental } from "../saludmental/saludmental.entity";
 import { Seguimientopostevento } from "../seguimientopostevento/seguimientopostevento.entity";
+import { Seguimientofisico } from "../seguimientofisico/seguimientofisico.entity";
+import { Tipocondicioncronica } from "../tipocondicioncronica/tipocondicioncronica.entity";
+import { Vacuna } from "../vacuna/vacuna.entity";
 import { CreatePacienteDto } from "./dto/create-paciente.dto";
 import { UpdatePacienteDto } from "./dto/update-paciente.dto";
 import { Paciente } from "./paciente.entity";
@@ -44,6 +64,13 @@ type TimelineItem = {
   detail: string;
 };
 
+type ClinicalHistorySource = {
+  type: string;
+  dateKey: string;
+  titleKey?: string;
+  records: object[];
+};
+
 /**
  * Implementa la lógica de negocio y persistencia del dominio paciente.
  */
@@ -62,6 +89,46 @@ export class PacienteService {
     private readonly examenclinicoRepository: Repository<Examenclinico>,
     @InjectRepository(Seguimientopostevento)
     private readonly seguimientoRepository: Repository<Seguimientopostevento>,
+    @InjectRepository(Seguimientofisico)
+    private readonly seguimientoFisicoRepository: Repository<Seguimientofisico>,
+    @InjectRepository(Estilovida)
+    private readonly estiloVidaRepository: Repository<Estilovida>,
+    @InjectRepository(Habitoespecifico)
+    private readonly habitoRepository: Repository<Habitoespecifico>,
+    @InjectRepository(Condicioncronica)
+    private readonly condicionRepository: Repository<Condicioncronica>,
+    @InjectRepository(Tipocondicioncronica)
+    private readonly tipoCondicionRepository: Repository<Tipocondicioncronica>,
+    @InjectRepository(Lesion)
+    private readonly lesionRepository: Repository<Lesion>,
+    @InjectRepository(Operacion)
+    private readonly operacionRepository: Repository<Operacion>,
+    @InjectRepository(Saludmental)
+    private readonly saludmentalRepository: Repository<Saludmental>,
+    @InjectRepository(Alergia)
+    private readonly alergiaRepository: Repository<Alergia>,
+    @InjectRepository(Antecedentefamiliar)
+    private readonly antecedenteFamiliarRepository: Repository<Antecedentefamiliar>,
+    @InjectRepository(Desparasitacion)
+    private readonly desparasitacionRepository: Repository<Desparasitacion>,
+    @InjectRepository(Documentoclinico)
+    private readonly documentoClinicoRepository: Repository<Documentoclinico>,
+    @InjectRepository(Embarazo)
+    private readonly embarazoRepository: Repository<Embarazo>,
+    @InjectRepository(Evaluacionsaludhabito)
+    private readonly evaluacionHabitoRepository: Repository<Evaluacionsaludhabito>,
+    @InjectRepository(Periodo)
+    private readonly periodoRepository: Repository<Periodo>,
+    @InjectRepository(Puntajeriesgo)
+    private readonly puntajeRiesgoRepository: Repository<Puntajeriesgo>,
+    @InjectRepository(Recordatoriocita)
+    private readonly recordatorioCitaRepository: Repository<Recordatoriocita>,
+    @InjectRepository(Registrodental)
+    private readonly registroDentalRepository: Repository<Registrodental>,
+    @InjectRepository(Registromensual)
+    private readonly registroMensualRepository: Repository<Registromensual>,
+    @InjectRepository(Vacuna)
+    private readonly vacunaRepository: Repository<Vacuna>,
   ) {}
 
   /**
@@ -149,6 +216,13 @@ export class PacienteService {
       recentConsults,
       recentExams,
       recentFollowUps,
+      latestPhysicalRecord,
+      latestLifestyle,
+      habits,
+      activeConditions,
+      recentInjuries,
+      recentOperations,
+      recentMentalHealth,
     ] = await Promise.all([
       this.citamedicaRepository.findOne({
         where: {
@@ -177,7 +251,51 @@ export class PacienteService {
         order: { fechaSeguimiento: "DESC" },
         take: 4,
       }),
+      this.seguimientoFisicoRepository.findOne({
+        where: { pacienteId, peso: Not(IsNull()) },
+        order: { fecha: "DESC" },
+      }),
+      this.estiloVidaRepository.findOne({
+        where: { pacienteId },
+        order: { fecharegistro: "DESC" },
+      }),
+      this.habitoRepository.find({
+        where: { pacienteId },
+        order: { creadoen: "DESC" },
+        take: 5,
+      }),
+      this.condicionRepository.find({
+        where: { pacienteId, estado: In(["activa", "Activa"]) },
+        order: { creadoen: "DESC" },
+      }),
+      this.lesionRepository.find({
+        where: { pacienteId },
+        order: { fechalesion: "DESC" },
+        take: 3,
+      }),
+      this.operacionRepository.find({
+        where: { pacienteId },
+        order: { fechaoperacion: "DESC" },
+        take: 3,
+      }),
+      this.saludmentalRepository.find({
+        where: { pacienteId },
+        order: { fecha: "DESC" },
+        take: 7,
+      }),
     ]);
+
+    const conditionTypeIds = [
+      ...new Set(activeConditions.map((item) => item.tipocondicionId)),
+    ];
+    const conditionTypes = conditionTypeIds.length
+      ? await this.tipoCondicionRepository.findBy({
+          tipocondicionId: In(conditionTypeIds),
+        })
+      : [];
+    const conditionNames = new Map(
+      conditionTypes.map((item) => [item.tipocondicionId, item.nombre]),
+    );
 
     const alerts = [
       overviewRow?.alergiasActivas > 0
@@ -300,9 +418,176 @@ export class PacienteService {
             )
           : null,
       },
+      clinicalDetails: {
+        latestWeight:
+          latestPhysicalRecord?.peso !== null &&
+          latestPhysicalRecord?.peso !== undefined
+            ? {
+                value: Number(latestPhysicalRecord.peso),
+                date: this.toIsoDate(latestPhysicalRecord.fecha),
+              }
+            : null,
+        lifestyle: latestLifestyle
+          ? {
+              date: this.toIsoDate(latestLifestyle.fecharegistro),
+              alimentacion: latestLifestyle.alimentacion ?? null,
+              actividadFisica: latestLifestyle.actividadfisica ?? null,
+              consumoAlcohol: latestLifestyle.consumoalcohol ?? null,
+              consumoTabaco: latestLifestyle.consumotabaco ?? null,
+              horasSueno:
+                latestLifestyle.horassueno !== undefined
+                  ? Number(latestLifestyle.horassueno)
+                  : null,
+              estres: latestLifestyle.estres ?? null,
+            }
+          : null,
+        habits: habits.map((item) => ({
+          habitoId: item.habitoId,
+          categoria: item.categoria ?? null,
+          nivel: item.nivel ?? null,
+          frecuencia: item.frecuencia ?? null,
+          cantidad:
+            item.cantidad !== undefined ? Number(item.cantidad) : null,
+          unidad: item.unidad ?? null,
+          impactoSalud: item.impactosalud ?? null,
+        })),
+        activeConditions: activeConditions.map((item) => ({
+          condicionId: item.condicioncronicaId,
+          nombre:
+            conditionNames.get(item.tipocondicionId) ??
+            `Condición #${item.tipocondicionId}`,
+          severidad: item.severidad ?? null,
+          tratamiento: item.tratamientoprincipal ?? null,
+          fechaDiagnostico: item.fechadiagnostico
+            ? this.toIsoDate(item.fechadiagnostico)
+            : null,
+        })),
+        recentInjuries: recentInjuries.map((item) => ({
+          lesionId: item.lesionId,
+          tipo: item.tipo,
+          parteCuerpo: item.partecuerpo ?? null,
+          severidad: item.severidad ?? null,
+          recuperado: item.recuperado,
+          fecha: this.toIsoDate(item.fechalesion),
+        })),
+        recentOperations: recentOperations.map((item) => ({
+          operacionId: item.operacionId,
+          tipo: item.tipo,
+          estado: item.estado,
+          hospital: item.hospital ?? null,
+          fecha: this.toIsoDate(item.fechaoperacion),
+        })),
+        mentalHealth: recentMentalHealth.length
+          ? {
+              latest: {
+                date: this.toIsoDate(recentMentalHealth[0].fecha),
+                mood: recentMentalHealth[0].estadoAnimo,
+                stress: recentMentalHealth[0].estres,
+                anxiety: recentMentalHealth[0].ansiedad,
+                sleepHours:
+                  recentMentalHealth[0].horasSueno !== null &&
+                  recentMentalHealth[0].horasSueno !== undefined
+                    ? Number(recentMentalHealth[0].horasSueno)
+                    : null,
+              },
+              recentRecords: recentMentalHealth.length,
+              averageMood: this.average(
+                recentMentalHealth.map((item) => item.estadoAnimo),
+              ),
+              averageStress: this.average(
+                recentMentalHealth.map((item) => item.estres),
+              ),
+              averageAnxiety: this.average(
+                recentMentalHealth.map((item) => item.ansiedad),
+              ),
+            }
+          : null,
+      },
       recentTimeline,
       carePointers,
     };
+  }
+
+  /**
+   * Obtiene todos los eventos del expediente para generar el historial clínico.
+   */
+  async getClinicalHistory(pacienteId: number) {
+    const exists = await this.pacienteRepository.exists({ where: { pacienteId } });
+    if (!exists) {
+      throw new NotFoundException(`paciente ${pacienteId} no encontrado`);
+    }
+
+    const [
+      appointments, consults, medications, exams, followUps, physical,
+      lifestyle, habits, conditions, injuries, operations, mentalHealth,
+      allergies, familyHistory, deworming, documents, pregnancies,
+      habitEvaluations, periods, riskScores, appointmentReminders, dental,
+      monthlyRecords, vaccines,
+    ] = await Promise.all([
+      this.citamedicaRepository.find({ where: { pacienteId } }),
+      this.consultamedicaRepository.find({ where: { pacienteId } }),
+      this.medicacionRepository.find({ where: { pacienteId } }),
+      this.examenclinicoRepository.find({ where: { pacienteId } }),
+      this.seguimientoRepository.find({ where: { pacienteId } }),
+      this.seguimientoFisicoRepository.find({ where: { pacienteId } }),
+      this.estiloVidaRepository.find({ where: { pacienteId } }),
+      this.habitoRepository.find({ where: { pacienteId } }),
+      this.condicionRepository.find({ where: { pacienteId } }),
+      this.lesionRepository.find({ where: { pacienteId } }),
+      this.operacionRepository.find({ where: { pacienteId } }),
+      this.saludmentalRepository.find({ where: { pacienteId } }),
+      this.alergiaRepository.find({ where: { pacienteId } }),
+      this.antecedenteFamiliarRepository.find({ where: { pacienteId } }),
+      this.desparasitacionRepository.find({ where: { pacienteId } }),
+      this.documentoClinicoRepository.find({ where: { pacienteId } }),
+      this.embarazoRepository.find({ where: { pacienteId } }),
+      this.evaluacionHabitoRepository.find({ where: { pacienteId } }),
+      this.periodoRepository.find({ where: { pacienteId } }),
+      this.puntajeRiesgoRepository.find({ where: { pacienteId } }),
+      this.recordatorioCitaRepository.find({ where: { pacienteId } }),
+      this.registroDentalRepository.find({ where: { pacienteId } }),
+      this.registroMensualRepository.find({ where: { pacienteId } }),
+      this.vacunaRepository.find({ where: { pacienteId } }),
+    ]);
+
+    const conditionTypeIds = [...new Set(conditions.map((item) => item.tipocondicionId))];
+    const conditionTypes = conditionTypeIds.length
+      ? await this.tipoCondicionRepository.findBy({ tipocondicionId: In(conditionTypeIds) })
+      : [];
+    const conditionNames = new Map(
+      conditionTypes.map((item) => [item.tipocondicionId, item.nombre]),
+    );
+    const namedConditions = conditions.map((item) => ({
+      ...item,
+      nombreCondicion: conditionNames.get(item.tipocondicionId) ?? `Condición #${item.tipocondicionId}`,
+    }));
+
+    return this.buildClinicalHistory([
+      { type: "Cita médica", dateKey: "fechacita", titleKey: "especialidad", records: appointments },
+      { type: "Consulta médica", dateKey: "fechaconsulta", titleKey: "motivo", records: consults },
+      { type: "Medicación", dateKey: "fechainicio", titleKey: "nombremedicamento", records: medications },
+      { type: "Examen clínico", dateKey: "fechaExamen", titleKey: "nombreExamen", records: exams },
+      { type: "Seguimiento", dateKey: "fechaSeguimiento", titleKey: "tituloEvento", records: followUps },
+      { type: "Seguimiento físico", dateKey: "fecha", titleKey: "tipoEjercicio", records: physical },
+      { type: "Estilo de vida", dateKey: "fecharegistro", records: lifestyle },
+      { type: "Hábito", dateKey: "inicio", titleKey: "categoria", records: habits },
+      { type: "Condición crónica", dateKey: "fechadiagnostico", titleKey: "nombreCondicion", records: namedConditions },
+      { type: "Lesión", dateKey: "fechalesion", titleKey: "tipo", records: injuries },
+      { type: "Operación", dateKey: "fechaoperacion", titleKey: "tipo", records: operations },
+      { type: "Salud mental", dateKey: "fecha", records: mentalHealth },
+      { type: "Alergia", dateKey: "fechadiagnostico", titleKey: "tipo", records: allergies },
+      { type: "Antecedente familiar", dateKey: "fecharegistro", titleKey: "condicion", records: familyHistory },
+      { type: "Desparasitación", dateKey: "fecha", titleKey: "producto", records: deworming },
+      { type: "Documento clínico", dateKey: "fechadocumento", titleKey: "entidadorigen", records: documents },
+      { type: "Embarazo", dateKey: "fechainicio", titleKey: "estado", records: pregnancies },
+      { type: "Evaluación de hábitos", dateKey: "fecha", titleKey: "categoria", records: habitEvaluations },
+      { type: "Periodo menstrual", dateKey: "fechaInicio", titleKey: "flujo", records: periods },
+      { type: "Puntaje de riesgo", dateKey: "fechamedicion", titleKey: "tipo", records: riskScores },
+      { type: "Recordatorio de cita", dateKey: "fecharecordatorio", titleKey: "mensaje", records: appointmentReminders },
+      { type: "Registro dental", dateKey: "fechaatencion", titleKey: "procedimiento", records: dental },
+      { type: "Registro menstrual", dateKey: "fechainicio", titleKey: "dolor", records: monthlyRecords },
+      { type: "Vacuna", dateKey: "fechaaplicacion", titleKey: "nombre", records: vaccines },
+    ]);
   }
 
   /**
@@ -328,6 +613,37 @@ export class PacienteService {
     if (!result.affected) {
       throw new NotFoundException(`registro ${id} no encontrado en paciente`);
     }
+  }
+
+  /**
+   * Construye el historial completo y elimina metadatos técnicos o archivos binarios.
+   */
+  private buildClinicalHistory(sources: ClinicalHistorySource[]) {
+    const ignoredFields = /^(pacienteId|creadoPor|creadopor|creadoEn|creadoen|modificadoPor|modificadopor|modificadoEn|modificadoen|campoPrueba\d+|campoprueba\d+|archivoPdf|archivoReceta|rutaarchivo)$/i;
+
+    return sources
+      .flatMap((source) =>
+        source.records.map((entity) => {
+          const record = entity as Record<string, unknown>;
+          const rawDate = record[source.dateKey] ?? record.creadoEn ?? record.creadoen;
+          const parsedDate = rawDate ? new Date(rawDate as string | number | Date) : null;
+          const date = parsedDate && !Number.isNaN(parsedDate.getTime())
+            ? parsedDate.toISOString()
+            : new Date(0).toISOString();
+          const rawTitle = source.titleKey ? record[source.titleKey] : null;
+          const fields = Object.entries(record)
+            .filter(([key, value]) => !ignoredFields.test(key) && !Buffer.isBuffer(value))
+            .map(([key, value]) => ({ key, value: value ?? null }));
+
+          return {
+            type: source.type,
+            title: rawTitle ? String(rawTitle) : source.type,
+            date,
+            fields,
+          };
+        }),
+      )
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }
 
   /**
@@ -453,6 +769,14 @@ export class PacienteService {
   private toIsoDate(value: Date | string): string {
     const date = value instanceof Date ? value : new Date(value);
     return date.toISOString().slice(0, 10);
+  }
+
+  /**
+   * Calcula un promedio con una cifra decimal.
+   */
+  private average(values: number[]): number {
+    const total = values.reduce((sum, value) => sum + Number(value), 0);
+    return Math.round((total / values.length) * 10) / 10;
   }
 
   /**

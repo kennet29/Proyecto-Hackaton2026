@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { Ionicons } from '@expo/vector-icons';
 import { Calendar, DateData } from 'react-native-calendars';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -19,6 +20,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { RootStackParamList } from '../navigation/types';
+import { toLocalDateOnlyString } from '../utils/localDate';
 
 type SeguimientoRecord = {
   seguimientoFisicoId: number;
@@ -121,7 +123,7 @@ const intensidadOptions = [
 ];
 
 const trendRangeOptions: Array<{ label: string; value: TrendRangeKey }> = [
-  { label: '7 dias', value: '7d' },
+  { label: '7 días', value: '7d' },
   { label: 'Quincenal', value: '15d' },
   { label: 'Mensual', value: '1m' },
   { label: 'Semestral', value: '6m' },
@@ -136,7 +138,7 @@ const CHART_SIDE_PADDING = 18;
 const CHART_POINT_GAP = 58;
 const CHART_LINE_THICKNESS = 3;
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => toLocalDateOnlyString();
 
 const parseDateOnly = (value?: string | null) => {
   if (!value) return null;
@@ -162,6 +164,27 @@ const addYears = (date: Date, amount: number) => {
   const next = new Date(date);
   next.setFullYear(next.getFullYear() + amount);
   return next;
+};
+
+const buildDemoRecords = (pacienteId: number, endDateValue: string): SeguimientoRecord[] => {
+  const endDate = parseDateOnly(endDateValue) ?? new Date();
+  const weights = [81.6, 81.3, 81.4, 81, 80.8, 80.9, 80.5, 80.3, 80.4, 80, 79.8, 79.9, 79.5, 79.3, 79.1];
+  const calories = [180, 240, 210, 320, 275, 360, 225, 410, 350, 290, 430, 380, 470, 420, 510];
+  const steps = [5200, 6800, 6100, 8400, 7300, 9100, 6400, 10200, 8800, 7600, 11000, 9400, 12100, 10500, 12800];
+
+  return weights.map((peso, index) => ({
+    seguimientoFisicoId: -(index + 1),
+    pacienteId,
+    fecha: toLocalDateOnlyString(addDays(endDate, index - (weights.length - 1))),
+    peso,
+    minutosEjercicio: 25 + (index % 5) * 8,
+    tipoEjercicio: index % 3 === 0 ? 'Caminata' : index % 3 === 1 ? 'Fuerza' : 'Bicicleta',
+    intensidad: index % 4 === 0 ? 'intensa' : index % 2 === 0 ? 'moderada' : 'leve',
+    pasos: steps[index] ?? null,
+    caloriasQuemadas: calories[index] ?? null,
+    distanciaKm: Math.round(((steps[index] ?? 0) * 0.00072) * 100) / 100,
+    notas: 'Dato temporal de demostración',
+  }));
 };
 
 const getTrendWindowStart = (endDate: Date, range: TrendRangeKey) => {
@@ -248,7 +271,7 @@ const getIntensityRank = (value?: string | null) => {
 const getIntensityColor = (value?: string | null) => {
   const normalized = (value ?? '').toLowerCase();
   if (normalized === 'intensa') return '#FF4D73';
-  if (normalized === 'moderada') return '#FF4D73';
+  if (normalized === 'moderada') return '#F9A826';
   if (normalized === 'leve') return '#38F28E';
   return '#9FB3C8';
 };
@@ -291,6 +314,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
   const [dataError, setDataError] = useState<string | null>(null);
   const [showPesoProgress, setShowPesoProgress] = useState(false);
   const [showHistorialReciente, setShowHistorialReciente] = useState(false);
+  const [showDemoData, setShowDemoData] = useState(false);
 
   useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -425,7 +449,15 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
     const marks: CalendarMarks = {};
     (historial?.registros ?? []).forEach((record) => {
       const existing = marks[record.fecha] ?? {};
-      const existingRank = getIntensityRank(existing.dotColor === '#FF4D73' ? 'intensa' : existing.dotColor === '#FF4D73' ? 'moderada' : existing.dotColor === '#38F28E' ? 'leve' : null);
+      const existingRank = getIntensityRank(
+        existing.dotColor === '#FF4D73'
+          ? 'intensa'
+          : existing.dotColor === '#F9A826'
+            ? 'moderada'
+            : existing.dotColor === '#38F28E'
+              ? 'leve'
+              : null,
+      );
       const currentRank = getIntensityRank(record.intensidad);
       marks[record.fecha] = {
         ...existing,
@@ -454,8 +486,18 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
     return (logros?.logros ?? []).filter((achievement) => achievement.unlocked);
   }, [logros?.logros]);
 
+  const demoRecords = useMemo(() => {
+    const newestDate = (historial?.registros ?? [])
+      .map((item) => item.fecha)
+      .filter(Boolean)
+      .sort((left, right) => left.localeCompare(right))
+      .at(-1) ?? today();
+    return buildDemoRecords(Number(selectedPatientId) || 0, newestDate);
+  }, [historial?.registros, selectedPatientId]);
+
   const chartData = useMemo(() => {
-    const sorted = (historial?.registros ?? []).slice().sort((a, b) => a.fecha.localeCompare(b.fecha));
+    const source = showDemoData ? demoRecords : (historial?.registros ?? []);
+    const sorted = source.slice().sort((a, b) => a.fecha.localeCompare(b.fecha));
     const endDate = parseDateOnly(sorted[sorted.length - 1]?.fecha) ?? parseDateOnly(today());
     if (!endDate) {
       return sorted;
@@ -468,10 +510,10 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
       }
       return itemDate >= startDate && itemDate <= endDate;
     });
-  }, [historial?.registros, trendRange]);
+  }, [demoRecords, historial?.registros, showDemoData, trendRange]);
 
   const trendRangeLabel = useMemo(() => {
-    return trendRangeOptions.find((option) => option.value === trendRange)?.label ?? '7 dias';
+    return trendRangeOptions.find((option) => option.value === trendRange)?.label ?? '7 días';
   }, [trendRange]);
 
   const maxCalories = useMemo(() => {
@@ -617,14 +659,35 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
         }
       >
         <View style={styles.hero}>
-          <Text style={styles.heroTitle}>Seguimiento Fisico</Text>
-          <Text style={styles.heroText}>
-            Registra ejercicio, peso, pasos, calorias y distancia para el control diario.
-          </Text>
+          <View style={styles.heroIcon}>
+            <Ionicons name="fitness-outline" size={26} color="#29B6FF" />
+          </View>
+          <View style={styles.heroCopy}>
+            <Text style={styles.heroEyebrow}>BIENESTAR Y ACTIVIDAD</Text>
+            <Text style={styles.heroTitle}>Seguimiento físico</Text>
+            <Text style={styles.heroText}>
+              Peso, ejercicio y actividad diaria en una sola vista.
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.heroAddButton}
+            onPress={() =>
+              navigation.navigate('SeguimientoFisicoForm', {
+                patientId: selectedPatientId ? Number(selectedPatientId) : undefined,
+              })
+            }
+          >
+            <Ionicons name="add" size={20} color="#071120" />
+            <Text style={styles.heroAddButtonText}>Nuevo registro</Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Paciente</Text>
+        <View style={styles.patientSelectorCard}>
+          <View style={styles.patientSelectorIcon}>
+            <Ionicons name="person-outline" size={20} color="#29B6FF" />
+          </View>
+          <View style={styles.patientSelectorCopy}>
+            <Text style={styles.fieldEyebrow}>PACIENTE</Text>
           {loadingPatients ? (
             <View style={styles.loadingBox}>
               <ActivityIndicator color="#29B6FF" />
@@ -654,10 +717,20 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
             </View>
           )}
           {patientError ? <Text style={styles.errorText}>{patientError}</Text> : null}
+          </View>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Resumen</Text>
+          <View style={styles.cardHeading}>
+            <View>
+              <Text style={styles.sectionTitle}>Panorama actual</Text>
+              <Text style={styles.sectionSubtitle}>Indicadores acumulados del paciente</Text>
+            </View>
+            <View style={styles.recordCountBadge}>
+              <Text style={styles.recordCountValue}>{resumen?.totalRegistros ?? 0}</Text>
+              <Text style={styles.recordCountLabel}>registros</Text>
+            </View>
+          </View>
           {loadingData ? (
             <View style={styles.loadingBox}>
               <ActivityIndicator color="#29B6FF" />
@@ -665,28 +738,44 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
             </View>
           ) : (
             <>
-              <Text style={styles.metricText}>
-                Total de registros: {resumen?.totalRegistros ?? 0}
-              </Text>
-              <Text style={styles.metricText}>
-                Peso inicial: {formatNumber(resumen?.peso?.inicial, ' kg')}
-              </Text>
-              <Text style={styles.metricText}>
-                Peso actual: {formatNumber(resumen?.peso?.actual, ' kg')}
-              </Text>
-              <Text style={styles.metricText}>
-                Cambio de peso: {formatNumber(resumen?.peso?.cambio, ' kg')}
-              </Text>
-              <Text style={styles.metricText}>
-                Minutos totales de ejercicio:{' '}
-                {formatNumber(resumen?.ejercicio?.minutosTotales, ' min')}
-              </Text>
-              <Text style={styles.metricText}>
-                Promedio de pasos: {formatNumber(resumen?.ejercicio?.pasosPromedio)}
-              </Text>
-              <Text style={styles.metricText}>
-                Calorias totales: {formatNumber(resumen?.ejercicio?.caloriasTotales)}
-              </Text>
+              <View style={styles.summaryGrid}>
+                <SummaryMetric
+                  icon="scale-outline"
+                  label="Peso actual"
+                  value={formatNumber(resumen?.peso?.actual, ' kg')}
+                  color="#29B6FF"
+                />
+                <SummaryMetric
+                  icon="swap-vertical-outline"
+                  label="Cambio"
+                  value={formatNumber(resumen?.peso?.cambio, ' kg')}
+                  color="#A78BFA"
+                />
+                <SummaryMetric
+                  icon="timer-outline"
+                  label="Ejercicio"
+                  value={formatNumber(resumen?.ejercicio?.minutosTotales, ' min')}
+                  color="#38F28E"
+                />
+                <SummaryMetric
+                  icon="footsteps-outline"
+                  label="Pasos promedio"
+                  value={formatNumber(resumen?.ejercicio?.pasosPromedio)}
+                  color="#F9A826"
+                />
+                <SummaryMetric
+                  icon="flame-outline"
+                  label="Calorías"
+                  value={formatNumber(resumen?.ejercicio?.caloriasTotales)}
+                  color="#FF4D73"
+                />
+                <SummaryMetric
+                  icon="flag-outline"
+                  label="Peso inicial"
+                  value={formatNumber(resumen?.peso?.inicial, ' kg')}
+                  color="#2DD4BF"
+                />
+              </View>
               {dataError ? <Text style={styles.errorText}>{dataError}</Text> : null}
             </>
           )}
@@ -697,7 +786,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
             <View>
               <Text style={styles.sectionTitle}>Calendario de registros</Text>
               <Text style={styles.calendarSubtitle}>
-                Explora el mes y toca un dia marcado para ver el detalle.
+                Explora el mes y toca un día marcado para ver el detalle.
               </Text>
             </View>
             <View style={styles.calendarPill}>
@@ -735,7 +824,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
               <Text style={styles.legendText}>Leve</Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#FF4D73' }]} />
+              <View style={[styles.legendDot, { backgroundColor: '#F9A826' }]} />
               <Text style={styles.legendText}>Moderada</Text>
             </View>
             <View style={styles.legendItem}>
@@ -748,7 +837,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
             <View style={styles.dayDetailBox}>
               <View style={styles.dayDetailHeader}>
                 <View>
-                  <Text style={styles.dayDetailEyebrow}>Detalle del dia</Text>
+                  <Text style={styles.dayDetailEyebrow}>Detalle del día</Text>
                   <Text style={styles.dayDetailTitle}>{formatDate(selectedDayRecord.fecha)}</Text>
                 </View>
                 <View
@@ -796,7 +885,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
           ) : (
             <View style={styles.calendarEmptyBox}>
               <Text style={styles.emptyText}>
-                Selecciona un dia marcado para ver el detalle del registro.
+                Selecciona un día marcado para ver el detalle del registro.
               </Text>
             </View>
           )}
@@ -805,15 +894,40 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
         <View style={styles.sectionDivider}>
           <Text style={styles.sectionDividerTitle}>Diagrama combinado</Text>
           <Text style={styles.sectionDividerText}>
-            Vista unificada para comparar peso y calorias por fecha.
+            Vista unificada para comparar peso y calorías por fecha.
           </Text>
         </View>
 
         <View style={[styles.card, styles.chartCard]}>
-          <Text style={styles.sectionTitle}>Tendencia en el tiempo</Text>
+          <View style={styles.chartHeading}>
+            <Text style={styles.sectionTitle}>Tendencia en el tiempo</Text>
+            <TouchableOpacity
+              style={[styles.demoButton, showDemoData && styles.demoButtonActive]}
+              onPress={() => setShowDemoData((previous) => !previous)}
+              accessibilityRole="button"
+              accessibilityLabel={showDemoData ? 'Volver a datos reales' : 'Probar gráfica con datos demo'}
+            >
+              <Ionicons
+                name={showDemoData ? 'server-outline' : 'flask-outline'}
+                size={16}
+                color={showDemoData ? '#071120' : '#F9A826'}
+              />
+              <Text style={[styles.demoButtonText, showDemoData && styles.demoButtonTextActive]}>
+                {showDemoData ? 'Datos reales' : 'Ver demo'}
+              </Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.chartSubtitle}>
-            Selecciona el rango para ver la tendencia por fecha en 7 dias, quincenal, mensual, semestral o anual.
+            Selecciona el rango para ver la tendencia por fecha en 7 días, quincenal, mensual, semestral o anual.
           </Text>
+          {showDemoData ? (
+            <View style={styles.demoNotice}>
+              <Ionicons name="information-circle-outline" size={17} color="#F9A826" />
+              <Text style={styles.demoNoticeText}>
+                Modo demostración: estos 15 registros son temporales y no se guardan en el expediente.
+              </Text>
+            </View>
+          ) : null}
           <View style={styles.trendRangeRow}>
             {trendRangeOptions.map((option) => {
               const active = option.value === trendRange;
@@ -835,7 +949,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
           </Text>
           {chartData.length ? (
             <View style={styles.trendBlock}>
-              <Text style={styles.trendTitle}>Peso y calorias por fecha</Text>
+              <Text style={styles.trendTitle}>Peso y calorías por fecha</Text>
               <View style={styles.combinedLegendRow}>
                 <View style={styles.combinedLegendItem}>
                   <View style={[styles.combinedLegendSwatch, { backgroundColor: '#29B6FF' }]} />
@@ -902,15 +1016,17 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                                 { left: item.x - 6, top: item.y - 6 },
                               ]}
                             />
-                            <Text
-                              style={[
-                                styles.lineChartValueLabel,
-                                styles.lineChartWeightLabel,
-                                { left: item.x - 30, top: Math.max(item.y - 28, 0) },
-                              ]}
-                            >
-                              P: {item.label}
-                            </Text>
+                            {item.showMarkerLabel ? (
+                              <Text
+                                style={[
+                                  styles.lineChartValueLabel,
+                                  styles.lineChartWeightLabel,
+                                  { left: item.x - 30, top: Math.max(item.y - 28, 0) },
+                                ]}
+                              >
+                                P: {item.label}
+                              </Text>
+                            ) : null}
                           </>
                         ) : null}
                       </View>
@@ -926,15 +1042,17 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                                 { left: item.x - 6, top: item.y - 6 },
                               ]}
                             />
-                            <Text
-                              style={[
-                                styles.lineChartValueLabel,
-                                styles.lineChartCaloriesLabel,
-                                { left: item.x - 30, top: Math.min(item.y + 12, CHART_PLOT_BOTTOM - 10) },
-                              ]}
-                            >
-                              C: {item.label}
-                            </Text>
+                            {item.showMarkerLabel ? (
+                              <Text
+                                style={[
+                                  styles.lineChartValueLabel,
+                                  styles.lineChartCaloriesLabel,
+                                  { left: item.x - 30, top: Math.min(item.y + 12, CHART_PLOT_BOTTOM - 10) },
+                                ]}
+                              >
+                                C: {item.label}
+                              </Text>
+                            ) : null}
                           </>
                         ) : null}
                       </View>
@@ -962,7 +1080,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
               </View>
             </View>
           ) : (
-            <Text style={styles.emptyText}>Todavia no hay datos suficientes para el diagrama.</Text>
+            <Text style={styles.emptyText}>Todavía no hay datos suficientes para el diagrama.</Text>
           )}
         </View>
 
@@ -973,9 +1091,16 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
             activeOpacity={0.85}
           >
             <Text style={styles.sectionTitle}>Progreso de peso</Text>
-            <Text style={styles.collapsibleAction}>
-              {showPesoProgress ? 'Ocultar' : 'Mostrar'}
-            </Text>
+            <View style={styles.collapsibleAction}>
+              <Text style={styles.collapsibleActionText}>
+                {showPesoProgress ? 'Ocultar' : 'Mostrar'}
+              </Text>
+              <Ionicons
+                name={showPesoProgress ? 'chevron-up' : 'chevron-down'}
+                size={17}
+                color="#29B6FF"
+              />
+            </View>
           </TouchableOpacity>
           {showPesoProgress ? (
             pesoProgress?.puntos?.length ? (
@@ -986,10 +1111,10 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                 </View>
               ))
             ) : (
-              <Text style={styles.emptyText}>Todavia no hay suficientes datos de peso.</Text>
+              <Text style={styles.emptyText}>Todavía no hay suficientes datos de peso.</Text>
             )
           ) : (
-            <Text style={styles.collapsedHint}>Despliega esta seccion para ver el progreso.</Text>
+            <Text style={styles.collapsedHint}>Despliega esta sección para ver el progreso.</Text>
           )}
         </View>
 
@@ -1000,9 +1125,16 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
             activeOpacity={0.85}
           >
             <Text style={styles.sectionTitle}>Historial reciente</Text>
-            <Text style={styles.collapsibleAction}>
-              {showHistorialReciente ? 'Ocultar' : 'Mostrar'}
-            </Text>
+            <View style={styles.collapsibleAction}>
+              <Text style={styles.collapsibleActionText}>
+                {showHistorialReciente ? 'Ocultar' : 'Mostrar'}
+              </Text>
+              <Ionicons
+                name={showHistorialReciente ? 'chevron-up' : 'chevron-down'}
+                size={17}
+                color="#29B6FF"
+              />
+            </View>
           </TouchableOpacity>
           {showHistorialReciente ? (
             historial?.registros?.length ? (
@@ -1032,10 +1164,10 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                   </View>
                 ))
             ) : (
-              <Text style={styles.emptyText}>Todavia no hay registros para este paciente.</Text>
+              <Text style={styles.emptyText}>Todavía no hay registros para este paciente.</Text>
             )
           ) : (
-            <Text style={styles.collapsedHint}>Despliega esta seccion para ver el historial.</Text>
+            <Text style={styles.collapsedHint}>Despliega esta sección para ver el historial.</Text>
           )}
         </View>
 
@@ -1048,18 +1180,24 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
             </View>
           ) : logros?.logros?.length ? (
             <>
-              <Text style={styles.metricText}>
-                Desbloqueados: {logros.desbloqueados} de {logros.total}
-              </Text>
-              <Text style={styles.metricText}>
-                Racha actual: {logros.progresoResumen.rachaActual} dias
-              </Text>
-              <Text style={styles.metricText}>
-                Racha maxima: {logros.progresoResumen.rachaMaxima} dias
-              </Text>
-              <Text style={styles.metricText}>
-                Distancia acumulada: {formatNumber(logros.progresoResumen.distanciaAcumulada, ' km')}
-              </Text>
+              <View style={styles.achievementSummaryGrid}>
+                <AchievementStat
+                  label="Desbloqueados"
+                  value={`${logros.desbloqueados}/${logros.total}`}
+                />
+                <AchievementStat
+                  label="Racha actual"
+                  value={`${logros.progresoResumen.rachaActual} días`}
+                />
+                <AchievementStat
+                  label="Racha máxima"
+                  value={`${logros.progresoResumen.rachaMaxima} días`}
+                />
+                <AchievementStat
+                  label="Distancia"
+                  value={formatNumber(logros.progresoResumen.distanciaAcumulada, ' km')}
+                />
+              </View>
 
               {unlockedAchievements.length ? (
                 <>
@@ -1133,8 +1271,39 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
           })
         }
       >
-        <Text style={styles.fabText}>+</Text>
+        <Ionicons name="add" size={25} color="#071120" />
       </TouchableOpacity>
+    </View>
+  );
+}
+
+function SummaryMetric({
+  icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  value: string;
+  color: string;
+}) {
+  return (
+    <View style={styles.summaryMetric}>
+      <View style={[styles.summaryMetricIcon, { backgroundColor: `${color}18` }]}>
+        <Ionicons name={icon} size={19} color={color} />
+      </View>
+      <Text style={styles.summaryMetricValue}>{value}</Text>
+      <Text style={styles.summaryMetricLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function AchievementStat({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.achievementStat}>
+      <Text style={styles.achievementStatValue}>{value}</Text>
+      <Text style={styles.achievementStatLabel}>{label}</Text>
     </View>
   );
 }
@@ -1149,24 +1318,98 @@ const styles = StyleSheet.create({
     paddingBottom: 110,
     backgroundColor: '#071120',
     gap: 16,
+    width: '100%',
+    maxWidth: 1180,
+    alignSelf: 'center',
   },
   hero: {
-    backgroundColor: '#29B6FF18',
-    borderRadius: 20,
+    backgroundColor: '#182A44',
+    borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#29B6FF',
+    borderColor: '#27496D',
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 13,
+  },
+  heroIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 17,
+    backgroundColor: '#29B6FF18',
+    borderWidth: 1,
+    borderColor: '#29B6FF55',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroCopy: {
+    flex: 1,
+    minWidth: 220,
+  },
+  heroEyebrow: {
+    color: '#29B6FF',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1.4,
+    marginBottom: 2,
   },
   heroTitle: {
     color: '#F4F8FF',
     fontSize: 24,
-    fontWeight: '800',
-    marginBottom: 6,
+    lineHeight: 29,
+    fontWeight: '900',
   },
   heroText: {
-    color: '#C9D7E8',
-    fontSize: 14,
-    lineHeight: 20,
+    color: '#9FB3C8',
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 3,
+  },
+  heroAddButton: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    backgroundColor: '#38F28E',
+    borderRadius: 14,
+    paddingHorizontal: 15,
+    paddingVertical: 11,
+  },
+  heroAddButtonText: {
+    color: '#071120',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  patientSelectorCard: {
+    backgroundColor: '#132238',
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#27496D',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  patientSelectorIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: '#29B6FF18',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  patientSelectorCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  fieldEyebrow: {
+    color: '#9FB3C8',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1,
+    marginBottom: 6,
   },
   calendarHeader: {
     flexDirection: 'row',
@@ -1205,14 +1448,86 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#132238',
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 16,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#27496D',
+  },
+  cardHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 12,
   },
   sectionTitle: {
     color: '#F4F8FF',
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '900',
+  },
+  sectionSubtitle: {
+    color: '#9FB3C8',
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 3,
+  },
+  recordCountBadge: {
+    minWidth: 64,
+    borderRadius: 14,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#27496D',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    alignItems: 'center',
+  },
+  recordCountValue: {
+    color: '#F4F8FF',
+    fontSize: 17,
+    lineHeight: 20,
+    fontWeight: '900',
+  },
+  recordCountLabel: {
+    color: '#9FB3C8',
+    fontSize: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  summaryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  summaryMetric: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 145,
+    minHeight: 115,
+    backgroundColor: '#071120',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#1B3355',
+    padding: 13,
+  },
+  summaryMetricIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 9,
+  },
+  summaryMetricValue: {
+    color: '#F4F8FF',
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '900',
+  },
+  summaryMetricLabel: {
+    color: '#9FB3C8',
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 2,
   },
   subsectionTitle: {
     color: '#F4F8FF',
@@ -1227,9 +1542,20 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   collapsibleAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#29B6FF12',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderWidth: 1,
+    borderColor: '#29B6FF45',
+  },
+  collapsibleActionText: {
     color: '#29B6FF',
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
   },
   collapsedHint: {
     color: '#9FB3C8',
@@ -1237,9 +1563,13 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   pickerWrapper: {
-    borderRadius: 12,
+    minHeight: 48,
+    borderRadius: 13,
     overflow: 'hidden',
-    backgroundColor: '#F4F8FF',
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#1B3355',
+    justifyContent: 'center',
   },
   input: {
     backgroundColor: '#F4F8FF',
@@ -1307,6 +1637,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
+  },
+  achievementSummaryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 9,
+  },
+  achievementStat: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 130,
+    backgroundColor: '#071120',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#27496D',
+    padding: 12,
+  },
+  achievementStatValue: {
+    color: '#F4F8FF',
+    fontSize: 17,
+    lineHeight: 21,
+    fontWeight: '900',
+  },
+  achievementStatLabel: {
+    color: '#9FB3C8',
+    fontSize: 10,
+    marginTop: 3,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   achievementBadge: {
     minWidth: '48%',
@@ -1383,11 +1741,56 @@ const styles = StyleSheet.create({
   chartCard: {
     marginTop: 2,
   },
+  chartHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
   chartSubtitle: {
     color: '#9FB3C8',
     fontSize: 13,
     lineHeight: 18,
     marginTop: 6,
+  },
+  demoButton: {
+    minHeight: 38,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 12,
+    paddingHorizontal: 11,
+    borderWidth: 1,
+    borderColor: '#F9A826',
+    backgroundColor: '#F9A82612',
+  },
+  demoButtonActive: {
+    backgroundColor: '#F9A826',
+  },
+  demoButtonText: {
+    color: '#F9A826',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  demoButtonTextActive: {
+    color: '#071120',
+  },
+  demoNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: '#F9A82612',
+    borderWidth: 1,
+    borderColor: '#F9A82645',
+    borderRadius: 12,
+    padding: 10,
+    marginTop: 2,
+  },
+  demoNoticeText: {
+    color: '#C9D7E8',
+    fontSize: 11,
+    lineHeight: 16,
+    flex: 1,
   },
   trendRangeRow: {
     flexDirection: 'row',
@@ -1414,7 +1817,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   trendRangeChipTextActive: {
-    color: '#29B6FF',
+    color: '#071120',
   },
   trendSummaryText: {
     color: '#C9D7E8',
@@ -1723,9 +2126,10 @@ const styles = StyleSheet.create({
   listItem: {
     borderWidth: 1,
     borderColor: '#27496D',
-    borderRadius: 14,
-    padding: 12,
+    borderRadius: 16,
+    padding: 14,
     gap: 4,
+    backgroundColor: '#071120',
   },
   itemTitle: {
     color: '#F4F8FF',
@@ -1741,7 +2145,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#29B6FF',
+    backgroundColor: '#38F28E',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
@@ -1749,11 +2153,5 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
     elevation: 7,
-  },
-  fabText: {
-    color: '#F4F8FF',
-    fontSize: 30,
-    lineHeight: 32,
-    fontWeight: '700',
   },
 });

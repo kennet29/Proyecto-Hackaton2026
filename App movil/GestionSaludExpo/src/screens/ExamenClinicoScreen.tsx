@@ -20,6 +20,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
+import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
 
 type ConsultationOption = {
   consultaId: number;
@@ -53,7 +54,7 @@ type PdfState = {
 
 type DatePickerField = 'exam-date' | 'result-date';
 
-const todayString = () => new Date().toISOString().slice(0, 10);
+const todayString = () => toLocalDateOnlyString();
 
 const toDateOnlyString = (input?: Date | string | null): string => {
   if (!input) return '';
@@ -91,8 +92,8 @@ const formatDisplayDate = (value?: string | null) => {
 
 const formatRecordDate = (value?: string | null) => {
   if (!value) return 'Sin fecha';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return String(value);
+  const parsed = parseCalendarDate(value);
+  if (!parsed) return String(value);
   return parsed.toLocaleDateString('es-NI', {
     year: 'numeric',
     month: 'short',
@@ -410,16 +411,6 @@ export function ExamenClinicoScreen() {
     return patientNameById[selectedPatientId] ?? `Paciente #${selectedPatientId}`;
   }, [hasValidPatient, patientNameById, selectedPatientId]);
 
-  const metrics = useMemo(
-    () => ({
-      total: recentExams.length,
-      withPdf: recentExams.filter((exam) => exam.tieneArchivoPdf).length,
-      linked: recentExams.filter((exam) => Number(exam.consultaId) > 0).length,
-      draftPages: pdfState?.pageCount ?? photos.length,
-    }),
-    [pdfState?.pageCount, photos.length, recentExams],
-  );
-
   const setDateFieldValue = useCallback((field: DatePickerField, value: string) => {
     if (field === 'exam-date') {
       handleChange('fechaExamen', value);
@@ -666,25 +657,6 @@ export function ExamenClinicoScreen() {
             <Text style={styles.errorText}>{screenError}</Text>
           </View>
         ) : null}
-
-        <View style={styles.metricsRow}>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.total}</Text>
-            <Text style={styles.metricLabel}>Examenes</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.withPdf}</Text>
-            <Text style={styles.metricLabel}>Con PDF</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.linked}</Text>
-            <Text style={styles.metricLabel}>Con consulta</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.draftPages}</Text>
-            <Text style={styles.metricLabel}>Hojas cargadas</Text>
-          </View>
-        </View>
 
         <View style={styles.formCard}>
           <Text style={styles.formTitle}>Registrar examen</Text>
@@ -1037,27 +1009,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#FF4D73',
     lineHeight: 20,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 18,
-    marginHorizontal: -5,
-  },
-  metricCard: {
-    width: '50%',
-    paddingHorizontal: 5,
-    marginBottom: 10,
-  },
-  metricValue: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#F4F8FF',
-  },
-  metricLabel: {
-    marginTop: 6,
-    color: '#C9D7E8',
-    fontSize: 13,
   },
   formCard: {
     backgroundColor: '#071120',

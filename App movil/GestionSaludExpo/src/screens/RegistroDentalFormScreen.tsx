@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -14,6 +15,7 @@ import DateTimePicker, {
   DateTimePickerAndroid,
 } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import { Calendar, type DateData, LocaleConfig } from 'react-native-calendars';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
@@ -21,7 +23,6 @@ import { API_URL } from '../config/api';
 import type { RootStackParamList } from '../navigation/types';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
-import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 
 type RegistroDentalRecord = {
   registrodentalId: number;
@@ -44,6 +45,51 @@ type PatientDentalSummary = {
 };
 
 type DatePickerField = 'date' | 'time' | 'notification-date' | 'notification-time';
+type TimePickerField = Extract<DatePickerField, 'time' | 'notification-time'>;
+type CalendarPickerField = Extract<DatePickerField, 'date' | 'notification-date'>;
+
+LocaleConfig.locales.es = {
+  monthNames: [
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
+  ],
+  monthNamesShort: [
+    'Ene.',
+    'Feb.',
+    'Mar.',
+    'Abr.',
+    'May.',
+    'Jun.',
+    'Jul.',
+    'Ago.',
+    'Sept.',
+    'Oct.',
+    'Nov.',
+    'Dic.',
+  ],
+  dayNames: [
+    'Domingo',
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
+  ],
+  dayNamesShort: ['Dom.', 'Lun.', 'Mar.', 'Mié.', 'Jue.', 'Vie.', 'Sáb.'],
+  today: 'Hoy',
+};
+LocaleConfig.defaultLocale = 'es';
 
 type FormState = {
   pacienteId: string;
@@ -78,12 +124,16 @@ const toDateOnlyString = (input?: Date | string | null): string => {
 
 const parseDateForPicker = (value?: string) => {
   if (value) {
+    const dateOnlyMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateOnlyMatch) {
+      return new Date(
+        Number(dateOnlyMatch[1]),
+        Number(dateOnlyMatch[2]) - 1,
+        Number(dateOnlyMatch[3]),
+      );
+    }
     const parsed = new Date(value);
     if (!Number.isNaN(parsed.getTime())) return parsed;
-    const parts = value.split('-').map(Number);
-    if (parts.length === 3 && parts.every((part) => !Number.isNaN(part))) {
-      return new Date(parts[0], parts[1] - 1, parts[2]);
-    }
   }
   return new Date();
 };
@@ -126,10 +176,21 @@ const formatDisplayDateTime = (value?: string | null) => {
 const formatTimeLabel = (value?: string) => {
   if (!value) return 'Selecciona hora';
   const parts = value.split(':');
-  if (parts.length >= 2) return `${parts[0]}:${parts[1]}`;
+  if (parts.length >= 2) {
+    const hour = Number(parts[0]);
+    if (Number.isFinite(hour)) {
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const hour12 = hour % 12 || 12;
+      return `${String(hour12).padStart(2, '0')}:${parts[1]} ${period}`;
+    }
+  }
   const parsed = new Date(value);
   if (!Number.isNaN(parsed.getTime())) {
-    return parsed.toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' });
+    return parsed.toLocaleTimeString('es-NI', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
   }
   return value;
 };
@@ -156,6 +217,9 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
   const [timeValue, setTimeValue] = useState('09:00');
   const [showNotificationDatePicker, setShowNotificationDatePicker] = useState(false);
   const [showNotificationTimePicker, setShowNotificationTimePicker] = useState(false);
+  const [webDatePickerField, setWebDatePickerField] =
+    useState<CalendarPickerField | null>(null);
+  const [webTimePickerField, setWebTimePickerField] = useState<TimePickerField | null>(null);
   const [createNotification, setCreateNotification] = useState(false);
   const [notificationDate, setNotificationDate] = useState(toDateOnlyString(new Date()));
   const [notificationTime, setNotificationTime] = useState('08:00');
@@ -348,53 +412,16 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
     return patientSummaries;
   }, [patientSummaries, selectedPatientId]);
 
-  const metrics = useMemo(() => {
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    return {
-      total: filteredRecords.length,
-      patients: new Set(filteredRecords.map((record) => record.pacienteId)).size,
-      thisMonth: filteredRecords.filter((record) => {
-        const parsed = new Date(record.fechaatencion);
-        return (
-          !Number.isNaN(parsed.getTime()) &&
-          parsed.getMonth() === currentMonth &&
-          parsed.getFullYear() === currentYear
-        );
-      }).length,
-      doctors: new Set(
-        filteredRecords
-          .map((record) => normalizeText(record.odontologo))
-          .filter((value): value is string => Boolean(value)),
-      ).size,
-    };
-  }, [filteredRecords]);
-
   const showPicker = (field: DatePickerField) => {
     if (Platform.OS === 'web') {
       const isDateField = field === 'date' || field === 'notification-date';
-      const handled = openWebDateTimePicker(
-        isDateField ? 'date' : 'time',
-        isDateField
-          ? field === 'date'
-            ? dateValue
-            : notificationDate
-          : field === 'time'
-            ? timeValue
-            : notificationTime,
-        (value) => {
-          if (field === 'date') {
-            setDateValue(value);
-          } else if (field === 'notification-date') {
-            setNotificationDate(value);
-          } else if (field === 'time') {
-            setTimeValue(value);
-          } else {
-            setNotificationTime(value);
-          }
-        },
-      );
-      if (handled) return;
+      if (isDateField) {
+        setWebDatePickerField(field);
+        return;
+      } else {
+        setWebTimePickerField(field);
+        return;
+      }
     }
 
     if (Platform.OS === 'android') {
@@ -418,7 +445,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
         DateTimePickerAndroid.open({
           value: parseTimeForPicker(field === 'time' ? timeValue : notificationTime),
           mode: 'time',
-          is24Hour: true,
+          is24Hour: false,
           onChange: (event, selected) => {
             if (event.type === 'set' && selected) {
               const hh = String(selected.getHours()).padStart(2, '0');
@@ -461,6 +488,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
         <DateTimePicker
           mode={isDate ? 'date' : 'time'}
           display="spinner"
+          is24Hour={isDate ? undefined : false}
           value={
             isDate
               ? parseDateForPicker(field === 'date' ? dateValue : notificationDate)
@@ -498,6 +526,290 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
           <Text style={styles.secondaryButtonText}>Listo</Text>
         </TouchableOpacity>
       </View>
+    );
+  };
+
+  const renderWebDatePicker = () => {
+    if (Platform.OS !== 'web' || !webDatePickerField) return null;
+
+    const selectedValue =
+      webDatePickerField === 'date' ? dateValue : notificationDate;
+    const updateSelectedDate = (value: string) => {
+      if (webDatePickerField === 'date') {
+        setDateValue(value);
+      } else {
+        setNotificationDate(value);
+      }
+    };
+    const chooseRelativeDate = (daysFromToday: number) => {
+      const nextDate = new Date();
+      nextDate.setHours(12, 0, 0, 0);
+      nextDate.setDate(nextDate.getDate() + daysFromToday);
+      updateSelectedDate(toDateOnlyString(nextDate));
+    };
+
+    return (
+      <Modal
+        visible
+        transparent
+        animationType="fade"
+        onRequestClose={() => setWebDatePickerField(null)}
+      >
+        <View style={styles.timeModalOverlay}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setWebDatePickerField(null)}
+            accessibilityLabel="Cerrar selector de fecha"
+          />
+          <View style={[styles.timeModalCard, styles.dateModalCard]}>
+            <View style={styles.timeModalHeader}>
+              <View style={styles.dateModalHeaderCopy}>
+                <Text style={styles.timeModalEyebrow}>
+                  {webDatePickerField === 'date'
+                    ? 'Fecha de atención'
+                    : 'Fecha del recordatorio'}
+                </Text>
+                <Text style={styles.timeModalTitle}>Selecciona la fecha</Text>
+                <Text style={styles.dateModalSelected}>
+                  {formatDisplayDate(selectedValue)}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.timeModalClose}
+                onPress={() => setWebDatePickerField(null)}
+                accessibilityLabel="Cerrar selector de fecha"
+              >
+                <Text style={styles.timeModalCloseText}>×</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Calendar
+              current={selectedValue}
+              firstDay={1}
+              hideExtraDays
+              enableSwipeMonths
+              onDayPress={(day: DateData) => updateSelectedDate(day.dateString)}
+              markedDates={{
+                [selectedValue]: {
+                  selected: true,
+                  selectedColor: '#29B6FF',
+                  selectedTextColor: '#03101F',
+                },
+              }}
+              theme={{
+                calendarBackground: '#071120',
+                textSectionTitleColor: '#9FB3C8',
+                selectedDayBackgroundColor: '#29B6FF',
+                selectedDayTextColor: '#03101F',
+                todayTextColor: '#38F28E',
+                dayTextColor: '#F4F8FF',
+                textDisabledColor: '#42566E',
+                monthTextColor: '#F4F8FF',
+                arrowColor: '#29B6FF',
+                textDayFontWeight: '600',
+                textMonthFontWeight: '900',
+                textDayHeaderFontWeight: '800',
+              }}
+              style={styles.dateCalendar}
+            />
+
+            <View style={styles.dateQuickActions}>
+              {[
+                { label: 'Hoy', days: 0 },
+                { label: 'Mañana', days: 1 },
+                { label: 'En 7 días', days: 7 },
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.label}
+                  style={styles.timeQuickButton}
+                  onPress={() => chooseRelativeDate(option.days)}
+                >
+                  <Text style={styles.timeQuickButtonText}>{option.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={styles.timeConfirmButton}
+              onPress={() => setWebDatePickerField(null)}
+            >
+              <Text style={styles.timeConfirmButtonText}>Confirmar fecha</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  const renderWebTimePicker = () => {
+    if (Platform.OS !== 'web' || !webTimePickerField) return null;
+
+    const selectedValue =
+      webTimePickerField === 'time' ? timeValue : notificationTime;
+    const [selectedHour = '08', selectedMinute = '00'] = selectedValue.split(':');
+    const selectedHour24 = Number(selectedHour);
+    const selectedPeriod = selectedHour24 >= 12 ? 'PM' : 'AM';
+    const selectedHour12 = String(selectedHour24 % 12 || 12);
+    const updateSelectedTime = (hour12: string, minute: string, period: string) => {
+      const normalizedHour12 = Number(hour12) % 12;
+      const hour24 = normalizedHour12 + (period === 'PM' ? 12 : 0);
+      const nextValue = `${String(hour24).padStart(2, '0')}:${minute.padStart(2, '0')}`;
+      if (webTimePickerField === 'time') {
+        setTimeValue(nextValue);
+      } else {
+        setNotificationTime(nextValue);
+      }
+    };
+    const chooseCurrentTime = () => {
+      const now = new Date();
+      const period = now.getHours() >= 12 ? 'PM' : 'AM';
+      updateSelectedTime(
+        String(now.getHours() % 12 || 12),
+        String(now.getMinutes()),
+        period,
+      );
+    };
+
+    return (
+      <Modal
+        visible
+        transparent
+        animationType="fade"
+        onRequestClose={() => setWebTimePickerField(null)}
+      >
+        <View style={styles.timeModalOverlay}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setWebTimePickerField(null)}
+            accessibilityLabel="Cerrar selector de hora"
+          />
+          <View style={styles.timeModalCard}>
+            <View style={styles.timeModalHeader}>
+              <View>
+                <Text style={styles.timeModalEyebrow}>
+                  {webTimePickerField === 'time' ? 'Hora de atención' : 'Hora del recordatorio'}
+                </Text>
+                <Text style={styles.timeModalTitle}>Selecciona la hora</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.timeModalClose}
+                onPress={() => setWebTimePickerField(null)}
+                accessibilityLabel="Cerrar selector de hora"
+              >
+                <Text style={styles.timeModalCloseText}>×</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.timeModalValue}>
+              {formatTimeLabel(selectedValue)}
+            </Text>
+
+            <View style={styles.timePickerColumns}>
+              <View style={styles.timePickerColumn}>
+                <Text style={styles.timePickerLabel}>Hora</Text>
+                <View style={styles.timePickerWrapper}>
+                  <Picker
+                    selectedValue={selectedHour12}
+                    onValueChange={(value) =>
+                      updateSelectedTime(String(value), selectedMinute, selectedPeriod)
+                    }
+                    dropdownIconColor="#F4F8FF"
+                    style={styles.timePicker}
+                  >
+                    {Array.from({ length: 12 }, (_, index) => {
+                      const value = String(index + 1);
+                      return (
+                        <Picker.Item
+                          key={value}
+                          label={value.padStart(2, '0')}
+                          value={value}
+                        />
+                      );
+                    })}
+                  </Picker>
+                </View>
+              </View>
+
+              <Text style={styles.timePickerSeparator}>:</Text>
+
+              <View style={styles.timePickerColumn}>
+                <Text style={styles.timePickerLabel}>Minutos</Text>
+                <View style={styles.timePickerWrapper}>
+                  <Picker
+                    selectedValue={selectedMinute.padStart(2, '0')}
+                    onValueChange={(value) =>
+                      updateSelectedTime(selectedHour12, String(value), selectedPeriod)
+                    }
+                    dropdownIconColor="#F4F8FF"
+                    style={styles.timePicker}
+                  >
+                    {Array.from({ length: 60 }, (_, minute) => {
+                      const value = String(minute).padStart(2, '0');
+                      return <Picker.Item key={value} label={value} value={value} />;
+                    })}
+                  </Picker>
+                </View>
+              </View>
+
+              <View style={[styles.timePickerColumn, styles.periodPickerColumn]}>
+                <Text style={styles.timePickerLabel}>Periodo</Text>
+                <View style={styles.timePickerWrapper}>
+                  <Picker
+                    selectedValue={selectedPeriod}
+                    onValueChange={(value) =>
+                      updateSelectedTime(selectedHour12, selectedMinute, String(value))
+                    }
+                    dropdownIconColor="#F4F8FF"
+                    style={styles.timePicker}
+                  >
+                    <Picker.Item label="AM" value="AM" />
+                    <Picker.Item label="PM" value="PM" />
+                  </Picker>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.timeQuickActions}>
+              <TouchableOpacity style={styles.timeQuickButton} onPress={chooseCurrentTime}>
+                <Text style={styles.timeQuickButtonText}>Ahora</Text>
+              </TouchableOpacity>
+              {[
+                { value: '08:00', label: '08:00 AM' },
+                { value: '12:00', label: '12:00 PM' },
+                { value: '18:00', label: '06:00 PM' },
+              ].map((preset) => (
+                <TouchableOpacity
+                  key={preset.value}
+                  style={[
+                    styles.timeQuickButton,
+                    selectedValue === preset.value ? styles.timeQuickButtonActive : null,
+                  ]}
+                  onPress={() => {
+                    const [hour24, minute] = preset.value.split(':');
+                    const numericHour = Number(hour24);
+                    updateSelectedTime(
+                      String(numericHour % 12 || 12),
+                      minute,
+                      numericHour >= 12 ? 'PM' : 'AM',
+                    );
+                  }}
+                >
+                  <Text style={styles.timeQuickButtonText}>{preset.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={styles.timeConfirmButton}
+              onPress={() => setWebTimePickerField(null)}
+            >
+              <Text style={styles.timeConfirmButtonText}>Confirmar hora</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     );
   };
 
@@ -640,20 +952,26 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
       <Text style={styles.label}>Fecha y hora</Text>
       <View style={styles.row}>
         <TouchableOpacity
-          style={[styles.dateButton, styles.flexItem]}
+          style={[styles.dateButton, styles.calendarButton, styles.flexItem]}
           onPress={() => showPicker('date')}
         >
-          <Text style={styles.dateButtonText}>{formatDisplayDate(dateValue)}</Text>
+          <Text style={styles.dateButtonLabel}>Fecha</Text>
+          <Text style={styles.dateButtonValue}>{formatDisplayDate(dateValue)}</Text>
+          <Text style={styles.dateButtonHint}>Abrir calendario</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.dateButton, styles.flexItem]}
+          style={[styles.dateButton, styles.timeButton, styles.flexItem]}
           onPress={() => showPicker('time')}
         >
-          <Text style={styles.dateButtonText}>Hora: {formatTimeLabel(timeValue)}</Text>
+          <Text style={styles.timeButtonLabel}>Hora</Text>
+          <Text style={styles.timeButtonValue}>{formatTimeLabel(timeValue)}</Text>
+          <Text style={styles.timeButtonHint}>Seleccionar</Text>
         </TouchableOpacity>
       </View>
       {renderIOSPicker('date')}
       {renderIOSPicker('time')}
+      {renderWebDatePicker()}
+      {renderWebTimePicker()}
 
       <TextInput
         style={styles.input}
@@ -718,16 +1036,22 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
             <Text style={styles.label}>Fecha y hora del recordatorio</Text>
             <View style={styles.row}>
               <TouchableOpacity
-                style={[styles.dateButton, styles.flexItem]}
+                style={[styles.dateButton, styles.calendarButton, styles.flexItem]}
                 onPress={() => showPicker('notification-date')}
               >
-                <Text style={styles.dateButtonText}>{formatDisplayDate(notificationDate)}</Text>
+                <Text style={styles.dateButtonLabel}>Fecha</Text>
+                <Text style={styles.dateButtonValue}>
+                  {formatDisplayDate(notificationDate)}
+                </Text>
+                <Text style={styles.dateButtonHint}>Abrir calendario</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.dateButton, styles.flexItem]}
+                style={[styles.dateButton, styles.timeButton, styles.flexItem]}
                 onPress={() => showPicker('notification-time')}
               >
-                <Text style={styles.dateButtonText}>Hora: {formatTimeLabel(notificationTime)}</Text>
+                <Text style={styles.timeButtonLabel}>Hora</Text>
+                <Text style={styles.timeButtonValue}>{formatTimeLabel(notificationTime)}</Text>
+                <Text style={styles.timeButtonHint}>Seleccionar</Text>
               </TouchableOpacity>
             </View>
             {renderIOSPicker('notification-date')}
@@ -789,25 +1113,6 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
           <Text style={styles.subtitle}>
             Revisa controles, procedimientos y profesionales por persona desde una sola vista.
           </Text>
-        </View>
-
-        <View style={styles.metricsRow}>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.total}</Text>
-            <Text style={styles.metricLabel}>Atenciones</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.patients}</Text>
-            <Text style={styles.metricLabel}>Pacientes</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.thisMonth}</Text>
-            <Text style={styles.metricLabel}>Este mes</Text>
-          </View>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{metrics.doctors}</Text>
-            <Text style={styles.metricLabel}>Odontologos</Text>
-          </View>
         </View>
 
         <View style={styles.filterCard}>
@@ -999,27 +1304,6 @@ const styles = StyleSheet.create({
     color: '#C9D7E8',
     fontSize: 15,
     lineHeight: 22,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 18,
-    marginHorizontal: -5,
-  },
-  metricCard: {
-    width: '50%',
-    paddingHorizontal: 5,
-    marginBottom: 10,
-  },
-  metricValue: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#F4F8FF',
-  },
-  metricLabel: {
-    marginTop: 6,
-    color: '#C9D7E8',
-    fontSize: 13,
   },
   filterCard: {
     backgroundColor: '#071120',
@@ -1235,11 +1519,225 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     backgroundColor: '#071120',
   },
-  dateButtonText: {
+  calendarButton: {
+    paddingVertical: 10,
+    borderColor: '#29B6FF',
+    backgroundColor: '#29B6FF0D',
+  },
+  dateButtonLabel: {
+    color: '#9FB3C8',
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  dateButtonValue: {
     color: '#F4F8FF',
     textAlign: 'center',
     fontSize: 15,
+    fontWeight: '900',
+    marginTop: 4,
+  },
+  dateButtonHint: {
+    color: '#29B6FF',
+    textAlign: 'center',
+    fontSize: 11,
     fontWeight: '700',
+    marginTop: 4,
+  },
+  timeButton: {
+    marginLeft: 10,
+    paddingVertical: 10,
+    borderColor: '#29B6FF',
+    backgroundColor: '#29B6FF0D',
+  },
+  timeButtonLabel: {
+    color: '#9FB3C8',
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  timeButtonValue: {
+    color: '#F4F8FF',
+    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: '900',
+    marginTop: 2,
+  },
+  timeButtonHint: {
+    color: '#29B6FF',
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 1,
+  },
+  timeModalOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: '#020812CC',
+  },
+  timeModalCard: {
+    width: '100%',
+    maxWidth: 460,
+    borderRadius: 24,
+    padding: 22,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#27496D',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.45,
+    shadowRadius: 28,
+    elevation: 18,
+  },
+  dateModalCard: {
+    maxWidth: 520,
+  },
+  dateModalHeaderCopy: {
+    flex: 1,
+    paddingRight: 14,
+  },
+  dateModalSelected: {
+    color: '#29B6FF',
+    fontSize: 14,
+    fontWeight: '800',
+    marginTop: 7,
+  },
+  dateCalendar: {
+    marginTop: 18,
+    borderRadius: 18,
+    padding: 8,
+    backgroundColor: '#071120',
+    borderWidth: 1,
+    borderColor: '#132238',
+  },
+  dateQuickActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 14,
+    marginHorizontal: -4,
+  },
+  timeModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  timeModalEyebrow: {
+    color: '#29B6FF',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.9,
+    textTransform: 'uppercase',
+  },
+  timeModalTitle: {
+    color: '#F4F8FF',
+    fontSize: 21,
+    fontWeight: '900',
+    marginTop: 4,
+  },
+  timeModalClose: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#132238',
+    borderWidth: 1,
+    borderColor: '#27496D',
+  },
+  timeModalCloseText: {
+    color: '#C9D7E8',
+    fontSize: 25,
+    lineHeight: 28,
+  },
+  timeModalValue: {
+    color: '#F4F8FF',
+    fontSize: 46,
+    fontWeight: '900',
+    textAlign: 'center',
+    letterSpacing: 2,
+    marginVertical: 20,
+  },
+  timePickerColumns: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  timePickerColumn: {
+    flex: 1,
+  },
+  periodPickerColumn: {
+    flex: 0.8,
+    marginLeft: 10,
+  },
+  timePickerLabel: {
+    color: '#9FB3C8',
+    fontSize: 12,
+    fontWeight: '800',
+    marginBottom: 7,
+    textTransform: 'uppercase',
+  },
+  timePickerWrapper: {
+    borderWidth: 1,
+    borderColor: '#27496D',
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#0A1728',
+  },
+  timePicker: {
+    height: 52,
+    color: '#F4F8FF',
+    backgroundColor: '#0A1728',
+  },
+  timePickerSeparator: {
+    color: '#29B6FF',
+    fontSize: 28,
+    fontWeight: '900',
+    paddingHorizontal: 12,
+    paddingBottom: 11,
+  },
+  timeQuickActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 18,
+    marginHorizontal: -4,
+  },
+  timeQuickButton: {
+    flexGrow: 1,
+    minWidth: 76,
+    alignItems: 'center',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginHorizontal: 4,
+    marginBottom: 8,
+    backgroundColor: '#132238',
+    borderWidth: 1,
+    borderColor: '#27496D',
+  },
+  timeQuickButtonActive: {
+    backgroundColor: '#29B6FF22',
+    borderColor: '#29B6FF',
+  },
+  timeQuickButtonText: {
+    color: '#F4F8FF',
+    fontWeight: '800',
+  },
+  timeConfirmButton: {
+    alignItems: 'center',
+    borderRadius: 14,
+    paddingVertical: 14,
+    marginTop: 6,
+    backgroundColor: '#29B6FF',
+  },
+  timeConfirmButtonText: {
+    color: '#03101F',
+    fontSize: 15,
+    fontWeight: '900',
   },
   iosPickerCard: {
     borderWidth: 1,

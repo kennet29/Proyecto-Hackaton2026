@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
@@ -22,6 +23,7 @@ import type { RootStackParamList } from '../navigation/types';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
+import { parseCalendarDate } from '../utils/localDate';
 
 type LesionRecord = {
   lesionId: number;
@@ -75,8 +77,8 @@ const formatDisplayDate = (value?: string | null) => {
 
 const formatRecordDate = (value?: string | null) => {
   if (!value) return 'Sin fecha';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return String(value);
+  const parsed = parseCalendarDate(value);
+  if (!parsed) return String(value);
   return parsed.toLocaleDateString('es-NI', {
     year: 'numeric',
     month: 'short',
@@ -100,6 +102,7 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [loadingRecords, setLoadingRecords] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
   const [showIOSDatePicker, setShowIOSDatePicker] = useState(false);
   const [filterPatientId, setFilterPatientId] = useState('');
   const [form, setForm] = useState({
@@ -231,15 +234,6 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
     return records;
   }, [filterPatientId, records]);
 
-  const metrics = useMemo(() => {
-    return {
-      total: filteredRecords.length,
-      patients: new Set(filteredRecords.map((record) => record.pacienteId)).size,
-      recovered: filteredRecords.filter((record) => record.recuperado).length,
-      active: filteredRecords.filter((record) => record.recuperado === false).length,
-    };
-  }, [filteredRecords]);
-
   const selectedPatientName = useMemo(() => {
     const activePatientId = Number(filterPatientId);
     if (!Number.isFinite(activePatientId) || activePatientId <= 0) {
@@ -266,6 +260,50 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
       return;
     }
     setShowIOSDatePicker(true);
+  };
+
+  const handleToggleRecoveryStatus = async (record: LesionRecord) => {
+    const nextRecovered = !Boolean(record.recuperado);
+    setUpdatingStatusId(record.lesionId);
+    try {
+      const result = await submitJsonWithOfflineFallback({
+        token,
+        path: `/lesion/${record.lesionId}`,
+        method: 'PATCH',
+        description: nextRecovered
+          ? 'marcar lesion como recuperada'
+          : 'reabrir seguimiento de lesion',
+        body: {
+          recuperado: nextRecovered,
+          modificadopor: user?.username ?? undefined,
+          modificadoen: new Date().toISOString(),
+        },
+      });
+
+      setRecords((current) =>
+        current.map((item) =>
+          item.lesionId === record.lesionId
+            ? { ...item, recuperado: nextRecovered }
+            : item,
+        ),
+      );
+
+      Alert.alert(
+        result.status === 'queued' ? 'Cambio guardado sin conexión' : 'Estado actualizado',
+        result.status === 'queued'
+          ? 'El nuevo estado se sincronizará cuando vuelva la conexión.'
+          : nextRecovered
+            ? 'La lesión fue marcada como recuperada.'
+            : 'La lesión volvió a estar en seguimiento.',
+      );
+    } catch (error) {
+      Alert.alert(
+        'No se pudo cambiar el estado',
+        error instanceof Error ? error.message : 'Intenta nuevamente.',
+      );
+    } finally {
+      setUpdatingStatusId(null);
+    }
   };
 
   const handleSubmit = async () => {
@@ -451,25 +489,6 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
           </View>
         ) : (
           <>
-            <View style={styles.metricsRow}>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.total}</Text>
-                <Text style={styles.metricLabel}>Lesiones</Text>
-              </View>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.patients}</Text>
-                <Text style={styles.metricLabel}>Pacientes</Text>
-              </View>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.recovered}</Text>
-                <Text style={styles.metricLabel}>Recuperadas</Text>
-              </View>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{metrics.active}</Text>
-                <Text style={styles.metricLabel}>En seguimiento</Text>
-              </View>
-            </View>
-
             <View style={styles.filterCard}>
               <Text style={styles.label}>Filtrar por paciente</Text>
               <View style={styles.pickerWrapper}>
@@ -557,6 +576,40 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
                   {normalizeText(record.notas) ? (
                     <Text style={styles.recordText}>Notas: {normalizeText(record.notas)}</Text>
                   ) : null}
+                  <TouchableOpacity
+                    style={[
+                      styles.statusActionButton,
+                      record.recuperado
+                        ? styles.statusActionButtonPending
+                        : styles.statusActionButtonSuccess,
+                      updatingStatusId === record.lesionId && styles.statusActionButtonDisabled,
+                    ]}
+                    onPress={() => void handleToggleRecoveryStatus(record)}
+                    disabled={updatingStatusId === record.lesionId}
+                  >
+                    {updatingStatusId === record.lesionId ? (
+                      <ActivityIndicator
+                        size="small"
+                        color={record.recuperado ? '#29B6FF' : '#38F28E'}
+                      />
+                    ) : (
+                      <Ionicons
+                        name={record.recuperado ? 'refresh-outline' : 'checkmark-circle-outline'}
+                        size={19}
+                        color={record.recuperado ? '#29B6FF' : '#38F28E'}
+                      />
+                    )}
+                    <Text
+                      style={[
+                        styles.statusActionButtonText,
+                        record.recuperado
+                          ? styles.statusActionButtonTextPending
+                          : styles.statusActionButtonTextSuccess,
+                      ]}
+                    >
+                      {record.recuperado ? 'Reabrir seguimiento' : 'Marcar como recuperada'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               ))
             )}
@@ -612,27 +665,6 @@ const styles = StyleSheet.create({
     color: '#C9D7E8',
     fontSize: 15,
     lineHeight: 22,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 18,
-    marginHorizontal: -5,
-  },
-  metricCard: {
-    width: '50%',
-    paddingHorizontal: 5,
-    marginBottom: 10,
-  },
-  metricValue: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#F4F8FF',
-  },
-  metricLabel: {
-    marginTop: 6,
-    color: '#C9D7E8',
-    fontSize: 13,
   },
   filterCard: {
     backgroundColor: '#071120',
@@ -770,6 +802,37 @@ const styles = StyleSheet.create({
     color: '#C9D7E8',
     marginBottom: 5,
     lineHeight: 20,
+  },
+  statusActionButton: {
+    minHeight: 48,
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  statusActionButtonSuccess: {
+    borderColor: '#38F28E55',
+    backgroundColor: '#38F28E12',
+  },
+  statusActionButtonPending: {
+    borderColor: '#29B6FF55',
+    backgroundColor: '#29B6FF12',
+  },
+  statusActionButtonDisabled: {
+    opacity: 0.65,
+  },
+  statusActionButtonText: {
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  statusActionButtonTextSuccess: {
+    color: '#38F28E',
+  },
+  statusActionButtonTextPending: {
+    color: '#29B6FF',
   },
   formCard: {
     backgroundColor: '#071120',

@@ -1,4 +1,6 @@
 import { API_URL } from '../config/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getTokenUserId } from './jwt';
 
 export type LinkedPatient = {
   pacienteId: number;
@@ -22,6 +24,35 @@ const normalizeText = (value: unknown) => {
 };
 
 const buildCacheKey = (headers: Record<string, string>) => headers.Authorization ?? '__anon__';
+const persistentCacheKey = (headers: Record<string, string>) => {
+  const token = headers.Authorization?.replace(/^Bearer\s+/i, '');
+  const userId = getTokenUserId(token);
+  return userId ? `@gs_linked_patients_${userId}` : null;
+};
+
+const readPersistentCache = async (
+  headers: Record<string, string>,
+): Promise<LinkedPatient[] | null> => {
+  const key = persistentCacheKey(headers);
+  if (!key) return null;
+  try {
+    const raw = await AsyncStorage.getItem(key);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return Array.isArray(parsed) ? (parsed as LinkedPatient[]) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writePersistentCache = async (
+  headers: Record<string, string>,
+  items: LinkedPatient[],
+) => {
+  const key = persistentCacheKey(headers);
+  if (key) {
+    await AsyncStorage.setItem(key, JSON.stringify(items));
+  }
+};
 
 const cloneItems = (items: LinkedPatient[]) => items.map((item) => ({ ...item }));
 
@@ -57,7 +88,8 @@ export async function fetchLinkedPatients(
   }
 
   const request = (async () => {
-    const response = await fetch(`${API_URL}/usuario-paciente/mis-pacientes`, { headers });
+    try {
+      const response = await fetch(`${API_URL}/usuario-paciente/mis-pacientes`, { headers });
     const relations = await response.json().catch(() => null);
 
     if (!response.ok) {
@@ -129,14 +161,26 @@ export async function fetchLinkedPatients(
       }),
     );
 
-    const filteredItems = items.filter((item): item is LinkedPatient => Boolean(item));
+      const filteredItems = items.filter((item): item is LinkedPatient => Boolean(item));
 
-    linkedPatientsCache.set(cacheKey, {
-      expiresAt: Date.now() + LINKED_PATIENTS_CACHE_TTL_MS,
-      items: cloneItems(filteredItems),
-    });
+      linkedPatientsCache.set(cacheKey, {
+        expiresAt: Date.now() + LINKED_PATIENTS_CACHE_TTL_MS,
+        items: cloneItems(filteredItems),
+      });
+      await writePersistentCache(headers, filteredItems);
 
-    return filteredItems;
+      return filteredItems;
+    } catch (error) {
+      const cached = await readPersistentCache(headers);
+      if (cached) {
+        linkedPatientsCache.set(cacheKey, {
+          expiresAt: Date.now() + LINKED_PATIENTS_CACHE_TTL_MS,
+          items: cloneItems(cached),
+        });
+        return cached;
+      }
+      throw error;
+    }
   })();
 
   inFlightLinkedPatientsRequests.set(cacheKey, request);

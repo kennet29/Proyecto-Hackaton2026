@@ -1,12 +1,19 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Modal, Platform, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { appColors, colorAlpha } from '../theme/colors';
+import {
+  getNanoAppearance,
+  loadNanoAppearanceId,
+  NanoAppearance,
+  NanoAppearancePreview,
+} from '../components/NanoAppearancePreview';
 
 type MenuTabKey = 'inicio' | 'medico' | 'bienestar' | 'gestion';
 
@@ -248,6 +255,14 @@ const wellnessOptions: OptionItem[] = [
 
 const managementOptions: OptionItem[] = [
   {
+    key: 'configurar-nano',
+    label: 'Configurar Nano',
+    description: 'Elige la apariencia del asistente desde una galería de diseños',
+    icon: 'color-palette-outline',
+    accent: '#C084FC',
+    navigateTo: 'NanoConfiguracion',
+  },
+  {
     key: 'paciente',
     label: 'Pacientes',
     description: 'Registra o actualiza perfiles',
@@ -348,23 +363,9 @@ const WEB_SCROLLBAR_CSS = `
   }
 `;
 
-function WellnessAssistantIcon() {
+function WellnessAssistantIcon({ appearance }: { appearance: NanoAppearance }) {
   return (
-    <View style={styles.assistantIconShell}>
-      <View style={styles.assistantIconFlame} />
-      <View style={styles.assistantIconHead}>
-        <View style={styles.assistantIconFace}>
-          <View style={styles.assistantIconEye} />
-          <View style={styles.assistantIconMouth} />
-          <View style={styles.assistantIconEye} />
-        </View>
-      </View>
-      <View style={styles.assistantIconEarLeft} />
-      <View style={styles.assistantIconEarRight} />
-      <View style={styles.assistantIconBody} />
-      <View style={styles.assistantIconFootLeft} />
-      <View style={styles.assistantIconFootRight} />
-    </View>
+    <NanoAppearancePreview appearance={appearance} size={58} />
   );
 }
 
@@ -372,6 +373,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
   const { token, logout, user } = useAuth();
   const [activeTab, setActiveTab] = useState<MenuTabKey>('inicio');
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [nanoAppearanceId, setNanoAppearanceId] = useState('base');
   const { width } = useWindowDimensions();
   const isWideLayout = width >= 760;
   const isWebWide = Platform.OS === 'web' && width >= 1040;
@@ -383,6 +385,21 @@ export function MenuPrincipalScreen({ navigation }: Props) {
   );
 
   const activeOptions = useMemo(() => optionsByTab[activeTab] ?? [], [activeTab]);
+  const activeNanoAppearance = useMemo(() => getNanoAppearance(nanoAppearanceId), [nanoAppearanceId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      loadNanoAppearanceId()
+        .then((appearanceId) => {
+          if (active) setNanoAppearanceId(appearanceId);
+        })
+        .catch(() => undefined);
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
 
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') {
@@ -472,13 +489,15 @@ export function MenuPrincipalScreen({ navigation }: Props) {
     </View>
   );
 
-  const webListHeader = (
+  const listHeader = (
     <>
-      {heroContent}
-      <View style={styles.webSectionHeader}>
-        <Text style={styles.webSectionTitle}>Accesos del modulo</Text>
-        <Text style={styles.webSectionMeta}>{activeOptions.length} opciones disponibles</Text>
-      </View>
+      {isWebWide ? heroContent : null}
+      {isWebWide ? (
+        <View style={styles.webSectionHeader}>
+          <Text style={styles.webSectionTitle}>Accesos del modulo</Text>
+          <Text style={styles.webSectionMeta}>{activeOptions.length} opciones disponibles</Text>
+        </View>
+      ) : null}
     </>
   );
 
@@ -520,7 +539,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
           style={styles.list}
           numColumns={gridColumns}
           columnWrapperStyle={gridColumns > 1 ? styles.cardRow : undefined}
-          ListHeaderComponent={isWebWide ? webListHeader : null}
+          ListHeaderComponent={listHeader}
           showsVerticalScrollIndicator
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -555,7 +574,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
             activeOpacity={0.9}
             onPress={() => navigation.navigate('NanoConsejero')}
           >
-            <WellnessAssistantIcon />
+            <WellnessAssistantIcon appearance={activeNanoAppearance} />
           </TouchableOpacity>
         ) : null}
 
@@ -897,7 +916,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: appColors.accent,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -908,104 +927,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 10,
     zIndex: 20,
-  },
-  assistantIconShell: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-  },
-  assistantIconFlame: {
-    position: 'absolute',
-    top: 0,
-    right: 8,
-    width: 11,
-    height: 11,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    borderBottomLeftRadius: 10,
-    backgroundColor: appColors.accent,
-    transform: [{ rotate: '22deg' }],
-  },
-  assistantIconHead: {
-    width: 29,
-    height: 23,
-    marginTop: 4,
-    borderRadius: 11,
-    backgroundColor: appColors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  assistantIconFace: {
-    width: 23,
-    height: 18,
-    borderRadius: 8,
-    backgroundColor: appColors.background,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-  },
-  assistantIconEye: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: appColors.text,
-  },
-  assistantIconMouth: {
-    width: 4,
-    height: 2,
-    borderBottomLeftRadius: 3,
-    borderBottomRightRadius: 3,
-    backgroundColor: appColors.text,
-    marginTop: 4,
-  },
-  assistantIconEarLeft: {
-    position: 'absolute',
-    top: 14,
-    left: 1,
-    width: 3,
-    height: 9,
-    borderRadius: 2,
-    backgroundColor: appColors.background,
-  },
-  assistantIconEarRight: {
-    position: 'absolute',
-    top: 14,
-    right: 1,
-    width: 3,
-    height: 9,
-    borderRadius: 2,
-    backgroundColor: appColors.background,
-  },
-  assistantIconBody: {
-    width: 14,
-    height: 9,
-    marginTop: 3,
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
-    borderBottomLeftRadius: 9,
-    borderBottomRightRadius: 9,
-    backgroundColor: appColors.accent,
-  },
-  assistantIconFootLeft: {
-    position: 'absolute',
-    bottom: 2,
-    left: 8,
-    width: 8,
-    height: 5,
-    borderRadius: 4,
-    backgroundColor: appColors.accent,
-    transform: [{ rotate: '22deg' }],
-  },
-  assistantIconFootRight: {
-    position: 'absolute',
-    bottom: 2,
-    right: 8,
-    width: 8,
-    height: 5,
-    borderRadius: 4,
-    backgroundColor: appColors.accent,
-    transform: [{ rotate: '-22deg' }],
+    overflow: 'hidden',
   },
   navbar: {
     flexDirection: 'row',
