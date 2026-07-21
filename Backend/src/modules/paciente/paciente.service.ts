@@ -4,32 +4,20 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { In, Not, IsNull, ObjectLiteral, Repository } from "typeorm";
-import { Alergia } from "../alergia/alergia.entity";
-import { Antecedentefamiliar } from "../antecedentefamiliar/antecedentefamiliar.entity";
+import { In, Not, IsNull, Repository } from "typeorm";
 import { Citamedica } from "../citamedica/citamedica.entity";
 import { Condicioncronica } from "../condicioncronica/condicioncronica.entity";
 import { Consultamedica } from "../consultamedica/consultamedica.entity";
-import { Desparasitacion } from "../desparasitacion/desparasitacion.entity";
-import { Documentoclinico } from "../documentoclinico/documentoclinico.entity";
-import { Embarazo } from "../embarazo/embarazo.entity";
 import { Examenclinico } from "../examenclinico/examenclinico.entity";
 import { Estilovida } from "../estilovida/estilovida.entity";
-import { Evaluacionsaludhabito } from "../evaluacionsaludhabito/evaluacionsaludhabito.entity";
 import { Habitoespecifico } from "../habitoespecifico/habitoespecifico.entity";
 import { Lesion } from "../lesion/lesion.entity";
 import { Medicacion } from "../medicacion/medicacion.entity";
 import { Operacion } from "../operacion/operacion.entity";
-import { Periodo } from "../periodo/periodo.entity";
-import { Puntajeriesgo } from "../puntajeriesgo/puntajeriesgo.entity";
-import { Recordatoriocita } from "../recordatoriocita/recordatoriocita.entity";
-import { Registrodental } from "../registrodental/registrodental.entity";
-import { Registromensual } from "../registromensual/registromensual.entity";
 import { Saludmental } from "../saludmental/saludmental.entity";
 import { Seguimientopostevento } from "../seguimientopostevento/seguimientopostevento.entity";
 import { Seguimientofisico } from "../seguimientofisico/seguimientofisico.entity";
 import { Tipocondicioncronica } from "../tipocondicioncronica/tipocondicioncronica.entity";
-import { Vacuna } from "../vacuna/vacuna.entity";
 import { CreatePacienteDto } from "./dto/create-paciente.dto";
 import { UpdatePacienteDto } from "./dto/update-paciente.dto";
 import { Paciente } from "./paciente.entity";
@@ -64,20 +52,11 @@ type TimelineItem = {
   detail: string;
 };
 
-type ClinicalHistorySource = {
-  type: string;
-  dateKey: string;
-  titleKey?: string;
-  records: object[];
-};
-
 /**
  * Implementa la lógica de negocio y persistencia del dominio paciente.
  */
 @Injectable()
 export class PacienteService {
-  private readonly historyColumnCache = new Map<string, string[]>();
-
   constructor(
     @InjectRepository(Paciente)
     private readonly pacienteRepository: Repository<Paciente>,
@@ -107,30 +86,6 @@ export class PacienteService {
     private readonly operacionRepository: Repository<Operacion>,
     @InjectRepository(Saludmental)
     private readonly saludmentalRepository: Repository<Saludmental>,
-    @InjectRepository(Alergia)
-    private readonly alergiaRepository: Repository<Alergia>,
-    @InjectRepository(Antecedentefamiliar)
-    private readonly antecedenteFamiliarRepository: Repository<Antecedentefamiliar>,
-    @InjectRepository(Desparasitacion)
-    private readonly desparasitacionRepository: Repository<Desparasitacion>,
-    @InjectRepository(Documentoclinico)
-    private readonly documentoClinicoRepository: Repository<Documentoclinico>,
-    @InjectRepository(Embarazo)
-    private readonly embarazoRepository: Repository<Embarazo>,
-    @InjectRepository(Evaluacionsaludhabito)
-    private readonly evaluacionHabitoRepository: Repository<Evaluacionsaludhabito>,
-    @InjectRepository(Periodo)
-    private readonly periodoRepository: Repository<Periodo>,
-    @InjectRepository(Puntajeriesgo)
-    private readonly puntajeRiesgoRepository: Repository<Puntajeriesgo>,
-    @InjectRepository(Recordatoriocita)
-    private readonly recordatorioCitaRepository: Repository<Recordatoriocita>,
-    @InjectRepository(Registrodental)
-    private readonly registroDentalRepository: Repository<Registrodental>,
-    @InjectRepository(Registromensual)
-    private readonly registroMensualRepository: Repository<Registromensual>,
-    @InjectRepository(Vacuna)
-    private readonly vacunaRepository: Repository<Vacuna>,
   ) {}
 
   /**
@@ -511,88 +466,6 @@ export class PacienteService {
   }
 
   /**
-   * Obtiene todos los eventos del expediente para generar el historial clínico.
-   */
-  async getClinicalHistory(pacienteId: number) {
-    const exists = await this.pacienteRepository.exists({ where: { pacienteId } });
-    if (!exists) {
-      throw new NotFoundException(`paciente ${pacienteId} no encontrado`);
-    }
-
-    const [
-      appointments, consults, medications, exams, followUps, physical,
-      lifestyle, habits, conditions, injuries, operations, mentalHealth,
-      allergies, familyHistory, deworming, documents, pregnancies,
-      habitEvaluations, periods, riskScores, appointmentReminders, dental,
-      monthlyRecords, vaccines,
-    ] = await Promise.all([
-      this.findHistoryRecords(this.citamedicaRepository, pacienteId),
-      this.findHistoryRecords(this.consultamedicaRepository, pacienteId),
-      this.findHistoryRecords(this.medicacionRepository, pacienteId),
-      this.findHistoryRecords(this.examenclinicoRepository, pacienteId),
-      this.findHistoryRecords(this.seguimientoRepository, pacienteId),
-      this.findHistoryRecords(this.seguimientoFisicoRepository, pacienteId),
-      this.findHistoryRecords(this.estiloVidaRepository, pacienteId),
-      this.findHistoryRecords(this.habitoRepository, pacienteId),
-      this.findHistoryRecords(this.condicionRepository, pacienteId),
-      this.findHistoryRecords(this.lesionRepository, pacienteId),
-      this.findHistoryRecords(this.operacionRepository, pacienteId),
-      this.findHistoryRecords(this.saludmentalRepository, pacienteId),
-      this.findHistoryRecords(this.alergiaRepository, pacienteId),
-      this.findHistoryRecords(this.antecedenteFamiliarRepository, pacienteId),
-      this.findHistoryRecords(this.desparasitacionRepository, pacienteId),
-      this.findHistoryRecords(this.documentoClinicoRepository, pacienteId),
-      this.findHistoryRecords(this.embarazoRepository, pacienteId),
-      this.findHistoryRecords(this.evaluacionHabitoRepository, pacienteId),
-      this.findHistoryRecords(this.periodoRepository, pacienteId),
-      this.findHistoryRecords(this.puntajeRiesgoRepository, pacienteId),
-      this.findHistoryRecords(this.recordatorioCitaRepository, pacienteId),
-      this.findHistoryRecords(this.registroDentalRepository, pacienteId),
-      this.findHistoryRecords(this.registroMensualRepository, pacienteId),
-      this.findHistoryRecords(this.vacunaRepository, pacienteId),
-    ]);
-
-    const conditionTypeIds = [...new Set(conditions.map((item) => item.tipocondicionId))];
-    const conditionTypes = conditionTypeIds.length
-      ? await this.tipoCondicionRepository.findBy({ tipocondicionId: In(conditionTypeIds) })
-      : [];
-    const conditionNames = new Map(
-      conditionTypes.map((item) => [item.tipocondicionId, item.nombre]),
-    );
-    const namedConditions = conditions.map((item) => ({
-      ...item,
-      nombreCondicion: conditionNames.get(item.tipocondicionId) ?? `Condición #${item.tipocondicionId}`,
-    }));
-
-    return this.buildClinicalHistory([
-      { type: "Cita médica", dateKey: "fechacita", titleKey: "especialidad", records: appointments },
-      { type: "Consulta médica", dateKey: "fechaconsulta", titleKey: "motivo", records: consults },
-      { type: "Medicación", dateKey: "fechainicio", titleKey: "nombremedicamento", records: medications },
-      { type: "Examen clínico", dateKey: "fechaExamen", titleKey: "nombreExamen", records: exams },
-      { type: "Seguimiento", dateKey: "fechaSeguimiento", titleKey: "tituloEvento", records: followUps },
-      { type: "Seguimiento físico", dateKey: "fecha", titleKey: "tipoEjercicio", records: physical },
-      { type: "Estilo de vida", dateKey: "fecharegistro", records: lifestyle },
-      { type: "Hábito", dateKey: "inicio", titleKey: "categoria", records: habits },
-      { type: "Condición crónica", dateKey: "fechadiagnostico", titleKey: "nombreCondicion", records: namedConditions },
-      { type: "Lesión", dateKey: "fechalesion", titleKey: "tipo", records: injuries },
-      { type: "Operación", dateKey: "fechaoperacion", titleKey: "tipo", records: operations },
-      { type: "Salud mental", dateKey: "fecha", records: mentalHealth },
-      { type: "Alergia", dateKey: "fechadiagnostico", titleKey: "tipo", records: allergies },
-      { type: "Antecedente familiar", dateKey: "fecharegistro", titleKey: "condicion", records: familyHistory },
-      { type: "Desparasitación", dateKey: "fecha", titleKey: "producto", records: deworming },
-      { type: "Documento clínico", dateKey: "fechadocumento", titleKey: "entidadorigen", records: documents },
-      { type: "Embarazo", dateKey: "fechainicio", titleKey: "estado", records: pregnancies },
-      { type: "Evaluación de hábitos", dateKey: "fecha", titleKey: "categoria", records: habitEvaluations },
-      { type: "Periodo menstrual", dateKey: "fechaInicio", titleKey: "flujo", records: periods },
-      { type: "Puntaje de riesgo", dateKey: "fechamedicion", titleKey: "tipo", records: riskScores },
-      { type: "Recordatorio de cita", dateKey: "fecharecordatorio", titleKey: "mensaje", records: appointmentReminders },
-      { type: "Registro dental", dateKey: "fechaatencion", titleKey: "procedimiento", records: dental },
-      { type: "Registro menstrual", dateKey: "fechainicio", titleKey: "dolor", records: monthlyRecords },
-      { type: "Vacuna", dateKey: "fechaaplicacion", titleKey: "nombre", records: vaccines },
-    ]);
-  }
-
-  /**
    * Update.
    * @param id Identificador del registro objetivo.
    * @param payload Datos validados que recibe la operación.
@@ -615,92 +488,6 @@ export class PacienteService {
     if (!result.affected) {
       throw new NotFoundException(`registro ${id} no encontrado en paciente`);
     }
-  }
-
-  /**
-   * Construye el historial completo y elimina metadatos técnicos o archivos binarios.
-   */
-  private buildClinicalHistory(sources: ClinicalHistorySource[]) {
-    const ignoredFields = /^(pacienteId|creadoPor|creadopor|creadoEn|creadoen|modificadoPor|modificadopor|modificadoEn|modificadoen|campoPrueba\d+|campoprueba\d+|archivoPdf|archivoReceta|rutaarchivo)$/i;
-
-    return sources
-      .flatMap((source) =>
-        source.records.map((entity) => {
-          const record = entity as Record<string, unknown>;
-          const rawDate = record[source.dateKey] ?? record.creadoEn ?? record.creadoen;
-          const parsedDate = rawDate ? new Date(rawDate as string | number | Date) : null;
-          const date = parsedDate && !Number.isNaN(parsedDate.getTime())
-            ? parsedDate.toISOString()
-            : new Date(0).toISOString();
-          const rawTitle = source.titleKey ? record[source.titleKey] : null;
-          const fields = Object.entries(record)
-            .filter(([key, value]) => !ignoredFields.test(key) && !Buffer.isBuffer(value))
-            .map(([key, value]) => ({ key, value: value ?? null }));
-
-          return {
-            type: source.type,
-            title: rawTitle ? String(rawTitle) : source.type,
-            date,
-            fields,
-          };
-        }),
-      )
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }
-
-  /**
-   * Selecciona únicamente las columnas que existen en la base desplegada.
-   * Esto permite generar el historial durante despliegues donde alguna
-   * migración aditiva todavía no se ha ejecutado.
-   */
-  private async findHistoryRecords<T extends ObjectLiteral>(
-    repository: Repository<T>,
-    pacienteId: number,
-  ): Promise<T[]> {
-    const tableName = repository.metadata.tableName;
-    let selectedProperties = this.historyColumnCache.get(tableName);
-
-    if (!selectedProperties) {
-      const columns = await repository.query(
-        `SELECT COLUMN_NAME AS columnName, DATA_TYPE AS dataType
-         FROM INFORMATION_SCHEMA.COLUMNS
-         WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = @0`,
-        [tableName],
-      ) as Array<{ columnName: string; dataType: string }>;
-      const availableColumns = new Map(
-        columns.map((column) => [
-          String(column.columnName).toLowerCase(),
-          String(column.dataType).toLowerCase(),
-        ]),
-      );
-      const binaryTypes = new Set(["binary", "varbinary", "image", "timestamp"]);
-
-      selectedProperties = repository.metadata.columns
-        .filter((column) => {
-          const dataType = availableColumns.get(column.databaseName.toLowerCase());
-          return Boolean(dataType) && !binaryTypes.has(dataType!);
-        })
-        .map((column) => column.propertyPath);
-
-      if (!selectedProperties.length) {
-        throw new Error(`No se encontraron columnas disponibles para ${tableName}`);
-      }
-      this.historyColumnCache.set(tableName, selectedProperties);
-    }
-
-    const patientColumn = repository.metadata.columns.find(
-      (column) => column.propertyName === "pacienteId",
-    );
-    if (!patientColumn || !selectedProperties.includes(patientColumn.propertyPath)) {
-      throw new Error(`La tabla ${tableName} no expone pacienteId`);
-    }
-
-    const alias = "historyRecord";
-    return repository
-      .createQueryBuilder(alias)
-      .select(selectedProperties.map((property) => `${alias}.${property}`))
-      .where(`${alias}.${patientColumn.propertyPath} = :pacienteId`, { pacienteId })
-      .getMany();
   }
 
   /**

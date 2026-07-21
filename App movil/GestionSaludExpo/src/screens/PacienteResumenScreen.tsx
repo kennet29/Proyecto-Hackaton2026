@@ -2,8 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   ActivityIndicator,
-  Alert,
-  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -13,8 +11,6 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
@@ -144,16 +140,6 @@ type ClinicalSummary = {
   carePointers: string[];
 };
 
-type ClinicalHistoryEvent = {
-  type: string;
-  title: string;
-  date: string;
-  fields: Array<{
-    key: string;
-    value: unknown;
-  }>;
-};
-
 type Metric = {
   label: string;
   value: number;
@@ -233,135 +219,6 @@ const formatGender = (value?: string | null) => {
   }
   if (!value?.trim()) return null;
   return `${value.trim().charAt(0).toLocaleUpperCase('es')}${value.trim().slice(1).toLocaleLowerCase('es')}`;
-};
-
-const historyFieldLabels: Record<string, string> = {
-  alergiaId: 'Identificador de alergia', antecedenteId: 'Identificador de antecedente',
-  citaId: 'Identificador de cita', condicioncronicaId: 'Identificador de condición',
-  consultaId: 'Identificador de consulta', desparasitacionId: 'Identificador de desparasitación',
-  documentoId: 'Identificador de documento', embarazoId: 'Identificador de embarazo',
-  estilovidaId: 'Identificador de estilo de vida', evaluacionId: 'Identificador de evaluación',
-  examenclinicoId: 'Identificador de examen', habitoId: 'Identificador de hábito',
-  lesionId: 'Identificador de lesión', medicacionId: 'Identificador de medicación',
-  operacionId: 'Identificador de operación', periodoId: 'Identificador de periodo',
-  puntajeriesgoId: 'Identificador de puntaje', recordatoriocitaId: 'Identificador de recordatorio',
-  registrodentalId: 'Identificador de registro dental', registromensualId: 'Identificador de registro menstrual',
-  saludmentalId: 'Identificador de salud mental', seguimientoFisicoId: 'Identificador de seguimiento físico',
-  seguimientoPosteventoId: 'Identificador de seguimiento', vacunaId: 'Identificador de vacuna',
-  tipocondicionId: 'Tipo de condición', tipohabitoId: 'Tipo de hábito', tipolesionId: 'Tipo de lesión',
-  tipooperacionId: 'Tipo de operación', tipodocumentoId: 'Tipo de documento', tipovacunaId: 'Tipo de vacuna',
-};
-
-const escapeHtml = (value: unknown) => String(value ?? '')
-  .replace(/&/g, '&amp;')
-  .replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;')
-  .replace(/"/g, '&quot;')
-  .replace(/'/g, '&#039;');
-
-const humanizeHistoryKey = (key: string) => {
-  if (historyFieldLabels[key]) return historyFieldLabels[key];
-  const spaced = key
-    .replace(/([a-záéíóúñ])([A-Z])/g, '$1 $2')
-    .replace(/_/g, ' ')
-    .trim();
-  return spaced ? `${spaced.charAt(0).toLocaleUpperCase('es')}${spaced.slice(1).toLocaleLowerCase('es')}` : key;
-};
-
-const formatHistoryValue = (key: string, value: unknown) => {
-  if (value === null || value === undefined || value === '') return 'Sin registro';
-  if (typeof value === 'boolean') return value ? 'Sí' : 'No';
-  if (/(fecha|inicio|fin|control|intento)/i.test(key) && (typeof value === 'string' || value instanceof Date)) {
-    const parsed = new Date(value);
-    if (!Number.isNaN(parsed.getTime())) {
-      return parsed.toLocaleString('es-NI', {
-        year: 'numeric', month: 'long', day: 'numeric',
-        ...(String(value).includes('T') ? { hour: '2-digit', minute: '2-digit' } : {}),
-      });
-    }
-  }
-  if (typeof value === 'number') return value.toLocaleString('es-NI');
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
-};
-
-const buildClinicalHistoryPdfHtml = (
-  summary: ClinicalSummary,
-  patientName: string,
-  history: ClinicalHistoryEvent[],
-) => {
-  const events = history.length
-    ? history.map((event, index) => {
-        const fieldRows = event.fields.map((field) => `
-          <tr>
-            <th>${escapeHtml(humanizeHistoryKey(field.key))}</th>
-            <td>${escapeHtml(formatHistoryValue(field.key, field.value))}</td>
-          </tr>`).join('');
-        return `
-          <section class="event">
-            <div class="event-head">
-              <div class="number">${index + 1}</div>
-              <div class="event-copy">
-                <div class="type">${escapeHtml(event.type)}</div>
-                <h2>${escapeHtml(event.title)}</h2>
-              </div>
-              <time>${escapeHtml(formatDateTime(event.date))}</time>
-            </div>
-            <table><tbody>${fieldRows}</tbody></table>
-          </section>`;
-      }).join('')
-    : '<div class="empty">No hay eventos clínicos registrados para este paciente.</div>';
-
-  return `<!DOCTYPE html>
-  <html lang="es"><head><meta charset="utf-8" />
-    <style>
-      @page { size: A4; margin: 18mm 14mm 20mm; }
-      * { box-sizing: border-box; }
-      body { margin: 0; color: #172033; font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; line-height: 1.45; }
-      .cover { border-bottom: 3px solid #2f80ed; margin-bottom: 18px; padding-bottom: 15px; }
-      .eyebrow { color: #2f80ed; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
-      h1 { color: #101828; font-size: 25px; margin: 4px 0 13px; }
-      .patient { background: #f4f7fb; border: 1px solid #dbe4ef; border-radius: 9px; padding: 12px 14px; }
-      .patient-name { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-      .meta { display: flex; flex-wrap: wrap; gap: 5px 22px; color: #475467; }
-      .meta strong { color: #172033; }
-      .intro { color: #475467; margin: 12px 0 0; }
-      .event { border: 1px solid #dbe4ef; border-radius: 9px; margin: 0 0 13px; overflow: hidden; page-break-inside: avoid; }
-      .event-head { align-items: center; background: #f8fafc; border-bottom: 1px solid #dbe4ef; display: flex; padding: 10px 12px; }
-      .number { align-items: center; background: #2f80ed; border-radius: 50%; color: white; display: flex; font-size: 9px; font-weight: 700; height: 23px; justify-content: center; margin-right: 9px; min-width: 23px; }
-      .event-copy { flex: 1; }
-      .type { color: #2f80ed; font-size: 8px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; }
-      h2 { color: #172033; font-size: 13px; margin: 1px 0 0; }
-      time { color: #667085; font-size: 9px; margin-left: 12px; text-align: right; }
-      table { border-collapse: collapse; width: 100%; }
-      th, td { border-bottom: 1px solid #edf1f5; padding: 6px 10px; text-align: left; vertical-align: top; }
-      tr:last-child th, tr:last-child td { border-bottom: 0; }
-      th { color: #475467; font-size: 9px; font-weight: 700; width: 35%; }
-      td { color: #172033; overflow-wrap: anywhere; white-space: pre-wrap; }
-      .empty { background: #f8fafc; border: 1px solid #dbe4ef; border-radius: 9px; color: #667085; padding: 24px; text-align: center; }
-      .footer { bottom: 5mm; color: #98a2b3; font-size: 8px; left: 14mm; position: fixed; right: 14mm; text-align: center; }
-      .footer::after { content: " · Página " counter(page); }
-    </style>
-  </head><body>
-    <header class="cover">
-      <div class="eyebrow">Expediente clínico</div>
-      <h1>Historial clínico cronológico</h1>
-      <div class="patient">
-        <div class="patient-name">${escapeHtml(patientName)}</div>
-        <div class="meta">
-          <span><strong>Expediente:</strong> #${escapeHtml(summary.patient.pacienteId)}</span>
-          <span><strong>Nacimiento:</strong> ${escapeHtml(formatDate(summary.patient.fechaNacimiento))}</span>
-          <span><strong>Sexo:</strong> ${escapeHtml(formatGender(summary.patient.sexo) ?? 'Sin registro')}</span>
-          <span><strong>Teléfono:</strong> ${escapeHtml(summary.patient.telefono ?? 'Sin registro')}</span>
-          <span><strong>Correo:</strong> ${escapeHtml(summary.patient.email ?? 'Sin registro')}</span>
-          <span><strong>Generado:</strong> ${escapeHtml(formatDateTime(new Date().toISOString()))}</span>
-        </div>
-      </div>
-      <p class="intro">${history.length} evento(s), organizados del más antiguo al más reciente. Cada registro muestra sus campos clínicos disponibles.</p>
-    </header>
-    <main>${events}</main>
-    <div class="footer">Documento confidencial de información clínica. Verifique su contenido con un profesional de salud.</div>
-  </body></html>`;
 };
 
 const buildPatientNarrative = (summary: ClinicalSummary) => {
@@ -509,7 +366,6 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [generatingHistoryPdf, setGeneratingHistoryPdf] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<'server' | 'cache' | null>(null);
 
@@ -630,51 +486,6 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
   const patientNarrative = summary ? buildPatientNarrative(summary) : null;
   const mentalHealth = summary?.clinicalDetails?.mentalHealth ?? null;
   const mentalHealthSummary = buildMentalHealthSummary(mentalHealth);
-
-  const generateClinicalHistoryPdf = async () => {
-    if (!summary) return;
-    setGeneratingHistoryPdf(true);
-    try {
-      const response = await fetch(
-        `${API_URL}/paciente/${summary.patient.pacienteId}/historial-clinico`,
-        { headers: authHeaders },
-      );
-      const body = await response.json().catch(() => null);
-      if (!response.ok || !Array.isArray(body)) {
-        throw new Error(body?.message ?? 'No se pudo cargar el historial clínico.');
-      }
-
-      const html = buildClinicalHistoryPdfHtml(
-        summary,
-        patientName,
-        body as ClinicalHistoryEvent[],
-      );
-      if (Platform.OS === 'web') {
-        await Print.printAsync({ html });
-        return;
-      }
-
-      const pdf = await Print.printToFileAsync({ html });
-      if (!pdf?.uri) throw new Error('No se pudo crear el archivo PDF.');
-
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(pdf.uri, {
-          mimeType: 'application/pdf',
-          UTI: 'com.adobe.pdf',
-          dialogTitle: `Historial clínico de ${patientName}`,
-        });
-      } else {
-        await Print.printAsync({ html });
-      }
-    } catch (pdfError) {
-      Alert.alert(
-        'No se pudo generar el PDF',
-        pdfError instanceof Error ? pdfError.message : 'Inténtalo nuevamente.',
-      );
-    } finally {
-      setGeneratingHistoryPdf(false);
-    }
-  };
 
   return (
     <ScrollView
@@ -797,23 +608,6 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
               <InfoItem icon="mail-outline" label="Correo" value={summary.patient.email || 'Sin registro'} wide />
               <InfoItem icon="time-outline" label="Última consulta" value={formatDateTime(summary.overview.ultimaConsulta)} wide />
             </View>
-
-            <TouchableOpacity
-              style={[styles.pdfButton, generatingHistoryPdf && styles.pdfButtonDisabled]}
-              onPress={generateClinicalHistoryPdf}
-              disabled={generatingHistoryPdf}
-              accessibilityRole="button"
-              accessibilityLabel="Generar historial clínico en PDF"
-            >
-              {generatingHistoryPdf ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Ionicons name="document-text-outline" size={19} color="#FFFFFF" />
-              )}
-              <Text style={styles.pdfButtonText}>
-                {generatingHistoryPdf ? 'Generando PDF...' : 'Generar historial clínico PDF'}
-              </Text>
-            </TouchableOpacity>
 
             <View style={styles.syncRow}>
               <Ionicons
@@ -1294,18 +1088,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: 8,
   },
-  pdfButton: {
-    alignItems: 'center',
-    backgroundColor: appColors.info,
-    borderRadius: 13,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 13,
-    minHeight: 46,
-    paddingHorizontal: 14,
-  },
-  pdfButtonDisabled: { opacity: 0.65 },
-  pdfButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900', marginLeft: 8 },
   contactGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5, marginTop: 17 },
   infoItem: {
     width: '50%',

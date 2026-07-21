@@ -63,19 +63,6 @@ export class PacienteController {
   }
 
   /**
-   * Devuelve el historial clínico completo en orden cronológico.
-   */
-  @Get(":id/historial-clinico")
-  async getClinicalHistory(@Param("id") id: string, @Req() req: Request) {
-    const pacienteId = Number(id);
-    await this.pacienteAccessService.assertAccess(
-      req.user as AuthenticatedUser,
-      pacienteId,
-    );
-    return this.pacienteservice.getClinicalHistory(pacienteId);
-  }
-
-  /**
    * Find one.
    * @param id Identificador del registro objetivo.
    * @param req Solicitud HTTP actual.
