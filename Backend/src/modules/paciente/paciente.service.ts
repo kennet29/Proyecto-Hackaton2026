@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { In, Not, IsNull, Repository } from "typeorm";
+import { In, Not, IsNull, ObjectLiteral, Repository } from "typeorm";
 import { Alergia } from "../alergia/alergia.entity";
 import { Antecedentefamiliar } from "../antecedentefamiliar/antecedentefamiliar.entity";
 import { Citamedica } from "../citamedica/citamedica.entity";
@@ -76,6 +76,8 @@ type ClinicalHistorySource = {
  */
 @Injectable()
 export class PacienteService {
+  private readonly historyColumnCache = new Map<string, string[]>();
+
   constructor(
     @InjectRepository(Paciente)
     private readonly pacienteRepository: Repository<Paciente>,
@@ -524,30 +526,30 @@ export class PacienteService {
       habitEvaluations, periods, riskScores, appointmentReminders, dental,
       monthlyRecords, vaccines,
     ] = await Promise.all([
-      this.citamedicaRepository.find({ where: { pacienteId } }),
-      this.consultamedicaRepository.find({ where: { pacienteId } }),
-      this.medicacionRepository.find({ where: { pacienteId } }),
-      this.examenclinicoRepository.find({ where: { pacienteId } }),
-      this.seguimientoRepository.find({ where: { pacienteId } }),
-      this.seguimientoFisicoRepository.find({ where: { pacienteId } }),
-      this.estiloVidaRepository.find({ where: { pacienteId } }),
-      this.habitoRepository.find({ where: { pacienteId } }),
-      this.condicionRepository.find({ where: { pacienteId } }),
-      this.lesionRepository.find({ where: { pacienteId } }),
-      this.operacionRepository.find({ where: { pacienteId } }),
-      this.saludmentalRepository.find({ where: { pacienteId } }),
-      this.alergiaRepository.find({ where: { pacienteId } }),
-      this.antecedenteFamiliarRepository.find({ where: { pacienteId } }),
-      this.desparasitacionRepository.find({ where: { pacienteId } }),
-      this.documentoClinicoRepository.find({ where: { pacienteId } }),
-      this.embarazoRepository.find({ where: { pacienteId } }),
-      this.evaluacionHabitoRepository.find({ where: { pacienteId } }),
-      this.periodoRepository.find({ where: { pacienteId } }),
-      this.puntajeRiesgoRepository.find({ where: { pacienteId } }),
-      this.recordatorioCitaRepository.find({ where: { pacienteId } }),
-      this.registroDentalRepository.find({ where: { pacienteId } }),
-      this.registroMensualRepository.find({ where: { pacienteId } }),
-      this.vacunaRepository.find({ where: { pacienteId } }),
+      this.findHistoryRecords(this.citamedicaRepository, pacienteId),
+      this.findHistoryRecords(this.consultamedicaRepository, pacienteId),
+      this.findHistoryRecords(this.medicacionRepository, pacienteId),
+      this.findHistoryRecords(this.examenclinicoRepository, pacienteId),
+      this.findHistoryRecords(this.seguimientoRepository, pacienteId),
+      this.findHistoryRecords(this.seguimientoFisicoRepository, pacienteId),
+      this.findHistoryRecords(this.estiloVidaRepository, pacienteId),
+      this.findHistoryRecords(this.habitoRepository, pacienteId),
+      this.findHistoryRecords(this.condicionRepository, pacienteId),
+      this.findHistoryRecords(this.lesionRepository, pacienteId),
+      this.findHistoryRecords(this.operacionRepository, pacienteId),
+      this.findHistoryRecords(this.saludmentalRepository, pacienteId),
+      this.findHistoryRecords(this.alergiaRepository, pacienteId),
+      this.findHistoryRecords(this.antecedenteFamiliarRepository, pacienteId),
+      this.findHistoryRecords(this.desparasitacionRepository, pacienteId),
+      this.findHistoryRecords(this.documentoClinicoRepository, pacienteId),
+      this.findHistoryRecords(this.embarazoRepository, pacienteId),
+      this.findHistoryRecords(this.evaluacionHabitoRepository, pacienteId),
+      this.findHistoryRecords(this.periodoRepository, pacienteId),
+      this.findHistoryRecords(this.puntajeRiesgoRepository, pacienteId),
+      this.findHistoryRecords(this.recordatorioCitaRepository, pacienteId),
+      this.findHistoryRecords(this.registroDentalRepository, pacienteId),
+      this.findHistoryRecords(this.registroMensualRepository, pacienteId),
+      this.findHistoryRecords(this.vacunaRepository, pacienteId),
     ]);
 
     const conditionTypeIds = [...new Set(conditions.map((item) => item.tipocondicionId))];
@@ -644,6 +646,61 @@ export class PacienteService {
         }),
       )
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }
+
+  /**
+   * Selecciona únicamente las columnas que existen en la base desplegada.
+   * Esto permite generar el historial durante despliegues donde alguna
+   * migración aditiva todavía no se ha ejecutado.
+   */
+  private async findHistoryRecords<T extends ObjectLiteral>(
+    repository: Repository<T>,
+    pacienteId: number,
+  ): Promise<T[]> {
+    const tableName = repository.metadata.tableName;
+    let selectedProperties = this.historyColumnCache.get(tableName);
+
+    if (!selectedProperties) {
+      const columns = await repository.query(
+        `SELECT COLUMN_NAME AS columnName, DATA_TYPE AS dataType
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = @0`,
+        [tableName],
+      ) as Array<{ columnName: string; dataType: string }>;
+      const availableColumns = new Map(
+        columns.map((column) => [
+          String(column.columnName).toLowerCase(),
+          String(column.dataType).toLowerCase(),
+        ]),
+      );
+      const binaryTypes = new Set(["binary", "varbinary", "image", "timestamp"]);
+
+      selectedProperties = repository.metadata.columns
+        .filter((column) => {
+          const dataType = availableColumns.get(column.databaseName.toLowerCase());
+          return Boolean(dataType) && !binaryTypes.has(dataType!);
+        })
+        .map((column) => column.propertyPath);
+
+      if (!selectedProperties.length) {
+        throw new Error(`No se encontraron columnas disponibles para ${tableName}`);
+      }
+      this.historyColumnCache.set(tableName, selectedProperties);
+    }
+
+    const patientColumn = repository.metadata.columns.find(
+      (column) => column.propertyName === "pacienteId",
+    );
+    if (!patientColumn || !selectedProperties.includes(patientColumn.propertyPath)) {
+      throw new Error(`La tabla ${tableName} no expone pacienteId`);
+    }
+
+    const alias = "historyRecord";
+    return repository
+      .createQueryBuilder(alias)
+      .select(selectedProperties.map((property) => `${alias}.${property}`))
+      .where(`${alias}.${patientColumn.propertyPath} = :pacienteId`, { pacienteId })
+      .getMany();
   }
 
   /**
