@@ -112,8 +112,8 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
       });
       const body = await parseJsonResponse<ApiMessage>(response);
       if (!response.ok) throw new Error(body?.message ?? 'No se pudo cambiar la contraseña.');
-      Alert.alert('Contraseña actualizada', 'Ya puedes iniciar sesión con tu nueva contraseña.', [
-        { text: 'Ir al inicio de sesión', onPress: () => navigation.goBack() },
+      Alert.alert('Éxito', 'Ya puedes iniciar sesión con tu nueva contraseña.', [
+        { text: 'Ir al inicio de sesión', onPress: () => navigation.replace('Login') },
       ]);
     } catch (error) {
       Alert.alert('No se pudo guardar', error instanceof Error ? error.message : 'Inténtalo nuevamente.');

@@ -215,7 +215,7 @@ export function RegistroScreen({ navigation }: Props) {
         }
       }
       setFeedback({ type: 'success', message: successMessage });
-      Alert.alert('Cuenta creada', successMessage, [
+      Alert.alert('Éxito', successMessage, [
         { text: 'Ir al login', onPress: () => navigation.replace('Login') },
       ]);
     } catch (error) {
