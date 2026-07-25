@@ -7,11 +7,10 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +23,7 @@ import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate } from '../utils/localDate';
+import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 
 type LesionRecord = {
   lesionId: number;
@@ -180,9 +180,10 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
     }
     setLoadingRecords(true);
     try {
-      const response = await fetch(`${API_URL}/lesion`, { headers: authHeaders });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(body?.message ?? 'No se pudieron cargar las lesiones');
+      const { data: body } = await getJsonWithOfflineFallback<unknown>(
+        '/lesion',
+        authHeaders,
+      );
       setRecords(
         (Array.isArray(body) ? body : [])
           .map((item: any, index: number) => ({
@@ -364,20 +365,20 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
         }
       >
         <View style={styles.heroCard}>
-          <Text style={styles.eyebrow}>SEGUIMIENTO FISICO</Text>
-          <Text style={styles.title}>{isCreateMode ? 'Nueva lesion' : 'Lesiones'}</Text>
-          <Text style={styles.subtitle}>
+          <AppText style={styles.eyebrow}>SEGUIMIENTO FISICO</AppText>
+          <AppText style={styles.title}>{isCreateMode ? 'Nueva lesion' : 'Lesiones'}</AppText>
+          <AppText style={styles.subtitle}>
             {isCreateMode
               ? 'Registra el evento, la severidad y el tratamiento para dejarlo listo en el historial clinico.'
               : 'Revisa el historial de lesiones por persona y filtra rapido los eventos que requieren seguimiento.'}
-          </Text>
+          </AppText>
         </View>
 
         {isCreateMode ? (
           <View style={styles.formCard}>
-            <Text style={styles.formTitle}>Registrar lesion</Text>
+            <AppText style={styles.formTitle}>Registrar lesion</AppText>
 
-            <Text style={styles.label}>Paciente</Text>
+            <AppText style={styles.label}>Paciente</AppText>
             <View style={styles.pickerWrapper}>
               <Picker
                 style={styles.picker}
@@ -402,9 +403,9 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
               </Picker>
             </View>
 
-            <Text style={styles.label}>Fecha de la lesion</Text>
+            <AppText style={styles.label}>Fecha de la lesion</AppText>
             <TouchableOpacity style={styles.dateButton} onPress={showDatePicker}>
-              <Text style={styles.dateButtonText}>{formatDisplayDate(form.fecha)}</Text>
+              <AppText style={styles.dateButtonText}>{formatDisplayDate(form.fecha)}</AppText>
             </TouchableOpacity>
             {Platform.OS === 'ios' && showIOSDatePicker ? (
               <View style={styles.iosPickerCard}>
@@ -421,33 +422,33 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
                   style={styles.secondaryButton}
                   onPress={() => setShowIOSDatePicker(false)}
                 >
-                  <Text style={styles.secondaryButtonText}>Listo</Text>
+                  <AppText style={styles.secondaryButtonText}>Listo</AppText>
                 </TouchableOpacity>
               </View>
             ) : null}
 
-            <TextInput
+            <AppTextInput
               style={styles.input}
               placeholder="Tipo de lesion"
               placeholderTextColor="#9FB3C8"
               value={form.tipo}
               onChangeText={(value) => handleChange('tipo', value)}
             />
-            <TextInput
+            <AppTextInput
               style={styles.input}
               placeholder="Parte del cuerpo"
               placeholderTextColor="#9FB3C8"
               value={form.parteCuerpo}
               onChangeText={(value) => handleChange('parteCuerpo', value)}
             />
-            <TextInput
+            <AppTextInput
               style={styles.input}
               placeholder="Severidad"
               placeholderTextColor="#9FB3C8"
               value={form.severidad}
               onChangeText={(value) => handleChange('severidad', value)}
             />
-            <TextInput
+            <AppTextInput
               style={styles.input}
               placeholder="Tratamiento"
               placeholderTextColor="#9FB3C8"
@@ -456,14 +457,14 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
             />
 
             <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>Lesion recuperada</Text>
+              <AppText style={styles.switchLabel}>Lesion recuperada</AppText>
               <Switch
                 value={form.recuperado}
                 onValueChange={(value) => handleChange('recuperado', value)}
               />
             </View>
 
-            <TextInput
+            <AppTextInput
               style={[styles.input, styles.multiline]}
               placeholder="Notas"
               placeholderTextColor="#9FB3C8"
@@ -480,17 +481,17 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
                   if (navigation.canGoBack()) navigation.goBack();
                 }}
               >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
+                <AppText style={styles.cancelButtonText}>Cancelar</AppText>
               </TouchableOpacity>
               <TouchableOpacity style={styles.primaryButton} onPress={handleSubmit}>
-                <Text style={styles.primaryButtonText}>Guardar</Text>
+                <AppText style={styles.primaryButtonText}>Guardar</AppText>
               </TouchableOpacity>
             </View>
           </View>
         ) : (
           <>
             <View style={styles.filterCard}>
-              <Text style={styles.label}>Filtrar por paciente</Text>
+              <AppText style={styles.label}>Filtrar por paciente</AppText>
               <View style={styles.pickerWrapper}>
                 <Picker
                   style={styles.picker}
@@ -514,34 +515,34 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
                   ))}
                 </Picker>
               </View>
-              <Text style={styles.filterHint}>
+              <AppText style={styles.filterHint}>
                 {`Mostrando historial de ${selectedPatientName}`}
-              </Text>
+              </AppText>
             </View>
 
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Historial de lesiones</Text>
-              <Text style={styles.sectionSubtitle}>{`${filteredRecords.length} registros`}</Text>
+              <AppText style={styles.sectionTitle}>Historial de lesiones</AppText>
+              <AppText style={styles.sectionSubtitle}>{`${filteredRecords.length} registros`}</AppText>
             </View>
 
             {loadingRecords ? (
               <View style={styles.loadingCard}>
-                <ActivityIndicator color="#38F28E" />
-                <Text style={styles.loadingText}>Cargando historial...</Text>
+                <ActivityIndicator color="#38E28E" />
+                <AppText style={styles.loadingText}>Cargando historial...</AppText>
               </View>
             ) : filteredRecords.length === 0 ? (
               <View style={styles.emptyCard}>
-                <Text style={styles.emptyTitle}>No hay lesiones para este filtro</Text>
-                <Text style={styles.emptyText}>
+                <AppText style={styles.emptyTitle}>No hay lesiones para este filtro</AppText>
+                <AppText style={styles.emptyText}>
                   Cambia el paciente seleccionado o registra una nueva lesion.
-                </Text>
+                </AppText>
               </View>
             ) : (
               filteredRecords.map((record) => (
                 <View key={record.lesionId} style={styles.recordCard}>
                   <View style={styles.recordTopRow}>
                     <View style={styles.datePill}>
-                      <Text style={styles.datePillText}>{formatRecordDate(record.fechalesion)}</Text>
+                      <AppText style={styles.datePillText}>{formatRecordDate(record.fechalesion)}</AppText>
                     </View>
                     <View
                       style={[
@@ -549,32 +550,32 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
                         record.recuperado ? styles.statusPillSuccess : styles.statusPillPending,
                       ]}
                     >
-                      <Text
+                      <AppText
                         style={[
                           styles.statusPillText,
                           record.recuperado ? styles.statusTextSuccess : styles.statusTextPending,
                         ]}
                       >
                         {record.recuperado ? 'Recuperada' : 'En seguimiento'}
-                      </Text>
+                      </AppText>
                     </View>
                   </View>
 
-                  <Text style={styles.recordTitle}>{normalizeText(record.tipo) ?? 'Lesion registrada'}</Text>
-                  <Text style={styles.recordPatient}>
+                  <AppText style={styles.recordTitle}>{normalizeText(record.tipo) ?? 'Lesion registrada'}</AppText>
+                  <AppText style={styles.recordPatient}>
                     {patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`}
-                  </Text>
-                  <Text style={styles.recordText}>
+                  </AppText>
+                  <AppText style={styles.recordText}>
                     Parte del cuerpo: {normalizeText(record.partecuerpo) ?? 'Sin dato'}
-                  </Text>
-                  <Text style={styles.recordText}>
+                  </AppText>
+                  <AppText style={styles.recordText}>
                     Severidad: {normalizeText(record.severidad) ?? 'Sin dato'}
-                  </Text>
-                  <Text style={styles.recordText}>
+                  </AppText>
+                  <AppText style={styles.recordText}>
                     Tratamiento: {normalizeText(record.tratamiento) ?? 'Sin dato'}
-                  </Text>
+                  </AppText>
                   {normalizeText(record.notas) ? (
-                    <Text style={styles.recordText}>Notas: {normalizeText(record.notas)}</Text>
+                    <AppText style={styles.recordText}>Notas: {normalizeText(record.notas)}</AppText>
                   ) : null}
                   <TouchableOpacity
                     style={[
@@ -590,16 +591,16 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
                     {updatingStatusId === record.lesionId ? (
                       <ActivityIndicator
                         size="small"
-                        color={record.recuperado ? '#29B6FF' : '#38F28E'}
+                        color={record.recuperado ? '#29B6FF' : '#38E28E'}
                       />
                     ) : (
                       <Ionicons
                         name={record.recuperado ? 'refresh-outline' : 'checkmark-circle-outline'}
                         size={19}
-                        color={record.recuperado ? '#29B6FF' : '#38F28E'}
+                        color={record.recuperado ? '#29B6FF' : '#38E28E'}
                       />
                     )}
-                    <Text
+                    <AppText
                       style={[
                         styles.statusActionButtonText,
                         record.recuperado
@@ -608,7 +609,7 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
                       ]}
                     >
                       {record.recuperado ? 'Reabrir seguimiento' : 'Marcar como recuperada'}
-                    </Text>
+                    </AppText>
                   </TouchableOpacity>
                 </View>
               ))
@@ -622,7 +623,7 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
           style={styles.fab}
           onPress={() => navigation.navigate('LesionCreate')}
         >
-          <Text style={styles.fabText}>+</Text>
+          <AppText style={styles.fabText}>+</AppText>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -648,7 +649,7 @@ const styles = StyleSheet.create({
     borderColor: '#132238',
   },
   eyebrow: {
-    color: '#38F28E',
+    color: '#38E28E',
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
@@ -756,10 +757,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 7,
     paddingHorizontal: 12,
-    backgroundColor: '#38F28E18',
+    backgroundColor: '#38E28E18',
   },
   datePillText: {
-    color: '#38F28E',
+    color: '#38E28E',
     fontWeight: '800',
     fontSize: 12,
   },
@@ -770,8 +771,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   statusPillSuccess: {
-    backgroundColor: '#38F28E18',
-    borderColor: '#38F28E',
+    backgroundColor: '#38E28E18',
+    borderColor: '#38E28E',
   },
   statusPillPending: {
     backgroundColor: '#182A44',
@@ -782,7 +783,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   statusTextSuccess: {
-    color: '#38F28E',
+    color: '#38E28E',
   },
   statusTextPending: {
     color: '#29B6FF',
@@ -794,7 +795,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   recordPatient: {
-    color: '#38F28E',
+    color: '#38E28E',
     fontWeight: '700',
     marginBottom: 10,
   },
@@ -814,8 +815,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   statusActionButtonSuccess: {
-    borderColor: '#38F28E55',
-    backgroundColor: '#38F28E12',
+    borderColor: '#38E28E55',
+    backgroundColor: '#38E28E12',
   },
   statusActionButtonPending: {
     borderColor: '#29B6FF55',
@@ -829,7 +830,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   statusActionButtonTextSuccess: {
-    color: '#38F28E',
+    color: '#38E28E',
   },
   statusActionButtonTextPending: {
     color: '#29B6FF',
@@ -877,7 +878,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   secondaryButtonText: {
-    color: '#38F28E',
+    color: '#38E28E',
     fontWeight: '800',
   },
   input: {
@@ -930,7 +931,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     flex: 1,
-    backgroundColor: '#38F28E',
+    backgroundColor: '#38E28E',
     borderRadius: 14,
     paddingVertical: 15,
     alignItems: 'center',
@@ -948,7 +949,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#38F28E',
+    backgroundColor: '#38E28E',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',

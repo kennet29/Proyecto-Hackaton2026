@@ -7,11 +7,10 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
@@ -552,8 +551,8 @@ export function DocumentoFormScreen() {
           <View style={styles.cameraCard}>
             <View style={styles.cameraHeader}>
               <View>
-                <Text style={styles.cameraTitle}>Tomar fotografía</Text>
-                <Text style={styles.cameraHint}>Coloca el documento dentro del encuadre.</Text>
+                <AppText style={styles.cameraTitle}>Tomar fotografía</AppText>
+                <AppText style={styles.cameraHint}>Coloca el documento dentro del encuadre.</AppText>
               </View>
               <TouchableOpacity style={styles.cameraCloseButton} onPress={closeWebCamera}>
                 <Ionicons name="close" size={24} color={appColors.text} />
@@ -576,7 +575,7 @@ export function DocumentoFormScreen() {
             </View>
             <TouchableOpacity style={styles.captureButton} onPress={captureWebPhoto}>
               <Ionicons name="camera" size={22} color={appColors.background} />
-              <Text style={styles.captureButtonText}>Capturar foto</Text>
+              <AppText style={styles.captureButtonText}>Capturar foto</AppText>
             </TouchableOpacity>
           </View>
         </View>
@@ -589,34 +588,34 @@ export function DocumentoFormScreen() {
           </View>
           <View style={styles.heroPill}>
             <Ionicons name="cloud-upload-outline" size={14} color={appColors.info} />
-            <Text style={styles.heroPillText}>Archivos clínicos</Text>
+            <AppText style={styles.heroPillText}>Archivos clínicos</AppText>
           </View>
         </View>
-        <Text style={styles.kicker}>ESPACIOS CLÍNICOS</Text>
-        <Text style={styles.title}>Documentos clínicos</Text>
-        <Text style={styles.subtitle}>
+        <AppText style={styles.kicker}>ESPACIOS CLÍNICOS</AppText>
+        <AppText style={styles.title}>Documentos clínicos</AppText>
+        <AppText style={styles.subtitle}>
           Adjunta imágenes, fotografías o PDF vinculados al expediente del paciente.
-        </Text>
+        </AppText>
       </View>
 
       <View style={styles.infoCard}>
         <Ionicons name="information-circle-outline" size={22} color={appColors.info} />
         <View style={styles.infoCopy}>
-          <Text style={styles.infoTitle}>Adjunta el documento</Text>
-          <Text style={styles.infoText}>
+          <AppText style={styles.infoTitle}>Adjunta el documento</AppText>
+          <AppText style={styles.infoText}>
             Puedes elegir una imagen, usar la cámara o subir un PDF de hasta 3 MB.
-          </Text>
+          </AppText>
         </View>
       </View>
 
       <View style={styles.formCard}>
-        <Text style={styles.sectionTitle}>Datos principales</Text>
+        <AppText style={styles.sectionTitle}>Datos principales</AppText>
 
-        <Text style={styles.label}>Persona asociada</Text>
+        <AppText style={styles.label}>Persona asociada</AppText>
         {loadingPatients ? (
           <View style={styles.loadingRow}>
             <ActivityIndicator color={appColors.info} />
-            <Text style={styles.loadingText}>Cargando personas...</Text>
+            <AppText style={styles.loadingText}>Cargando personas...</AppText>
           </View>
         ) : (
           <View style={styles.pickerWrapper}>
@@ -640,17 +639,17 @@ export function DocumentoFormScreen() {
         {selectedPatient ? (
           <View style={styles.selectedCard}>
             <Ionicons name="checkmark-circle" size={18} color={appColors.success} />
-            <Text style={styles.selectedText}>{`Expediente de ${selectedPatient.displayName}`}</Text>
+            <AppText style={styles.selectedText}>{`Expediente de ${selectedPatient.displayName}`}</AppText>
           </View>
         ) : null}
 
       </View>
 
       <View style={styles.formCard}>
-        <Text style={styles.sectionTitle}>Origen del documento</Text>
-        <Text style={styles.fieldHint}>
+        <AppText style={styles.sectionTitle}>Origen del documento</AppText>
+        <AppText style={styles.fieldHint}>
           Indica a qué módulo pertenece y selecciona el registro de la persona.
-        </Text>
+        </AppText>
         <View style={styles.originGrid}>
           {originOptions.map((origin) => {
             const active = form.entidadOrigen === origin.value;
@@ -665,7 +664,7 @@ export function DocumentoFormScreen() {
                   size={17}
                   color={active ? appColors.background : appColors.info}
                 />
-                <Text style={[styles.originChipText, active && styles.originChipTextActive]}>{origin.label}</Text>
+                <AppText style={[styles.originChipText, active && styles.originChipTextActive]}>{origin.label}</AppText>
               </TouchableOpacity>
             );
           })}
@@ -673,11 +672,11 @@ export function DocumentoFormScreen() {
 
         {form.entidadOrigen !== 'general' ? (
           <>
-            <Text style={styles.label}>{`Seleccionar ${selectedOrigin.label.toLowerCase()}`}</Text>
+            <AppText style={styles.label}>{`Seleccionar ${selectedOrigin.label.toLowerCase()}`}</AppText>
             {loadingOriginRecords ? (
               <View style={styles.loadingRow}>
                 <ActivityIndicator color={appColors.info} />
-                <Text style={styles.loadingText}>Cargando registros...</Text>
+                <AppText style={styles.loadingText}>Cargando registros...</AppText>
               </View>
             ) : originRecords.length > 0 ? (
               <View style={styles.pickerWrapper}>
@@ -696,36 +695,36 @@ export function DocumentoFormScreen() {
             ) : (
               <View style={styles.emptyOriginRecords}>
                 <Ionicons name="file-tray-outline" size={20} color={appColors.textMuted} />
-                <Text style={styles.emptyOriginRecordsText}>
+                <AppText style={styles.emptyOriginRecordsText}>
                   {`Esta persona no tiene registros de ${selectedOrigin.label.toLowerCase()}.`}
-                </Text>
+                </AppText>
               </View>
             )}
           </>
         ) : (
-          <Text style={styles.fieldHint}>
+          <AppText style={styles.fieldHint}>
             Usa General cuando el archivo no pertenece a un registro específico.
-          </Text>
+          </AppText>
         )}
       </View>
 
       <View style={styles.formCard}>
-        <Text style={styles.sectionTitle}>Archivo clínico</Text>
-        <Text style={styles.label}>Archivo adjunto</Text>
-        <Text style={styles.fieldHint}>Elige cómo deseas agregar el documento clínico.</Text>
+        <AppText style={styles.sectionTitle}>Archivo clínico</AppText>
+        <AppText style={styles.label}>Archivo adjunto</AppText>
+        <AppText style={styles.fieldHint}>Elige cómo deseas agregar el documento clínico.</AppText>
 
         <View style={styles.attachmentActions}>
           <TouchableOpacity style={styles.attachmentButton} onPress={handlePickImage}>
             <Ionicons name="image-outline" size={20} color={appColors.info} />
-            <Text style={styles.attachmentButtonText}>Elegir imagen</Text>
+            <AppText style={styles.attachmentButtonText}>Elegir imagen</AppText>
           </TouchableOpacity>
           <TouchableOpacity style={styles.attachmentButton} onPress={handleTakePhoto}>
             <Ionicons name="camera-outline" size={20} color={appColors.info} />
-            <Text style={styles.attachmentButtonText}>Tomar foto</Text>
+            <AppText style={styles.attachmentButtonText}>Tomar foto</AppText>
           </TouchableOpacity>
           <TouchableOpacity style={styles.attachmentButton} onPress={handlePickPdf}>
             <Ionicons name="document-attach-outline" size={20} color={appColors.info} />
-            <Text style={styles.attachmentButtonText}>Subir PDF</Text>
+            <AppText style={styles.attachmentButtonText}>Subir PDF</AppText>
           </TouchableOpacity>
         </View>
 
@@ -739,14 +738,14 @@ export function DocumentoFormScreen() {
               </View>
             )}
             <View style={styles.attachmentInfo}>
-              <Text style={styles.attachmentTitle}>
+              <AppText style={styles.attachmentTitle}>
                 {attachment.kind === 'pdf' ? 'PDF seleccionado' : 'Imagen seleccionada'}
-              </Text>
-              <Text style={styles.attachmentName} numberOfLines={1}>{attachment.name}</Text>
-              <Text style={styles.attachmentMeta}>
+              </AppText>
+              <AppText style={styles.attachmentName} numberOfLines={1}>{attachment.name}</AppText>
+              <AppText style={styles.attachmentMeta}>
                 {attachment.size ? `${(attachment.size / 1024 / 1024).toFixed(2)} MB · ` : ''}
                 {attachment.mimeType}
-              </Text>
+              </AppText>
             </View>
             <TouchableOpacity
               style={styles.removeAttachmentButton}
@@ -759,12 +758,12 @@ export function DocumentoFormScreen() {
         ) : (
           <View style={styles.emptyAttachment}>
             <Ionicons name="cloud-upload-outline" size={22} color={appColors.textMuted} />
-            <Text style={styles.emptyAttachmentText}>Aún no has seleccionado un archivo</Text>
+            <AppText style={styles.emptyAttachmentText}>Aún no has seleccionado un archivo</AppText>
           </View>
         )}
 
-        <Text style={styles.label}>Notas</Text>
-        <TextInput
+        <AppText style={styles.label}>Notas</AppText>
+        <AppTextInput
           style={[styles.input, styles.multiline]}
           placeholder="Describe qué contiene, fecha del estudio o indicaciones relevantes"
           placeholderTextColor={appColors.textMuted}
@@ -776,7 +775,7 @@ export function DocumentoFormScreen() {
 
       <View style={styles.actions}>
         <TouchableOpacity style={styles.cancelBtn} onPress={resetForm} disabled={submitting}>
-          <Text style={styles.cancelBtnText}>Limpiar</Text>
+          <AppText style={styles.cancelBtnText}>Limpiar</AppText>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.primaryBtn, submitting && styles.disabledBtn]}
@@ -784,7 +783,7 @@ export function DocumentoFormScreen() {
           disabled={submitting}
         >
           {submitting ? <ActivityIndicator color={appColors.text} /> : <Ionicons name="save-outline" size={20} color={appColors.text} />}
-          <Text style={styles.btnText}>{submitting ? 'Guardando...' : 'Guardar documento'}</Text>
+          <AppText style={styles.btnText}>{submitting ? 'Guardando...' : 'Guardar documento'}</AppText>
         </TouchableOpacity>
       </View>
       </ScrollView>

@@ -6,11 +6,10 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
@@ -99,11 +98,11 @@ const getScoreColor = (value?: string | number | null, inverse = false) => {
   if (inverse) {
     if (score >= 4) return '#FF4D73';
     if (score === 3) return '#F9A826';
-    return '#38F28E';
+    return '#38E28E';
   }
   if (score <= 2) return '#FF4D73';
   if (score === 3) return '#F9A826';
-  return '#38F28E';
+  return '#38E28E';
 };
 
 const formatAlertTitle = (value: string) => {
@@ -350,15 +349,15 @@ export function SaludMentalScreen() {
           <Ionicons name="happy-outline" size={26} color="#A78BFA" />
         </View>
         <View style={styles.heroCopy}>
-          <Text style={styles.heroEyebrow}>BIENESTAR EMOCIONAL</Text>
-          <Text style={styles.heroTitle}>Salud mental</Text>
-          <Text style={styles.heroText}>
+          <AppText style={styles.heroEyebrow}>BIENESTAR EMOCIONAL</AppText>
+          <AppText style={styles.heroTitle}>Salud mental</AppText>
+          <AppText style={styles.heroText}>
             Estado de ánimo, descanso y hábitos diarios en una sola vista.
-          </Text>
+          </AppText>
         </View>
         <TouchableOpacity style={styles.heroAction} onPress={() => setShowForm((current) => !current)}>
           <Ionicons name={showForm ? 'close' : 'add'} size={20} color="#071120" />
-          <Text style={styles.heroActionText}>{showForm ? 'Cerrar' : 'Nuevo registro'}</Text>
+          <AppText style={styles.heroActionText}>{showForm ? 'Cerrar' : 'Nuevo registro'}</AppText>
         </TouchableOpacity>
       </View>
 
@@ -367,14 +366,14 @@ export function SaludMentalScreen() {
           <Ionicons name="person-outline" size={20} color="#A78BFA" />
         </View>
         <View style={styles.patientSelectorCopy}>
-          <Text style={styles.fieldEyebrow}>PACIENTE</Text>
+          <AppText style={styles.fieldEyebrow}>PACIENTE</AppText>
         {loadingPatients ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color="#38F28E" />
-            <Text style={styles.loadingText}>Cargando pacientes...</Text>
+            <ActivityIndicator color="#38E28E" />
+            <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
           </View>
         ) : patients.length === 0 ? (
-          <Text style={styles.emptyText}>No hay pacientes vinculados en esta cuenta.</Text>
+          <AppText style={styles.emptyText}>No hay pacientes vinculados en esta cuenta.</AppText>
         ) : (
           <View style={styles.pickerWrapper}>
             <Picker
@@ -396,7 +395,7 @@ export function SaludMentalScreen() {
             </Picker>
           </View>
         )}
-        {patientError ? <Text style={styles.errorText}>{patientError}</Text> : null}
+        {patientError ? <AppText style={styles.errorText}>{patientError}</AppText> : null}
         </View>
       </View>
 
@@ -410,10 +409,10 @@ export function SaludMentalScreen() {
             <Ionicons name="create-outline" size={20} color="#A78BFA" />
           </View>
           <View style={styles.formToggleCopy}>
-            <Text style={styles.sectionTitle}>Nuevo registro diario</Text>
-            <Text style={styles.sectionSubtitle}>
+            <AppText style={styles.sectionTitle}>Nuevo registro diario</AppText>
+            <AppText style={styles.sectionSubtitle}>
               Añade contexto emocional, descanso y hábitos.
-            </Text>
+            </AppText>
           </View>
           <Ionicons
             name={showForm ? 'chevron-up' : 'chevron-down'}
@@ -425,9 +424,9 @@ export function SaludMentalScreen() {
         {showForm ? (
           <>
         <View style={styles.formSection}>
-          <Text style={styles.formSectionTitle}>Fecha</Text>
-          <Text style={styles.fieldLabel}>Día del registro</Text>
-          <TextInput
+          <AppText style={styles.formSectionTitle}>Fecha</AppText>
+          <AppText style={styles.fieldLabel}>Día del registro</AppText>
+          <AppTextInput
             style={styles.input}
             value={form.fecha}
             onChangeText={(value) => handleChange('fecha', value)}
@@ -438,16 +437,16 @@ export function SaludMentalScreen() {
         </View>
 
         <View style={styles.formSection}>
-          <Text style={styles.formSectionTitle}>Estado emocional</Text>
-          <Text style={styles.scaleHint}>
+          <AppText style={styles.formSectionTitle}>Estado emocional</AppText>
+          <AppText style={styles.scaleHint}>
             Usa la escala del 1 al 5 para registrar cómo se sintió la persona hoy.
-          </Text>
+          </AppText>
           <View style={styles.row}>
             <View style={styles.fieldGroupHalf}>
               <View style={styles.fieldLabelRow}>
-                <Text style={styles.fieldLabel}>Ánimo</Text>
+                <AppText style={styles.fieldLabel}>Ánimo</AppText>
                 <View style={[styles.scorePill, { backgroundColor: getScoreColor(form.estadoAnimo) }]}>
-                  <Text style={styles.scorePillText}>{getScoreLabel(form.estadoAnimo)}</Text>
+                  <AppText style={styles.scorePillText}>{getScoreLabel(form.estadoAnimo)}</AppText>
                 </View>
               </View>
               <View style={[styles.pickerWrapper, styles.halfInput]}>
@@ -463,9 +462,9 @@ export function SaludMentalScreen() {
             </View>
             <View style={styles.fieldGroupHalf}>
               <View style={styles.fieldLabelRow}>
-                <Text style={styles.fieldLabel}>Estrés</Text>
+                <AppText style={styles.fieldLabel}>Estrés</AppText>
                 <View style={[styles.scorePill, { backgroundColor: getScoreColor(form.estres, true) }]}>
-                  <Text style={styles.scorePillText}>{getScoreLabel(form.estres)}</Text>
+                  <AppText style={styles.scorePillText}>{getScoreLabel(form.estres)}</AppText>
                 </View>
               </View>
               <View style={[styles.pickerWrapper, styles.halfInput]}>
@@ -482,9 +481,9 @@ export function SaludMentalScreen() {
           </View>
           <View style={styles.fieldGroup}>
             <View style={styles.fieldLabelRow}>
-              <Text style={styles.fieldLabel}>Ansiedad</Text>
+              <AppText style={styles.fieldLabel}>Ansiedad</AppText>
               <View style={[styles.scorePill, { backgroundColor: getScoreColor(form.ansiedad, true) }]}>
-                <Text style={styles.scorePillText}>{getScoreLabel(form.ansiedad)}</Text>
+                <AppText style={styles.scorePillText}>{getScoreLabel(form.ansiedad)}</AppText>
               </View>
             </View>
             <View style={styles.pickerWrapper}>
@@ -506,11 +505,11 @@ export function SaludMentalScreen() {
         </View>
 
         <View style={styles.formSection}>
-          <Text style={styles.formSectionTitle}>Sueño y descanso</Text>
+          <AppText style={styles.formSectionTitle}>Sueño y descanso</AppText>
           <View style={styles.row}>
             <View style={styles.fieldGroupHalf}>
-              <Text style={styles.fieldLabel}>Horas de sueño</Text>
-              <TextInput
+              <AppText style={styles.fieldLabel}>Horas de sueño</AppText>
+              <AppTextInput
                 style={[styles.input, styles.halfInput]}
                 value={form.horasSueno}
                 onChangeText={(value) => handleChange('horasSueno', value)}
@@ -520,8 +519,8 @@ export function SaludMentalScreen() {
               />
             </View>
             <View style={styles.fieldGroupHalf}>
-              <Text style={styles.fieldLabel}>Horas de descanso</Text>
-              <TextInput
+              <AppText style={styles.fieldLabel}>Horas de descanso</AppText>
+              <AppTextInput
                 style={[styles.input, styles.halfInput]}
                 value={form.descansoHoras}
                 onChangeText={(value) => handleChange('descansoHoras', value)}
@@ -534,11 +533,11 @@ export function SaludMentalScreen() {
         </View>
 
         <View style={styles.formSection}>
-          <Text style={styles.formSectionTitle}>Hábitos del día</Text>
+          <AppText style={styles.formSectionTitle}>Hábitos del día</AppText>
           <View style={styles.row}>
             <View style={styles.fieldGroupHalf}>
-              <Text style={styles.fieldLabel}>Ejercicio en minutos</Text>
-              <TextInput
+              <AppText style={styles.fieldLabel}>Ejercicio en minutos</AppText>
+              <AppTextInput
                 style={[styles.input, styles.halfInput]}
                 value={form.ejercicioMinutos}
                 onChangeText={(value) => handleChange('ejercicioMinutos', value)}
@@ -548,8 +547,8 @@ export function SaludMentalScreen() {
               />
             </View>
             <View style={styles.fieldGroupHalf}>
-              <Text style={styles.fieldLabel}>Tiempo social en minutos</Text>
-              <TextInput
+              <AppText style={styles.fieldLabel}>Tiempo social en minutos</AppText>
+              <AppTextInput
                 style={[styles.input, styles.halfInput]}
                 value={form.tiempoSocialMinutos}
                 onChangeText={(value) => handleChange('tiempoSocialMinutos', value)}
@@ -561,8 +560,8 @@ export function SaludMentalScreen() {
           </View>
           <View style={styles.row}>
             <View style={styles.fieldGroupHalf}>
-              <Text style={styles.fieldLabel}>Hidratación en litros</Text>
-              <TextInput
+              <AppText style={styles.fieldLabel}>Hidratación en litros</AppText>
+              <AppTextInput
                 style={[styles.input, styles.halfInput]}
                 value={form.hidratacionLitros}
                 onChangeText={(value) => handleChange('hidratacionLitros', value)}
@@ -572,8 +571,8 @@ export function SaludMentalScreen() {
               />
             </View>
             <View style={styles.fieldGroupHalf}>
-              <Text style={styles.fieldLabel}>Pausas digitales</Text>
-              <TextInput
+              <AppText style={styles.fieldLabel}>Pausas digitales</AppText>
+              <AppTextInput
                 style={[styles.input, styles.halfInput]}
                 value={form.pausasDigitales}
                 onChangeText={(value) => handleChange('pausasDigitales', value)}
@@ -586,9 +585,9 @@ export function SaludMentalScreen() {
         </View>
 
         <View style={styles.formSection}>
-          <Text style={styles.formSectionTitle}>Reflexión personal</Text>
-          <Text style={styles.fieldLabel}>Nota personal</Text>
-          <TextInput
+          <AppText style={styles.formSectionTitle}>Reflexión personal</AppText>
+          <AppText style={styles.fieldLabel}>Nota personal</AppText>
+          <AppTextInput
             style={[styles.input, styles.textArea]}
             value={form.notaPersonal}
             onChangeText={(value) => handleChange('notaPersonal', value)}
@@ -607,16 +606,16 @@ export function SaludMentalScreen() {
           {submitting ? (
             <ActivityIndicator color="#F4F8FF" />
           ) : (
-            <Text style={styles.primaryBtnText}>Guardar registro</Text>
+            <AppText style={styles.primaryBtnText}>Guardar registro</AppText>
           )}
         </TouchableOpacity>
           </>
         ) : (
           <View style={styles.formCollapsedHint}>
             <Ionicons name="information-circle-outline" size={17} color="#9FB3C8" />
-            <Text style={styles.formCollapsedText}>
+            <AppText style={styles.formCollapsedText}>
               Abre esta sección cuando quieras registrar cómo se siente el paciente.
-            </Text>
+            </AppText>
           </View>
         )}
       </View>
@@ -624,18 +623,18 @@ export function SaludMentalScreen() {
       <View style={styles.card}>
         <View style={styles.summaryHeading}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Panorama emocional</Text>
-            <Text style={styles.sectionSubtitle}>Lectura rápida del seguimiento actual.</Text>
+            <AppText style={styles.sectionTitle}>Panorama emocional</AppText>
+            <AppText style={styles.sectionSubtitle}>Lectura rápida del seguimiento actual.</AppText>
           </View>
           <View style={styles.recordBadge}>
-            <Text style={styles.recordBadgeValue}>{historial?.totalRegistros ?? 0}</Text>
-            <Text style={styles.recordBadgeLabel}>registros</Text>
+            <AppText style={styles.recordBadgeValue}>{historial?.totalRegistros ?? 0}</AppText>
+            <AppText style={styles.recordBadgeLabel}>registros</AppText>
           </View>
         </View>
         {loadingData ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color="#38F28E" />
-            <Text style={styles.loadingText}>Cargando estadísticas...</Text>
+            <ActivityIndicator color="#38E28E" />
+            <AppText style={styles.loadingText}>Cargando estadísticas...</AppText>
           </View>
         ) : (
           <>
@@ -643,8 +642,8 @@ export function SaludMentalScreen() {
               <View style={styles.latestRecordBox}>
                 <View style={styles.latestRecordHeader}>
                   <View>
-                    <Text style={styles.latestRecordEyebrow}>ÚLTIMO REGISTRO</Text>
-                    <Text style={styles.latestRecordTitle}>{formatDate(latestRecord.fecha)}</Text>
+                    <AppText style={styles.latestRecordEyebrow}>ÚLTIMO REGISTRO</AppText>
+                    <AppText style={styles.latestRecordTitle}>{formatDate(latestRecord.fecha)}</AppText>
                   </View>
                   <Ionicons name="calendar-outline" size={20} color="#A78BFA" />
                 </View>
@@ -659,7 +658,7 @@ export function SaludMentalScreen() {
 
             {statsSummary.weekly ? (
               <>
-                <Text style={styles.subsectionTitle}>Promedio de los últimos 7 días</Text>
+                <AppText style={styles.subsectionTitle}>Promedio de los últimos 7 días</AppText>
                 <View style={styles.mentalMetricGrid}>
                   <MentalMetric label="Ánimo" value={statsSummary.weekly.estadoAnimo ?? 'N/D'} color={getScoreColor(statsSummary.weekly.estadoAnimo)} />
                   <MentalMetric label="Estrés" value={statsSummary.weekly.estres ?? 'N/D'} color={getScoreColor(statsSummary.weekly.estres, true)} />
@@ -671,25 +670,25 @@ export function SaludMentalScreen() {
 
             {statsSummary.monthly ? (
               <View style={styles.monthlyBox}>
-                <Ionicons name="trending-up-outline" size={20} color="#38F28E" />
+                <Ionicons name="trending-up-outline" size={20} color="#38E28E" />
                 <View style={styles.monthlyCopy}>
-                  <Text style={styles.monthlyTitle}>Tendencia de {statsSummary.monthly.mes}</Text>
-                  <Text style={styles.monthlyText}>
+                  <AppText style={styles.monthlyTitle}>Tendencia de {statsSummary.monthly.mes}</AppText>
+                  <AppText style={styles.monthlyText}>
                     {statsSummary.monthly.registros} registros · ánimo {statsSummary.monthly.estadoAnimoPromedio ?? 'N/D'} · estrés {statsSummary.monthly.estresPromedio ?? 'N/D'} · ansiedad {statsSummary.monthly.ansiedadPromedio ?? 'N/D'}
-                  </Text>
+                  </AppText>
                 </View>
               </View>
             ) : null}
 
-            {dataError ? <Text style={styles.errorText}>{dataError}</Text> : null}
+            {dataError ? <AppText style={styles.errorText}>{dataError}</AppText> : null}
           </>
         )}
       </View>
 
       <View style={styles.card}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Alertas</Text>
-          <Text style={styles.sectionSubtitle}>Mensajes que merecen seguimiento cercano.</Text>
+          <AppText style={styles.sectionTitle}>Alertas</AppText>
+          <AppText style={styles.sectionSubtitle}>Mensajes que merecen seguimiento cercano.</AppText>
         </View>
         {alerts?.alertas?.length ? (
           alerts.alertas.map((item, index) => (
@@ -709,53 +708,53 @@ export function SaludMentalScreen() {
               </View>
               <View style={styles.alertCopy}>
                 <View style={styles.alertHeader}>
-                  <Text style={styles.alertTitle}>
+                  <AppText style={styles.alertTitle}>
                     {formatAlertTitle(item.tipo)}
-                  </Text>
-                  <Text style={styles.alertDate}>{formatDate(item.fecha)}</Text>
+                  </AppText>
+                  <AppText style={styles.alertDate}>{formatDate(item.fecha)}</AppText>
                 </View>
-                <Text style={styles.alertText}>{item.detalle}</Text>
+                <AppText style={styles.alertText}>{item.detalle}</AppText>
               </View>
             </View>
           ))
         ) : (
           <View style={styles.healthyState}>
-            <Ionicons name="checkmark-circle-outline" size={23} color="#38F28E" />
-            <Text style={styles.healthyText}>No hay alertas que requieran atención por ahora.</Text>
+            <Ionicons name="checkmark-circle-outline" size={23} color="#38E28E" />
+            <AppText style={styles.healthyText}>No hay alertas que requieran atención por ahora.</AppText>
           </View>
         )}
       </View>
 
       <View style={styles.card}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Historial reciente</Text>
-          <Text style={styles.sectionSubtitle}>Últimas entradas registradas para este paciente.</Text>
+          <AppText style={styles.sectionTitle}>Historial reciente</AppText>
+          <AppText style={styles.sectionSubtitle}>Últimas entradas registradas para este paciente.</AppText>
         </View>
         {historial?.historialPorFecha?.length ? (
           historial.historialPorFecha.slice(0, 6).map((item) => (
             <View key={item.saludmentalId} style={styles.listItem}>
-              <Text style={styles.itemTitle}>{formatDate(item.fecha)}</Text>
+              <AppText style={styles.itemTitle}>{formatDate(item.fecha)}</AppText>
               <View style={styles.historyScoreRow}>
                 <HistoryScore label="Ánimo" value={item.estadoAnimo} color={getScoreColor(item.estadoAnimo)} />
                 <HistoryScore label="Estrés" value={item.estres} color={getScoreColor(item.estres, true)} />
                 <HistoryScore label="Ansiedad" value={item.ansiedad} color={getScoreColor(item.ansiedad, true)} />
               </View>
-              <Text style={styles.itemText}>
+              <AppText style={styles.itemText}>
                 Sueño: {item.horasSueno ?? 'N/D'} h · Descanso: {item.descansoHoras ?? 'N/D'} h
-              </Text>
-              <Text style={styles.itemText}>
+              </AppText>
+              <AppText style={styles.itemText}>
                 Ejercicio: {item.ejercicioMinutos ?? 'N/D'} min · Hidratación: {item.hidratacionLitros ?? 'N/D'} L
-              </Text>
-              <Text style={styles.itemText}>
+              </AppText>
+              <AppText style={styles.itemText}>
                 Tiempo social: {item.tiempoSocialMinutos ?? 'N/D'} min · Pausas digitales: {item.pausasDigitales ?? 'N/D'}
-              </Text>
+              </AppText>
               {item.notaPersonal ? (
-                <Text style={styles.itemText}>Nota: {item.notaPersonal}</Text>
+                <AppText style={styles.itemText}>Nota: {item.notaPersonal}</AppText>
               ) : null}
             </View>
           ))
         ) : (
-          <Text style={styles.emptyText}>Todavía no hay registros para este paciente.</Text>
+          <AppText style={styles.emptyText}>Todavía no hay registros para este paciente.</AppText>
         )}
       </View>
     </ScrollView>
@@ -776,8 +775,8 @@ function MentalMetric({
   return (
     <View style={styles.mentalMetric}>
       <View style={[styles.mentalMetricAccent, { backgroundColor: color }]} />
-      <Text style={styles.mentalMetricValue}>{String(value)}{suffix}</Text>
-      <Text style={styles.mentalMetricLabel}>{label}</Text>
+      <AppText style={styles.mentalMetricValue}>{String(value)}{suffix}</AppText>
+      <AppText style={styles.mentalMetricLabel}>{label}</AppText>
     </View>
   );
 }
@@ -785,8 +784,8 @@ function MentalMetric({
 function HistoryScore({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <View style={[styles.historyScore, { borderColor: `${color}55`, backgroundColor: `${color}12` }]}>
-      <Text style={[styles.historyScoreValue, { color }]}>{value}</Text>
-      <Text style={styles.historyScoreLabel}>{label}</Text>
+      <AppText style={[styles.historyScoreValue, { color }]}>{value}</AppText>
+      <AppText style={styles.historyScoreLabel}>{label}</AppText>
     </View>
   );
 }
@@ -1158,9 +1157,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-    backgroundColor: '#38F28E0D',
+    backgroundColor: '#38E28E0D',
     borderWidth: 1,
-    borderColor: '#38F28E45',
+    borderColor: '#38E28E45',
     borderRadius: 15,
     padding: 13,
   },
@@ -1230,9 +1229,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 9,
-    backgroundColor: '#38F28E0D',
+    backgroundColor: '#38E28E0D',
     borderWidth: 1,
-    borderColor: '#38F28E45',
+    borderColor: '#38E28E45',
     borderRadius: 14,
     padding: 13,
   },

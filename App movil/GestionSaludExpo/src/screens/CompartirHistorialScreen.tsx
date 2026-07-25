@@ -5,11 +5,10 @@ import {
   ScrollView,
   Share,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
@@ -362,23 +361,23 @@ export function CompartirHistorialScreen({ route }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.heroCard}>
-        <Text style={styles.kicker}>GESTION</Text>
-        <Text style={styles.title}>Compartir historial medico</Text>
-        <Text style={styles.subtitle}>
+        <AppText style={styles.kicker}>GESTION</AppText>
+        <AppText style={styles.title}>Compartir historial medico</AppText>
+        <AppText style={styles.subtitle}>
           Crea un permiso para otro usuario. El backend solo lo aprobara si ese usuario tiene rol medico.
-        </Text>
+        </AppText>
       </View>
 
       {loading ? (
         <View style={styles.loadingCard}>
           <ActivityIndicator color={appColors.info} />
-          <Text style={styles.loadingText}>Cargando personas y medicos...</Text>
+          <AppText style={styles.loadingText}>Cargando personas y medicos...</AppText>
         </View>
       ) : (
         <>
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>1. Persona</Text>
-            <Text style={styles.helperText}>Selecciona de quién vas a compartir la informacion.</Text>
+            <AppText style={styles.sectionTitle}>1. Persona</AppText>
+            <AppText style={styles.helperText}>Selecciona de quién vas a compartir la informacion.</AppText>
             <View style={styles.chipList}>
               {patients.map((patient) => {
                 const isActive = String(patient.pacienteId) === selectedPatientId;
@@ -388,9 +387,9 @@ export function CompartirHistorialScreen({ route }: Props) {
                     style={[styles.personChip, isActive && styles.personChipActive]}
                     onPress={() => setSelectedPatientId(String(patient.pacienteId))}
                   >
-                    <Text style={[styles.personChipText, isActive && styles.personChipTextActive]}>
+                    <AppText style={[styles.personChipText, isActive && styles.personChipTextActive]}>
                       {patient.displayName}
-                    </Text>
+                    </AppText>
                   </TouchableOpacity>
                 );
               })}
@@ -398,20 +397,20 @@ export function CompartirHistorialScreen({ route }: Props) {
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>2. Medico</Text>
-            <Text style={styles.helperText}>
+            <AppText style={styles.sectionTitle}>2. Medico</AppText>
+            <AppText style={styles.helperText}>
               Toca un medico disponible o escribe el ID de un usuario con permiso de medico.
-            </Text>
+            </AppText>
             <View style={styles.testDoctorBox}>
               <View style={styles.testDoctorHeader}>
                 <Ionicons name="flask-outline" size={18} color={appColors.info} />
-                <Text style={styles.testDoctorTitle}>Medico de prueba</Text>
+                <AppText style={styles.testDoctorTitle}>Medico de prueba</AppText>
               </View>
-              <Text style={styles.testDoctorText}>Usuario: {TEST_DOCTOR_USERNAME}</Text>
-              <Text style={styles.testDoctorText}>Clave: {TEST_DOCTOR_PASSWORD}</Text>
-              <Text style={styles.testDoctorHint}>
+              <AppText style={styles.testDoctorText}>Usuario: {TEST_DOCTOR_USERNAME}</AppText>
+              <AppText style={styles.testDoctorText}>Clave: {TEST_DOCTOR_PASSWORD}</AppText>
+              <AppText style={styles.testDoctorHint}>
                 Cargalo con {TEST_DOCTOR_SQL}; quedara con rol medico y registro aprobado.
-              </Text>
+              </AppText>
             </View>
 
             {doctors.length > 0 ? (
@@ -428,19 +427,19 @@ export function CompartirHistorialScreen({ route }: Props) {
                       }}
                     >
                       <View style={styles.doctorHeader}>
-                        <Text style={styles.doctorTitle}>{buildDoctorLabel(doctor)}</Text>
+                        <AppText style={styles.doctorTitle}>{buildDoctorLabel(doctor)}</AppText>
                         {doctor.estado ? (
                           <View style={styles.statusPill}>
-                            <Text style={styles.statusPillText}>{doctor.estado}</Text>
+                            <AppText style={styles.statusPillText}>{doctor.estado}</AppText>
                           </View>
                         ) : null}
                       </View>
-                      <Text style={styles.doctorSubtitle}>
+                      <AppText style={styles.doctorSubtitle}>
                         Usuario ID: {doctor.usuarioId}
-                      </Text>
-                      <Text style={styles.doctorMeta}>{buildDoctorSummary(doctor)}</Text>
+                      </AppText>
+                      <AppText style={styles.doctorMeta}>{buildDoctorSummary(doctor)}</AppText>
                       {doctor.numerolicencia ? (
-                        <Text style={styles.doctorMeta}>Licencia: {doctor.numerolicencia}</Text>
+                        <AppText style={styles.doctorMeta}>Licencia: {doctor.numerolicencia}</AppText>
                       ) : null}
                     </TouchableOpacity>
                   );
@@ -449,14 +448,14 @@ export function CompartirHistorialScreen({ route }: Props) {
             ) : (
               <View style={styles.emptyCard}>
                 <Ionicons name="medkit-outline" size={20} color={appColors.textMuted} />
-                <Text style={styles.emptyText}>
+                <AppText style={styles.emptyText}>
                   No se encontraron medicos en el catalogo. Puedes escribir el ID manualmente.
-                </Text>
+                </AppText>
               </View>
             )}
 
-            <Text style={styles.label}>ID del medico</Text>
-            <TextInput
+            <AppText style={styles.label}>ID del medico</AppText>
+            <AppTextInput
               style={styles.input}
               placeholder="Ejemplo: 12"
               placeholderTextColor={appColors.textMuted}
@@ -469,34 +468,34 @@ export function CompartirHistorialScreen({ route }: Props) {
             />
             <View style={styles.medicoRequirementBox}>
               <Ionicons name="shield-checkmark-outline" size={18} color={appColors.success} />
-              <Text style={styles.medicoRequirementText}>
+              <AppText style={styles.medicoRequirementText}>
                 El permiso se crea solamente si el usuario destino tiene rol medico en el backend.
-              </Text>
+              </AppText>
             </View>
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>3. Alcance del permiso</Text>
-            <Text style={styles.helperText}>Define cuánto tiempo vive el permiso principal.</Text>
+            <AppText style={styles.sectionTitle}>3. Alcance del permiso</AppText>
+            <AppText style={styles.helperText}>Define cuánto tiempo vive el permiso principal.</AppText>
 
             <View style={styles.segmentRow}>
               <TouchableOpacity
                 style={[styles.segmentButton, permissionType === 'temporal' && styles.segmentButtonActive]}
                 onPress={() => setPermissionType('temporal')}
               >
-                <Text style={[styles.segmentButtonText, permissionType === 'temporal' && styles.segmentButtonTextActive]}>
+                <AppText style={[styles.segmentButtonText, permissionType === 'temporal' && styles.segmentButtonTextActive]}>
                   Temporal
-                </Text>
+                </AppText>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.segmentButton, permissionType === 'permanente' && styles.segmentButtonActive]}
                 onPress={() => setPermissionType('permanente')}
               >
-                <Text
+                <AppText
                   style={[styles.segmentButtonText, permissionType === 'permanente' && styles.segmentButtonTextActive]}
                 >
                   Permanente
-                </Text>
+                </AppText>
               </TouchableOpacity>
             </View>
 
@@ -510,17 +509,17 @@ export function CompartirHistorialScreen({ route }: Props) {
                       style={[styles.optionChip, isActive && styles.optionChipActive]}
                       onPress={() => setPermissionDuration(option.value)}
                     >
-                      <Text style={[styles.optionChipText, isActive && styles.optionChipTextActive]}>
+                      <AppText style={[styles.optionChipText, isActive && styles.optionChipTextActive]}>
                         {option.label}
-                      </Text>
+                      </AppText>
                     </TouchableOpacity>
                   );
                 })}
               </View>
             ) : null}
 
-            <Text style={styles.label}>Nota opcional</Text>
-            <TextInput
+            <AppText style={styles.label}>Nota opcional</AppText>
+            <AppTextInput
               style={[styles.input, styles.multilineInput]}
               placeholder="Ejemplo: compartir para segunda opinion"
               placeholderTextColor={appColors.textMuted}
@@ -531,10 +530,10 @@ export function CompartirHistorialScreen({ route }: Props) {
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>4. Que quieres compartir</Text>
-            <Text style={styles.helperText}>
+            <AppText style={styles.sectionTitle}>4. Que quieres compartir</AppText>
+            <AppText style={styles.helperText}>
               Marca solo las partes del historial que el medico necesita revisar.
-            </Text>
+            </AppText>
             <View style={styles.sectionGrid}>
               {SECTION_OPTIONS.map((option) => {
                 const isActive = selectedSections.includes(option.key);
@@ -544,10 +543,10 @@ export function CompartirHistorialScreen({ route }: Props) {
                     style={[styles.sectionOption, isActive && styles.sectionOptionActive]}
                     onPress={() => toggleSection(option.key)}
                   >
-                    <Text style={[styles.sectionOptionLabel, isActive && styles.sectionOptionLabelActive]}>
+                    <AppText style={[styles.sectionOptionLabel, isActive && styles.sectionOptionLabelActive]}>
                       {option.label}
-                    </Text>
-                    <Text style={styles.sectionOptionHelper}>{option.helper}</Text>
+                    </AppText>
+                    <AppText style={styles.sectionOptionHelper}>{option.helper}</AppText>
                   </TouchableOpacity>
                 );
               })}
@@ -555,8 +554,8 @@ export function CompartirHistorialScreen({ route }: Props) {
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>5. Tiempo del enlace</Text>
-            <Text style={styles.helperText}>Este es el tiempo durante el cual el enlace funcionara.</Text>
+            <AppText style={styles.sectionTitle}>5. Tiempo del enlace</AppText>
+            <AppText style={styles.helperText}>Este es el tiempo durante el cual el enlace funcionara.</AppText>
             <View style={styles.chipList}>
               {SHARE_DURATION_OPTIONS.map((option) => {
                 const isActive = shareDurationMinutes === option.value;
@@ -566,9 +565,9 @@ export function CompartirHistorialScreen({ route }: Props) {
                     style={[styles.optionChip, isActive && styles.optionChipActive]}
                     onPress={() => setShareDurationMinutes(option.value)}
                   >
-                    <Text style={[styles.optionChipText, isActive && styles.optionChipTextActive]}>
+                    <AppText style={[styles.optionChipText, isActive && styles.optionChipTextActive]}>
                       {option.label}
-                    </Text>
+                    </AppText>
                   </TouchableOpacity>
                 );
               })}
@@ -584,7 +583,7 @@ export function CompartirHistorialScreen({ route }: Props) {
               ) : (
                 <>
                   <Ionicons name="link-outline" size={18} color={appColors.text} />
-                  <Text style={styles.primaryButtonText}>Generar enlace</Text>
+                  <AppText style={styles.primaryButtonText}>Generar enlace</AppText>
                 </>
               )}
             </TouchableOpacity>
@@ -594,36 +593,36 @@ export function CompartirHistorialScreen({ route }: Props) {
             <View style={styles.resultCard}>
               <View style={styles.resultHeader}>
                 <Ionicons name="checkmark-circle-outline" size={22} color={appColors.success} />
-                <Text style={styles.resultTitle}>Enlace listo</Text>
+                <AppText style={styles.resultTitle}>Enlace listo</AppText>
               </View>
-              <Text style={styles.resultText}>Paciente: {generatedLink.patientName}</Text>
-              <Text style={styles.resultText}>Medico: {generatedLink.doctorLabel}</Text>
-              <Text style={styles.resultText}>Expira: {formatDateTime(generatedLink.expiresAt)}</Text>
-              <Text style={styles.resultLabel}>Enlace interno de app</Text>
+              <AppText style={styles.resultText}>Paciente: {generatedLink.patientName}</AppText>
+              <AppText style={styles.resultText}>Medico: {generatedLink.doctorLabel}</AppText>
+              <AppText style={styles.resultText}>Expira: {formatDateTime(generatedLink.expiresAt)}</AppText>
+              <AppText style={styles.resultLabel}>Enlace interno de app</AppText>
               <View style={styles.linkBox}>
-                <Text selectable style={styles.linkText}>{generatedLink.appUrl}</Text>
+                <AppText selectable style={styles.linkText}>{generatedLink.appUrl}</AppText>
               </View>
-              <Text style={styles.resultLabel}>Codigo para pegar en la app</Text>
+              <AppText style={styles.resultLabel}>Codigo para pegar en la app</AppText>
               <View style={styles.linkBox}>
-                <Text selectable style={styles.codeText}>{generatedLink.token}</Text>
+                <AppText selectable style={styles.codeText}>{generatedLink.token}</AppText>
               </View>
-              <Text style={styles.resultLabel}>Enlace web</Text>
+              <AppText style={styles.resultLabel}>Enlace web</AppText>
               <View style={styles.linkBox}>
-                <Text selectable style={styles.linkText}>{generatedLink.shareUrl}</Text>
+                <AppText selectable style={styles.linkText}>{generatedLink.shareUrl}</AppText>
               </View>
               <TouchableOpacity style={styles.shareButton} onPress={() => void handleShare()}>
                 <Ionicons name="share-social-outline" size={18} color={appColors.background} />
-                <Text style={styles.shareButtonText}>Compartir enlace</Text>
+                <AppText style={styles.shareButtonText}>Compartir enlace</AppText>
               </TouchableOpacity>
             </View>
           ) : null}
         </>
       )}
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      <Text style={styles.footerNote}>
+      {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
+      <AppText style={styles.footerNote}>
         Este enlace debe compartirse solo con el medico autorizado. Usuario activo: {user?.username ?? 'usuario'}.
-      </Text>
+      </AppText>
     </ScrollView>
   );
 }

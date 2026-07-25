@@ -5,12 +5,11 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -133,11 +132,11 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
           <View style={styles.heroIcon}>
             <Ionicons name="key-outline" size={30} color={appColors.info} />
           </View>
-          <Text style={styles.eyebrow}>SEGURIDAD DE LA CUENTA</Text>
-          <Text style={styles.heroTitle}>Recupera el acceso de forma segura</Text>
-          <Text style={styles.heroText}>
+          <AppText style={styles.eyebrow}>SEGURIDAD DE LA CUENTA</AppText>
+          <AppText style={styles.heroTitle}>Recupera el acceso de forma segura</AppText>
+          <AppText style={styles.heroText}>
             Verificaremos tu identidad antes de permitir que establezcas una contraseña nueva.
-          </Text>
+          </AppText>
           <View style={styles.trustList}>
             {[
               ['shield-checkmark-outline', 'Verificación protegida contra bots'],
@@ -146,7 +145,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
             ].map(([icon, text]) => (
               <View key={text} style={styles.trustItem}>
                 <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={18} color={appColors.success} />
-                <Text style={styles.trustText}>{text}</Text>
+                <AppText style={styles.trustText}>{text}</AppText>
               </View>
             ))}
           </View>
@@ -155,8 +154,8 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
         <View style={[styles.card, isDesktop && styles.cardDesktop]}>
           <View style={styles.progressHeader}>
             <View style={styles.progressCopy}>
-              <Text style={styles.cardTitle}>{step === 1 ? 'Verifica tu identidad' : 'Crea tu contraseña'}</Text>
-              <Text style={styles.cardSubtitle}>Paso {step} de 2</Text>
+              <AppText style={styles.cardTitle}>{step === 1 ? 'Verifica tu identidad' : 'Crea tu contraseña'}</AppText>
+              <AppText style={styles.cardSubtitle}>Paso {step} de 2</AppText>
             </View>
             <View style={styles.steps}>
               {[1, 2].map((item) => (
@@ -164,7 +163,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
                   {step > item ? (
                     <Ionicons name="checkmark" size={14} color={appColors.background} />
                   ) : (
-                    <Text style={[styles.stepNumber, step >= item && styles.stepNumberActive]}>{item}</Text>
+                    <AppText style={[styles.stepNumber, step >= item && styles.stepNumberActive]}>{item}</AppText>
                   )}
                 </View>
               ))}
@@ -174,10 +173,10 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
           {step === 1 ? (
             <View style={styles.form}>
               <View>
-                <Text style={styles.label}>Correo de la cuenta</Text>
+                <AppText style={styles.label}>Correo de la cuenta</AppText>
                 <View style={styles.inputWrap}>
                   <Ionicons name="mail-outline" size={19} color={appColors.textMuted} />
-                  <TextInput
+                  <AppTextInput
                     style={styles.input}
                     placeholder="nombre@correo.com"
                     keyboardType="email-address"
@@ -191,7 +190,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
               </View>
 
               <View>
-                <Text style={styles.label}>Pregunta de seguridad</Text>
+                <AppText style={styles.label}>Pregunta de seguridad</AppText>
                 <View style={styles.questionGrid}>
                   {SECURITY_QUESTIONS.map((question) => {
                     const selected = securityQuestion === question.id;
@@ -204,7 +203,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
                         onPress={() => setSecurityQuestion(question.id)}
                       >
                         <Ionicons name={question.icon} size={18} color={selected ? appColors.info : appColors.textMuted} />
-                        <Text style={[styles.questionText, selected && styles.questionTextActive]}>{question.label}</Text>
+                        <AppText style={[styles.questionText, selected && styles.questionTextActive]}>{question.label}</AppText>
                         <View style={[styles.radio, selected && styles.radioActive]}>
                           {selected ? <View style={styles.radioCenter} /> : null}
                         </View>
@@ -215,10 +214,10 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
               </View>
 
               <View>
-                <Text style={styles.label}>Tu respuesta</Text>
+                <AppText style={styles.label}>Tu respuesta</AppText>
                 <View style={styles.inputWrap}>
                   <Ionicons name="chatbubble-ellipses-outline" size={19} color={appColors.textMuted} />
-                  <TextInput
+                  <AppTextInput
                     style={styles.input}
                     placeholder="Escribe la respuesta que registraste"
                     placeholderTextColor={appColors.textMuted}
@@ -226,7 +225,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
                     onChangeText={setSecurityAnswer}
                   />
                 </View>
-                <Text style={styles.helperText}>No distingue entre mayúsculas, minúsculas ni acentos.</Text>
+                <AppText style={styles.helperText}>No distingue entre mayúsculas, minúsculas ni acentos.</AppText>
               </View>
 
               <AltchaWidget onPayload={handleAltchaPayload} resetKey={altchaResetKey} />
@@ -238,7 +237,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
               >
                 {sendingCode ? <ActivityIndicator color={appColors.background} /> : (
                   <>
-                    <Text style={styles.primaryButtonText}>Continuar</Text>
+                    <AppText style={styles.primaryButtonText}>Continuar</AppText>
                     <Ionicons name="arrow-forward" size={18} color={appColors.background} />
                   </>
                 )}
@@ -249,15 +248,15 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
               <View style={styles.successBanner}>
                 <Ionicons name="checkmark-circle" size={23} color={appColors.success} />
                 <View style={styles.bannerCopy}>
-                  <Text style={styles.successTitle}>Identidad verificada</Text>
-                  <Text style={styles.successText}>Usa el código generado para {email.trim().toLowerCase()}.</Text>
+                  <AppText style={styles.successTitle}>Identidad verificada</AppText>
+                  <AppText style={styles.successText}>Usa el código generado para {email.trim().toLowerCase()}.</AppText>
                 </View>
               </View>
 
               <View>
-                <Text style={styles.label}>Código de recuperación</Text>
+                <AppText style={styles.label}>Código de recuperación</AppText>
                 <View style={styles.codeInputWrap}>
-                  <TextInput
+                  <AppTextInput
                     style={styles.codeInput}
                     placeholder="AB12"
                     placeholderTextColor={appColors.textMuted}
@@ -267,16 +266,16 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
                     maxLength={4}
                   />
                 </View>
-                <Text style={styles.helperText}>
+                <AppText style={styles.helperText}>
                   {recoveryExpiresAt ? 'Este código expira en 30 minutos.' : 'Ingresa el código de cuatro caracteres.'}
-                </Text>
+                </AppText>
               </View>
 
               <View>
-                <Text style={styles.label}>Nueva contraseña</Text>
+                <AppText style={styles.label}>Nueva contraseña</AppText>
                 <View style={styles.inputWrap}>
                   <Ionicons name="lock-closed-outline" size={19} color={appColors.textMuted} />
-                  <TextInput
+                  <AppTextInput
                     style={styles.input}
                     placeholder="Escribe una contraseña segura"
                     placeholderTextColor={appColors.textMuted}
@@ -297,17 +296,17 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
                         size={15}
                         color={check.valid ? appColors.success : appColors.textMuted}
                       />
-                      <Text style={[styles.requirementText, check.valid && styles.requirementValid]}>{check.label}</Text>
+                      <AppText style={[styles.requirementText, check.valid && styles.requirementValid]}>{check.label}</AppText>
                     </View>
                   ))}
                 </View>
               </View>
 
               <View>
-                <Text style={styles.label}>Confirma tu contraseña</Text>
+                <AppText style={styles.label}>Confirma tu contraseña</AppText>
                 <View style={styles.inputWrap}>
                   <Ionicons name="lock-closed-outline" size={19} color={appColors.textMuted} />
-                  <TextInput
+                  <AppTextInput
                     style={styles.input}
                     placeholder="Repite la contraseña"
                     placeholderTextColor={appColors.textMuted}
@@ -334,13 +333,13 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
                 {saving ? <ActivityIndicator color={appColors.background} /> : (
                   <>
                     <Ionicons name="shield-checkmark" size={18} color={appColors.background} />
-                    <Text style={styles.primaryButtonText}>Actualizar contraseña</Text>
+                    <AppText style={styles.primaryButtonText}>Actualizar contraseña</AppText>
                   </>
                 )}
               </TouchableOpacity>
               <TouchableOpacity style={styles.backButton} onPress={() => setStep(1)}>
                 <Ionicons name="arrow-back" size={17} color={appColors.textMuted} />
-                <Text style={styles.backButtonText}>Cambiar datos de verificación</Text>
+                <AppText style={styles.backButtonText}>Cambiar datos de verificación</AppText>
               </TouchableOpacity>
             </View>
           )}

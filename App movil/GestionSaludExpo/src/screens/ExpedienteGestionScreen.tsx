@@ -3,11 +3,10 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -57,9 +56,9 @@ const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => 
       <Ionicons
         name={isSuccess ? 'checkmark-circle-outline' : 'alert-circle-outline'}
         size={18}
-        color={isSuccess ? '#38F28E' : '#FF4D73'}
+        color={isSuccess ? '#38E28E' : '#FF4D73'}
       />
-      <Text style={styles.feedbackText}>{feedback.message}</Text>
+      <AppText style={styles.feedbackText}>{feedback.message}</AppText>
     </View>
   );
 };
@@ -250,17 +249,17 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
             <Ionicons name="people-outline" size={25} color={appColors.info} />
           </View>
           <View style={styles.heroCopy}>
-            <Text style={styles.heroEyebrow}>EXPEDIENTE FAMILIAR</Text>
-            <Text style={styles.heroTitle}>Personas asociadas</Text>
-            <Text style={styles.heroSubtitle}>
+            <AppText style={styles.heroEyebrow}>EXPEDIENTE FAMILIAR</AppText>
+            <AppText style={styles.heroTitle}>Personas asociadas</AppText>
+            <AppText style={styles.heroSubtitle}>
               Administra los perfiles clínicos vinculados a tu cuenta.
-            </Text>
+            </AppText>
           </View>
           <View style={styles.totalBadge}>
-            <Text style={styles.totalValue}>{linkedPatients.length}</Text>
-            <Text style={styles.totalLabel}>
+            <AppText style={styles.totalValue}>{linkedPatients.length}</AppText>
+            <AppText style={styles.totalLabel}>
               {linkedPatients.length === 1 ? 'persona' : 'personas'}
-            </Text>
+            </AppText>
           </View>
         </View>
 
@@ -277,21 +276,21 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               size={19}
               color={showPersonForm ? appColors.text : appColors.background}
             />
-            <Text
+            <AppText
               style={[
                 styles.primaryActionText,
                 showPersonForm && styles.primaryActionTextSecondary,
               ]}
             >
               {showPersonForm ? 'Cerrar formulario' : 'Agregar persona'}
-            </Text>
+            </AppText>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.shareHistoryBtn}
             onPress={() => navigation.navigate('CompartirHistorial')}
           >
             <Ionicons name="share-social-outline" size={19} color={appColors.info} />
-            <Text style={styles.shareHistoryText}>Compartir expediente</Text>
+            <AppText style={styles.shareHistoryText}>Compartir expediente</AppText>
           </TouchableOpacity>
         </View>
       </View>
@@ -299,10 +298,10 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
       <View style={styles.panelCard}>
         <View style={styles.panelHeaderRow}>
           <View style={styles.panelHeaderCopy}>
-            <Text style={styles.panelTitle}>Directorio del expediente</Text>
-            <Text style={styles.panelHelper}>
+            <AppText style={styles.panelTitle}>Directorio del expediente</AppText>
+            <AppText style={styles.panelHelper}>
               Selecciona una persona para consultar o administrar su información clínica.
-            </Text>
+            </AppText>
           </View>
         </View>
 
@@ -311,16 +310,16 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
         {loadingPatients ? (
           <View style={styles.stateCard}>
             <ActivityIndicator color="#29B6FF" />
-            <Text style={styles.stateTitle}>Cargando personas</Text>
-            <Text style={styles.stateText}>Estamos consultando tus vinculos registrados.</Text>
+            <AppText style={styles.stateTitle}>Cargando personas</AppText>
+            <AppText style={styles.stateText}>Estamos consultando tus vinculos registrados.</AppText>
           </View>
         ) : linkedPatients.length === 0 ? (
           <View style={styles.stateCard}>
             <Ionicons name="people-outline" size={28} color="#29B6FF" />
-            <Text style={styles.stateTitle}>Aun no tienes personas vinculadas</Text>
-            <Text style={styles.stateText}>
+            <AppText style={styles.stateTitle}>Aun no tienes personas vinculadas</AppText>
+            <AppText style={styles.stateText}>
               Crea la primera persona para comenzar a llenar el expediente familiar o personal.
-            </Text>
+            </AppText>
           </View>
         ) : (
           <View style={styles.peopleList}>
@@ -328,36 +327,36 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               <View key={`${person.relationId}-${person.pacienteId}`} style={styles.personCard}>
                 <View style={styles.personMainRow}>
                   <View style={styles.personAvatar}>
-                    <Text style={styles.personAvatarText}>{getInitials(person.nombreCompleto)}</Text>
+                    <AppText style={styles.personAvatarText}>{getInitials(person.nombreCompleto)}</AppText>
                   </View>
                   <View style={styles.personCopy}>
                     <View style={styles.personTitleRow}>
-                      <Text style={styles.personName}>{person.nombreCompleto}</Text>
+                      <AppText style={styles.personName}>{person.nombreCompleto}</AppText>
                       {person.esPrincipal ? (
                         <View style={styles.personBadge}>
-                          <Text style={styles.personBadgeText}>Principal</Text>
+                          <AppText style={styles.personBadgeText}>Principal</AppText>
                         </View>
                       ) : null}
                     </View>
                     <View style={styles.personDetails}>
                       <View style={styles.personDetail}>
                         <Ionicons name="finger-print-outline" size={14} color={appColors.textMuted} />
-                        <Text style={styles.personMeta}>ID #{person.pacienteId}</Text>
+                        <AppText style={styles.personMeta}>ID #{person.pacienteId}</AppText>
                       </View>
                       {person.parentesco ? (
                         <View style={styles.personDetail}>
                           <Ionicons name="people-outline" size={14} color={appColors.textMuted} />
-                          <Text style={styles.personMeta}>{person.parentesco}</Text>
+                          <AppText style={styles.personMeta}>{person.parentesco}</AppText>
                         </View>
                       ) : null}
                       {person.contacto ? (
                         <View style={styles.personDetail}>
                           <Ionicons name="call-outline" size={14} color={appColors.textMuted} />
-                          <Text style={styles.personContact}>{person.contacto}</Text>
+                          <AppText style={styles.personContact}>{person.contacto}</AppText>
                         </View>
                       ) : null}
                     </View>
-                    {person.notas ? <Text style={styles.personNotes}>{person.notas}</Text> : null}
+                    {person.notas ? <AppText style={styles.personNotes}>{person.notas}</AppText> : null}
                   </View>
                 </View>
                 <View style={styles.personActions}>
@@ -371,7 +370,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                     }
                   >
                     <Ionicons name="pulse-outline" size={17} color={appColors.background} />
-                    <Text style={styles.personActionPrimaryText}>Ver resumen</Text>
+                    <AppText style={styles.personActionPrimaryText}>Ver resumen</AppText>
                   </TouchableOpacity>
                   <TouchableOpacity
                     activeOpacity={0.82}
@@ -381,7 +380,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                     }
                   >
                     <Ionicons name="create-outline" size={17} color={appColors.info} />
-                    <Text style={styles.personActionText}>Editar</Text>
+                    <AppText style={styles.personActionText}>Editar</AppText>
                   </TouchableOpacity>
                   <TouchableOpacity
                     activeOpacity={0.82}
@@ -403,20 +402,20 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
 
         {showPersonForm ? (
           <View style={styles.formCard}>
-            <Text style={styles.formTitle}>Registrar nueva persona</Text>
-            <Text style={styles.formSubtitle}>
+            <AppText style={styles.formTitle}>Registrar nueva persona</AppText>
+            <AppText style={styles.formSubtitle}>
               Completa los datos basicos para vincularla al expediente actual.
-            </Text>
+            </AppText>
 
             <View style={styles.formGrid}>
-              <TextInput
+              <AppTextInput
                 style={styles.input}
                 placeholder="Nombres"
                 placeholderTextColor="#9FB3C8"
                 value={personForm.nombres}
                 onChangeText={(text) => handlePersonInput('nombres', text)}
               />
-              <TextInput
+              <AppTextInput
                 style={styles.input}
                 placeholder="Apellidos"
                 placeholderTextColor="#9FB3C8"
@@ -424,7 +423,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                 onChangeText={(text) => handlePersonInput('apellidos', text)}
               />
               <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Sexo</Text>
+                <AppText style={styles.fieldLabel}>Sexo</AppText>
                 <View style={styles.segmentedRow}>
                   {[
                     { label: 'Femenino', value: 'F' },
@@ -439,20 +438,20 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                         style={[styles.segmentOption, isSelected && styles.segmentOptionActive]}
                         onPress={() => handlePersonInput('sexo', isSelected ? '' : option.value)}
                       >
-                        <Text
+                        <AppText
                           style={[
                             styles.segmentOptionText,
                             isSelected && styles.segmentOptionTextActive,
                           ]}
                         >
                           {option.label}
-                        </Text>
+                        </AppText>
                       </TouchableOpacity>
                     );
                   })}
                 </View>
               </View>
-              <TextInput
+              <AppTextInput
                 style={styles.input}
                 placeholder="Fecha de nacimiento (YYYY-MM-DD)"
                 placeholderTextColor="#9FB3C8"
@@ -461,7 +460,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                 value={personForm.fechanacimiento}
                 onChangeText={(text) => handlePersonInput('fechanacimiento', text)}
               />
-              <TextInput
+              <AppTextInput
                 style={styles.input}
                 placeholder="Telefono"
                 placeholderTextColor="#9FB3C8"
@@ -469,7 +468,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                 value={personForm.telefono}
                 onChangeText={(text) => handlePersonInput('telefono', text)}
               />
-              <TextInput
+              <AppTextInput
                 style={styles.input}
                 placeholder="Correo electronico"
                 placeholderTextColor="#9FB3C8"
@@ -478,14 +477,14 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                 value={personForm.email}
                 onChangeText={(text) => handlePersonInput('email', text)}
               />
-              <TextInput
+              <AppTextInput
                 style={styles.input}
                 placeholder="Parentesco o rol"
                 placeholderTextColor="#9FB3C8"
                 value={personForm.parentesco}
                 onChangeText={(text) => handlePersonInput('parentesco', text)}
               />
-              <TextInput
+              <AppTextInput
                 style={[styles.input, styles.multilineInput]}
                 placeholder="Notas"
                 placeholderTextColor="#9FB3C8"
@@ -512,10 +511,10 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                 />
               </View>
               <View style={styles.principalButtonCopy}>
-                <Text style={styles.switchTitle}>Marcar como principal</Text>
-                <Text style={styles.switchHelper}>
+                <AppText style={styles.switchTitle}>Marcar como principal</AppText>
+                <AppText style={styles.switchHelper}>
                   Usa esta opción para destacar la persona central del expediente.
-                </Text>
+                </AppText>
               </View>
               <View
                 style={[
@@ -541,7 +540,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               ) : (
                 <>
                   <Ionicons name="save-outline" size={18} color="#071120" />
-                  <Text style={styles.submitBtnText}>Guardar persona</Text>
+                  <AppText style={styles.submitBtnText}>Guardar persona</AppText>
                 </>
               )}
             </TouchableOpacity>

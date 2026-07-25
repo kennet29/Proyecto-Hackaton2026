@@ -6,11 +6,10 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../context/AuthContext';
@@ -344,25 +343,25 @@ export function PeriodoScreen() {
             <Ionicons name="moon-outline" size={24} color={appColors.text} />
           </View>
           <View style={styles.heroCopy}>
-            <Text style={styles.heroEyebrow}>Bienestar femenino</Text>
-            <Text style={styles.heroTitle}>Módulo de Periodo</Text>
+            <AppText style={styles.heroEyebrow}>Bienestar femenino</AppText>
+            <AppText style={styles.heroTitle}>Módulo de Periodo</AppText>
           </View>
         </View>
-        <Text style={styles.heroText}>
+        <AppText style={styles.heroText}>
           Registra ciclos, síntomas y revisa la predicción del siguiente periodo.
-        </Text>
+        </AppText>
         <View style={styles.heroChips}>
           <View style={styles.chip}>
             <Ionicons name="calendar-outline" size={14} color={appColors.accent} />
-            <Text style={styles.chipText}>Ciclos</Text>
+            <AppText style={styles.chipText}>Ciclos</AppText>
           </View>
           <View style={styles.chip}>
             <Ionicons name="pulse-outline" size={14} color={appColors.info} />
-            <Text style={styles.chipText}>Síntomas</Text>
+            <AppText style={styles.chipText}>Síntomas</AppText>
           </View>
           <View style={styles.chip}>
             <Ionicons name="analytics-outline" size={14} color={appColors.success} />
-            <Text style={styles.chipText}>Predicción</Text>
+            <AppText style={styles.chipText}>Predicción</AppText>
           </View>
         </View>
       </View>
@@ -370,8 +369,8 @@ export function PeriodoScreen() {
       <View style={styles.card}>
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionLabel}>Seguridad</Text>
-            <Text style={styles.sectionTitle}>Acceso y validación</Text>
+            <AppText style={styles.sectionLabel}>Seguridad</AppText>
+            <AppText style={styles.sectionTitle}>Acceso y validación</AppText>
           </View>
           <View
             style={[
@@ -384,28 +383,28 @@ export function PeriodoScreen() {
               size={14}
               color={isUnlocked ? appColors.success : appColors.accent}
             />
-            <Text
+            <AppText
               style={[
                 styles.statusBadgeText,
                 isUnlocked ? styles.statusBadgeTextSuccess : styles.statusBadgeTextLocked,
               ]}
             >
               {isUnlocked ? 'Activo' : 'Bloqueado'}
-            </Text>
+            </AppText>
           </View>
         </View>
         {!hasFemalePatients ? (
           <View style={styles.noticeBox}>
             <Ionicons name="information-circle-outline" size={20} color={appColors.accent} />
-            <Text style={styles.errorText}>
+            <AppText style={styles.errorText}>
               Este módulo se habilita cuando existe una persona vinculada con género femenino.
-            </Text>
+            </AppText>
           </View>
         ) : isUnlocked ? (
           <>
-            <Text style={styles.successText}>
+            <AppText style={styles.successText}>
               Módulo desbloqueado. Ya puedes registrar y consultar periodos.
-            </Text>
+            </AppText>
             <TouchableOpacity
               style={styles.secondaryBtn}
               onPress={() => {
@@ -415,15 +414,15 @@ export function PeriodoScreen() {
               }}
             >
               <Ionicons name="lock-closed-outline" size={18} color={appColors.text} />
-              <Text style={styles.secondaryBtnText}>Bloquear módulo</Text>
+              <AppText style={styles.secondaryBtnText}>Bloquear módulo</AppText>
             </TouchableOpacity>
           </>
         ) : (
           <>
-            <Text style={styles.helperText}>
+            <AppText style={styles.helperText}>
               Se encontró al menos una paciente femenina. Ingresa la contraseña adicional para continuar.
-            </Text>
-            <TextInput
+            </AppText>
+            <AppTextInput
               style={styles.input}
               value={modulePassword}
               onChangeText={setModulePassword}
@@ -434,7 +433,7 @@ export function PeriodoScreen() {
             />
             <TouchableOpacity style={styles.primaryBtn} onPress={handleUnlock}>
               <Ionicons name="lock-open-outline" size={18} color={appColors.background} />
-              <Text style={styles.primaryBtnText}>Desbloquear módulo</Text>
+              <AppText style={styles.primaryBtnText}>Desbloquear módulo</AppText>
             </TouchableOpacity>
           </>
         )}
@@ -443,16 +442,16 @@ export function PeriodoScreen() {
       {!isUnlocked ? null : (
         <>
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Paciente</Text>
+        <AppText style={styles.sectionTitle}>Paciente</AppText>
         {loadingPatients ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color="#FF4D73" />
-            <Text style={styles.loadingText}>Cargando pacientes...</Text>
+            <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
           </View>
         ) : patients.length === 0 ? (
-          <Text style={styles.emptyText}>
+          <AppText style={styles.emptyText}>
             No hay pacientes femeninas vinculadas para este módulo.
-          </Text>
+          </AppText>
         ) : (
           <View style={styles.pickerWrapper}>
             <Picker
@@ -474,12 +473,12 @@ export function PeriodoScreen() {
             </Picker>
           </View>
         )}
-        {patientError ? <Text style={styles.errorText}>{patientError}</Text> : null}
+        {patientError ? <AppText style={styles.errorText}>{patientError}</AppText> : null}
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Nuevo registro</Text>
-        <TextInput
+        <AppText style={styles.sectionTitle}>Nuevo registro</AppText>
+        <AppTextInput
           style={styles.input}
           value={form.fechaInicio}
           onChangeText={(value) => handleChange('fechaInicio', value)}
@@ -487,7 +486,7 @@ export function PeriodoScreen() {
           placeholderTextColor={appColors.textMuted}
           autoCapitalize="none"
         />
-        <TextInput
+        <AppTextInput
           style={styles.input}
           value={form.fechaFin}
           onChangeText={(value) => handleChange('fechaFin', value)}
@@ -496,7 +495,7 @@ export function PeriodoScreen() {
           autoCapitalize="none"
         />
         <View style={styles.row}>
-          <TextInput
+          <AppTextInput
             style={[styles.input, styles.halfInput]}
             value={form.duracionDias}
             onChangeText={(value) => handleChange('duracionDias', value)}
@@ -504,7 +503,7 @@ export function PeriodoScreen() {
             placeholderTextColor={appColors.textMuted}
             keyboardType="numeric"
           />
-          <TextInput
+          <AppTextInput
             style={[styles.input, styles.halfInput]}
             value={form.cicloDias}
             onChangeText={(value) => handleChange('cicloDias', value)}
@@ -530,14 +529,14 @@ export function PeriodoScreen() {
             </Picker>
           </View>
         </View>
-        <TextInput
+        <AppTextInput
           style={styles.input}
           value={form.sintomas}
           onChangeText={(value) => handleChange('sintomas', value)}
           placeholder="Síntomas separados por coma"
           placeholderTextColor={appColors.textMuted}
         />
-        <TextInput
+        <AppTextInput
           style={[styles.input, styles.textArea]}
           value={form.observaciones}
           onChangeText={(value) => handleChange('observaciones', value)}
@@ -556,79 +555,79 @@ export function PeriodoScreen() {
           ) : (
             <>
               <Ionicons name="save-outline" size={18} color={appColors.background} />
-              <Text style={styles.primaryBtnText}>Guardar periodo</Text>
+              <AppText style={styles.primaryBtnText}>Guardar periodo</AppText>
             </>
           )}
         </TouchableOpacity>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Resumen</Text>
+        <AppText style={styles.sectionTitle}>Resumen</AppText>
         {loadingData ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color="#FF4D73" />
-            <Text style={styles.loadingText}>Cargando historial...</Text>
+            <AppText style={styles.loadingText}>Cargando historial...</AppText>
           </View>
         ) : !selectedPatientId ? (
-          <Text style={styles.emptyText}>Selecciona una paciente para ver información.</Text>
+          <AppText style={styles.emptyText}>Selecciona una paciente para ver información.</AppText>
         ) : (
           <>
-            <Text style={styles.metricText}>Paciente: {selectedPatientLabel ?? `#${selectedPatientId}`}</Text>
-            <Text style={styles.metricText}>
+            <AppText style={styles.metricText}>Paciente: {selectedPatientLabel ?? `#${selectedPatientId}`}</AppText>
+            <AppText style={styles.metricText}>
               Total de registros: {historial?.totalRegistros ?? 0}
-            </Text>
-            <Text style={styles.metricText}>
+            </AppText>
+            <AppText style={styles.metricText}>
               Promedio de duración: {historial?.promedioDuracionDias ?? 'Sin dato'}
-            </Text>
-            <Text style={styles.metricText}>
+            </AppText>
+            <AppText style={styles.metricText}>
               Promedio de ciclo: {historial?.promedioCicloDias ?? 'Sin dato'}
-            </Text>
+            </AppText>
             {prediction?.proximoPeriodo ? (
               <View style={styles.highlightBox}>
-                <Text style={styles.highlightTitle}>Siguiente predicción</Text>
-                <Text style={styles.highlightText}>
+                <AppText style={styles.highlightTitle}>Siguiente predicción</AppText>
+                <AppText style={styles.highlightText}>
                   Inicio: {formatDate(prediction.proximoPeriodo.fechaInicio)}
-                </Text>
-                <Text style={styles.highlightText}>
+                </AppText>
+                <AppText style={styles.highlightText}>
                   Fin: {formatDate(prediction.proximoPeriodo.fechaFin)}
-                </Text>
-                <Text style={styles.highlightText}>
+                </AppText>
+                <AppText style={styles.highlightText}>
                   Ovulación estimada: {formatDate(prediction.ovulacionEstimada)}
-                </Text>
+                </AppText>
                 {prediction.ventanaFertil ? (
-                  <Text style={styles.highlightText}>
+                  <AppText style={styles.highlightText}>
                     Ventana fértil: {formatDate(prediction.ventanaFertil.inicio)} al{' '}
                     {formatDate(prediction.ventanaFertil.fin)}
-                  </Text>
+                  </AppText>
                 ) : null}
               </View>
             ) : null}
-            {dataError ? <Text style={styles.errorText}>{dataError}</Text> : null}
+            {dataError ? <AppText style={styles.errorText}>{dataError}</AppText> : null}
           </>
         )}
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Historial reciente</Text>
+        <AppText style={styles.sectionTitle}>Historial reciente</AppText>
         {historial?.registros?.length ? (
           historial.registros.slice(0, 6).map((item) => (
             <View key={item.periodoId} style={styles.listItem}>
-              <Text style={styles.itemTitle}>
+              <AppText style={styles.itemTitle}>
                 {formatDate(item.fechaInicio)} {item.fechaFin ? `- ${formatDate(item.fechaFin)}` : ''}
-              </Text>
-              <Text style={styles.itemText}>
+              </AppText>
+              <AppText style={styles.itemText}>
                 Flujo: {formatEnum(item.flujo)} · Dolor: {formatEnum(item.dolor)}
-              </Text>
-              <Text style={styles.itemText}>
+              </AppText>
+              <AppText style={styles.itemText}>
                 Duración: {item.duracionDias ?? 'N/D'} días · Ciclo: {item.cicloDias ?? 'N/D'} días
-              </Text>
+              </AppText>
               {item.sintomas?.length ? (
-                <Text style={styles.itemText}>Síntomas: {item.sintomas.join(', ')}</Text>
+                <AppText style={styles.itemText}>Síntomas: {item.sintomas.join(', ')}</AppText>
               ) : null}
             </View>
           ))
         ) : (
-          <Text style={styles.emptyText}>Todavía no hay registros para esta paciente.</Text>
+          <AppText style={styles.emptyText}>Todavía no hay registros para esta paciente.</AppText>
         )}
       </View>
         </>

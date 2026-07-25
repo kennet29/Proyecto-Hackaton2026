@@ -1,24 +1,25 @@
 import React from 'react';
-import { View, Text, StyleSheet, Linking, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Linking, TouchableOpacity } from 'react-native';
+import { AppText } from '../components/AppText';
 
 export function ContactoScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Contactanos</Text>
-      <Text style={styles.text}>Soporte 24/7 para tus consultas medicas digitales.</Text>
+      <AppText style={styles.title}>Contactanos</AppText>
+      <AppText style={styles.text}>Soporte 24/7 para tus consultas medicas digitales.</AppText>
       <TouchableOpacity onPress={() => Linking.openURL('mailto:soporte@gestionsalud.com')}>
-        <Text style={styles.link}>soporte@gestionsalud.com</Text>
+        <AppText style={styles.link}>soporte@gestionsalud.com</AppText>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => Linking.openURL('tel:+5058001234')}>
-        <Text style={styles.link}>+505 800 1234</Text>
+        <AppText style={styles.link}>+505 800 1234</AppText>
       </TouchableOpacity>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Horario</Text>
-        <Text style={styles.cardText}>Lunes a viernes 8:00 am a 8:00 pm (GMT-6)</Text>
+        <AppText style={styles.cardTitle}>Horario</AppText>
+        <AppText style={styles.cardText}>Lunes a viernes 8:00 am a 8:00 pm (GMT-6)</AppText>
       </View>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Direccion</Text>
-        <Text style={styles.cardText}>Centro clinico digital, Managua, Nicaragua</Text>
+        <AppText style={styles.cardTitle}>Direccion</AppText>
+        <AppText style={styles.cardText}>Centro clinico digital, Managua, Nicaragua</AppText>
       </View>
     </View>
   );

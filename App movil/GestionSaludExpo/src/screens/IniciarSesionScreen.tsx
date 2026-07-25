@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { AppText } from '../components/AppText';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 
@@ -8,18 +9,18 @@ type Props = NativeStackScreenProps<RootStackParamList, 'IniciarSesion'>;
 export function IniciarSesionScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Bienvenido a Gestión Salud</Text>
-      <Text style={styles.subtitle}>
+      <AppText style={styles.title}>Bienvenido a Gestión Salud</AppText>
+      <AppText style={styles.subtitle}>
         Organiza tus citas, tratamientos y recordatorios desde un solo lugar.
-      </Text>
+      </AppText>
       <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.btnText}>Ir a login</Text>
+        <AppText style={styles.btnText}>Ir a login</AppText>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.secondaryBtn}
         onPress={() => navigation.navigate('Registro')}
       >
-        <Text style={styles.secondaryText}>Crear cuenta</Text>
+        <AppText style={styles.secondaryText}>Crear cuenta</AppText>
       </TouchableOpacity>
     </View>
   );

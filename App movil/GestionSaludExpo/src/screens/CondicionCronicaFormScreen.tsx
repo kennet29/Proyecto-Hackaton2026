@@ -6,11 +6,10 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +25,7 @@ import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients
 import { appColors, colorAlpha } from '../theme/colors';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate } from '../utils/localDate';
+import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 
 type TipoCondicion = {
   tipocondicionId: number;
@@ -208,9 +208,10 @@ export function CondicionCronicaFormScreen({
 
   const fetchTypes = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/tipocondicioncronica`, { headers: authHeaders });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(body?.message ?? 'No se pudieron cargar los tipos');
+      const { data: body } = await getJsonWithOfflineFallback<unknown>(
+        '/tipocondicioncronica',
+        authHeaders,
+      );
       setTypeOptions(
         (Array.isArray(body) ? body : [])
           .map((item: any) => ({
@@ -230,9 +231,10 @@ export function CondicionCronicaFormScreen({
 
   const fetchDocumentTypes = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/tipodocumentoclinico`, { headers: authHeaders });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(body?.message ?? 'No se pudieron cargar los tipos de documento');
+      const { data: body } = await getJsonWithOfflineFallback<unknown>(
+        '/tipodocumentoclinico',
+        authHeaders,
+      );
       const normalized = (Array.isArray(body) ? body : [])
         .map((item: any) => ({
           tipodocumentoId: Number(item?.tipodocumentoId ?? item?.tipodocumentoid ?? item?.id ?? 0),
@@ -251,9 +253,10 @@ export function CondicionCronicaFormScreen({
     if (!token) return;
     setLoadingRecords(true);
     try {
-      const response = await fetch(`${API_URL}/condicioncronica`, { headers: authHeaders });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(body?.message ?? 'No se pudieron cargar las condiciones');
+      const { data: body } = await getJsonWithOfflineFallback<unknown>(
+        '/condicioncronica',
+        authHeaders,
+      );
       setRecords(
         (Array.isArray(body) ? body : [])
           .map((item: any) => ({
@@ -718,73 +721,73 @@ export function CondicionCronicaFormScreen({
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.heroCard}>
-          <Text style={styles.kicker}>ENFERMEDADES CRONICAS</Text>
-          <Text style={styles.title}>
+          <AppText style={styles.kicker}>ENFERMEDADES CRONICAS</AppText>
+          <AppText style={styles.title}>
             {isCreateMode ? 'Nueva enfermedad cronica' : 'Personas y condiciones'}
-          </Text>
-          <Text style={styles.subtitle}>
+          </AppText>
+          <AppText style={styles.subtitle}>
             {isCreateMode
               ? 'Registra una nueva enfermedad cronica y deja programado su seguimiento.'
               : 'Revisa rapido que personas tienen condiciones cronicas y luego filtra el detalle si necesitas profundizar.'}
-          </Text>
+          </AppText>
         </View>
 
         {!isCreateMode ? (
           <>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Resumen por persona</Text>
-              <Text style={styles.sectionSubtitle}>
+              <AppText style={styles.sectionTitle}>Resumen por persona</AppText>
+              <AppText style={styles.sectionSubtitle}>
                 {`${groupedPatientConditions.length} personas vinculadas`}
-              </Text>
+              </AppText>
             </View>
 
             {loadingPatients || loadingRecords ? (
               <View style={styles.stateBox}>
-                <ActivityIndicator color="#38F28E" />
-                <Text style={styles.stateText}>Cargando personas y condiciones...</Text>
+                <ActivityIndicator color="#38E28E" />
+                <AppText style={styles.stateText}>Cargando personas y condiciones...</AppText>
               </View>
             ) : groupedPatientConditions.length === 0 ? (
               <View style={styles.stateBox}>
-                <Text style={styles.stateTitle}>Sin personas vinculadas</Text>
-                <Text style={styles.stateText}>
+                <AppText style={styles.stateTitle}>Sin personas vinculadas</AppText>
+                <AppText style={styles.stateText}>
                   Todavia no hay personas disponibles para mostrar condiciones cronicas.
-                </Text>
+                </AppText>
               </View>
             ) : (
               groupedPatientConditions.map(({ patient, conditions }) => (
                 <View key={patient.pacienteId} style={styles.personCard}>
                   <View style={styles.personHeader}>
                     <View>
-                      <Text style={styles.personName}>{patient.displayName}</Text>
-                      <Text style={styles.personMeta}>
+                      <AppText style={styles.personName}>{patient.displayName}</AppText>
+                      <AppText style={styles.personMeta}>
                         {conditions.length === 1 ? '1 condicion registrada' : `${conditions.length} condiciones registradas`}
-                      </Text>
+                      </AppText>
                     </View>
                     <View style={styles.countBadge}>
-                      <Text style={styles.countBadgeText}>{conditions.length}</Text>
+                      <AppText style={styles.countBadgeText}>{conditions.length}</AppText>
                     </View>
                   </View>
 
                   {conditions.length === 0 ? (
-                    <Text style={styles.emptyInlineText}>Sin condiciones cronicas registradas.</Text>
+                    <AppText style={styles.emptyInlineText}>Sin condiciones cronicas registradas.</AppText>
                   ) : (
                     conditions.map((record) => (
                       <View key={record.condicioncronicaId} style={styles.conditionRow}>
                         <View style={styles.conditionHeader}>
-                          <Text style={styles.conditionName}>
+                          <AppText style={styles.conditionName}>
                             {typeNameById[record.tipocondicionId] ?? `Condicion #${record.tipocondicionId}`}
-                          </Text>
-                          <Text style={styles.conditionState}>{record.estado || 'Sin estado'}</Text>
+                          </AppText>
+                          <AppText style={styles.conditionState}>{record.estado || 'Sin estado'}</AppText>
                         </View>
-                        <Text style={styles.conditionText}>
+                        <AppText style={styles.conditionText}>
                           Diagnostico: {formatRecordDate(record.fechadiagnostico)}
-                        </Text>
-                        <Text style={styles.conditionText}>
+                        </AppText>
+                        <AppText style={styles.conditionText}>
                           Severidad: {record.severidad || 'Sin dato'}
-                        </Text>
-                        <Text style={styles.conditionText}>
+                        </AppText>
+                        <AppText style={styles.conditionText}>
                           Tratamiento: {record.tratamientoprincipal || 'Sin dato'}
-                        </Text>
+                        </AppText>
                       </View>
                     ))
                   )}
@@ -793,7 +796,7 @@ export function CondicionCronicaFormScreen({
             )}
 
             <View style={styles.filterCard}>
-              <Text style={styles.label}>Filtrar historial por paciente</Text>
+              <AppText style={styles.label}>Filtrar historial por paciente</AppText>
               <View style={styles.pickerWrapper}>
                 <Picker
                   style={styles.picker}
@@ -814,27 +817,27 @@ export function CondicionCronicaFormScreen({
             </View>
 
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Historial de condiciones</Text>
-              <Text style={styles.sectionSubtitle}>
+              <AppText style={styles.sectionTitle}>Historial de condiciones</AppText>
+              <AppText style={styles.sectionSubtitle}>
                 {`${filteredRecords.length} registros para ${selectedPatientName}`}
-              </Text>
+              </AppText>
             </View>
 
             {filteredRecords.length === 0 ? (
-              <Text style={styles.emptyText}>No hay condiciones registradas para este paciente.</Text>
+              <AppText style={styles.emptyText}>No hay condiciones registradas para este paciente.</AppText>
             ) : (
               filteredRecords.map((record) => (
                 <View key={record.condicioncronicaId} style={styles.card}>
-                  <Text style={styles.cardTitle}>
+                  <AppText style={styles.cardTitle}>
                     {typeNameById[record.tipocondicionId] ?? `Condicion #${record.tipocondicionId}`}
-                  </Text>
-                  <Text style={styles.cardText}>Paciente: {patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`}</Text>
-                  <Text style={styles.cardText}>Diagnostico: {formatRecordDate(record.fechadiagnostico)}</Text>
-                  <Text style={styles.cardText}>Estado: {record.estado || 'Sin dato'}</Text>
-                  <Text style={styles.cardText}>Severidad: {record.severidad || 'Sin dato'}</Text>
-                  <Text style={styles.cardText}>Tratamiento: {record.tratamientoprincipal || 'Sin dato'}</Text>
-                  <Text style={styles.cardText}>Seguimiento: {formatRecordDate(record.proximoseguimiento)}</Text>
-                  {record.notas ? <Text style={styles.cardText}>Notas: {record.notas}</Text> : null}
+                  </AppText>
+                  <AppText style={styles.cardText}>Paciente: {patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`}</AppText>
+                  <AppText style={styles.cardText}>Diagnostico: {formatRecordDate(record.fechadiagnostico)}</AppText>
+                  <AppText style={styles.cardText}>Estado: {record.estado || 'Sin dato'}</AppText>
+                  <AppText style={styles.cardText}>Severidad: {record.severidad || 'Sin dato'}</AppText>
+                  <AppText style={styles.cardText}>Tratamiento: {record.tratamientoprincipal || 'Sin dato'}</AppText>
+                  <AppText style={styles.cardText}>Seguimiento: {formatRecordDate(record.proximoseguimiento)}</AppText>
+                  {record.notas ? <AppText style={styles.cardText}>Notas: {record.notas}</AppText> : null}
                 </View>
               ))
             )}
@@ -843,13 +846,13 @@ export function CondicionCronicaFormScreen({
 
         {isCreateMode ? (
           <View style={styles.formCard}>
-            <Text style={styles.formTitle}>Nueva condicion cronica</Text>
+            <AppText style={styles.formTitle}>Nueva condicion cronica</AppText>
 
-            <Text style={styles.label}>Condicion clinica</Text>
+            <AppText style={styles.label}>Condicion clinica</AppText>
             <View style={styles.conditionInputCard}>
               <View style={styles.conditionInputWrapper}>
                 <Ionicons name="medical-outline" size={20} color={appColors.info} />
-                <TextInput
+                <AppTextInput
                   style={styles.conditionInput}
                   placeholder="Escribe la condicion. Ej. Diabetes tipo 2"
                   placeholderTextColor="#9FB3C8"
@@ -877,7 +880,7 @@ export function CondicionCronicaFormScreen({
                 }
               >
                 <Ionicons name="search-outline" size={18} color={appColors.text} />
-                <Text style={styles.conditionPickerButtonText}>Buscar en lista</Text>
+                <AppText style={styles.conditionPickerButtonText}>Buscar en lista</AppText>
               </TouchableOpacity>
               {selectedConditionName ? (
                 <View style={styles.selectedConditionCard}>
@@ -886,22 +889,22 @@ export function CondicionCronicaFormScreen({
                     size={18}
                     color={form.tipocondicionId ? appColors.success : appColors.info}
                   />
-                  <Text style={styles.selectedConditionText}>
+                  <AppText style={styles.selectedConditionText}>
                     {form.tipocondicionId
                       ? `Seleccionada: ${selectedConditionName}`
                       : `Nueva condicion: ${selectedConditionName}`}
-                  </Text>
+                  </AppText>
                 </View>
               ) : (
-                <Text style={styles.fieldHint}>
+                <AppText style={styles.fieldHint}>
                   Puedes escribir una condicion nueva o escoger una existente desde el catalogo.
-                </Text>
+                </AppText>
               )}
             </View>
 
-            <Text style={styles.label}>Fecha de diagnostico</Text>
+            <AppText style={styles.label}>Fecha de diagnostico</AppText>
             <TouchableOpacity style={styles.dateButton} onPress={() => showDatePicker('fechadiagnostico')}>
-              <Text style={styles.dateButtonText}>{formatDisplayDate(form.fechadiagnostico)}</Text>
+              <AppText style={styles.dateButtonText}>{formatDisplayDate(form.fechadiagnostico)}</AppText>
             </TouchableOpacity>
             {Platform.OS === 'ios' && showIOSDiagnosticoPicker ? (
               <View style={styles.iosPickerCard}>
@@ -915,26 +918,26 @@ export function CondicionCronicaFormScreen({
                   }
                 />
                 <TouchableOpacity style={styles.secondaryBtn} onPress={() => setShowIOSDiagnosticoPicker(false)}>
-                  <Text style={styles.secondaryBtnText}>Listo</Text>
+                  <AppText style={styles.secondaryBtnText}>Listo</AppText>
                 </TouchableOpacity>
               </View>
             ) : null}
 
-            <TextInput
+            <AppTextInput
               style={styles.input}
               placeholder="Estado"
               placeholderTextColor="#9FB3C8"
               value={form.estado}
               onChangeText={(value) => handleChange('estado', value)}
             />
-            <TextInput
+            <AppTextInput
               style={styles.input}
               placeholder="Severidad"
               placeholderTextColor="#9FB3C8"
               value={form.severidad}
               onChangeText={(value) => handleChange('severidad', value)}
             />
-            <TextInput
+            <AppTextInput
               style={styles.input}
               placeholder="Tratamiento principal"
               placeholderTextColor="#9FB3C8"
@@ -942,9 +945,9 @@ export function CondicionCronicaFormScreen({
               onChangeText={(value) => handleChange('tratamientoprincipal', value)}
             />
 
-            <Text style={styles.label}>Proximo seguimiento</Text>
+            <AppText style={styles.label}>Proximo seguimiento</AppText>
             <TouchableOpacity style={styles.dateButton} onPress={() => showDatePicker('proximoseguimiento')}>
-              <Text style={styles.dateButtonText}>{formatDisplayDate(form.proximoseguimiento)}</Text>
+              <AppText style={styles.dateButtonText}>{formatDisplayDate(form.proximoseguimiento)}</AppText>
             </TouchableOpacity>
             {Platform.OS === 'ios' && showIOSSeguimientoPicker ? (
               <View style={styles.iosPickerCard}>
@@ -958,7 +961,7 @@ export function CondicionCronicaFormScreen({
                   }
                 />
                 <TouchableOpacity style={styles.secondaryBtn} onPress={() => setShowIOSSeguimientoPicker(false)}>
-                  <Text style={styles.secondaryBtnText}>Listo</Text>
+                  <AppText style={styles.secondaryBtnText}>Listo</AppText>
                 </TouchableOpacity>
               </View>
             ) : null}
@@ -969,14 +972,14 @@ export function CondicionCronicaFormScreen({
                   <Ionicons name="document-attach-outline" size={22} color={appColors.info} />
                 </View>
                 <View style={styles.attachmentsHeaderCopy}>
-                  <Text style={styles.attachmentsTitle}>Resultados y diagnósticos</Text>
-                  <Text style={styles.attachmentsHint}>
+                  <AppText style={styles.attachmentsTitle}>Resultados y diagnósticos</AppText>
+                  <AppText style={styles.attachmentsHint}>
                     Adjunta imágenes o PDF de hasta 3 MB por archivo.
-                  </Text>
+                  </AppText>
                 </View>
                 {attachments.length > 0 ? (
                   <View style={styles.attachmentsCount}>
-                    <Text style={styles.attachmentsCountText}>{attachments.length}</Text>
+                    <AppText style={styles.attachmentsCountText}>{attachments.length}</AppText>
                   </View>
                 ) : null}
               </View>
@@ -984,21 +987,21 @@ export function CondicionCronicaFormScreen({
               <View style={styles.attachmentActions}>
                 <TouchableOpacity style={styles.attachmentAction} onPress={handlePickImages}>
                   <Ionicons name="images-outline" size={19} color={appColors.info} />
-                  <Text style={styles.attachmentActionText}>Imágenes</Text>
+                  <AppText style={styles.attachmentActionText}>Imágenes</AppText>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.attachmentAction} onPress={handleTakePhoto}>
                   <Ionicons name="camera-outline" size={19} color={appColors.info} />
-                  <Text style={styles.attachmentActionText}>Tomar foto</Text>
+                  <AppText style={styles.attachmentActionText}>Tomar foto</AppText>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.attachmentAction} onPress={handlePickPdfs}>
                   <Ionicons name="document-text-outline" size={19} color={appColors.info} />
-                  <Text style={styles.attachmentActionText}>Subir PDF</Text>
+                  <AppText style={styles.attachmentActionText}>Subir PDF</AppText>
                 </TouchableOpacity>
               </View>
 
               {attachments.length > 0 ? (
                 <>
-                  <Text style={styles.attachmentTypeLabel}>Tipo de documento</Text>
+                  <AppText style={styles.attachmentTypeLabel}>Tipo de documento</AppText>
                   <View style={styles.attachmentTypePicker}>
                     <Picker
                       style={styles.picker}
@@ -1028,14 +1031,14 @@ export function CondicionCronicaFormScreen({
                           </View>
                         )}
                         <View style={styles.attachmentItemCopy}>
-                          <Text style={styles.attachmentName} numberOfLines={1}>
+                          <AppText style={styles.attachmentName} numberOfLines={1}>
                             {attachment.name}
-                          </Text>
-                          <Text style={styles.attachmentMeta}>
+                          </AppText>
+                          <AppText style={styles.attachmentMeta}>
                             {attachment.size
                               ? `${(attachment.size / 1024 / 1024).toFixed(2)} MB`
                               : attachment.mimeType}
-                          </Text>
+                          </AppText>
                         </View>
                         <TouchableOpacity
                           style={styles.removeAttachment}
@@ -1055,12 +1058,12 @@ export function CondicionCronicaFormScreen({
               ) : (
                 <View style={styles.attachmentsEmpty}>
                   <Ionicons name="cloud-upload-outline" size={20} color={appColors.textMuted} />
-                  <Text style={styles.attachmentsEmptyText}>No hay archivos seleccionados</Text>
+                  <AppText style={styles.attachmentsEmptyText}>No hay archivos seleccionados</AppText>
                 </View>
               )}
             </View>
 
-            <TextInput
+            <AppTextInput
               style={[styles.input, styles.multiline]}
               placeholder="Notas"
               placeholderTextColor="#9FB3C8"
@@ -1071,10 +1074,10 @@ export function CondicionCronicaFormScreen({
 
             <View style={styles.formActions}>
               <TouchableOpacity style={styles.cancelBtn} onPress={resetForm}>
-                <Text style={styles.cancelBtnText}>Cancelar</Text>
+                <AppText style={styles.cancelBtnText}>Cancelar</AppText>
               </TouchableOpacity>
               <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
-                <Text style={styles.primaryBtnText}>Guardar</Text>
+                <AppText style={styles.primaryBtnText}>Guardar</AppText>
               </TouchableOpacity>
             </View>
           </View>
@@ -1083,7 +1086,7 @@ export function CondicionCronicaFormScreen({
 
       {!isCreateMode ? (
         <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('CondicionCronicaCreate')}>
-          <Text style={styles.fabText}>+</Text>
+          <AppText style={styles.fabText}>+</AppText>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -1431,7 +1434,7 @@ const styles = StyleSheet.create({
   },
   primaryBtn: {
     flex: 1,
-    backgroundColor: '#38F28E',
+    backgroundColor: '#38E28E',
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
@@ -1532,7 +1535,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   conditionState: {
-    color: '#38F28E',
+    color: '#38E28E',
     fontWeight: '700',
   },
   conditionText: {
@@ -1563,7 +1566,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#38F28E',
+    backgroundColor: '#38E28E',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { AppText } from './AppText';
 import { appColors } from '../theme/colors';
 
 type AppErrorBoundaryProps = {
@@ -38,16 +39,16 @@ export class AppErrorBoundary extends React.Component<
     return (
       <View style={styles.screen}>
         <View style={styles.card}>
-          <Text style={styles.eyebrow}>RECUPERACION</Text>
-          <Text style={styles.title}>La pantalla fallo</Text>
-          <Text style={styles.body}>
+          <AppText style={styles.eyebrow}>RECUPERACION</AppText>
+          <AppText style={styles.title}>La pantalla fallo</AppText>
+          <AppText style={styles.body}>
             Se capturo un error inesperado para evitar que toda la app se cierre.
-          </Text>
-          <Text style={styles.detail} numberOfLines={4}>
+          </AppText>
+          <AppText style={styles.detail} numberOfLines={4}>
             {this.state.error.message || 'Error sin mensaje'}
-          </Text>
+          </AppText>
           <Pressable style={styles.button} onPress={this.handleReset}>
-            <Text style={styles.buttonText}>Intentar de nuevo</Text>
+            <AppText style={styles.buttonText}>Intentar de nuevo</AppText>
           </Pressable>
         </View>
       </View>

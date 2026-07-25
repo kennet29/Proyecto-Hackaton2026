@@ -6,11 +6,10 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { Picker } from '@react-native-picker/picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -58,7 +57,7 @@ const getImpactAccent = (value?: string | null) => {
     return '#FF4D73';
   }
   if (normalized.includes('bajo') || normalized.includes('positivo') || normalized.includes('saludable')) {
-    return '#38F28E';
+    return '#38E28E';
   }
   return '#29B6FF';
 };
@@ -236,8 +235,8 @@ export function HabitosScreen(_: Props) {
   if (loading) {
     return (
       <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" color="#38F28E" />
-        <Text style={styles.loadingText}>Cargando habitos...</Text>
+        <ActivityIndicator size="large" color="#38E28E" />
+        <AppText style={styles.loadingText}>Cargando habitos...</AppText>
       </View>
     );
   }
@@ -246,21 +245,21 @@ export function HabitosScreen(_: Props) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View style={styles.headerBadge}>
-          <Text style={styles.headerBadgeText}>Seguimiento continuo</Text>
+          <AppText style={styles.headerBadgeText}>Seguimiento continuo</AppText>
         </View>
-        <Text style={styles.title}>Habitos</Text>
-        <Text style={styles.subtitle}>
+        <AppText style={styles.title}>Habitos</AppText>
+        <AppText style={styles.subtitle}>
           Registra actividad fisica, sueno, alimentacion u otros habitos para entender patrones y riesgos.
-        </Text>
+        </AppText>
       </View>
 
       <View style={styles.card}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.cardTitle}>Contexto del registro</Text>
-          <Text style={styles.cardSubtitle}>Selecciona paciente y tipo antes de guardar el habito.</Text>
+          <AppText style={styles.cardTitle}>Contexto del registro</AppText>
+          <AppText style={styles.cardSubtitle}>Selecciona paciente y tipo antes de guardar el habito.</AppText>
         </View>
 
-        <Text style={styles.label}>Paciente</Text>
+        <AppText style={styles.label}>Paciente</AppText>
         <View style={styles.pickerShell}>
           <Picker
             selectedValue={form.pacienteId}
@@ -278,7 +277,7 @@ export function HabitosScreen(_: Props) {
           </Picker>
         </View>
 
-        <Text style={styles.label}>Tipo de habito</Text>
+        <AppText style={styles.label}>Tipo de habito</AppText>
         <View style={styles.pickerShell}>
           <Picker
             selectedValue={form.tipohabitoId}
@@ -299,34 +298,34 @@ export function HabitosScreen(_: Props) {
         {selectedPatient || selectedType ? (
           <View style={styles.contextBox}>
             {selectedPatient ? (
-              <Text style={styles.contextText}>Paciente activo: {selectedPatient.displayName}</Text>
+              <AppText style={styles.contextText}>Paciente activo: {selectedPatient.displayName}</AppText>
             ) : null}
             {selectedType ? (
-              <Text style={styles.contextText}>
+              <AppText style={styles.contextText}>
                 Tipo elegido: {selectedType.nombre}
                 {selectedType.categoria ? ` - ${selectedType.categoria}` : ''}
-              </Text>
+              </AppText>
             ) : null}
           </View>
         ) : null}
 
         {types.length === 0 ? (
-          <Text style={styles.warningText}>
+          <AppText style={styles.warningText}>
             No hay tipos de habito configurados en la base de datos.
-          </Text>
+          </AppText>
         ) : null}
       </View>
 
       <View style={styles.card}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.cardTitle}>Nuevo registro</Text>
-          <Text style={styles.cardSubtitle}>Completa el nivel, la frecuencia y el impacto observado.</Text>
+          <AppText style={styles.cardTitle}>Nuevo registro</AppText>
+          <AppText style={styles.cardSubtitle}>Completa el nivel, la frecuencia y el impacto observado.</AppText>
         </View>
 
         <View style={styles.formSection}>
-          <Text style={styles.formSectionTitle}>Detalle principal</Text>
-          <Text style={styles.label}>Categoria</Text>
-          <TextInput
+          <AppText style={styles.formSectionTitle}>Detalle principal</AppText>
+          <AppText style={styles.label}>Categoria</AppText>
+          <AppTextInput
             style={styles.input}
             placeholder="Ej. actividad fisica, alimentacion, sueno"
             placeholderTextColor="#9FB3C8"
@@ -336,8 +335,8 @@ export function HabitosScreen(_: Props) {
 
           <View style={styles.row}>
             <View style={styles.fieldGroupHalf}>
-              <Text style={styles.label}>Nivel</Text>
-              <TextInput
+              <AppText style={styles.label}>Nivel</AppText>
+              <AppTextInput
                 style={styles.input}
                 placeholder="Ej. bajo, medio, alto"
                 placeholderTextColor="#9FB3C8"
@@ -346,8 +345,8 @@ export function HabitosScreen(_: Props) {
               />
             </View>
             <View style={styles.fieldGroupHalf}>
-              <Text style={styles.label}>Frecuencia</Text>
-              <TextInput
+              <AppText style={styles.label}>Frecuencia</AppText>
+              <AppTextInput
                 style={styles.input}
                 placeholder="Ej. diario, semanal"
                 placeholderTextColor="#9FB3C8"
@@ -359,11 +358,11 @@ export function HabitosScreen(_: Props) {
         </View>
 
         <View style={styles.formSection}>
-          <Text style={styles.formSectionTitle}>Medicion y fecha</Text>
+          <AppText style={styles.formSectionTitle}>Medicion y fecha</AppText>
           <View style={styles.row}>
             <View style={styles.fieldGroupHalf}>
-              <Text style={styles.label}>Cantidad</Text>
-              <TextInput
+              <AppText style={styles.label}>Cantidad</AppText>
+              <AppTextInput
                 style={styles.input}
                 placeholder="Ej. 30"
                 placeholderTextColor="#9FB3C8"
@@ -373,8 +372,8 @@ export function HabitosScreen(_: Props) {
               />
             </View>
             <View style={styles.fieldGroupHalf}>
-              <Text style={styles.label}>Unidad</Text>
-              <TextInput
+              <AppText style={styles.label}>Unidad</AppText>
+              <AppTextInput
                 style={styles.input}
                 placeholder="Ej. min, veces, litros"
                 placeholderTextColor="#9FB3C8"
@@ -384,8 +383,8 @@ export function HabitosScreen(_: Props) {
             </View>
           </View>
 
-          <Text style={styles.label}>Fecha de inicio o referencia</Text>
-          <TextInput
+          <AppText style={styles.label}>Fecha de inicio o referencia</AppText>
+          <AppTextInput
             style={styles.input}
             placeholder="YYYY-MM-DD"
             placeholderTextColor="#9FB3C8"
@@ -395,9 +394,9 @@ export function HabitosScreen(_: Props) {
         </View>
 
         <View style={styles.formSection}>
-          <Text style={styles.formSectionTitle}>Interpretacion clinica</Text>
-          <Text style={styles.label}>Impacto en salud</Text>
-          <TextInput
+          <AppText style={styles.formSectionTitle}>Interpretacion clinica</AppText>
+          <AppText style={styles.label}>Impacto en salud</AppText>
+          <AppTextInput
             style={styles.input}
             placeholder="Ej. positivo, moderado, alto riesgo"
             placeholderTextColor="#9FB3C8"
@@ -405,8 +404,8 @@ export function HabitosScreen(_: Props) {
             onChangeText={(value) => handleChange('impactosalud', value)}
           />
 
-          <Text style={styles.label}>Observaciones</Text>
-          <TextInput
+          <AppText style={styles.label}>Observaciones</AppText>
+          <AppTextInput
             style={[styles.input, styles.multiline]}
             placeholder="Agrega contexto, detonantes, cambios o recomendaciones"
             placeholderTextColor="#9FB3C8"
@@ -422,36 +421,36 @@ export function HabitosScreen(_: Props) {
           onPress={handleSubmit}
           disabled={submitting || types.length === 0}
         >
-          <Text style={styles.primaryBtnText}>
+          <AppText style={styles.primaryBtnText}>
             {submitting ? 'Guardando...' : 'Guardar habito'}
-          </Text>
+          </AppText>
         </TouchableOpacity>
       </View>
 
       <View style={styles.card}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.cardTitle}>Lectura rapida</Text>
-          <Text style={styles.cardSubtitle}>Resumen util de la informacion capturada.</Text>
+          <AppText style={styles.cardTitle}>Lectura rapida</AppText>
+          <AppText style={styles.cardSubtitle}>Resumen util de la informacion capturada.</AppText>
         </View>
 
         <View style={styles.insightBox}>
-          <Text style={styles.insightTitle}>Lo que ya podemos hacer con esta informacion</Text>
-          <Text style={styles.insightText}>{insights.summaryText}</Text>
+          <AppText style={styles.insightTitle}>Lo que ya podemos hacer con esta informacion</AppText>
+          <AppText style={styles.insightText}>{insights.summaryText}</AppText>
           {insights.latest ? (
-            <Text style={styles.insightText}>
+            <AppText style={styles.insightText}>
               Ultimo registro: {getTypeName(insights.latest.tipohabitoId)} ({formatDate(insights.latest.inicio)}).
-            </Text>
+            </AppText>
           ) : null}
         </View>
       </View>
 
       <View style={styles.card}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.cardTitle}>Registros</Text>
-          <Text style={styles.cardSubtitle}>Historial filtrado por el paciente activo.</Text>
+          <AppText style={styles.cardTitle}>Registros</AppText>
+          <AppText style={styles.cardSubtitle}>Historial filtrado por el paciente activo.</AppText>
         </View>
         {visibleRecords.length === 0 ? (
-          <Text style={styles.emptyText}>Todavia no hay habitos registrados.</Text>
+          <AppText style={styles.emptyText}>Todavia no hay habitos registrados.</AppText>
         ) : (
           <FlatList
             data={visibleRecords}
@@ -464,16 +463,16 @@ export function HabitosScreen(_: Props) {
                 <View style={styles.recordCard}>
                   <View style={styles.recordHeader}>
                     <View style={styles.recordHeaderText}>
-                      <Text style={styles.recordTitle}>{getTypeName(item.tipohabitoId)}</Text>
-                      <Text style={styles.recordText}>
+                      <AppText style={styles.recordTitle}>{getTypeName(item.tipohabitoId)}</AppText>
+                      <AppText style={styles.recordText}>
                         {formatDate(item.inicio)} {item.frecuencia ? `- ${item.frecuencia}` : ''}
-                      </Text>
+                      </AppText>
                     </View>
                     {item.impactosalud ? (
                       <View style={[styles.impactBadge, { borderColor: accent }]}>
-                        <Text style={[styles.impactBadgeText, { color: accent }]}>
+                        <AppText style={[styles.impactBadgeText, { color: accent }]}>
                           {item.impactosalud}
-                        </Text>
+                        </AppText>
                       </View>
                     ) : null}
                   </View>
@@ -481,25 +480,25 @@ export function HabitosScreen(_: Props) {
                   <View style={styles.recordMetaRow}>
                     {item.categoria ? (
                       <View style={styles.metaChip}>
-                        <Text style={styles.metaChipText}>{item.categoria}</Text>
+                        <AppText style={styles.metaChipText}>{item.categoria}</AppText>
                       </View>
                     ) : null}
                     {item.nivel ? (
                       <View style={styles.metaChip}>
-                        <Text style={styles.metaChipText}>Nivel: {item.nivel}</Text>
+                        <AppText style={styles.metaChipText}>Nivel: {item.nivel}</AppText>
                       </View>
                     ) : null}
                     {item.cantidad ? (
                       <View style={styles.metaChip}>
-                        <Text style={styles.metaChipText}>
+                        <AppText style={styles.metaChipText}>
                           {item.cantidad} {item.unidad ?? ''}
-                        </Text>
+                        </AppText>
                       </View>
                     ) : null}
                   </View>
 
                   {item.observaciones ? (
-                    <Text style={styles.recordNote}>{item.observaciones}</Text>
+                    <AppText style={styles.recordNote}>{item.observaciones}</AppText>
                   ) : null}
                 </View>
               );
@@ -532,22 +531,22 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   header: {
-    backgroundColor: '#38F28E',
+    backgroundColor: '#38E28E',
     borderRadius: 24,
     padding: 20,
     gap: 8,
     borderWidth: 1,
-    borderColor: '#38F28E',
+    borderColor: '#38E28E',
   },
   headerBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#38F28E',
+    backgroundColor: '#38E28E',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   headerBadgeText: {
-    color: '#38F28E',
+    color: '#38E28E',
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.4,
@@ -559,7 +558,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   subtitle: {
-    color: '#38F28E',
+    color: '#38E28E',
     lineHeight: 20,
   },
   card: {
@@ -648,7 +647,7 @@ const styles = StyleSheet.create({
     minHeight: 92,
   },
   primaryBtn: {
-    backgroundColor: '#38F28E',
+    backgroundColor: '#38E28E',
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',

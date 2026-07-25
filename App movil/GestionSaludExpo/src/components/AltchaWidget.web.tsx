@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { AppText } from './AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '../config/api';
 import { appColors, colorAlpha } from '../theme/colors';
@@ -67,12 +68,12 @@ function AltchaFrame({ status, children, onRetry }: { status: string; children: 
       <View style={styles.heading}>
         <View style={styles.headingCopy}>
           <Ionicons name="shield-checkmark-outline" size={19} color={appColors.success} />
-          <View><Text style={styles.title}>Verificación privada</Text><Text style={styles.subtitle}>Protección ALTCHA sin rastreo</Text></View>
+          <View><AppText style={styles.title}>Verificación privada</AppText><AppText style={styles.subtitle}>Protección ALTCHA sin rastreo</AppText></View>
         </View>
-        {status === 'verified' ? <View style={styles.badge}><Ionicons name="checkmark-circle" size={15} color={appColors.success} /><Text style={styles.badgeText}>Verificado</Text></View> : null}
+        {status === 'verified' ? <View style={styles.badge}><Ionicons name="checkmark-circle" size={15} color={appColors.success} /><AppText style={styles.badgeText}>Verificado</AppText></View> : null}
       </View>
       <View style={styles.area}>{children}{status === 'loading' ? <ActivityIndicator color={appColors.info} /> : null}</View>
-      {status === 'error' ? <View style={styles.errorRow}><Text style={styles.error}>La API de verificación no está disponible.</Text><TouchableOpacity onPress={onRetry} style={styles.retryButton}><Ionicons name="refresh" size={15} color={appColors.info} /><Text style={styles.retryText}>Reintentar</Text></TouchableOpacity></View> : null}
+      {status === 'error' ? <View style={styles.errorRow}><AppText style={styles.error}>La API de verificación no está disponible.</AppText><TouchableOpacity onPress={onRetry} style={styles.retryButton}><Ionicons name="refresh" size={15} color={appColors.info} /><AppText style={styles.retryText}>Reintentar</AppText></TouchableOpacity></View> : null}
     </View>
   );
 }

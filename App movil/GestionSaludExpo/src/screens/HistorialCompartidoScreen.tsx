@@ -3,11 +3,10 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { API_URL } from '../config/api';
@@ -92,26 +91,26 @@ const humanizeKey = (value: string) =>
 
 const renderValue = (value: unknown, depth = 0): React.ReactNode => {
   if (value === null || value === undefined || value === '') {
-    return <Text style={styles.emptyValue}>Sin dato</Text>;
+    return <AppText style={styles.emptyValue}>Sin dato</AppText>;
   }
 
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-    return <Text style={styles.valueText}>{String(value)}</Text>;
+    return <AppText style={styles.valueText}>{String(value)}</AppText>;
   }
 
   if (Array.isArray(value)) {
     if (value.length === 0) {
-      return <Text style={styles.emptyValue}>Sin registros</Text>;
+      return <AppText style={styles.emptyValue}>Sin registros</AppText>;
     }
     return (
       <View style={styles.arrayList}>
         {value.slice(0, 8).map((item, index) => (
           <View key={index} style={styles.arrayItem}>
-            <Text style={styles.arrayIndex}>#{index + 1}</Text>
+            <AppText style={styles.arrayIndex}>#{index + 1}</AppText>
             {renderValue(item, depth + 1)}
           </View>
         ))}
-        {value.length > 8 ? <Text style={styles.moreText}>+{value.length - 8} registros mas</Text> : null}
+        {value.length > 8 ? <AppText style={styles.moreText}>+{value.length - 8} registros mas</AppText> : null}
       </View>
     );
   }
@@ -121,24 +120,24 @@ const renderValue = (value: unknown, depth = 0): React.ReactNode => {
       ([, item]) => item !== undefined,
     );
     if (!entries.length) {
-      return <Text style={styles.emptyValue}>Sin datos</Text>;
+      return <AppText style={styles.emptyValue}>Sin datos</AppText>;
     }
     return (
       <View style={[styles.objectBox, depth > 0 && styles.objectBoxNested]}>
         {entries.slice(0, 12).map(([key, item]) => (
           <View key={key} style={styles.fieldRow}>
-            <Text style={styles.fieldLabel}>{humanizeKey(key)}</Text>
+            <AppText style={styles.fieldLabel}>{humanizeKey(key)}</AppText>
             {renderValue(item, depth + 1)}
           </View>
         ))}
         {entries.length > 12 ? (
-          <Text style={styles.moreText}>+{entries.length - 12} campos mas</Text>
+          <AppText style={styles.moreText}>+{entries.length - 12} campos mas</AppText>
         ) : null}
       </View>
     );
   }
 
-  return <Text style={styles.valueText}>{String(value)}</Text>;
+  return <AppText style={styles.valueText}>{String(value)}</AppText>;
 };
 
 export function HistorialCompartidoScreen({ route }: Props) {
@@ -192,18 +191,18 @@ export function HistorialCompartidoScreen({ route }: Props) {
       <View style={styles.heroCard}>
         <View style={styles.heroBadge}>
           <Ionicons name="open-outline" size={16} color={appColors.info} />
-          <Text style={styles.heroBadgeText}>Historial compartido</Text>
+          <AppText style={styles.heroBadgeText}>Historial compartido</AppText>
         </View>
-        <Text style={styles.title}>Abrir enlace o codigo</Text>
-        <Text style={styles.subtitle}>
+        <AppText style={styles.title}>Abrir enlace o codigo</AppText>
+        <AppText style={styles.subtitle}>
           Pega el enlace web, el enlace interno de la app o el codigo recibido para consultar las
           secciones autorizadas.
-        </Text>
+        </AppText>
       </View>
 
       <View style={styles.formCard}>
-        <Text style={styles.label}>Enlace o codigo</Text>
-        <TextInput
+        <AppText style={styles.label}>Enlace o codigo</AppText>
+        <AppTextInput
           style={styles.input}
           value={inputValue}
           onChangeText={setInputValue}
@@ -222,32 +221,32 @@ export function HistorialCompartidoScreen({ route }: Props) {
           ) : (
             <>
               <Ionicons name="eye-outline" size={18} color={appColors.text} />
-              <Text style={styles.primaryButtonText}>Abrir historial</Text>
+              <AppText style={styles.primaryButtonText}>Abrir historial</AppText>
             </>
           )}
         </TouchableOpacity>
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
       </View>
 
       {sharedHistory ? (
         <View style={styles.summaryCard}>
-          <Text style={styles.sectionTitle}>Permiso</Text>
+          <AppText style={styles.sectionTitle}>Permiso</AppText>
           <View style={styles.metaGrid}>
             <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>Paciente</Text>
-              <Text style={styles.metaValue}>#{sharedHistory.permiso?.pacienteId ?? 'N/D'}</Text>
+              <AppText style={styles.metaLabel}>Paciente</AppText>
+              <AppText style={styles.metaValue}>#{sharedHistory.permiso?.pacienteId ?? 'N/D'}</AppText>
             </View>
             <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>Medico</Text>
-              <Text style={styles.metaValue}>#{sharedHistory.permiso?.medicoId ?? 'N/D'}</Text>
+              <AppText style={styles.metaLabel}>Medico</AppText>
+              <AppText style={styles.metaValue}>#{sharedHistory.permiso?.medicoId ?? 'N/D'}</AppText>
             </View>
             <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>Estado</Text>
-              <Text style={styles.metaValue}>{sharedHistory.permiso?.estado ?? 'N/D'}</Text>
+              <AppText style={styles.metaLabel}>Estado</AppText>
+              <AppText style={styles.metaValue}>{sharedHistory.permiso?.estado ?? 'N/D'}</AppText>
             </View>
             <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>Expira</Text>
-              <Text style={styles.metaValue}>{formatDateTime(sharedHistory.expiresAt)}</Text>
+              <AppText style={styles.metaLabel}>Expira</AppText>
+              <AppText style={styles.metaValue}>{formatDateTime(sharedHistory.expiresAt)}</AppText>
             </View>
           </View>
         </View>
@@ -255,7 +254,7 @@ export function HistorialCompartidoScreen({ route }: Props) {
 
       {sections.map(([sectionKey, sectionValue]) => (
         <View key={sectionKey} style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>{SECTION_LABELS[sectionKey] ?? humanizeKey(sectionKey)}</Text>
+          <AppText style={styles.sectionTitle}>{SECTION_LABELS[sectionKey] ?? humanizeKey(sectionKey)}</AppText>
           {renderValue(sectionValue)}
         </View>
       ))}

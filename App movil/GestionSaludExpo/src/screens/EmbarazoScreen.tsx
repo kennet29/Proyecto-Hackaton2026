@@ -5,11 +5,10 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
@@ -391,8 +390,8 @@ export function EmbarazoScreen() {
           <Ionicons name="heart-circle-outline" size={27} color="#FB7185" />
         </View>
         <View style={styles.headerCopy}>
-          <Text style={styles.title}>Embarazo</Text>
-          <Text style={styles.subtitle}>Ficha obstétrica, antecedentes y seguimiento del embarazo.</Text>
+          <AppText style={styles.title}>Embarazo</AppText>
+          <AppText style={styles.subtitle}>Ficha obstétrica, antecedentes y seguimiento del embarazo.</AppText>
         </View>
       </View>
 
@@ -403,12 +402,12 @@ export function EmbarazoScreen() {
             size={18}
             color={feedback.type === 'success' ? appColors.success : appColors.accent}
           />
-          <Text style={styles.feedbackText}>{feedback.message}</Text>
+          <AppText style={styles.feedbackText}>{feedback.message}</AppText>
         </View>
       ) : null}
 
       <View style={styles.patientCard}>
-        <Text style={styles.label}>Paciente</Text>
+        <AppText style={styles.label}>Paciente</AppText>
         {loadingPatients ? (
           <ActivityIndicator color={appColors.info} />
         ) : (
@@ -435,19 +434,19 @@ export function EmbarazoScreen() {
       ) : filteredRecords.length === 0 ? (
         <View style={styles.emptyCard}>
           <Ionicons name="document-text-outline" size={29} color={appColors.info} />
-          <Text style={styles.emptyTitle}>Sin registros de embarazo</Text>
-          <Text style={styles.emptyText}>Agrega la primera ficha obstétrica para este paciente.</Text>
+          <AppText style={styles.emptyTitle}>Sin registros de embarazo</AppText>
+          <AppText style={styles.emptyText}>Agrega la primera ficha obstétrica para este paciente.</AppText>
         </View>
       ) : (
         filteredRecords.map((record) => (
           <View key={record.embarazoId} style={styles.recordCard}>
             <View style={styles.recordHeader}>
               <View>
-                <Text style={styles.recordEyebrow}>FICHA OBSTÉTRICA</Text>
-                <Text style={styles.recordTitle}>FPP: {formatDate(record.fechaprobableparto)}</Text>
+                <AppText style={styles.recordEyebrow}>FICHA OBSTÉTRICA</AppText>
+                <AppText style={styles.recordTitle}>FPP: {formatDate(record.fechaprobableparto)}</AppText>
               </View>
               <View style={styles.statusChip}>
-                <Text style={styles.statusText}>{record.estado || 'Sin estado'}</Text>
+                <AppText style={styles.statusText}>{record.estado || 'Sin estado'}</AppText>
               </View>
             </View>
             <View style={styles.infoGrid}>
@@ -492,8 +491,8 @@ export function EmbarazoScreen() {
             </View>
             {record.antecedentesRelevantes ? (
               <View style={styles.notes}>
-                <Text style={styles.notesLabel}>ANTECEDENTES RELEVANTES</Text>
-                <Text style={styles.notesText}>{record.antecedentesRelevantes}</Text>
+                <AppText style={styles.notesLabel}>ANTECEDENTES RELEVANTES</AppText>
+                <AppText style={styles.notesText}>{record.antecedentesRelevantes}</AppText>
               </View>
             ) : null}
           </View>
@@ -502,8 +501,8 @@ export function EmbarazoScreen() {
 
       {showForm ? (
         <View style={styles.formCard}>
-          <Text style={styles.formTitle}>Nueva ficha obstétrica</Text>
-          <Text style={styles.formHint}>Los campos marcados con * son obligatorios.</Text>
+          <AppText style={styles.formTitle}>Nueva ficha obstétrica</AppText>
+          <AppText style={styles.formHint}>Los campos marcados con * son obligatorios.</AppText>
 
           <FormSection title="Datación del embarazo">
             <DateInput label="Fecha de última menstruación (FUM) *" value={form.fechainicio} onPress={() => openDatePicker('fechainicio')} />
@@ -605,7 +604,7 @@ export function EmbarazoScreen() {
                 }}
               />
               <TouchableOpacity onPress={() => setIosDateField(null)} style={styles.iosDone}>
-                <Text style={styles.iosDoneText}>Listo</Text>
+                <AppText style={styles.iosDoneText}>Listo</AppText>
               </TouchableOpacity>
             </View>
           ) : null}
@@ -618,7 +617,7 @@ export function EmbarazoScreen() {
             {submitting ? (
               <ActivityIndicator color={appColors.text} />
             ) : (
-              <Text style={styles.saveButtonText}>Guardar ficha obstétrica</Text>
+              <AppText style={styles.saveButtonText}>Guardar ficha obstétrica</AppText>
             )}
           </TouchableOpacity>
         </View>
@@ -632,7 +631,7 @@ export function EmbarazoScreen() {
         }}
       >
         <Ionicons name={showForm ? 'close' : 'add'} size={22} color={appColors.text} />
-        <Text style={styles.toggleText}>{showForm ? 'Cerrar formulario' : 'Nueva ficha de embarazo'}</Text>
+        <AppText style={styles.toggleText}>{showForm ? 'Cerrar formulario' : 'Nueva ficha de embarazo'}</AppText>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -641,8 +640,8 @@ export function EmbarazoScreen() {
 function RecordItem({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.recordItem}>
-      <Text style={styles.recordLabel}>{label}</Text>
-      <Text style={styles.recordValue}>{value}</Text>
+      <AppText style={styles.recordLabel}>{label}</AppText>
+      <AppText style={styles.recordValue}>{value}</AppText>
     </View>
   );
 }
@@ -650,7 +649,7 @@ function RecordItem({ label, value }: { label: string; value: string }) {
 function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <View style={styles.formSection}>
-      <Text style={styles.formSectionTitle}>{title}</Text>
+      <AppText style={styles.formSectionTitle}>{title}</AppText>
       {children}
     </View>
   );
@@ -659,12 +658,12 @@ function FormSection({ title, children }: { title: string; children: React.React
 function DateInput({ label, value, onPress }: { label: string; value: string; onPress: () => void }) {
   return (
     <View style={styles.field}>
-      <Text style={styles.formLabel}>{label}</Text>
+      <AppText style={styles.formLabel}>{label}</AppText>
       <TouchableOpacity style={styles.inputShell} onPress={onPress}>
         <Ionicons name="calendar-outline" size={18} color={appColors.info} />
-        <Text style={value ? styles.dateValue : styles.placeholder}>
+        <AppText style={value ? styles.dateValue : styles.placeholder}>
           {value ? formatDate(value) : 'Selecciona una fecha'}
-        </Text>
+        </AppText>
       </TouchableOpacity>
     </View>
   );
@@ -683,8 +682,8 @@ function NumberInput({
 }) {
   return (
     <View style={[styles.field, !full && styles.halfField]}>
-      <Text style={styles.formLabel}>{label}</Text>
-      <TextInput
+      <AppText style={styles.formLabel}>{label}</AppText>
+      <AppTextInput
         style={styles.textInput}
         value={value}
         onChangeText={onChange}
@@ -711,8 +710,8 @@ function TextField({
 }) {
   return (
     <View style={styles.field}>
-      <Text style={styles.formLabel}>{label}</Text>
-      <TextInput
+      <AppText style={styles.formLabel}>{label}</AppText>
+      <AppTextInput
         style={[styles.textInput, multiline && styles.multiline]}
         value={value}
         onChangeText={onChange}
@@ -739,7 +738,7 @@ function PickerInput({
 }) {
   return (
     <View style={[styles.field, compact && styles.halfField]}>
-      <Text style={styles.formLabel}>{label}</Text>
+      <AppText style={styles.formLabel}>{label}</AppText>
       <View style={styles.formPicker}>
         <Picker selectedValue={value} onValueChange={(nextValue) => onChange(String(nextValue))}>
           {options.map((option) => (

@@ -6,11 +6,10 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -56,6 +55,25 @@ const formatDisplayDate = (value?: string) => {
     day: 'numeric',
   });
 };
+
+function FieldLabel({
+  children,
+  required = false,
+}: {
+  children: React.ReactNode;
+  required?: boolean;
+}) {
+  return (
+    <AppText style={styles.label}>
+      {children}
+      {required ? (
+        <AppText style={styles.requiredMark}> *</AppText>
+      ) : (
+        <AppText style={styles.optionalText}> (opcional)</AppText>
+      )}
+    </AppText>
+  );
+}
 
 export function PacienteEditorScreen({ navigation, route }: Props) {
   const pacienteId = route.params?.pacienteId ?? null;
@@ -233,61 +251,89 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
     return (
       <View style={styles.loadingScreen}>
         <ActivityIndicator size="large" color="#29B6FF" />
-        <Text style={styles.loadingText}>Cargando paciente...</Text>
+        <AppText style={styles.loadingText}>Cargando paciente...</AppText>
       </View>
     );
   }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>{isEditing ? 'Editar Paciente' : 'Nuevo Paciente'}</Text>
-      <Text style={styles.subtitle}>
+      <AppText style={styles.title}>{isEditing ? 'Editar Paciente' : 'Nuevo Paciente'}</AppText>
+      <AppText style={styles.subtitle}>
         {isEditing ? `Paciente #${pacienteId}` : 'Completa los datos para vincularlo a tu cuenta.'}
-      </Text>
+      </AppText>
 
-      <TextInput
+      <AppText style={styles.requiredHint}>Los campos con * son obligatorios.</AppText>
+
+      <FieldLabel required>Nombres</FieldLabel>
+      <AppTextInput
         style={styles.input}
-        placeholder="Nombres"
+        placeholder="Ej. María José"
+        placeholderTextColor="#8298AF"
         value={form.nombres}
         onChangeText={(value) => handleChange('nombres', value)}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Apellidos"
-        value={form.apellidos}
-        onChangeText={(value) => handleChange('apellidos', value)}
+        autoCapitalize="words"
+        accessibilityLabel="Nombres del paciente"
       />
 
-      <Text style={styles.label}>Genero</Text>
+      <FieldLabel required>Apellidos</FieldLabel>
+      <AppTextInput
+        style={styles.input}
+        placeholder="Ej. López García"
+        placeholderTextColor="#8298AF"
+        value={form.apellidos}
+        onChangeText={(value) => handleChange('apellidos', value)}
+        autoCapitalize="words"
+        accessibilityLabel="Apellidos del paciente"
+      />
+
+      <FieldLabel required>Género</FieldLabel>
       <View style={styles.pickerShell}>
-        <Picker selectedValue={form.sexo} onValueChange={(value) => handleChange('sexo', String(value))}>
-          <Picker.Item label="Selecciona un genero" value="" />
+        <Picker
+          selectedValue={form.sexo}
+          onValueChange={(value) => handleChange('sexo', String(value))}
+          accessibilityLabel="Género del paciente"
+        >
+          <Picker.Item label="Selecciona un género" value="" />
           <Picker.Item label="Femenino" value="F" />
           <Picker.Item label="Masculino" value="M" />
         </Picker>
       </View>
 
-      <TextInput
+      <FieldLabel>Teléfono</FieldLabel>
+      <AppTextInput
         style={styles.input}
-        placeholder="Telefono"
+        placeholder="Ej. 8888 8888"
+        placeholderTextColor="#8298AF"
         keyboardType="phone-pad"
         value={form.telefono}
         onChangeText={(value) => handleChange('telefono', value)}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Correo"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={form.email}
-        onChangeText={(value) => handleChange('email', value)}
+        accessibilityLabel="Teléfono del paciente"
       />
 
-      <Text style={styles.label}>Fecha de nacimiento</Text>
-      <TouchableOpacity style={styles.dateField} onPress={showBirthDatePicker}>
-        <Text style={form.fechaNacimiento ? styles.dateValue : styles.datePlaceholder}>
+      <FieldLabel>Correo electrónico</FieldLabel>
+      <AppTextInput
+        style={styles.input}
+        placeholder="Ej. nombre@correo.com"
+        placeholderTextColor="#8298AF"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+        value={form.email}
+        onChangeText={(value) => handleChange('email', value)}
+        accessibilityLabel="Correo electrónico del paciente"
+      />
+
+      <FieldLabel>Fecha de nacimiento</FieldLabel>
+      <TouchableOpacity
+        style={styles.dateField}
+        onPress={showBirthDatePicker}
+        accessibilityRole="button"
+        accessibilityLabel="Seleccionar fecha de nacimiento"
+      >
+        <AppText style={form.fechaNacimiento ? styles.dateValue : styles.datePlaceholder}>
           {formatDisplayDate(form.fechaNacimiento)}
-        </Text>
+        </AppText>
       </TouchableOpacity>
 
       {showIOSDatePicker ? (
@@ -302,14 +348,18 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         />
       ) : null}
 
-      <TextInput
+      <FieldLabel>Parentesco con el titular</FieldLabel>
+      <AppTextInput
         style={styles.input}
-        placeholder="Parentesco con el principal"
+        placeholder="Ej. Madre, hijo o cónyuge"
+        placeholderTextColor="#8298AF"
         value={form.parentesco}
         onChangeText={(value) => handleChange('parentesco', value)}
+        autoCapitalize="sentences"
+        accessibilityLabel="Parentesco con el titular de la cuenta"
       />
       <View style={styles.switchRow}>
-        <Text style={styles.switchLabel}>Marcar como paciente principal</Text>
+        <AppText style={styles.switchLabel}>Marcar como paciente principal</AppText>
         <Switch
           value={form.esPrincipal}
           onValueChange={(value) => handleChange('esPrincipal', value)}
@@ -318,9 +368,9 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
       </View>
 
       <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit} disabled={submitting}>
-        <Text style={styles.btnText}>
+        <AppText style={styles.btnText}>
           {submitting ? 'Guardando...' : isEditing ? 'Actualizar Paciente' : 'Guardar Paciente'}
-        </Text>
+        </AppText>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -351,13 +401,25 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: '#C9D7E8',
-    marginBottom: 18,
+    marginBottom: 8,
+  },
+  requiredHint: {
+    color: '#9FB3C8',
+    fontSize: 13,
+    marginBottom: 20,
   },
   label: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
     color: '#F4F8FF',
     marginBottom: 8,
+  },
+  requiredMark: {
+    color: '#FF8A80',
+  },
+  optionalText: {
+    color: '#9FB3C8',
+    fontWeight: '500',
   },
   input: {
     borderWidth: 1,

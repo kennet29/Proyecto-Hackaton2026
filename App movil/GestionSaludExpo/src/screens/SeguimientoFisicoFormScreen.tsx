@@ -4,11 +4,10 @@ import {
   Alert,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { Picker } from '@react-native-picker/picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -294,21 +293,21 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.hero}>
-        <Text style={styles.heroTitle}>Nuevo Seguimiento</Text>
-        <Text style={styles.heroText}>
+        <AppText style={styles.heroTitle}>Nuevo Seguimiento</AppText>
+        <AppText style={styles.heroText}>
           Crea el registro en una vista separada y, si quieres, usa un registro anterior como base.
-        </Text>
+        </AppText>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Paciente</Text>
+        <AppText style={styles.sectionTitle}>Paciente</AppText>
         {loadingPatients ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color="#29B6FF" />
-            <Text style={styles.loadingText}>Cargando pacientes...</Text>
+            <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
           </View>
         ) : patients.length === 0 ? (
-          <Text style={styles.emptyText}>No hay pacientes vinculados en esta cuenta.</Text>
+          <AppText style={styles.emptyText}>No hay pacientes vinculados en esta cuenta.</AppText>
         ) : (
           <View style={styles.pickerWrapper}>
             <Picker
@@ -329,19 +328,19 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
             </Picker>
           </View>
         )}
-        {patientError ? <Text style={styles.errorText}>{patientError}</Text> : null}
+        {patientError ? <AppText style={styles.errorText}>{patientError}</AppText> : null}
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Usar registro anterior</Text>
-        <Text style={styles.sectionText}>
+        <AppText style={styles.sectionTitle}>Usar registro anterior</AppText>
+        <AppText style={styles.sectionText}>
           Elige uno de tus registros ya guardados para copiar peso, ejercicio, pasos, calorias, distancia y notas.
           La fecha nueva se deja en hoy para evitar duplicados.
-        </Text>
+        </AppText>
         {loadingHistory ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color="#29B6FF" />
-            <Text style={styles.loadingText}>Cargando registros recientes...</Text>
+            <AppText style={styles.loadingText}>Cargando registros recientes...</AppText>
           </View>
         ) : templateRecords.length ? (
           templateRecords.map((record) => {
@@ -352,34 +351,34 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
                 style={[styles.templateCard, active && styles.templateCardActive]}
                 onPress={() => applyTemplate(record)}
               >
-                <Text style={styles.templateTitle}>{formatDate(record.fecha)}</Text>
-                <Text style={styles.templateText}>
+                <AppText style={styles.templateTitle}>{formatDate(record.fecha)}</AppText>
+                <AppText style={styles.templateText}>
                   Peso: {formatNumber(record.peso, ' kg')} Â· Minutos: {formatNumber(record.minutosEjercicio, ' min')}
-                </Text>
-                <Text style={styles.templateText}>
+                </AppText>
+                <AppText style={styles.templateText}>
                   Pasos: {formatNumber(record.pasos)} Â· Calorias: {formatNumber(record.caloriasQuemadas)}
-                </Text>
-                <Text style={styles.templateText}>
+                </AppText>
+                <AppText style={styles.templateText}>
                   Distancia: {formatNumber(record.distanciaKm, ' km')} Â· Intensidad: {record.intensidad ?? 'N/D'}
-                </Text>
+                </AppText>
                 {record.tipoEjercicio ? (
-                  <Text style={styles.templateText}>Actividad: {record.tipoEjercicio}</Text>
+                  <AppText style={styles.templateText}>Actividad: {record.tipoEjercicio}</AppText>
                 ) : null}
-                <Text style={styles.templateAction}>{active ? 'Plantilla aplicada' : 'Usar como plantilla'}</Text>
+                <AppText style={styles.templateAction}>{active ? 'Plantilla aplicada' : 'Usar como plantilla'}</AppText>
               </TouchableOpacity>
             );
           })
         ) : (
-          <Text style={styles.emptyText}>Todavia no hay registros previos para este paciente.</Text>
+          <AppText style={styles.emptyText}>Todavia no hay registros previos para este paciente.</AppText>
         )}
-        {historyError ? <Text style={styles.errorText}>{historyError}</Text> : null}
+        {historyError ? <AppText style={styles.errorText}>{historyError}</AppText> : null}
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Datos del registro</Text>
+        <AppText style={styles.sectionTitle}>Datos del registro</AppText>
 
-        <Text style={styles.fieldLabel}>Fecha</Text>
-        <TextInput
+        <AppText style={styles.fieldLabel}>Fecha</AppText>
+        <AppTextInput
           style={styles.input}
           value={form.fecha}
           onChangeText={(value) => handleChange('fecha', value)}
@@ -389,8 +388,8 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
 
         <View style={styles.row}>
           <View style={styles.fieldGroupHalf}>
-            <Text style={styles.fieldLabel}>Peso</Text>
-            <TextInput
+            <AppText style={styles.fieldLabel}>Peso</AppText>
+            <AppTextInput
               style={styles.input}
               value={form.peso}
               onChangeText={(value) => handleChange('peso', value)}
@@ -399,8 +398,8 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
             />
           </View>
           <View style={styles.fieldGroupHalf}>
-            <Text style={styles.fieldLabel}>Minutos de ejercicio</Text>
-            <TextInput
+            <AppText style={styles.fieldLabel}>Minutos de ejercicio</AppText>
+            <AppTextInput
               style={styles.input}
               value={form.minutosEjercicio}
               onChangeText={(value) => handleChange('minutosEjercicio', value)}
@@ -410,15 +409,15 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           </View>
         </View>
 
-        <Text style={styles.fieldLabel}>Tipo de ejercicio</Text>
-        <TextInput
+        <AppText style={styles.fieldLabel}>Tipo de ejercicio</AppText>
+        <AppTextInput
           style={styles.input}
           value={form.tipoEjercicio}
           onChangeText={(value) => handleChange('tipoEjercicio', value)}
           placeholder="Tipo de ejercicio"
         />
 
-        <Text style={styles.fieldLabel}>Intensidad</Text>
+        <AppText style={styles.fieldLabel}>Intensidad</AppText>
         <View style={styles.pickerWrapper}>
           <Picker
             selectedValue={form.intensidad}
@@ -436,8 +435,8 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
 
         <View style={styles.row}>
           <View style={styles.fieldGroupHalf}>
-            <Text style={styles.fieldLabel}>Pasos</Text>
-            <TextInput
+            <AppText style={styles.fieldLabel}>Pasos</AppText>
+            <AppTextInput
               style={styles.input}
               value={form.pasos}
               onChangeText={(value) => handleChange('pasos', value)}
@@ -446,8 +445,8 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
             />
           </View>
           <View style={styles.fieldGroupHalf}>
-            <Text style={styles.fieldLabel}>Calorias quemadas</Text>
-            <TextInput
+            <AppText style={styles.fieldLabel}>Calorias quemadas</AppText>
+            <AppTextInput
               style={styles.input}
               value={form.caloriasQuemadas}
               onChangeText={(value) => handleChange('caloriasQuemadas', value)}
@@ -457,8 +456,8 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           </View>
         </View>
 
-        <Text style={styles.fieldLabel}>Distancia</Text>
-        <TextInput
+        <AppText style={styles.fieldLabel}>Distancia</AppText>
+        <AppTextInput
           style={styles.input}
           value={form.distanciaKm}
           onChangeText={(value) => handleChange('distanciaKm', value)}
@@ -466,8 +465,8 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           keyboardType="decimal-pad"
         />
 
-        <Text style={styles.fieldLabel}>Notas</Text>
-        <TextInput
+        <AppText style={styles.fieldLabel}>Notas</AppText>
+        <AppTextInput
           style={[styles.input, styles.textArea]}
           value={form.notas}
           onChangeText={(value) => handleChange('notas', value)}
@@ -484,7 +483,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           {submitting ? (
             <ActivityIndicator color="#F4F8FF" />
           ) : (
-            <Text style={styles.primaryBtnText}>Guardar seguimiento</Text>
+            <AppText style={styles.primaryBtnText}>Guardar seguimiento</AppText>
           )}
         </TouchableOpacity>
       </View>

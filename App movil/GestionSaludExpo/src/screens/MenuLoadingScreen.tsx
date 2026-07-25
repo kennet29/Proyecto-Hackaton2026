@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, SafeAreaView, StyleSheet, View } from 'react-native';
+import { AppText } from '../components/AppText';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { healthTips } from '../data/healthTips';
 import { RootStackParamList } from '../navigation/types';
@@ -169,28 +170,28 @@ export function MenuLoadingScreen({ navigation }: Props) {
 
         <View style={styles.centerBlock}>
           <View style={styles.loaderCard}>
-            <Text style={styles.loaderEyebrow}>CARGANDO PANEL DE SALUD</Text>
+            <AppText style={styles.loaderEyebrow}>CARGANDO PANEL DE SALUD</AppText>
             <HeartRateLoader />
           </View>
-          <Text style={styles.loadingText}>Sincronizando informacion importante...</Text>
+          <AppText style={styles.loadingText}>Sincronizando informacion importante...</AppText>
         </View>
 
         <View style={styles.tipsCard}>
           <View style={styles.tipsHeader}>
-            <Text style={styles.tipsTitle}>Consejos de salud</Text>
-            <Text style={styles.tipsCounter}>
+            <AppText style={styles.tipsTitle}>Consejos de salud</AppText>
+            <AppText style={styles.tipsCounter}>
               {tipIndex + 1} / {healthTips.length}
-            </Text>
+            </AppText>
           </View>
 
-          <Text style={styles.primaryTip}>{visibleTips[0]?.text}</Text>
+          <AppText style={styles.primaryTip}>{visibleTips[0]?.text}</AppText>
 
           <View style={styles.tipDivider} />
 
           {visibleTips.slice(1).map((tip) => (
-            <Text key={`tip-${tip.index}`} style={styles.secondaryTip}>
+            <AppText key={`tip-${tip.index}`} style={styles.secondaryTip}>
               • {tip.text}
-            </Text>
+            </AppText>
           ))}
         </View>
       </View>

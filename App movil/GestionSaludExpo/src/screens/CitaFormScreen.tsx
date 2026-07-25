@@ -1,26 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
-
   ActivityIndicator,
-
   Alert,
-
   Platform,
-
   ScrollView,
-
   StyleSheet,
-
-  Text,
-
-  TextInput,
-
   TouchableOpacity,
-
   View,
-
 } from "react-native";
+import { AppText, AppTextInput } from '../components/AppText';
 
 import DateTimePicker, {
 
@@ -37,6 +26,7 @@ import { useAuth } from "../context/AuthContext";
 import { API_URL } from "../config/api";
 import { submitJsonWithOfflineFallback } from "../utils/offlineWriteQueue";
 import { openWebDateTimePicker } from "../utils/webDateTimePicker";
+import { getJsonWithOfflineFallback } from "../utils/offlineReadCache";
 
 
 
@@ -407,15 +397,10 @@ export function CitaFormScreen() {
 
     try {
 
-      const response = await fetch(`${API_URL}/citamedica`, { headers });
-
-      const body = await response.json().catch(() => null);
-
-      if (!response.ok) {
-
-        throw new Error(body?.message ?? "No se pudieron obtener las citas");
-
-      }
+      const { data: body } = await getJsonWithOfflineFallback<unknown>(
+        "/citamedica",
+        headers,
+      );
 
       const data = Array.isArray(body) ? body : [];
 
@@ -860,7 +845,7 @@ export function CitaFormScreen() {
 
     <ScrollView contentContainerStyle={styles.container}>
 
-      <Text style={styles.pageTitle}>Citas Programadas</Text>
+      <AppText style={styles.pageTitle}>Citas Programadas</AppText>
 
       <View style={styles.calendarCard}>
 
@@ -870,7 +855,7 @@ export function CitaFormScreen() {
 
             <ActivityIndicator color="#29B6FF" />
 
-            <Text style={styles.loadingText}>Cargando agenda...</Text>
+            <AppText style={styles.loadingText}>Cargando agenda...</AppText>
 
           </View>
 
@@ -898,11 +883,11 @@ export function CitaFormScreen() {
 
               selectedDayTextColor: "#F4F8FF",
 
-              textDayFontFamily: "System",
+              textDayFontFamily: 'SpaceGrotesk_400Regular',
 
-              textMonthFontFamily: "System",
+              textMonthFontFamily: 'Nunito_700Bold',
 
-              textDayHeaderFontFamily: "System",
+              textDayHeaderFontFamily: 'SpaceGrotesk_600SemiBold',
 
             }}
 
@@ -912,7 +897,7 @@ export function CitaFormScreen() {
 
         )}
 
-        {fetchError ? <Text style={styles.errorText}>{fetchError}</Text> : null}
+        {fetchError ? <AppText style={styles.errorText}>{fetchError}</AppText> : null}
 
       </View>
 
@@ -920,7 +905,7 @@ export function CitaFormScreen() {
 
       <View style={styles.patientSection}>
 
-        <Text style={styles.sectionTitle}>Personas registradas</Text>
+        <AppText style={styles.sectionTitle}>Personas registradas</AppText>
 
         {loadingPatients ? (
 
@@ -928,7 +913,7 @@ export function CitaFormScreen() {
 
             <ActivityIndicator color="#29B6FF" />
 
-            <Text style={styles.loadingText}>Cargando personas...</Text>
+            <AppText style={styles.loadingText}>Cargando personas...</AppText>
 
           </View>
 
@@ -936,15 +921,15 @@ export function CitaFormScreen() {
 
           <View style={styles.emptyPatients}>
 
-            <Text style={styles.emptyText}>
+            <AppText style={styles.emptyText}>
 
               No hay personas vinculadas. RegÃ­stralas desde Gestionar Expediente.
 
-            </Text>
+            </AppText>
 
             <TouchableOpacity style={styles.refreshBtn} onPress={fetchPatients}>
 
-              <Text style={styles.refreshBtnText}>Actualizar</Text>
+              <AppText style={styles.refreshBtnText}>Actualizar</AppText>
 
             </TouchableOpacity>
 
@@ -958,11 +943,11 @@ export function CitaFormScreen() {
 
               <View key={person.pacienteId} style={styles.patientChip}>
 
-                <Text style={styles.patientChipTitle}>{person.displayName}</Text>
+                <AppText style={styles.patientChipTitle}>{person.displayName}</AppText>
 
                 {person.parentesco ? (
 
-                  <Text style={styles.patientChipSubtitle}>{person.parentesco}</Text>
+                  <AppText style={styles.patientChipSubtitle}>{person.parentesco}</AppText>
 
                 ) : null}
 
@@ -974,7 +959,7 @@ export function CitaFormScreen() {
 
         )}
 
-        {patientError ? <Text style={styles.errorText}>{patientError}</Text> : null}
+        {patientError ? <AppText style={styles.errorText}>{patientError}</AppText> : null}
 
       </View>
 
@@ -982,11 +967,11 @@ export function CitaFormScreen() {
 
       <View style={styles.dailySection}>
 
-        <Text style={styles.sectionTitle}>{formatHumanDate(selectedDate)}</Text>
+        <AppText style={styles.sectionTitle}>{formatHumanDate(selectedDate)}</AppText>
 
         {appointmentsForSelectedDay.length === 0 ? (
 
-          <Text style={styles.emptyText}>No hay citas para este dÃ­a.</Text>
+          <AppText style={styles.emptyText}>No hay citas para este dÃ­a.</AppText>
 
         ) : (
 
@@ -1006,27 +991,27 @@ export function CitaFormScreen() {
 
                 <View style={styles.appointmentHeader}>
 
-                  <Text style={styles.appointmentHour}>{appointment.timeLabel}</Text>
+                  <AppText style={styles.appointmentHour}>{appointment.timeLabel}</AppText>
 
                   <View style={styles.statusBadge}>
 
-                    <Text style={styles.statusBadgeText}>{appointment.estado ?? "Programada"}</Text>
+                    <AppText style={styles.statusBadgeText}>{appointment.estado ?? "Programada"}</AppText>
 
                   </View>
 
                 </View>
 
-                <Text style={styles.appointmentTitle}>{resolvedName}</Text>
+                <AppText style={styles.appointmentTitle}>{resolvedName}</AppText>
 
                 {appointment.especialidad ? (
 
-                  <Text style={styles.appointmentDetail}>Especialidad: {appointment.especialidad}</Text>
+                  <AppText style={styles.appointmentDetail}>Especialidad: {appointment.especialidad}</AppText>
 
                 ) : null}
 
                 {appointment.motivo ? (
 
-                  <Text style={styles.appointmentDetail}>Motivo: {appointment.motivo}</Text>
+                  <AppText style={styles.appointmentDetail}>Motivo: {appointment.motivo}</AppText>
 
                 ) : null}
 
@@ -1046,7 +1031,7 @@ export function CitaFormScreen() {
 
         <View style={styles.formCard}>
 
-          <Text style={styles.formTitle}>Registrar cita</Text>
+          <AppText style={styles.formTitle}>Registrar cita</AppText>
 
           {loadingPatients ? (
 
@@ -1054,7 +1039,7 @@ export function CitaFormScreen() {
 
               <ActivityIndicator color="#29B6FF" />
 
-              <Text style={styles.loadingText}>Cargando personas...</Text>
+              <AppText style={styles.loadingText}>Cargando personas...</AppText>
 
             </View>
 
@@ -1062,7 +1047,7 @@ export function CitaFormScreen() {
 
             <View style={styles.emptyPatients}>
 
-              <Text style={styles.emptyText}>Agrega personas para seleccionar un paciente.</Text>
+              <AppText style={styles.emptyText}>Agrega personas para seleccionar un paciente.</AppText>
 
             </View>
 
@@ -1108,19 +1093,19 @@ export function CitaFormScreen() {
 
           )}
 
-          <Text style={styles.inputLabel}>Fecha y hora</Text>
+          <AppText style={styles.inputLabel}>Fecha y hora</AppText>
 
           <View style={styles.dateRow}>
 
             <TouchableOpacity style={styles.dateButton} onPress={openDatePicker}>
 
-              <Text style={styles.dateButtonText}>{formatHumanDate(formDate)}</Text>
+              <AppText style={styles.dateButtonText}>{formatHumanDate(formDate)}</AppText>
 
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.dateButton} onPress={openTimePicker}>
 
-              <Text style={styles.dateButtonText}>Hora: {formattedTime}</Text>
+              <AppText style={styles.dateButtonText}>Hora: {formattedTime}</AppText>
 
             </TouchableOpacity>
 
@@ -1162,7 +1147,7 @@ export function CitaFormScreen() {
 
               >
 
-                <Text style={styles.iosPickerDoneText}>Listo</Text>
+                <AppText style={styles.iosPickerDoneText}>Listo</AppText>
 
               </TouchableOpacity>
 
@@ -1206,7 +1191,7 @@ export function CitaFormScreen() {
 
               >
 
-                <Text style={styles.iosPickerDoneText}>Listo</Text>
+                <AppText style={styles.iosPickerDoneText}>Listo</AppText>
 
               </TouchableOpacity>
 
@@ -1214,7 +1199,7 @@ export function CitaFormScreen() {
 
           ) : null}
 
-          <TextInput
+          <AppTextInput
 
             style={styles.input}
 
@@ -1226,7 +1211,7 @@ export function CitaFormScreen() {
 
           />
 
-          <TextInput
+          <AppTextInput
 
             style={styles.input}
 
@@ -1254,7 +1239,7 @@ export function CitaFormScreen() {
 
             ) : (
 
-              <Text style={styles.btnText}>Guardar Cita</Text>
+              <AppText style={styles.btnText}>Guardar Cita</AppText>
 
             )}
 
@@ -1265,7 +1250,7 @@ export function CitaFormScreen() {
       )}
 
       <TouchableOpacity style={styles.fab} onPress={() => setShowForm((prev) => !prev)}>
-        <Text style={styles.fabText}>{showForm ? "Ã—" : "+"}</Text>
+        <AppText style={styles.fabText}>{showForm ? "Ã—" : "+"}</AppText>
       </TouchableOpacity>
     </ScrollView>
 
@@ -1713,7 +1698,7 @@ const styles = StyleSheet.create({
 
   primaryBtn: {
 
-    backgroundColor: "#38F28E",
+    backgroundColor: "#38E28E",
 
     paddingVertical: 16,
 

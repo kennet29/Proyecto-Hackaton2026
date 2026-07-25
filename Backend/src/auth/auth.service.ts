@@ -38,6 +38,7 @@ import { PasswordResetToken } from "./entities/password-reset-token.entity";
 import { MailService } from "../mail/mail.service";
 import { TokenRevocationService } from "./token-revocation.service";
 import { UsuarioPaciente } from "../modules/usuariopaciente/usuariopaciente.entity";
+import { NanoAppearanceService } from "../nano/nano-appearance.service";
 
 /**
  * Describe el usuario autenticado que se inyecta en la solicitud actual.
@@ -90,6 +91,7 @@ export class AuthService {
     private readonly usuarioPacienteRepository: Repository<UsuarioPaciente>,
     private readonly mailService: MailService,
     private readonly tokenRevocationService: TokenRevocationService,
+    private readonly nanoAppearanceService: NanoAppearanceService,
   ) {}
 
   /**
@@ -128,6 +130,7 @@ export class AuthService {
       }
     }
     await this.usersService.registerLogin(user.id);
+    await this.nanoAppearanceService.registerLoginUnlocks(user.id);
     const linkedRelations = await this.usuarioPacienteRepository.find({
       where: { usuarioId: user.id },
       order: { esPrincipal: "DESC", creadoEn: "ASC" },

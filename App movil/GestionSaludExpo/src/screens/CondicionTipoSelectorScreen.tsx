@@ -4,11 +4,10 @@ import {
   Alert,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { API_URL } from '../config/api';
@@ -124,18 +123,18 @@ export function CondicionTipoSelectorScreen({ navigation, route }: Props) {
           <View style={styles.heroIcon}>
             <Ionicons name="search-outline" size={28} color={appColors.text} />
           </View>
-          <Text style={styles.kicker}>CATALOGO CLINICO</Text>
-          <Text style={styles.title}>Escoger condicion</Text>
-          <Text style={styles.subtitle}>
+          <AppText style={styles.kicker}>CATALOGO CLINICO</AppText>
+          <AppText style={styles.title}>Escoger condicion</AppText>
+          <AppText style={styles.subtitle}>
             Busca una condicion existente o escribe una nueva si no aparece en la lista.
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.searchCard}>
-          <Text style={styles.label}>Buscar o escribir condicion</Text>
+          <AppText style={styles.label}>Buscar o escribir condicion</AppText>
           <View style={styles.searchInputWrapper}>
             <Ionicons name="search-outline" size={20} color={appColors.textMuted} />
-            <TextInput
+            <AppTextInput
               style={styles.searchInput}
               placeholder="Ej. Diabetes, hipertension, asma..."
               placeholderTextColor={appColors.textMuted}
@@ -156,8 +155,8 @@ export function CondicionTipoSelectorScreen({ navigation, route }: Props) {
                 <Ionicons name="add-outline" size={20} color={appColors.background} />
               </View>
               <View style={styles.customCopy}>
-                <Text style={styles.customTitle}>Usar "{query.trim()}"</Text>
-                <Text style={styles.customText}>Se creara como nuevo tipo al guardar la condicion.</Text>
+                <AppText style={styles.customTitle}>Usar "{query.trim()}"</AppText>
+                <AppText style={styles.customText}>Se creara como nuevo tipo al guardar la condicion.</AppText>
               </View>
             </TouchableOpacity>
           ) : null}
@@ -165,27 +164,27 @@ export function CondicionTipoSelectorScreen({ navigation, route }: Props) {
 
         <View style={styles.listCard}>
           <View style={styles.listHeader}>
-            <Text style={styles.sectionTitle}>Condiciones disponibles</Text>
-            <Text style={styles.counterText}>{filteredOptions.length}</Text>
+            <AppText style={styles.sectionTitle}>Condiciones disponibles</AppText>
+            <AppText style={styles.counterText}>{filteredOptions.length}</AppText>
           </View>
 
           {loading ? (
             <View style={styles.stateBox}>
               <ActivityIndicator color={appColors.info} />
-              <Text style={styles.stateText}>Cargando condiciones...</Text>
+              <AppText style={styles.stateText}>Cargando condiciones...</AppText>
             </View>
           ) : error ? (
             <View style={styles.stateBox}>
-              <Text style={styles.stateTitle}>No se pudo cargar</Text>
-              <Text style={styles.stateText}>{error}</Text>
+              <AppText style={styles.stateTitle}>No se pudo cargar</AppText>
+              <AppText style={styles.stateText}>{error}</AppText>
               <TouchableOpacity style={styles.retryButton} onPress={fetchOptions}>
-                <Text style={styles.retryButtonText}>Reintentar</Text>
+                <AppText style={styles.retryButtonText}>Reintentar</AppText>
               </TouchableOpacity>
             </View>
           ) : filteredOptions.length === 0 ? (
             <View style={styles.stateBox}>
-              <Text style={styles.stateTitle}>Sin coincidencias</Text>
-              <Text style={styles.stateText}>Puedes usar el texto escrito como una nueva condicion.</Text>
+              <AppText style={styles.stateTitle}>Sin coincidencias</AppText>
+              <AppText style={styles.stateText}>Puedes usar el texto escrito como una nueva condicion.</AppText>
             </View>
           ) : (
             filteredOptions.map((item) => {
@@ -203,7 +202,7 @@ export function CondicionTipoSelectorScreen({ navigation, route }: Props) {
                       color={active ? appColors.success : appColors.info}
                     />
                   </View>
-                  <Text style={styles.optionText}>{item.nombre}</Text>
+                  <AppText style={styles.optionText}>{item.nombre}</AppText>
                   <Ionicons name="chevron-forward" size={18} color={appColors.textMuted} />
                 </TouchableOpacity>
               );

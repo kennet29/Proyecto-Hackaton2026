@@ -6,12 +6,11 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Calendar, DateData } from 'react-native-calendars';
@@ -22,6 +21,7 @@ import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate } from '../utils/localDate';
 import { WebTimeInput } from '../components/WebTimeInput';
+import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 
 const webPickerInputStyle = {
   flex: 1,
@@ -32,7 +32,7 @@ const webPickerInputStyle = {
   backgroundColor: '#0D1B2A',
   color: '#F4F8FF',
   padding: '0 14px',
-  fontFamily: 'Inter, "Segoe UI", Roboto, Arial, sans-serif',
+  fontFamily: '"SpaceGrotesk_400Regular", "Segoe UI", Arial, sans-serif',
   fontSize: 15,
   fontWeight: 700,
   outline: 'none',
@@ -246,11 +246,10 @@ export function VacunaFormScreen() {
     setLoadingRecords(true);
     setRecordsError(null);
     try {
-      const response = await fetch(`${API_URL}/vacuna`, { headers: authHeaders });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(body?.message ?? 'No se pudieron cargar las vacunas');
-      }
+      const { data: body } = await getJsonWithOfflineFallback<unknown>(
+        '/vacuna',
+        authHeaders,
+      );
       const data = Array.isArray(body) ? mapRecords(body) : [];
       setRecords(data);
     } catch (error) {
@@ -316,7 +315,7 @@ export function VacunaFormScreen() {
         const existing = marks[applicationDate] ?? {};
         const dots = existing.dots ?? [];
         if (!dots.some((dot) => dot.key === `application-${record.vacunaId}`)) {
-          dots.push({ key: `application-${record.vacunaId}`, color: '#38F28E' });
+          dots.push({ key: `application-${record.vacunaId}`, color: '#38E28E' });
         }
         marks[applicationDate] = {
           ...existing,
@@ -537,10 +536,17 @@ export function VacunaFormScreen() {
       if (offlineResult.status === 'queued') {
         Alert.alert(
           'Notificacion en cola',
-          'No habia conexion. La notificacion quedo pendiente y se enviara cuando vuelva la red.',
+          offlineResult.localReminder === 'scheduled'
+            ? 'No había conexión. La notificación quedó programada en este dispositivo y se sincronizará después.'
+            : 'La notificación quedó pendiente de sincronización. Revisa los permisos de notificaciones del dispositivo.',
         );
       } else {
-        Alert.alert('Notificacion creada', 'La notificacion push de la proxima dosis fue programada.');
+        Alert.alert(
+          'Notificacion creada',
+          offlineResult.localReminder === 'scheduled'
+            ? 'El aviso de la próxima dosis funcionará también sin conexión.'
+            : 'La notificación fue registrada. Revisa los permisos del dispositivo para recibirla localmente.',
+        );
       }
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo crear la notificacion');
@@ -599,7 +605,7 @@ export function VacunaFormScreen() {
             if (field === 'notificationTime') setShowIOSNotificationTimePicker(false);
           }}
         >
-          <Text style={styles.iosPickerDoneText}>Listo</Text>
+          <AppText style={styles.iosPickerDoneText}>Listo</AppText>
         </TouchableOpacity>
       </View>
     );
@@ -617,27 +623,27 @@ export function VacunaFormScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
       >
         <View style={styles.heroCard}>
-          <Text style={styles.kicker}>VACUNAS</Text>
-          <Text style={styles.title}>Control de dosis y refuerzos</Text>
-          <Text style={styles.subtitle}>
+          <AppText style={styles.kicker}>VACUNAS</AppText>
+          <AppText style={styles.title}>Control de dosis y refuerzos</AppText>
+          <AppText style={styles.subtitle}>
             Revisa el calendario, despliega el historial cuando lo necesites y programa una notificacion push para la proxima dosis.
-          </Text>
+          </AppText>
         </View>
 
-        {recordsError ? <Text style={styles.errorText}>{recordsError}</Text> : null}
+        {recordsError ? <AppText style={styles.errorText}>{recordsError}</AppText> : null}
 
         <View style={styles.filterCard}>
-          <Text style={styles.label}>Filtrar por persona</Text>
+          <AppText style={styles.label}>Filtrar por persona</AppText>
           {loadingPatients ? (
             <View style={styles.loadingRow}>
               <ActivityIndicator color="#29B6FF" />
-              <Text style={styles.loadingText}>Cargando personas...</Text>
+              <AppText style={styles.loadingText}>Cargando personas...</AppText>
             </View>
           ) : patientOptions.length === 0 ? (
             <View style={styles.emptyBox}>
-              <Text style={styles.emptyText}>No hay personas vinculadas para aplicar filtros.</Text>
+              <AppText style={styles.emptyText}>No hay personas vinculadas para aplicar filtros.</AppText>
               <TouchableOpacity style={styles.secondaryBtn} onPress={fetchPatients}>
-                <Text style={styles.secondaryBtnText}>Reintentar</Text>
+                <AppText style={styles.secondaryBtnText}>Reintentar</AppText>
               </TouchableOpacity>
             </View>
           ) : (
@@ -663,18 +669,18 @@ export function VacunaFormScreen() {
         </View>
 
         <View style={styles.calendarCard}>
-          <Text style={styles.formTitle}>Calendario de vacunas</Text>
+          <AppText style={styles.formTitle}>Calendario de vacunas</AppText>
           {loadingRecords ? (
             <View style={styles.stateBox}>
               <ActivityIndicator color="#29B6FF" />
-              <Text style={styles.stateText}>Cargando calendario...</Text>
+              <AppText style={styles.stateText}>Cargando calendario...</AppText>
             </View>
           ) : visibleRecords.length === 0 ? (
             <View style={styles.stateBox}>
-              <Text style={styles.stateTitle}>Sin fechas registradas</Text>
-              <Text style={styles.stateText}>
+              <AppText style={styles.stateTitle}>Sin fechas registradas</AppText>
+              <AppText style={styles.stateText}>
                 Agrega una vacuna para ver las dosis marcadas en el calendario.
-              </Text>
+              </AppText>
             </View>
           ) : (
             <Calendar
@@ -689,7 +695,7 @@ export function VacunaFormScreen() {
                 dayTextColor: '#F4F8FF',
                 monthTextColor: '#F4F8FF',
                 textSectionTitleColor: '#29B6FF',
-                todayTextColor: '#38F28E',
+                todayTextColor: '#38E28E',
                 arrowColor: '#29B6FF',
                 selectedDayBackgroundColor: '#29B6FF',
                 selectedDayTextColor: '#F4F8FF',
@@ -711,36 +717,36 @@ export function VacunaFormScreen() {
             disabled={!hasDayRecords}
           >
             <View style={styles.sectionToggleCopy}>
-              <Text style={styles.formTitle}>Dosis del dia</Text>
-              <Text style={styles.sectionHelper}>
+              <AppText style={styles.formTitle}>Dosis del dia</AppText>
+              <AppText style={styles.sectionHelper}>
                 {!hasDayRecords
                   ? 'No hay vacunas para desplegar en esta fecha'
                   : showDaySection
                     ? 'Ocultar vacunas de la fecha seleccionada'
                     : 'Desplegar vacunas de la fecha seleccionada'}
-              </Text>
+              </AppText>
             </View>
             <View style={styles.sectionToggleActions}>
               <View style={styles.countBadge}>
-                <Text style={styles.countBadgeText}>{recordsForSelectedDay.length}</Text>
+                <AppText style={styles.countBadgeText}>{recordsForSelectedDay.length}</AppText>
               </View>
-              <Text style={[styles.sectionToggleIcon, !hasDayRecords && styles.sectionToggleIconDisabled]}>
+              <AppText style={[styles.sectionToggleIcon, !hasDayRecords && styles.sectionToggleIconDisabled]}>
                 {hasDayRecords ? (showDaySection ? '-' : '+') : ''}
-              </Text>
+              </AppText>
             </View>
           </TouchableOpacity>
 
           {showDaySection && hasDayRecords ? (
             <>
-              <Text style={styles.dayLabel}>{formatDisplayDate(selectedDate, selectedDate)}</Text>
+              <AppText style={styles.dayLabel}>{formatDisplayDate(selectedDate, selectedDate)}</AppText>
               {recordsForSelectedDay.map((record) => {
                   const label = patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`;
                   return (
                     <View key={`day-${record.vacunaId}-${record.dayType}`} style={styles.vaccineCard}>
                       <View style={styles.vaccineHeader}>
                         <View>
-                          <Text style={styles.vaccineName}>{record.nombre}</Text>
-                          <Text style={styles.vaccineMeta}>{label}</Text>
+                          <AppText style={styles.vaccineName}>{record.nombre}</AppText>
+                          <AppText style={styles.vaccineMeta}>{label}</AppText>
                         </View>
                         <View
                           style={[
@@ -748,16 +754,16 @@ export function VacunaFormScreen() {
                             record.dayType === 'proxima' ? styles.dayTypeNext : styles.dayTypeApplied,
                           ]}
                         >
-                          <Text style={styles.dayTypeBadgeText}>
+                          <AppText style={styles.dayTypeBadgeText}>
                             {record.dayType === 'proxima' ? 'Proxima dosis' : 'Aplicada'}
-                          </Text>
+                          </AppText>
                         </View>
                       </View>
-                      {record.lote ? <Text style={styles.vaccineDetail}>Lote: {record.lote}</Text> : null}
-                      <Text style={styles.vaccineDetail}>
+                      {record.lote ? <AppText style={styles.vaccineDetail}>Lote: {record.lote}</AppText> : null}
+                      <AppText style={styles.vaccineDetail}>
                         Proxima dosis:{' '}
-                        <Text style={styles.vaccineHighlight}>{formatNextDose(record.proximadosis)}</Text>
-                      </Text>
+                        <AppText style={styles.vaccineHighlight}>{formatNextDose(record.proximadosis)}</AppText>
+                      </AppText>
                     </View>
                   );
                 })}
@@ -777,8 +783,8 @@ export function VacunaFormScreen() {
             disabled={!hasHistoryRecords}
           >
             <View style={styles.sectionToggleCopy}>
-              <Text style={styles.formTitle}>Historial completo</Text>
-              <Text style={styles.sectionHelper}>
+              <AppText style={styles.formTitle}>Historial completo</AppText>
+              <AppText style={styles.sectionHelper}>
                 {!hasHistoryRecords
                   ? activePatientId
                     ? 'Este paciente no tiene vacunas para mostrar'
@@ -786,15 +792,15 @@ export function VacunaFormScreen() {
                   : showHistorySection
                     ? 'Ocultar vacunas anteriores'
                     : 'Desplegar vacunas anteriores'}
-              </Text>
+              </AppText>
             </View>
             <View style={styles.sectionToggleActions}>
               <View style={styles.countBadge}>
-                <Text style={styles.countBadgeText}>{visibleRecords.length}</Text>
+                <AppText style={styles.countBadgeText}>{visibleRecords.length}</AppText>
               </View>
-              <Text style={[styles.sectionToggleIcon, !hasHistoryRecords && styles.sectionToggleIconDisabled]}>
+              <AppText style={[styles.sectionToggleIcon, !hasHistoryRecords && styles.sectionToggleIconDisabled]}>
                 {hasHistoryRecords ? (showHistorySection ? '-' : '+') : ''}
-              </Text>
+              </AppText>
             </View>
           </TouchableOpacity>
 
@@ -802,7 +808,7 @@ export function VacunaFormScreen() {
             loadingRecords ? (
               <View style={styles.stateBox}>
                 <ActivityIndicator color="#29B6FF" />
-                <Text style={styles.stateText}>Cargando vacunas...</Text>
+                <AppText style={styles.stateText}>Cargando vacunas...</AppText>
               </View>
             ) : (
               visibleRecords.map((record) => {
@@ -811,17 +817,17 @@ export function VacunaFormScreen() {
                   <View key={record.vacunaId} style={styles.vaccineCard}>
                     <View style={styles.vaccineHeader}>
                       <View>
-                        <Text style={styles.vaccineName}>{record.nombre}</Text>
-                        <Text style={styles.vaccineMeta}>
+                        <AppText style={styles.vaccineName}>{record.nombre}</AppText>
+                        <AppText style={styles.vaccineMeta}>
                           {label} Ã‚Â· Aplicada {formatRecordDate(record.fechaaplicacion)}
-                        </Text>
+                        </AppText>
                       </View>
                     </View>
-                    {record.lote ? <Text style={styles.vaccineDetail}>Lote: {record.lote}</Text> : null}
-                    <Text style={styles.vaccineDetail}>
+                    {record.lote ? <AppText style={styles.vaccineDetail}>Lote: {record.lote}</AppText> : null}
+                    <AppText style={styles.vaccineDetail}>
                       Proxima dosis:{' '}
-                      <Text style={styles.vaccineHighlight}>{formatNextDose(record.proximadosis)}</Text>
-                    </Text>
+                      <AppText style={styles.vaccineHighlight}>{formatNextDose(record.proximadosis)}</AppText>
+                    </AppText>
                   </View>
                 );
               })
@@ -831,21 +837,21 @@ export function VacunaFormScreen() {
 
         {showForm ? (
           <View style={styles.formCard}>
-            <Text style={styles.formTitle}>Registrar vacuna</Text>
+            <AppText style={styles.formTitle}>Registrar vacuna</AppText>
 
-            <Text style={styles.label}>Paciente</Text>
+            <AppText style={styles.label}>Paciente</AppText>
             {loadingPatients ? (
               <View style={styles.loadingRow}>
                 <ActivityIndicator color="#29B6FF" />
-                <Text style={styles.loadingText}>Cargando personas...</Text>
+                <AppText style={styles.loadingText}>Cargando personas...</AppText>
               </View>
             ) : patientOptions.length === 0 ? (
               <View style={styles.emptyBox}>
-                <Text style={styles.emptyText}>
+                <AppText style={styles.emptyText}>
                   No hay personas vinculadas. Crea una desde Gestionar Expediente.
-                </Text>
+                </AppText>
                 <TouchableOpacity style={styles.secondaryBtn} onPress={fetchPatients}>
-                  <Text style={styles.secondaryBtnText}>Reintentar</Text>
+                  <AppText style={styles.secondaryBtnText}>Reintentar</AppText>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -867,10 +873,10 @@ export function VacunaFormScreen() {
                 </Picker>
               </View>
             )}
-            {patientError ? <Text style={styles.errorText}>{patientError}</Text> : null}
+            {patientError ? <AppText style={styles.errorText}>{patientError}</AppText> : null}
 
-            <Text style={styles.label}>Nombre vacuna</Text>
-            <TextInput
+            <AppText style={styles.label}>Nombre vacuna</AppText>
+            <AppTextInput
               style={styles.input}
               placeholder="Nombre vacuna"
               placeholderTextColor="#9FB3C8"
@@ -880,7 +886,7 @@ export function VacunaFormScreen() {
 
             <View style={[styles.formGrid, isWideLayout && styles.formGridWide]}>
               <View style={styles.formField}>
-                <Text style={styles.label}>Fecha de aplicacion</Text>
+                <AppText style={styles.label}>Fecha de aplicacion</AppText>
                 {Platform.OS === 'web' ? (
                   React.createElement('input', {
                     type: 'date',
@@ -892,7 +898,7 @@ export function VacunaFormScreen() {
                 ) : (
                   <>
                     <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('fecha')}>
-                      <Text style={styles.dateButtonText}>{formatDisplayDate(form.fecha)}</Text>
+                      <AppText style={styles.dateButtonText}>{formatDisplayDate(form.fecha)}</AppText>
                     </TouchableOpacity>
                     {renderIOSPicker('fecha')}
                   </>
@@ -900,8 +906,8 @@ export function VacunaFormScreen() {
               </View>
 
               <View style={styles.formField}>
-                <Text style={styles.label}>Lote</Text>
-                <TextInput
+                <AppText style={styles.label}>Lote</AppText>
+                <AppTextInput
                   style={styles.input}
                   placeholder="Lote"
                   placeholderTextColor="#9FB3C8"
@@ -911,7 +917,7 @@ export function VacunaFormScreen() {
               </View>
 
               <View style={styles.formField}>
-                <Text style={styles.label}>Proxima dosis</Text>
+                <AppText style={styles.label}>Proxima dosis</AppText>
                 {Platform.OS === 'web' ? (
                   React.createElement('input', {
                     type: 'date',
@@ -923,9 +929,9 @@ export function VacunaFormScreen() {
                 ) : (
                   <>
                     <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('proximaDosis')}>
-                      <Text style={styles.dateButtonText}>
+                      <AppText style={styles.dateButtonText}>
                         {form.proximaDosis ? formatDisplayDate(form.proximaDosis) : 'Opcional'}
-                      </Text>
+                      </AppText>
                     </TouchableOpacity>
                     {renderIOSPicker('proximaDosis')}
                   </>
@@ -936,10 +942,10 @@ export function VacunaFormScreen() {
             {form.proximaDosis ? (
               <View style={styles.inlineNotificationCard}>
                 <View style={styles.inlineNotificationCopy}>
-                  <Text style={styles.inlineNotificationTitle}>Notificacion de proxima dosis</Text>
-                  <Text style={styles.inlineNotificationHint}>
+                  <AppText style={styles.inlineNotificationTitle}>Notificacion de proxima dosis</AppText>
+                  <AppText style={styles.inlineNotificationHint}>
                     Programa un aviso push para la fecha de la siguiente dosis.
-                  </Text>
+                  </AppText>
                 </View>
                 <TouchableOpacity
                   style={[
@@ -948,35 +954,35 @@ export function VacunaFormScreen() {
                   ]}
                   onPress={() => setShowNotificationForm((prev) => !prev)}
                 >
-                  <Text style={styles.inlineNotificationToggleText}>
+                  <AppText style={styles.inlineNotificationToggleText}>
                     {showNotificationForm ? 'Ocultar' : 'Crear'}
-                  </Text>
+                  </AppText>
                 </TouchableOpacity>
               </View>
             ) : (
-              <Text style={styles.sectionHelper}>
+              <AppText style={styles.sectionHelper}>
                 Agrega una fecha de proxima dosis si quieres crear una notificacion.
-              </Text>
+              </AppText>
             )}
 
             <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
-              <Text style={styles.btnText}>Guardar vacuna</Text>
+              <AppText style={styles.btnText}>Guardar vacuna</AppText>
             </TouchableOpacity>
 
             {showNotificationForm ? (
               <View style={styles.notificationCard}>
-                <Text style={styles.formTitle}>Notificacion de proxima dosis</Text>
-                <Text style={styles.sectionHelper}>
+                <AppText style={styles.formTitle}>Notificacion de proxima dosis</AppText>
+                <AppText style={styles.sectionHelper}>
                   El canal queda fijo como notificacion push.
-                </Text>
+                </AppText>
 
-                <Text style={styles.label}>Canal</Text>
+                <AppText style={styles.label}>Canal</AppText>
                 <View style={styles.fixedChannelCard}>
-                  <Text style={styles.fixedChannelText}>Notificacion push</Text>
+                  <AppText style={styles.fixedChannelText}>Notificacion push</AppText>
                 </View>
 
-                <Text style={styles.label}>Mensaje</Text>
-                <TextInput
+                <AppText style={styles.label}>Mensaje</AppText>
+                <AppTextInput
                   style={[styles.input, styles.multiline]}
                   placeholder="Mensaje de la notificacion"
                   placeholderTextColor="#9FB3C8"
@@ -985,7 +991,7 @@ export function VacunaFormScreen() {
                   onChangeText={(value) => handleNotificationChange('mensaje', value)}
                 />
 
-                <Text style={styles.label}>Fecha y hora del aviso</Text>
+                <AppText style={styles.label}>Fecha y hora del aviso</AppText>
                 <View style={styles.dateTimeRow}>
                   {Platform.OS === 'web' ? (
                     <>
@@ -1005,10 +1011,10 @@ export function VacunaFormScreen() {
                   ) : (
                     <>
                       <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('notificationDate')}>
-                        <Text style={styles.dateButtonText}>{formatDisplayDate(notificationDate)}</Text>
+                        <AppText style={styles.dateButtonText}>{formatDisplayDate(notificationDate)}</AppText>
                       </TouchableOpacity>
                       <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('notificationTime')}>
-                        <Text style={styles.dateButtonText}>{formatDisplayTime(notificationTime)}</Text>
+                        <AppText style={styles.dateButtonText}>{formatDisplayTime(notificationTime)}</AppText>
                       </TouchableOpacity>
                     </>
                   )}
@@ -1017,7 +1023,7 @@ export function VacunaFormScreen() {
                 {renderIOSPicker('notificationTime')}
 
                 <TouchableOpacity style={styles.notificationBtn} onPress={handleCreateNotification}>
-                  <Text style={styles.notificationBtnText}>Crear notificacion push</Text>
+                  <AppText style={styles.notificationBtnText}>Crear notificacion push</AppText>
                 </TouchableOpacity>
               </View>
             ) : null}
@@ -1026,7 +1032,7 @@ export function VacunaFormScreen() {
       </ScrollView>
 
       <TouchableOpacity style={styles.fab} onPress={() => setShowForm((prev) => !prev)}>
-        <Text style={styles.fabText}>{showForm ? 'x' : '+'}</Text>
+        <AppText style={styles.fabText}>{showForm ? 'x' : '+'}</AppText>
       </TouchableOpacity>
     </View>
   );
@@ -1298,7 +1304,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   primaryBtn: {
-    backgroundColor: '#1FBF78',
+    backgroundColor: '#38E28E',
     minHeight: 54,
     borderRadius: 14,
     marginTop: 6,
@@ -1312,7 +1318,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   notificationBtn: {
-    backgroundColor: '#1FBF78',
+    backgroundColor: '#38E28E',
     minHeight: 52,
     borderRadius: 14,
     marginTop: 4,
@@ -1391,7 +1397,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   dayTypeApplied: {
-    backgroundColor: '#38F28E18',
+    backgroundColor: '#38E28E18',
   },
   dayTypeNext: {
     backgroundColor: '#FF4D7318',

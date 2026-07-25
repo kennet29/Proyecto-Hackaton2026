@@ -6,11 +6,10 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import DateTimePicker, {
   DateTimePickerAndroid,
 } from '@react-native-community/datetimepicker';
@@ -23,6 +22,7 @@ import { API_URL } from '../config/api';
 import type { RootStackParamList } from '../navigation/types';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
+import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 
 type RegistroDentalRecord = {
   registrodentalId: number;
@@ -315,11 +315,10 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
     if (!token) return;
     setLoadingRecords(true);
     try {
-      const response = await fetch(`${API_URL}/registrodental`, { headers: authHeaders });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(body?.message ?? 'No se pudieron cargar los registros dentales');
-      }
+      const { data: body } = await getJsonWithOfflineFallback<unknown>(
+        '/registrodental',
+        authHeaders,
+      );
       setRecords(
         (Array.isArray(body) ? body : [])
           .map((item: any, index: number) => ({
@@ -523,7 +522,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
             if (field === 'notification-time') setShowNotificationTimePicker(false);
           }}
         >
-          <Text style={styles.secondaryButtonText}>Listo</Text>
+          <AppText style={styles.secondaryButtonText}>Listo</AppText>
         </TouchableOpacity>
       </View>
     );
@@ -565,22 +564,22 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
           <View style={[styles.timeModalCard, styles.dateModalCard]}>
             <View style={styles.timeModalHeader}>
               <View style={styles.dateModalHeaderCopy}>
-                <Text style={styles.timeModalEyebrow}>
+                <AppText style={styles.timeModalEyebrow}>
                   {webDatePickerField === 'date'
                     ? 'Fecha de atención'
                     : 'Fecha del recordatorio'}
-                </Text>
-                <Text style={styles.timeModalTitle}>Selecciona la fecha</Text>
-                <Text style={styles.dateModalSelected}>
+                </AppText>
+                <AppText style={styles.timeModalTitle}>Selecciona la fecha</AppText>
+                <AppText style={styles.dateModalSelected}>
                   {formatDisplayDate(selectedValue)}
-                </Text>
+                </AppText>
               </View>
               <TouchableOpacity
                 style={styles.timeModalClose}
                 onPress={() => setWebDatePickerField(null)}
                 accessibilityLabel="Cerrar selector de fecha"
               >
-                <Text style={styles.timeModalCloseText}>×</Text>
+                <AppText style={styles.timeModalCloseText}>×</AppText>
               </TouchableOpacity>
             </View>
 
@@ -602,7 +601,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
                 textSectionTitleColor: '#9FB3C8',
                 selectedDayBackgroundColor: '#29B6FF',
                 selectedDayTextColor: '#03101F',
-                todayTextColor: '#38F28E',
+                todayTextColor: '#38E28E',
                 dayTextColor: '#F4F8FF',
                 textDisabledColor: '#42566E',
                 monthTextColor: '#F4F8FF',
@@ -625,7 +624,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
                   style={styles.timeQuickButton}
                   onPress={() => chooseRelativeDate(option.days)}
                 >
-                  <Text style={styles.timeQuickButtonText}>{option.label}</Text>
+                  <AppText style={styles.timeQuickButtonText}>{option.label}</AppText>
                 </TouchableOpacity>
               ))}
             </View>
@@ -634,7 +633,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
               style={styles.timeConfirmButton}
               onPress={() => setWebDatePickerField(null)}
             >
-              <Text style={styles.timeConfirmButtonText}>Confirmar fecha</Text>
+              <AppText style={styles.timeConfirmButtonText}>Confirmar fecha</AppText>
             </TouchableOpacity>
           </View>
         </View>
@@ -688,27 +687,27 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
           <View style={styles.timeModalCard}>
             <View style={styles.timeModalHeader}>
               <View>
-                <Text style={styles.timeModalEyebrow}>
+                <AppText style={styles.timeModalEyebrow}>
                   {webTimePickerField === 'time' ? 'Hora de atención' : 'Hora del recordatorio'}
-                </Text>
-                <Text style={styles.timeModalTitle}>Selecciona la hora</Text>
+                </AppText>
+                <AppText style={styles.timeModalTitle}>Selecciona la hora</AppText>
               </View>
               <TouchableOpacity
                 style={styles.timeModalClose}
                 onPress={() => setWebTimePickerField(null)}
                 accessibilityLabel="Cerrar selector de hora"
               >
-                <Text style={styles.timeModalCloseText}>×</Text>
+                <AppText style={styles.timeModalCloseText}>×</AppText>
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.timeModalValue}>
+            <AppText style={styles.timeModalValue}>
               {formatTimeLabel(selectedValue)}
-            </Text>
+            </AppText>
 
             <View style={styles.timePickerColumns}>
               <View style={styles.timePickerColumn}>
-                <Text style={styles.timePickerLabel}>Hora</Text>
+                <AppText style={styles.timePickerLabel}>Hora</AppText>
                 <View style={styles.timePickerWrapper}>
                   <Picker
                     selectedValue={selectedHour12}
@@ -732,10 +731,10 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
                 </View>
               </View>
 
-              <Text style={styles.timePickerSeparator}>:</Text>
+              <AppText style={styles.timePickerSeparator}>:</AppText>
 
               <View style={styles.timePickerColumn}>
-                <Text style={styles.timePickerLabel}>Minutos</Text>
+                <AppText style={styles.timePickerLabel}>Minutos</AppText>
                 <View style={styles.timePickerWrapper}>
                   <Picker
                     selectedValue={selectedMinute.padStart(2, '0')}
@@ -754,7 +753,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
               </View>
 
               <View style={[styles.timePickerColumn, styles.periodPickerColumn]}>
-                <Text style={styles.timePickerLabel}>Periodo</Text>
+                <AppText style={styles.timePickerLabel}>Periodo</AppText>
                 <View style={styles.timePickerWrapper}>
                   <Picker
                     selectedValue={selectedPeriod}
@@ -773,7 +772,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
 
             <View style={styles.timeQuickActions}>
               <TouchableOpacity style={styles.timeQuickButton} onPress={chooseCurrentTime}>
-                <Text style={styles.timeQuickButtonText}>Ahora</Text>
+                <AppText style={styles.timeQuickButtonText}>Ahora</AppText>
               </TouchableOpacity>
               {[
                 { value: '08:00', label: '08:00 AM' },
@@ -796,7 +795,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
                     );
                   }}
                 >
-                  <Text style={styles.timeQuickButtonText}>{preset.label}</Text>
+                  <AppText style={styles.timeQuickButtonText}>{preset.label}</AppText>
                 </TouchableOpacity>
               ))}
             </View>
@@ -805,7 +804,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
               style={styles.timeConfirmButton}
               onPress={() => setWebTimePickerField(null)}
             >
-              <Text style={styles.timeConfirmButtonText}>Confirmar hora</Text>
+              <AppText style={styles.timeConfirmButtonText}>Confirmar hora</AppText>
             </TouchableOpacity>
           </View>
         </View>
@@ -910,23 +909,23 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
 
   const renderForm = () => (
     <View style={styles.formCard}>
-      <Text style={styles.formTitle}>Nuevo registro dental</Text>
-      <Text style={styles.formSubtitle}>
+      <AppText style={styles.formTitle}>Nuevo registro dental</AppText>
+      <AppText style={styles.formSubtitle}>
         Registra la atencion, el procedimiento y las piezas tratadas para conservar el historial odontologico.
-      </Text>
+      </AppText>
 
-      <Text style={styles.label}>Paciente</Text>
+      <AppText style={styles.label}>Paciente</AppText>
       {loadingPatients ? (
         <View style={styles.loadingCard}>
           <ActivityIndicator color="#29B6FF" />
-          <Text style={styles.loadingText}>Cargando pacientes...</Text>
+          <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
         </View>
       ) : patientOptions.length === 0 ? (
         <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>No hay pacientes vinculados</Text>
-          <Text style={styles.emptyText}>
+          <AppText style={styles.emptyTitle}>No hay pacientes vinculados</AppText>
+          <AppText style={styles.emptyText}>
             Primero agrega una persona desde Gestionar Expediente.
-          </Text>
+          </AppText>
         </View>
       ) : (
         <View style={styles.pickerWrapper}>
@@ -949,23 +948,23 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
         </View>
       )}
 
-      <Text style={styles.label}>Fecha y hora</Text>
+      <AppText style={styles.label}>Fecha y hora</AppText>
       <View style={styles.row}>
         <TouchableOpacity
           style={[styles.dateButton, styles.calendarButton, styles.flexItem]}
           onPress={() => showPicker('date')}
         >
-          <Text style={styles.dateButtonLabel}>Fecha</Text>
-          <Text style={styles.dateButtonValue}>{formatDisplayDate(dateValue)}</Text>
-          <Text style={styles.dateButtonHint}>Abrir calendario</Text>
+          <AppText style={styles.dateButtonLabel}>Fecha</AppText>
+          <AppText style={styles.dateButtonValue}>{formatDisplayDate(dateValue)}</AppText>
+          <AppText style={styles.dateButtonHint}>Abrir calendario</AppText>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.dateButton, styles.timeButton, styles.flexItem]}
           onPress={() => showPicker('time')}
         >
-          <Text style={styles.timeButtonLabel}>Hora</Text>
-          <Text style={styles.timeButtonValue}>{formatTimeLabel(timeValue)}</Text>
-          <Text style={styles.timeButtonHint}>Seleccionar</Text>
+          <AppText style={styles.timeButtonLabel}>Hora</AppText>
+          <AppText style={styles.timeButtonValue}>{formatTimeLabel(timeValue)}</AppText>
+          <AppText style={styles.timeButtonHint}>Seleccionar</AppText>
         </TouchableOpacity>
       </View>
       {renderIOSPicker('date')}
@@ -973,35 +972,35 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
       {renderWebDatePicker()}
       {renderWebTimePicker()}
 
-      <TextInput
+      <AppTextInput
         style={styles.input}
         placeholder="Procedimiento"
         placeholderTextColor="#9FB3C8"
         value={form.procedimiento}
         onChangeText={(value) => handleChange('procedimiento', value)}
       />
-      <TextInput
+      <AppTextInput
         style={styles.input}
         placeholder="Diagnostico"
         placeholderTextColor="#9FB3C8"
         value={form.diagnostico}
         onChangeText={(value) => handleChange('diagnostico', value)}
       />
-      <TextInput
+      <AppTextInput
         style={styles.input}
         placeholder="Odontologo"
         placeholderTextColor="#9FB3C8"
         value={form.odontologo}
         onChangeText={(value) => handleChange('odontologo', value)}
       />
-      <TextInput
+      <AppTextInput
         style={styles.input}
         placeholder="Piezas tratadas"
         placeholderTextColor="#9FB3C8"
         value={form.piezasTratadas}
         onChangeText={(value) => handleChange('piezasTratadas', value)}
       />
-      <TextInput
+      <AppTextInput
         style={[styles.input, styles.multiline]}
         placeholder="Notas"
         placeholderTextColor="#9FB3C8"
@@ -1013,10 +1012,10 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
       <View style={styles.notificationCard}>
         <View style={styles.notificationHeader}>
           <View style={styles.notificationHeaderCopy}>
-            <Text style={styles.notificationTitle}>Notificacion de seguimiento</Text>
-            <Text style={styles.notificationHint}>
+            <AppText style={styles.notificationTitle}>Notificacion de seguimiento</AppText>
+            <AppText style={styles.notificationHint}>
               Decide si quieres dejar programado un recordatorio desde este mismo registro.
-            </Text>
+            </AppText>
           </View>
           <TouchableOpacity
             style={[
@@ -1025,39 +1024,39 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
             ]}
             onPress={() => setCreateNotification((prev) => !prev)}
           >
-            <Text style={styles.notificationToggleText}>
+            <AppText style={styles.notificationToggleText}>
               {createNotification ? 'Si' : 'No'}
-            </Text>
+            </AppText>
           </TouchableOpacity>
         </View>
 
         {createNotification ? (
           <>
-            <Text style={styles.label}>Fecha y hora del recordatorio</Text>
+            <AppText style={styles.label}>Fecha y hora del recordatorio</AppText>
             <View style={styles.row}>
               <TouchableOpacity
                 style={[styles.dateButton, styles.calendarButton, styles.flexItem]}
                 onPress={() => showPicker('notification-date')}
               >
-                <Text style={styles.dateButtonLabel}>Fecha</Text>
-                <Text style={styles.dateButtonValue}>
+                <AppText style={styles.dateButtonLabel}>Fecha</AppText>
+                <AppText style={styles.dateButtonValue}>
                   {formatDisplayDate(notificationDate)}
-                </Text>
-                <Text style={styles.dateButtonHint}>Abrir calendario</Text>
+                </AppText>
+                <AppText style={styles.dateButtonHint}>Abrir calendario</AppText>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.dateButton, styles.timeButton, styles.flexItem]}
                 onPress={() => showPicker('notification-time')}
               >
-                <Text style={styles.timeButtonLabel}>Hora</Text>
-                <Text style={styles.timeButtonValue}>{formatTimeLabel(notificationTime)}</Text>
-                <Text style={styles.timeButtonHint}>Seleccionar</Text>
+                <AppText style={styles.timeButtonLabel}>Hora</AppText>
+                <AppText style={styles.timeButtonValue}>{formatTimeLabel(notificationTime)}</AppText>
+                <AppText style={styles.timeButtonHint}>Seleccionar</AppText>
               </TouchableOpacity>
             </View>
             {renderIOSPicker('notification-date')}
             {renderIOSPicker('notification-time')}
 
-            <TextInput
+            <AppTextInput
               style={[styles.input, styles.multiline]}
               placeholder="Mensaje de la notificacion"
               placeholderTextColor="#9FB3C8"
@@ -1079,7 +1078,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
             }
           }}
         >
-          <Text style={styles.cancelButtonText}>Cancelar</Text>
+          <AppText style={styles.cancelButtonText}>Cancelar</AppText>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.primaryButton, isSubmitting ? styles.primaryButtonDisabled : null]}
@@ -1089,7 +1088,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
           {isSubmitting ? (
             <ActivityIndicator color="#F4F8FF" />
           ) : (
-            <Text style={styles.primaryButtonText}>Guardar</Text>
+            <AppText style={styles.primaryButtonText}>Guardar</AppText>
           )}
         </TouchableOpacity>
       </View>
@@ -1108,15 +1107,15 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.heroCard}>
-          <Text style={styles.eyebrow}>Atencion odontologica</Text>
-          <Text style={styles.title}>Registro dental</Text>
-          <Text style={styles.subtitle}>
+          <AppText style={styles.eyebrow}>Atencion odontologica</AppText>
+          <AppText style={styles.title}>Registro dental</AppText>
+          <AppText style={styles.subtitle}>
             Revisa controles, procedimientos y profesionales por persona desde una sola vista.
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.filterCard}>
-          <Text style={styles.label}>Filtrar por paciente</Text>
+          <AppText style={styles.label}>Filtrar por paciente</AppText>
           <View style={styles.pickerWrapper}>
             <Picker
               selectedValue={selectedPatientId}
@@ -1140,29 +1139,29 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
               ))}
             </Picker>
           </View>
-          <Text style={styles.filterHint}>
+          <AppText style={styles.filterHint}>
             {selectedPatientId
               ? `Mostrando atenciones de ${patientNameById[Number(selectedPatientId)] ?? 'paciente'}`
               : 'Mostrando el historial odontologico completo'}
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Personas y controles</Text>
-          <Text style={styles.sectionSubtitle}>{`${visibleSummaries.length} perfiles`}</Text>
+          <AppText style={styles.sectionTitle}>Personas y controles</AppText>
+          <AppText style={styles.sectionSubtitle}>{`${visibleSummaries.length} perfiles`}</AppText>
         </View>
 
         {loadingRecords ? (
           <View style={styles.loadingCard}>
             <ActivityIndicator color="#29B6FF" />
-            <Text style={styles.loadingText}>Cargando resumen...</Text>
+            <AppText style={styles.loadingText}>Cargando resumen...</AppText>
           </View>
         ) : visibleSummaries.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>Todavia no hay registros dentales</Text>
-            <Text style={styles.emptyText}>
+            <AppText style={styles.emptyTitle}>Todavia no hay registros dentales</AppText>
+            <AppText style={styles.emptyText}>
               Usa el boton flotante para registrar la primera atencion odontologica.
-            </Text>
+            </AppText>
           </View>
         ) : (
           visibleSummaries.map((summary) => (
@@ -1181,77 +1180,77 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
             >
               <View style={styles.summaryHeader}>
                 <View style={styles.summaryHeaderBody}>
-                  <Text style={styles.summaryName}>{summary.patientName}</Text>
-                  <Text style={styles.summaryMeta}>
+                  <AppText style={styles.summaryName}>{summary.patientName}</AppText>
+                  <AppText style={styles.summaryMeta}>
                     {summary.latestDate
                       ? `Ultima: ${formatDisplayDateTime(summary.latestDate)}`
                       : 'Sin fecha reciente'}
-                  </Text>
+                  </AppText>
                 </View>
                 <View style={styles.summaryCountBadge}>
-                  <Text style={styles.summaryCountValue}>{summary.total}</Text>
-                  <Text style={styles.summaryCountLabel}>visitas</Text>
+                  <AppText style={styles.summaryCountValue}>{summary.total}</AppText>
+                  <AppText style={styles.summaryCountLabel}>visitas</AppText>
                 </View>
               </View>
-              <Text style={styles.summaryPrimary}>
+              <AppText style={styles.summaryPrimary}>
                 {summary.latestProcedure ?? 'Atencion odontologica registrada'}
-              </Text>
-              <Text style={styles.summarySecondary}>
+              </AppText>
+              <AppText style={styles.summarySecondary}>
                 {summary.odontologos.length > 0
                   ? `Odontologos: ${summary.odontologos.slice(0, 2).join(' Ã¢â‚¬Â¢ ')}`
                   : 'Sin profesional registrado'}
-              </Text>
-              <Text style={styles.summaryAction}>
+              </AppText>
+              <AppText style={styles.summaryAction}>
                 {Number(selectedPatientId) === summary.pacienteId
                   ? 'Toca para volver a ver todos'
                   : 'Toca para filtrar este historial'}
-              </Text>
+              </AppText>
             </TouchableOpacity>
           ))
         )}
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Historial dental</Text>
-          <Text style={styles.sectionSubtitle}>{`${filteredRecords.length} registros`}</Text>
+          <AppText style={styles.sectionTitle}>Historial dental</AppText>
+          <AppText style={styles.sectionSubtitle}>{`${filteredRecords.length} registros`}</AppText>
         </View>
 
         {loadingRecords ? (
           <View style={styles.loadingCard}>
             <ActivityIndicator color="#29B6FF" />
-            <Text style={styles.loadingText}>Cargando historial...</Text>
+            <AppText style={styles.loadingText}>Cargando historial...</AppText>
           </View>
         ) : filteredRecords.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>No hay registros para este filtro</Text>
-            <Text style={styles.emptyText}>
+            <AppText style={styles.emptyTitle}>No hay registros para este filtro</AppText>
+            <AppText style={styles.emptyText}>
               Cambia el paciente seleccionado o registra una nueva atencion dental.
-            </Text>
+            </AppText>
           </View>
         ) : (
           filteredRecords.map((record) => (
             <View key={record.registrodentalId} style={styles.recordCard}>
               <View style={styles.recordTopRow}>
                 <View style={styles.datePill}>
-                  <Text style={styles.datePillText}>{formatDisplayDateTime(record.fechaatencion)}</Text>
+                  <AppText style={styles.datePillText}>{formatDisplayDateTime(record.fechaatencion)}</AppText>
                 </View>
               </View>
-              <Text style={styles.recordTitle}>{record.procedimiento || 'Atencion dental'}</Text>
+              <AppText style={styles.recordTitle}>{record.procedimiento || 'Atencion dental'}</AppText>
               {!selectedPatientId ? (
-                <Text style={styles.recordPatient}>
+                <AppText style={styles.recordPatient}>
                   {patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`}
-                </Text>
+                </AppText>
               ) : null}
-              <Text style={styles.recordText}>
+              <AppText style={styles.recordText}>
                 Diagnostico: {normalizeText(record.diagnostico) ?? 'Sin dato'}
-              </Text>
-              <Text style={styles.recordText}>
+              </AppText>
+              <AppText style={styles.recordText}>
                 Odontologo: {normalizeText(record.odontologo) ?? 'Sin dato'}
-              </Text>
-              <Text style={styles.recordText}>
+              </AppText>
+              <AppText style={styles.recordText}>
                 Piezas tratadas: {normalizeText(record.piezastratadas) ?? 'Sin dato'}
-              </Text>
+              </AppText>
               {normalizeText(record.notas) ? (
-                <Text style={styles.recordText}>Notas: {normalizeText(record.notas)}</Text>
+                <AppText style={styles.recordText}>Notas: {normalizeText(record.notas)}</AppText>
               ) : null}
             </View>
           ))
@@ -1262,7 +1261,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
         style={styles.fab}
         onPress={() => navigation.navigate('RegistroDentalCreate')}
       >
-        <Text style={styles.fabText}>+</Text>
+        <AppText style={styles.fabText}>+</AppText>
       </TouchableOpacity>
     </View>
   );
@@ -1412,18 +1411,18 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: '#38F28E18',
+    backgroundColor: '#38E28E18',
     borderWidth: 1,
-    borderColor: '#38F28E',
+    borderColor: '#38E28E',
     alignItems: 'center',
   },
   summaryCountValue: {
-    color: '#38F28E',
+    color: '#38E28E',
     fontSize: 20,
     fontWeight: '900',
   },
   summaryCountLabel: {
-    color: '#38F28E',
+    color: '#38E28E',
     fontSize: 10,
     fontWeight: '800',
     textTransform: 'uppercase',

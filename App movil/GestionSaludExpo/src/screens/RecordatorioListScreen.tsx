@@ -6,21 +6,21 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { API_URL } from '../config/api';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
 import { WebTimeInput } from '../components/WebTimeInput';
 import { toLocalDateOnlyString } from '../utils/localDate';
+import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
+import { syncLocalReminder } from '../utils/localReminderScheduler';
 
 const webDateInputStyle = {
   flex: 1,
@@ -142,7 +142,7 @@ const SOURCE_DEFINITIONS: SourceDefinition[] = [
     label: 'Consultas',
     endpoint: '/consultamedica',
     icon: 'medkit-outline',
-    accent: '#38F28E',
+    accent: '#38E28E',
     idKeys: ['consultaId', 'consultaid', 'id'],
     titleKeys: ['motivo', 'diagnostico'],
     dateKeys: ['fechaconsulta'],
@@ -416,39 +416,53 @@ export function RecordatorioListScreen() {
     setError(null);
     try {
       const [recordatoriosResult, notificationsResult, patientsResult, ...sourceResults] = await Promise.allSettled([
-        fetch(`${API_URL}/recordatoriocita`, { headers }),
-        fetch(`${API_URL}/notificacion`, { headers }),
+        getJsonWithOfflineFallback<unknown>('/recordatoriocita', headers),
+        getJsonWithOfflineFallback<unknown>('/notificacion', headers),
         fetchLinkedPatients(headers, { forceRefresh: true }),
-        ...SOURCE_DEFINITIONS.map((definition) => fetch(`${API_URL}${definition.endpoint}`, { headers })),
+        ...SOURCE_DEFINITIONS.map((definition) =>
+          getJsonWithOfflineFallback<unknown>(definition.endpoint, headers),
+        ),
       ]);
 
       const reminderErrors: string[] = [];
       const mergedReminders: ReminderRecord[] = [];
 
       if (recordatoriosResult.status === 'fulfilled') {
-        const remindersPayload = await recordatoriosResult.value.json().catch(() => null);
-        if (recordatoriosResult.value.ok) {
-          mergedReminders.push(
-            ...mapRecordatorioCitas(Array.isArray(remindersPayload) ? remindersPayload : []),
-          );
-        } else {
-          reminderErrors.push(remindersPayload?.message ?? 'No se pudieron cargar los recordatorios manuales');
-        }
+        const remindersPayload = recordatoriosResult.value.data;
+        mergedReminders.push(
+          ...mapRecordatorioCitas(Array.isArray(remindersPayload) ? remindersPayload : []),
+        );
       } else {
         reminderErrors.push('No se pudieron cargar los recordatorios manuales');
       }
 
       if (notificationsResult.status === 'fulfilled') {
-        const notificationsPayload = await notificationsResult.value.json().catch(() => null);
-        if (notificationsResult.value.ok) {
-          mergedReminders.push(
-            ...mapNotifications(Array.isArray(notificationsPayload) ? notificationsPayload : []),
-          );
-        } else {
-          reminderErrors.push(notificationsPayload?.message ?? 'No se pudieron cargar las notificaciones automaticas');
-        }
+        const notificationsPayload = notificationsResult.value.data;
+        mergedReminders.push(
+          ...mapNotifications(Array.isArray(notificationsPayload) ? notificationsPayload : []),
+        );
       } else {
         reminderErrors.push('No se pudieron cargar las notificaciones automaticas');
+      }
+
+      if (user?.id) {
+        await Promise.all(
+          mergedReminders.map((reminder) =>
+            syncLocalReminder({
+              ownerUserId: user.id,
+              operationId: `hydrate-${reminder.reminderType}-${reminder.reminderId}`,
+              path: `/${reminder.reminderType}/${reminder.reminderId}`,
+              method: 'PATCH',
+              body: {
+                mensaje: reminder.mensaje,
+                ...(reminder.reminderType === 'notificacion'
+                  ? { fechaprogramada: reminder.fecharecordatorio }
+                  : { fecharecordatorio: reminder.fecharecordatorio }),
+                estado: reminder.estado,
+              },
+            }),
+          ),
+        );
       }
 
       setReminders(mergedReminders);
@@ -456,8 +470,8 @@ export function RecordatorioListScreen() {
 
       const loadedSources = await Promise.all(
         sourceResults.map(async (result, index) => {
-          if (result.status !== 'fulfilled' || !result.value.ok) return [];
-          const payload = await result.value.json().catch(() => null);
+          if (result.status !== 'fulfilled') return [];
+          const payload = result.value.data;
           return mapSourceRecords(Array.isArray(payload) ? payload : [], SOURCE_DEFINITIONS[index]);
         }),
       );
@@ -471,7 +485,7 @@ export function RecordatorioListScreen() {
     } finally {
       setLoading(false);
     }
-  }, [headers]);
+  }, [headers, user?.id]);
 
   useEffect(() => {
     fetchData();
@@ -557,8 +571,12 @@ export function RecordatorioListScreen() {
       Alert.alert(
         result.status === 'queued' ? 'Recordatorio en cola' : 'Recordatorio creado',
         result.status === 'queued'
-          ? 'No habia conexion. Se sincronizara cuando vuelva la red.'
-          : 'El aviso quedo registrado correctamente.',
+          ? result.localReminder === 'scheduled'
+            ? 'No había conexión. El aviso quedó programado en este dispositivo y se sincronizará después.'
+            : 'No había conexión. El registro se sincronizará cuando vuelva la red.'
+          : result.localReminder === 'scheduled'
+            ? 'El aviso quedó registrado y funcionará también sin conexión.'
+            : 'El aviso quedó registrado correctamente.',
       );
       setSelectedSourceKey('');
       setMessage('');
@@ -689,7 +707,9 @@ export function RecordatorioListScreen() {
       Alert.alert(
         result.status === 'queued' ? 'Reprogramación guardada' : 'Recordatorio reprogramado',
         result.status === 'queued'
-          ? 'No hay conexión. La nueva fecha se sincronizará cuando vuelva la red.'
+          ? result.localReminder === 'scheduled'
+            ? 'No hay conexión. La nueva fecha ya quedó programada en este dispositivo y se sincronizará después.'
+            : 'No hay conexión. La nueva fecha se sincronizará cuando vuelva la red.'
           : 'La nueva fecha y hora quedaron guardadas.',
       );
     } catch (rescheduleError) {
@@ -735,8 +755,8 @@ export function RecordatorioListScreen() {
               <Ionicons name={source?.icon ?? 'notifications-outline'} size={16} color={source?.accent ?? appColors.info} />
             </View>
             <View style={styles.personTextWrap}>
-              <Text style={styles.personName}>{patientName}</Text>
-              <Text style={styles.personSubtext}>{sourceLabel}</Text>
+              <AppText style={styles.personName}>{patientName}</AppText>
+              <AppText style={styles.personSubtext}>{sourceLabel}</AppText>
             </View>
           </View>
           <View
@@ -745,30 +765,30 @@ export function RecordatorioListScreen() {
               { backgroundColor: colorAlpha(displayStatus.color, '18') },
             ]}
           >
-            <Text style={[styles.stateBadgeText, { color: displayStatus.color }]}>
+            <AppText style={[styles.stateBadgeText, { color: displayStatus.color }]}>
               {displayStatus.label}
-            </Text>
+            </AppText>
           </View>
         </View>
 
         <View style={styles.metaBlock}>
-          <Text style={styles.metaTitle}>Fecha del aviso</Text>
-          <Text style={styles.metaValue}>{formatDateTimeLabel(item.fecharecordatorio)}</Text>
+          <AppText style={styles.metaTitle}>Fecha del aviso</AppText>
+          <AppText style={styles.metaValue}>{formatDateTimeLabel(item.fecharecordatorio)}</AppText>
         </View>
 
         <View style={styles.messageCard}>
-          <Text style={styles.metaTitle}>Mensaje</Text>
-          <Text style={styles.messageText}>{item.mensaje}</Text>
+          <AppText style={styles.metaTitle}>Mensaje</AppText>
+          <AppText style={styles.messageText}>{item.mensaje}</AppText>
         </View>
 
         {isRescheduleOpen ? (
           <View style={styles.reschedulePanel}>
             <View style={styles.rescheduleHeader}>
               <View style={styles.personTextWrap}>
-                <Text style={styles.rescheduleTitle}>Reprogramar aviso</Text>
-                <Text style={styles.rescheduleHint}>
+                <AppText style={styles.rescheduleTitle}>Reprogramar aviso</AppText>
+                <AppText style={styles.rescheduleHint}>
                   Elige una fecha y hora futuras para volver a dejarlo pendiente.
-                </Text>
+                </AppText>
               </View>
               <TouchableOpacity
                 style={styles.rescheduleCloseButton}
@@ -799,14 +819,14 @@ export function RecordatorioListScreen() {
                 </>
               ) : (
                 <>
-                  <TextInput
+                  <AppTextInput
                     style={styles.input}
                     placeholder="YYYY-MM-DD"
                     placeholderTextColor={appColors.textMuted}
                     value={rescheduleDate}
                     onChangeText={setRescheduleDate}
                   />
-                  <TextInput
+                  <AppTextInput
                     style={styles.input}
                     placeholder="HH:MM"
                     placeholderTextColor={appColors.textMuted}
@@ -823,7 +843,7 @@ export function RecordatorioListScreen() {
                 onPress={() => setReschedulingReminder(null)}
                 disabled={rescheduling}
               >
-                <Text style={styles.rescheduleCancelText}>Cancelar</Text>
+                <AppText style={styles.rescheduleCancelText}>Cancelar</AppText>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
@@ -838,7 +858,7 @@ export function RecordatorioListScreen() {
                 ) : (
                   <Ionicons name="calendar-outline" size={17} color={appColors.background} />
                 )}
-                <Text style={styles.rescheduleSaveText}>Guardar nueva fecha</Text>
+                <AppText style={styles.rescheduleSaveText}>Guardar nueva fecha</AppText>
               </TouchableOpacity>
             </View>
           </View>
@@ -868,14 +888,14 @@ export function RecordatorioListScreen() {
                   color={isCompleted ? appColors.success : appColors.text}
                 />
               )}
-              <Text
+              <AppText
                 style={[
                   styles.completeButtonText,
                   isCompleted ? styles.completeButtonTextCompleted : null,
                 ]}
               >
                 {isCompleted ? 'Realizada' : 'Marcar como realizada'}
-              </Text>
+              </AppText>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -889,14 +909,14 @@ export function RecordatorioListScreen() {
               accessibilityLabel="Reprogramar recordatorio"
             >
               <Ionicons name="calendar-outline" size={17} color={appColors.info} />
-              <Text style={styles.rescheduleButtonText}>
+              <AppText style={styles.rescheduleButtonText}>
                 {isRescheduleOpen ? 'Cerrar' : 'Reprogramar'}
-              </Text>
+              </AppText>
             </TouchableOpacity>
           </View>
-          <Text style={styles.footerId}>
+          <AppText style={styles.footerId}>
             {item.reminderType === 'notificacion' ? 'Notif' : 'Rec'} #{item.reminderId}
-          </Text>
+          </AppText>
         </View>
       </View>
     );
@@ -911,15 +931,15 @@ export function RecordatorioListScreen() {
       <View style={[styles.formPanel, isWide && styles.formPanelWide]}>
         <View style={styles.panelHeader}>
           <View>
-            <Text style={styles.panelTitle}>Crear recordatorio</Text>
-            <Text style={styles.panelSubtitle}>Elige cualquier registro clinico y programa el aviso.</Text>
+            <AppText style={styles.panelTitle}>Crear recordatorio</AppText>
+            <AppText style={styles.panelSubtitle}>Elige cualquier registro clinico y programa el aviso.</AppText>
           </View>
           <TouchableOpacity style={styles.iconButton} onPress={() => void fetchData()}>
             <Ionicons name="refresh-outline" size={18} color={appColors.info} />
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.label}>Persona</Text>
+        <AppText style={styles.label}>Persona</AppText>
         <View style={styles.pickerWrapper}>
           <Picker
             selectedValue={selectedPatientId}
@@ -937,7 +957,7 @@ export function RecordatorioListScreen() {
           </Picker>
         </View>
 
-        <Text style={styles.label}>Tipo de registro</Text>
+        <AppText style={styles.label}>Tipo de registro</AppText>
         <View style={styles.typeGrid}>
           {SOURCE_DEFINITIONS.map((definition) => {
             const isActive = sourceType === definition.key;
@@ -948,13 +968,13 @@ export function RecordatorioListScreen() {
                 onPress={() => handleSourceTypeChange(definition.key)}
               >
                 <Ionicons name={definition.icon} size={16} color={isActive ? definition.accent : appColors.textSoft} />
-                <Text style={[styles.typeChipText, isActive && { color: definition.accent }]}>{definition.label}</Text>
+                <AppText style={[styles.typeChipText, isActive && { color: definition.accent }]}>{definition.label}</AppText>
               </TouchableOpacity>
             );
           })}
         </View>
 
-        <Text style={styles.label}>Registro</Text>
+        <AppText style={styles.label}>Registro</AppText>
         <View style={styles.pickerWrapper}>
           <Picker
             selectedValue={selectedSourceKey}
@@ -982,16 +1002,16 @@ export function RecordatorioListScreen() {
               <Ionicons name={selectedSource.icon} size={17} color={selectedSource.accent} />
             </View>
             <View style={styles.personTextWrap}>
-              <Text style={styles.personName}>{selectedSource.title}</Text>
-              <Text style={styles.personSubtext}>
+              <AppText style={styles.personName}>{selectedSource.title}</AppText>
+              <AppText style={styles.personSubtext}>
                 {selectedPatientName} - {selectedSource.typeLabel}
                 {selectedSource.date ? ` - ${formatDateTimeLabel(selectedSource.date)}` : ''}
-              </Text>
+              </AppText>
             </View>
           </View>
         ) : null}
 
-        <Text style={styles.label}>Fecha y hora del aviso</Text>
+        <AppText style={styles.label}>Fecha y hora del aviso</AppText>
         <View style={styles.dateTimeRow}>
           {Platform.OS === 'web' ? (
             <>
@@ -1010,14 +1030,14 @@ export function RecordatorioListScreen() {
             </>
           ) : (
             <>
-              <TextInput
+              <AppTextInput
                 style={styles.input}
                 placeholder="YYYY-MM-DD"
                 placeholderTextColor={appColors.textMuted}
                 value={notificationDate}
                 onChangeText={setNotificationDate}
               />
-              <TextInput
+              <AppTextInput
                 style={styles.input}
                 placeholder="HH:mm"
                 placeholderTextColor={appColors.textMuted}
@@ -1028,8 +1048,8 @@ export function RecordatorioListScreen() {
           )}
         </View>
 
-        <Text style={styles.label}>Mensaje</Text>
-        <TextInput
+        <AppText style={styles.label}>Mensaje</AppText>
+        <AppTextInput
           style={[styles.input, styles.messageInput]}
           placeholder="Mensaje del recordatorio"
           placeholderTextColor={appColors.textMuted}
@@ -1048,7 +1068,7 @@ export function RecordatorioListScreen() {
           ) : (
             <>
               <Ionicons name="add-circle-outline" size={19} color={appColors.text} />
-              <Text style={styles.primaryButtonText}>Guardar recordatorio</Text>
+              <AppText style={styles.primaryButtonText}>Guardar recordatorio</AppText>
             </>
           )}
         </TouchableOpacity>
@@ -1057,27 +1077,27 @@ export function RecordatorioListScreen() {
       <View style={[styles.listPanel, isWide && styles.listPanelWide]}>
         <View style={styles.panelHeader}>
           <View>
-            <Text style={styles.panelTitle}>Listado</Text>
-            <Text style={styles.panelSubtitle}>{sortedReminders.length} recordatorios y notificaciones registradas</Text>
+            <AppText style={styles.panelTitle}>Listado</AppText>
+            <AppText style={styles.panelSubtitle}>{sortedReminders.length} recordatorios y notificaciones registradas</AppText>
           </View>
         </View>
 
         {loading ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color={appColors.info} />
-            <Text style={styles.loadingText}>Cargando recordatorios...</Text>
+            <AppText style={styles.loadingText}>Cargando recordatorios...</AppText>
           </View>
         ) : sortedReminders.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="notifications-off-outline" size={24} color={appColors.textMuted} />
-            <Text style={styles.emptyTitle}>No hay recordatorios</Text>
-            <Text style={styles.emptyText}>Crea un aviso desde el formulario para que aparezca aqui.</Text>
+            <AppText style={styles.emptyTitle}>No hay recordatorios</AppText>
+            <AppText style={styles.emptyText}>Crea un aviso desde el formulario para que aparezca aqui.</AppText>
           </View>
         ) : (
           <View style={styles.list}>{sortedReminders.map(renderReminder)}</View>
         )}
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
       </View>
     </ScrollView>
   );

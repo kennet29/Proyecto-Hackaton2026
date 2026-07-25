@@ -3,6 +3,16 @@ import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import { LinkingOptions, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
+import { Nunito_400Regular } from '@expo-google-fonts/nunito/400Regular';
+import { Nunito_600SemiBold } from '@expo-google-fonts/nunito/600SemiBold';
+import { Nunito_700Bold } from '@expo-google-fonts/nunito/700Bold';
+import { Nunito_800ExtraBold } from '@expo-google-fonts/nunito/800ExtraBold';
+import { Nunito_900Black } from '@expo-google-fonts/nunito/900Black';
+import { SpaceGrotesk_400Regular } from '@expo-google-fonts/space-grotesk/400Regular';
+import { SpaceGrotesk_500Medium } from '@expo-google-fonts/space-grotesk/500Medium';
+import { SpaceGrotesk_600SemiBold } from '@expo-google-fonts/space-grotesk/600SemiBold';
+import { SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk/700Bold';
 import { RootStackParamList } from './src/navigation/types';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { IniciarSesionScreen } from './src/screens/IniciarSesionScreen';
@@ -61,6 +71,7 @@ import { useOfflineWriteSync } from './src/hooks/useOfflineWriteSync';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
 import { OfflineStatusBanner } from './src/components/OfflineStatusBanner';
 import { appColors } from './src/theme/colors';
+import { appFontFamilies } from './src/theme/typography';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const WEB_FORM_STYLE_ID = 'gestion-salud-web-form-styles';
@@ -69,7 +80,7 @@ const WEB_FORM_CSS = `
   body,
   #root,
   * {
-    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: "SpaceGrotesk_400Regular", "Segoe UI", Arial, sans-serif;
   }
 
   select {
@@ -79,7 +90,7 @@ const WEB_FORM_CSS = `
     border-radius: 12px;
     background-color: #0D1B2A;
     color: #F4F8FF;
-    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: "SpaceGrotesk_600SemiBold", "Segoe UI", Arial, sans-serif;
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0;
@@ -95,7 +106,7 @@ const WEB_FORM_CSS = `
   select option {
     background-color: #0D1B2A;
     color: #F4F8FF;
-    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: "SpaceGrotesk_600SemiBold", "Segoe UI", Arial, sans-serif;
     font-size: 15px;
     font-weight: 600;
   }
@@ -115,6 +126,7 @@ const WEB_FORM_CSS = `
 const sharedScreenOptions = {
   headerStyle: { backgroundColor: appColors.background },
   headerTintColor: appColors.text,
+  headerTitleStyle: { fontFamily: appFontFamilies.headingBold },
 };
 
 const linking: LinkingOptions<RootStackParamList> = {
@@ -450,6 +462,18 @@ const RootNavigator = () => {
 };
 
 export default function App() {
+  const [fontsLoaded, fontError] = useFonts({
+    Nunito_400Regular,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+    Nunito_800ExtraBold,
+    Nunito_900Black,
+    SpaceGrotesk_400Regular,
+    SpaceGrotesk_500Medium,
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
+  });
+
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') {
       return undefined;
@@ -464,6 +488,18 @@ export default function App() {
 
     return () => undefined;
   }, []);
+
+  if (fontError) {
+    throw fontError;
+  }
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loadingScreen}>
+        <ActivityIndicator size="large" color={appColors.info} />
+      </View>
+    );
+  }
 
   return (
     <AuthProvider>

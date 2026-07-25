@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { AppText } from './AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { API_URL } from '../config/api';
@@ -23,14 +24,14 @@ export function AltchaWidget({ onPayload, resetKey = 0 }: Props) {
   return (
     <View style={styles.wrapper}>
       <View style={styles.heading}>
-        <View style={styles.headingCopy}><Ionicons name="shield-checkmark-outline" size={19} color={appColors.success} /><View><Text style={styles.title}>Verificación privada</Text><Text style={styles.subtitle}>Protección ALTCHA sin rastreo</Text></View></View>
-        {status === 'verified' ? <View style={styles.badge}><Ionicons name="checkmark-circle" size={15} color={appColors.success} /><Text style={styles.badgeText}>Verificado</Text></View> : null}
+        <View style={styles.headingCopy}><Ionicons name="shield-checkmark-outline" size={19} color={appColors.success} /><View><AppText style={styles.title}>Verificación privada</AppText><AppText style={styles.subtitle}>Protección ALTCHA sin rastreo</AppText></View></View>
+        {status === 'verified' ? <View style={styles.badge}><Ionicons name="checkmark-circle" size={15} color={appColors.success} /><AppText style={styles.badgeText}>Verificado</AppText></View> : null}
       </View>
       <View style={styles.area}>
         <WebView key={`${resetKey}-${retryKey}`} source={{ uri: `${API_URL}/auth/altcha-widget` }} onMessage={handleMessage} onLoadStart={() => setStatus('loading')} onError={() => setStatus('error')} javaScriptEnabled domStorageEnabled originWhitelist={['https://*', 'http://*', 'blob:*']} setSupportMultipleWindows={false} style={styles.webView} containerStyle={styles.webViewContainer} scrollEnabled={false} overScrollMode="never" />
-        {status === 'loading' ? <View style={styles.loading}><ActivityIndicator color={appColors.info} /><Text style={styles.loadingText}>Preparando verificación…</Text></View> : null}
+        {status === 'loading' ? <View style={styles.loading}><ActivityIndicator color={appColors.info} /><AppText style={styles.loadingText}>Preparando verificación…</AppText></View> : null}
       </View>
-      {status === 'error' ? <View style={styles.errorRow}><Text style={styles.error}>La API de verificación no está disponible.</Text><TouchableOpacity onPress={() => { setStatus('loading'); setRetryKey((current) => current + 1); }} style={styles.retryButton}><Ionicons name="refresh" size={15} color={appColors.info} /><Text style={styles.retryText}>Reintentar</Text></TouchableOpacity></View> : null}
+      {status === 'error' ? <View style={styles.errorRow}><AppText style={styles.error}>La API de verificación no está disponible.</AppText><TouchableOpacity onPress={() => { setStatus('loading'); setRetryKey((current) => current + 1); }} style={styles.retryButton}><Ionicons name="refresh" size={15} color={appColors.info} /><AppText style={styles.retryText}>Reintentar</AppText></TouchableOpacity></View> : null}
     </View>
   );
 }

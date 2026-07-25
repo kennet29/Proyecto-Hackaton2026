@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { AppText } from './AppText';
 import { OfflineSyncState } from '../hooks/useOfflineWriteSync';
 import { appColors } from '../theme/colors';
 
@@ -29,14 +30,14 @@ export const OfflineStatusBanner: React.FC<Props> = ({ state }) => {
 
   return (
     <View accessibilityRole="alert" style={[styles.container, tone]}>
-      <Text style={styles.text}>{message}</Text>
+      <AppText style={styles.text}>{message}</AppText>
       {state.isConnected !== false && !state.isSyncing && hasWork ? (
         <TouchableOpacity
           accessibilityRole="button"
           onPress={() => void state.retry()}
           style={styles.retryButton}
         >
-          <Text style={styles.retryText}>Reintentar</Text>
+          <AppText style={styles.retryText}>Reintentar</AppText>
         </TouchableOpacity>
       ) : null}
     </View>
