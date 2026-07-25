@@ -5,12 +5,11 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { API_URL } from '../config/api';
@@ -40,14 +39,14 @@ const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => 
         isSuccess ? styles.feedbackSuccess : styles.feedbackError,
       ]}
     >
-      <Text
+      <AppText
         style={[
           styles.feedbackText,
           isSuccess ? styles.feedbackTextSuccess : styles.feedbackTextError,
         ]}
       >
         {feedback.message}
-      </Text>
+      </AppText>
     </View>
   );
 };
@@ -233,34 +232,34 @@ export function RegistroScreen({ navigation }: Props) {
         {isWebWide ? (
           <View style={styles.webIntroPanel}>
             <View style={styles.webIntroIcon}>
-              <Text style={styles.webIntroIconText}>GS</Text>
+              <AppText style={styles.webIntroIconText}>GS</AppText>
             </View>
-            <Text style={styles.webIntroTitle}>Crea tu expediente digital</Text>
-            <Text style={styles.webIntroCopy}>
+            <AppText style={styles.webIntroTitle}>Crea tu expediente digital</AppText>
+            <AppText style={styles.webIntroCopy}>
               Registra tu cuenta para administrar pacientes asociados, historial clinico y
               recordatorios desde una vista web mas amplia.
-            </Text>
+            </AppText>
             <View style={styles.webIntroLine} />
-            <Text style={styles.webIntroNote}>Acceso web y movil con la misma cuenta.</Text>
+            <AppText style={styles.webIntroNote}>Acceso web y movil con la misma cuenta.</AppText>
           </View>
         ) : null}
       <View style={[styles.card, isWideLayout && styles.cardWide, isWebWide && styles.webCard]}>
-        <Text style={styles.title}>Crear cuenta</Text>
-        <Text style={styles.subtitle}>
+        <AppText style={styles.title}>Crear cuenta</AppText>
+        <AppText style={styles.subtitle}>
           Completa tus datos para registrarte en Gestión Salud.
-        </Text>
+        </AppText>
         <FeedbackBanner feedback={feedback} />
         {bootstrapMode ? (
           <View style={styles.bootstrapNotice}>
-            <Text style={styles.bootstrapNoticeText}>
+            <AppText style={styles.bootstrapNoticeText}>
               Estás creando el primer usuario del sistema. Esta cuenta recibirá acceso
               administrador inicial.
-            </Text>
+            </AppText>
           </View>
         ) : null}
 
-        <Text style={styles.label}>Nombre completo</Text>
-        <TextInput
+        <AppText style={styles.label}>Nombre completo</AppText>
+        <AppTextInput
           style={styles.input}
           placeholder="Ej: Andrea López"
           placeholderTextColor="#9FB3C8"
@@ -269,8 +268,8 @@ export function RegistroScreen({ navigation }: Props) {
           onChangeText={(text) => setFullName(sanitizeText(text))}
         />
 
-        <Text style={styles.label}>Correo electrónico</Text>
-        <TextInput
+        <AppText style={styles.label}>Correo electrónico</AppText>
+        <AppTextInput
           style={styles.input}
           placeholder="tu@email.com"
           placeholderTextColor="#9FB3C8"
@@ -281,8 +280,8 @@ export function RegistroScreen({ navigation }: Props) {
           onChangeText={(text) => setEmail(sanitizeEmail(text))}
         />
 
-        <Text style={styles.label}>Ciudad</Text>
-        <TextInput
+        <AppText style={styles.label}>Ciudad</AppText>
+        <AppTextInput
           style={styles.input}
           placeholder="Ej: Managua"
           placeholderTextColor="#9FB3C8"
@@ -291,8 +290,8 @@ export function RegistroScreen({ navigation }: Props) {
           onChangeText={(text) => setCity(sanitizeText(text))}
         />
 
-        <Text style={styles.label}>País</Text>
-        <TextInput
+        <AppText style={styles.label}>País</AppText>
+        <AppTextInput
           style={styles.input}
           placeholder="Ej: Nicaragua"
           placeholderTextColor="#9FB3C8"
@@ -301,8 +300,8 @@ export function RegistroScreen({ navigation }: Props) {
           onChangeText={(text) => setCountry(sanitizeText(text))}
         />
 
-        <Text style={styles.label}>Usuario</Text>
-        <TextInput
+        <AppText style={styles.label}>Usuario</AppText>
+        <AppTextInput
           style={styles.input}
           placeholder="usuario.demo"
           placeholderTextColor="#9FB3C8"
@@ -312,8 +311,8 @@ export function RegistroScreen({ navigation }: Props) {
           onChangeText={(text) => setUsername(sanitizeUsername(text))}
         />
 
-        <Text style={styles.label}>Contraseña</Text>
-        <TextInput
+        <AppText style={styles.label}>Contraseña</AppText>
+        <AppTextInput
           style={styles.input}
           placeholder="Mínimo 8 caracteres"
           placeholderTextColor="#9FB3C8"
@@ -322,8 +321,8 @@ export function RegistroScreen({ navigation }: Props) {
           onChangeText={(text) => setPassword(sanitizePassword(text))}
         />
 
-        <Text style={styles.label}>Confirmar contraseña</Text>
-        <TextInput
+        <AppText style={styles.label}>Confirmar contraseña</AppText>
+        <AppTextInput
           style={styles.input}
           placeholder="Repite la contraseña"
           placeholderTextColor="#9FB3C8"
@@ -332,21 +331,21 @@ export function RegistroScreen({ navigation }: Props) {
           onChangeText={(text) => setConfirmPassword(sanitizePassword(text))}
         />
 
-        <Text style={styles.label}>Pregunta de seguridad</Text>
+        <AppText style={styles.label}>Pregunta de seguridad</AppText>
         {SECURITY_QUESTIONS.map((question) => (
           <TouchableOpacity key={question.id} style={[styles.questionOption, securityQuestion === question.id && styles.questionOptionActive]} onPress={() => setSecurityQuestion(question.id)} disabled={loading}>
-            <Text style={styles.questionOptionText}>{question.label}</Text>
+            <AppText style={styles.questionOptionText}>{question.label}</AppText>
           </TouchableOpacity>
         ))}
-        <TextInput style={styles.input} placeholder="Tu respuesta" placeholderTextColor="#9FB3C8" value={securityAnswer} onChangeText={setSecurityAnswer} />
+        <AppTextInput style={styles.input} placeholder="Tu respuesta" placeholderTextColor="#9FB3C8" value={securityAnswer} onChangeText={setSecurityAnswer} />
 
         {biometricAvailable ? (
           <View style={styles.fingerprintBox}>
-            <Text style={styles.label}>Huella digital</Text>
-            <Text style={styles.fingerprintHint}>
+            <AppText style={styles.label}>Huella digital</AppText>
+            <AppText style={styles.fingerprintHint}>
               Registra tu huella para iniciar sesión desde este dispositivo sin
               contraseña.
-            </Text>
+            </AppText>
             <TouchableOpacity
               style={[
                 styles.fingerprintBtn,
@@ -355,22 +354,22 @@ export function RegistroScreen({ navigation }: Props) {
               onPress={handleRegisterFingerprint}
               disabled={loading}
             >
-              <Text
+              <AppText
                 style={[
                   styles.fingerprintBtnText,
                   fingerprintStatus === 'saved' && styles.fingerprintBtnTextActive,
                 ]}
               >
                 {fingerprintStatus === 'saved' ? 'Huella lista' : 'Registrar huella'}
-              </Text>
+              </AppText>
             </TouchableOpacity>
           </View>
         ) : (
-          <Text style={styles.fingerprintWarning}>
+          <AppText style={styles.fingerprintWarning}>
             {Platform.OS === 'web'
               ? 'La huella digital esta disponible en la app movil.'
               : 'Configura la huella en tu teléfono para habilitar esta opción.'}
-          </Text>
+          </AppText>
         )}
 
         <TouchableOpacity
@@ -382,12 +381,12 @@ export function RegistroScreen({ navigation }: Props) {
           {loading ? (
             <ActivityIndicator color="#F4F8FF" />
           ) : (
-            <Text style={styles.primaryLabel}>Registrarme</Text>
+            <AppText style={styles.primaryLabel}>Registrarme</AppText>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.secondaryBtn} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.secondaryLabel}>Ya tengo cuenta</Text>
+          <AppText style={styles.secondaryLabel}>Ya tengo cuenta</AppText>
         </TouchableOpacity>
       </View>
       </View>
@@ -458,7 +457,7 @@ const styles = StyleSheet.create({
     marginVertical: 28,
   },
   webIntroNote: {
-    color: '#38F28E',
+    color: '#38E28E',
     fontSize: 14,
     fontWeight: '800',
   },
@@ -502,8 +501,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   feedbackSuccess: {
-    backgroundColor: '#38F28E18',
-    borderColor: '#38F28E',
+    backgroundColor: '#38E28E18',
+    borderColor: '#38E28E',
   },
   feedbackError: {
     backgroundColor: '#FF4D7318',
@@ -514,7 +513,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   feedbackTextSuccess: {
-    color: '#38F28E',
+    color: '#38E28E',
   },
   feedbackTextError: {
     color: '#FF4D73',

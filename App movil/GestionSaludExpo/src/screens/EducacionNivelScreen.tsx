@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
+import { AppText } from '../components/AppText';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { obtenerNivel } from '../data/educacion';
@@ -16,9 +17,9 @@ export function EducacionNivelScreen({ route, navigation }: Props) {
   if (!nivel) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.errorText}>No se pudo abrir este nivel educativo.</Text>
+        <AppText style={styles.errorText}>No se pudo abrir este nivel educativo.</AppText>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.backBtnText}>Volver</Text>
+          <AppText style={styles.backBtnText}>Volver</AppText>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -26,15 +27,15 @@ export function EducacionNivelScreen({ route, navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>{nivel.nombre}</Text>
-      <Text style={styles.subtitle}>{nivel.enfoque}</Text>
+      <AppText style={styles.title}>{nivel.nombre}</AppText>
+      <AppText style={styles.subtitle}>{nivel.enfoque}</AppText>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>CÃƒÆ’Ã‚Â³mo lo explicamos</Text>
+        <AppText style={styles.sectionTitle}>CÃƒÆ’Ã‚Â³mo lo explicamos</AppText>
         <View style={styles.tagRow}>
           {nivel.comoMostrar.map((item) => (
             <View key={item} style={styles.tag}>
-              <Text style={styles.tagText}>{item}</Text>
+              <AppText style={styles.tagText}>{item}</AppText>
             </View>
           ))}
         </View>
@@ -48,12 +49,12 @@ export function EducacionNivelScreen({ route, navigation }: Props) {
             style={styles.card}
             onPress={() => navigation.navigate('EducacionTema', { nivelId: nivel.id, temaId: item.id })}
           >
-            <Text style={styles.cardTitle}>{item.titulo}</Text>
-            <Text style={styles.cardDescription}>{item.descripcion}</Text>
+            <AppText style={styles.cardTitle}>{item.titulo}</AppText>
+            <AppText style={styles.cardDescription}>{item.descripcion}</AppText>
             <View style={styles.tagRow}>
               {item.formato.slice(0, 2).map((fmt) => (
                 <View key={fmt} style={styles.smallTag}>
-                  <Text style={styles.smallTagText}>{fmt}</Text>
+                  <AppText style={styles.smallTagText}>{fmt}</AppText>
                 </View>
               ))}
             </View>

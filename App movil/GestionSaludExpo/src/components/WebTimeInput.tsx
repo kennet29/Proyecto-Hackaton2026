@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { AppText } from './AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { appColors, colorAlpha } from '../theme/colors';
 
@@ -80,7 +81,7 @@ export const WebTimeInput = ({
       >
         <View style={styles.triggerValue}>
           <Ionicons name="time-outline" size={19} color={appColors.info} />
-          <Text style={styles.triggerText}>{formatLabel(value)}</Text>
+          <AppText style={styles.triggerText}>{formatLabel(value)}</AppText>
         </View>
         <Ionicons name={isOpen ? 'chevron-up' : 'chevron-down'} size={19} color={appColors.textMuted} />
       </Pressable>
@@ -89,8 +90,8 @@ export const WebTimeInput = ({
         <View style={styles.panel} accessibilityRole="menu">
           <View style={styles.panelHeader}>
             <View>
-              <Text style={styles.panelEyebrow}>HORA SELECCIONADA</Text>
-              <Text style={styles.panelTime}>{formatLabel(value)}</Text>
+              <AppText style={styles.panelEyebrow}>HORA SELECCIONADA</AppText>
+              <AppText style={styles.panelTime}>{formatLabel(value)}</AppText>
             </View>
             <Pressable
               accessibilityRole="button"
@@ -102,7 +103,7 @@ export const WebTimeInput = ({
             </Pressable>
           </View>
 
-          <Text style={styles.sectionLabel}>Hora</Text>
+          <AppText style={styles.sectionLabel}>Hora</AppText>
           <View style={styles.optionsGrid}>
             {HOURS.map((hour) => {
               const selected = displayHour === hour;
@@ -118,15 +119,15 @@ export const WebTimeInput = ({
                     pressed && styles.pressed,
                   ]}
                 >
-                  <Text style={[styles.optionText, selected && styles.optionTextSelected]}>
+                  <AppText style={[styles.optionText, selected && styles.optionTextSelected]}>
                     {String(hour).padStart(2, '0')}
-                  </Text>
+                  </AppText>
                 </Pressable>
               );
             })}
           </View>
 
-          <Text style={styles.sectionLabel}>Minutos</Text>
+          <AppText style={styles.sectionLabel}>Minutos</AppText>
           <View style={styles.optionsGrid}>
             {minuteOptions.map((minute) => {
               const selected = parsed.minute === minute;
@@ -142,9 +143,9 @@ export const WebTimeInput = ({
                     pressed && styles.pressed,
                   ]}
                 >
-                  <Text style={[styles.optionText, selected && styles.optionTextSelected]}>
+                  <AppText style={[styles.optionText, selected && styles.optionTextSelected]}>
                     {String(minute).padStart(2, '0')}
-                  </Text>
+                  </AppText>
                 </Pressable>
               );
             })}
@@ -166,9 +167,9 @@ export const WebTimeInput = ({
                       pressed && styles.pressed,
                     ]}
                   >
-                    <Text style={[styles.periodText, selected && styles.periodTextSelected]}>
+                    <AppText style={[styles.periodText, selected && styles.periodTextSelected]}>
                       {item === 'AM' ? 'a. m.' : 'p. m.'}
-                    </Text>
+                    </AppText>
                   </Pressable>
                 );
               })}
@@ -179,7 +180,7 @@ export const WebTimeInput = ({
               style={({ pressed }) => [styles.doneButton, pressed && styles.pressed]}
             >
               <Ionicons name="checkmark" size={18} color={appColors.background} />
-              <Text style={styles.doneText}>Listo</Text>
+              <AppText style={styles.doneText}>Listo</AppText>
             </Pressable>
           </View>
         </View>
@@ -193,7 +194,7 @@ export const WebTimeInput = ({
             onPress={() => onChange(roundCurrentTime())}
             style={({ pressed }) => [styles.quickButton, pressed && styles.pressed]}
           >
-            <Text style={styles.quickText}>Ahora</Text>
+            <AppText style={styles.quickText}>Ahora</AppText>
           </Pressable>
           {QUICK_TIMES.map((time) => {
             const selected = value === time;
@@ -209,7 +210,7 @@ export const WebTimeInput = ({
                   pressed && styles.pressed,
                 ]}
               >
-                <Text style={[styles.quickText, selected && styles.quickTextSelected]}>{time}</Text>
+                <AppText style={[styles.quickText, selected && styles.quickTextSelected]}>{time}</AppText>
               </Pressable>
             );
           })}

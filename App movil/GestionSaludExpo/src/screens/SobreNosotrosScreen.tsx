@@ -1,32 +1,33 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { AppText } from '../components/AppText';
 
 export function SobreNosotrosScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Sobre Nosotros</Text>
-      <Text style={styles.paragraph}>
+      <AppText style={styles.title}>Sobre Nosotros</AppText>
+      <AppText style={styles.paragraph}>
         Gestion Salud nace para centralizar tus historiales clinicos, recordatorios de medicamentos y
         seguimientos cronicos. Empoderamos al paciente con herramientas simples y seguras.
-      </Text>
-      <Text style={styles.subtitle}>Nuestros Pilares</Text>
+      </AppText>
+      <AppText style={styles.subtitle}>Nuestros Pilares</AppText>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Seguridad</Text>
-        <Text style={styles.cardText}>
+        <AppText style={styles.cardTitle}>Seguridad</AppText>
+        <AppText style={styles.cardText}>
           Cifrado extremo a extremo y autenticacion moderna para proteger tus datos.
-        </Text>
+        </AppText>
       </View>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Acompanamiento</Text>
-        <Text style={styles.cardText}>
+        <AppText style={styles.cardTitle}>Acompanamiento</AppText>
+        <AppText style={styles.cardText}>
           Recordatorios inteligentes y tableros que muestran tus avances y controles pendientes.
-        </Text>
+        </AppText>
       </View>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Integraciones</Text>
-        <Text style={styles.cardText}>
+        <AppText style={styles.cardTitle}>Integraciones</AppText>
+        <AppText style={styles.cardText}>
           Conectamos con laboratorios, clinicas y aseguradoras para reducir el papeleo.
-        </Text>
+        </AppText>
       </View>
     </ScrollView>
   );

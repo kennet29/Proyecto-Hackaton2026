@@ -6,9 +6,9 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
+import { AppText } from '../components/AppText';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -75,7 +75,7 @@ export function NanoHistorialScreen({}: Props) {
       {loading ? (
         <View style={styles.loadingWrap}>
           <ActivityIndicator size="large" color={appColors.info} />
-          <Text style={styles.loadingText}>Cargando historial...</Text>
+          <AppText style={styles.loadingText}>Cargando historial...</AppText>
         </View>
       ) : (
         <ScrollView
@@ -90,31 +90,31 @@ export function NanoHistorialScreen({}: Props) {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.heroCard}>
-            <Text style={styles.heroTitle}>Historial de Nano</Text>
-            <Text style={styles.heroSubtitle}>
+            <AppText style={styles.heroTitle}>Historial de Nano</AppText>
+            <AppText style={styles.heroSubtitle}>
               Aqui se guardan localmente tus ultimos analisis de comida para revisarlos despues.
-            </Text>
+            </AppText>
           </View>
 
           {!history.length ? (
             <View style={styles.emptyCard}>
               <Ionicons name="time-outline" size={26} color={appColors.info} />
-              <Text style={styles.emptyTitle}>Todavia no hay historial</Text>
-              <Text style={styles.emptyText}>
+              <AppText style={styles.emptyTitle}>Todavia no hay historial</AppText>
+              <AppText style={styles.emptyText}>
                 Analiza una comida con Nano y aqui aparecera guardada con su resumen nutricional.
-              </Text>
+              </AppText>
             </View>
           ) : (
             history.map((item) => (
               <View key={item.id} style={styles.entryCard}>
                 <View style={styles.entryHeader}>
                   <View style={styles.entryHeaderCopy}>
-                    <Text style={styles.entryGoal}>{item.goalLabel}</Text>
-                    <Text style={styles.entryDate}>{formatCreatedAt(item.createdAt)}</Text>
+                    <AppText style={styles.entryGoal}>{item.goalLabel}</AppText>
+                    <AppText style={styles.entryDate}>{formatCreatedAt(item.createdAt)}</AppText>
                   </View>
                   {item.macronutrients ? (
                     <View style={styles.kcalBadge}>
-                      <Text style={styles.kcalBadgeText}>{Math.round(item.macronutrients.calories)} kcal</Text>
+                      <AppText style={styles.kcalBadgeText}>{Math.round(item.macronutrients.calories)} kcal</AppText>
                     </View>
                   ) : null}
                 </View>
@@ -123,22 +123,22 @@ export function NanoHistorialScreen({}: Props) {
                   <Image source={{ uri: item.photoUri }} style={styles.entryImage} resizeMode="cover" />
                 ) : null}
 
-                <Text style={styles.feedbackText}>{item.feedback}</Text>
-                {item.userNote ? <Text style={styles.noteText}>Nota: {item.userNote}</Text> : null}
+                <AppText style={styles.feedbackText}>{item.feedback}</AppText>
+                {item.userNote ? <AppText style={styles.noteText}>Nota: {item.userNote}</AppText> : null}
 
                 {item.macronutrients ? (
                   <View style={styles.macroRow}>
                     <View style={styles.metricPill}>
-                      <Text style={styles.metricLabel}>Proteina</Text>
-                      <Text style={styles.metricValue}>{item.macronutrients.proteinGrams} g</Text>
+                      <AppText style={styles.metricLabel}>Proteina</AppText>
+                      <AppText style={styles.metricValue}>{item.macronutrients.proteinGrams} g</AppText>
                     </View>
                     <View style={styles.metricPill}>
-                      <Text style={styles.metricLabel}>Carbohidratos</Text>
-                      <Text style={styles.metricValue}>{item.macronutrients.carbohydratesGrams} g</Text>
+                      <AppText style={styles.metricLabel}>Carbohidratos</AppText>
+                      <AppText style={styles.metricValue}>{item.macronutrients.carbohydratesGrams} g</AppText>
                     </View>
                     <View style={styles.metricPill}>
-                      <Text style={styles.metricLabel}>Grasas</Text>
-                      <Text style={styles.metricValue}>{item.macronutrients.fatGrams} g</Text>
+                      <AppText style={styles.metricLabel}>Grasas</AppText>
+                      <AppText style={styles.metricValue}>{item.macronutrients.fatGrams} g</AppText>
                     </View>
                   </View>
                 ) : null}
@@ -147,9 +147,9 @@ export function NanoHistorialScreen({}: Props) {
                   <View style={styles.microWrap}>
                     {item.micronutrients.slice(0, 4).map((micro) => (
                       <View key={`${item.id}-${micro.key}`} style={styles.microPill}>
-                        <Text style={styles.microPillText}>
+                        <AppText style={styles.microPillText}>
                           {micro.label}: {Math.round(micro.dailyValuePercent)}%
-                        </Text>
+                        </AppText>
                       </View>
                     ))}
                   </View>

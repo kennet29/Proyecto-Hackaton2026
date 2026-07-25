@@ -5,10 +5,10 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText } from '../components/AppText';
 import { Picker } from '@react-native-picker/picker';
 import { Calendar, DateData } from 'react-native-calendars';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -17,6 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { parseCalendarDate } from '../utils/localDate';
+import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 
 type Consulta = {
   consultaId: number;
@@ -146,12 +147,10 @@ export function ConsultaListScreen({ navigation }: Props) {
       try {
         setLoading(true);
         const query = pacienteId ? `?pacienteId=${pacienteId}` : '';
-        const response = await fetch(`${API_URL}/consultamedica${query}`, { headers: authHeaders });
-        const body = await response.json().catch(() => null);
-
-        if (!response.ok) {
-          throw new Error((body as { message?: string } | null)?.message ?? 'No se pudieron obtener las consultas');
-        }
+        const { data: body } = await getJsonWithOfflineFallback<unknown>(
+          `/consultamedica${query}`,
+          authHeaders,
+        );
 
         const validData = Array.isArray(body)
           ? body.filter(
@@ -284,18 +283,18 @@ export function ConsultaListScreen({ navigation }: Props) {
       onPress={() => navigation.navigate('ConsultaForm', { consulta: item })}
     >
       <View style={styles.cardTopRow}>
-        <Text style={styles.title}>Consulta #{item.consultaId}</Text>
-        <Text style={styles.dateBadge}>{formatDateTime(item.fechaconsulta)}</Text>
+        <AppText style={styles.title}>Consulta #{item.consultaId}</AppText>
+        <AppText style={styles.dateBadge}>{formatDateTime(item.fechaconsulta)}</AppText>
       </View>
-      <Text style={styles.text}>
+      <AppText style={styles.text}>
         Paciente: {patientNameById[item.pacienteId] ?? `Paciente #${item.pacienteId}`}
-      </Text>
-      <Text style={styles.text}>Motivo: {item.motivo || 'N/A'}</Text>
+      </AppText>
+      <AppText style={styles.text}>Motivo: {item.motivo || 'N/A'}</AppText>
       {item.diagnostico ? (
-        <Text style={styles.text}>Diagnostico: {item.diagnostico}</Text>
+        <AppText style={styles.text}>Diagnostico: {item.diagnostico}</AppText>
       ) : null}
       {item.tratamiento ? (
-        <Text style={styles.text}>Tratamiento: {item.tratamiento}</Text>
+        <AppText style={styles.text}>Tratamiento: {item.tratamiento}</AppText>
       ) : null}
     </TouchableOpacity>
   );
@@ -313,15 +312,15 @@ export function ConsultaListScreen({ navigation }: Props) {
         }
       >
         <View style={styles.heroCard}>
-          <Text style={styles.kicker}>CONSULTAS MEDICAS</Text>
-          <Text style={styles.header}>Agenda clinica</Text>
-          <Text style={styles.subheader}>
+          <AppText style={styles.kicker}>CONSULTAS MEDICAS</AppText>
+          <AppText style={styles.header}>Agenda clinica</AppText>
+          <AppText style={styles.subheader}>
             Revisa el calendario de consultas y abre cada registro desde las tarjetas del dia.
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.filterCard}>
-          <Text style={styles.sectionTitle}>Filtrar por paciente</Text>
+          <AppText style={styles.sectionTitle}>Filtrar por paciente</AppText>
           <View style={styles.filterRow}>
             <View style={styles.pickerWrapper}>
               <Picker
@@ -341,25 +340,25 @@ export function ConsultaListScreen({ navigation }: Props) {
               </Picker>
             </View>
             <TouchableOpacity style={styles.filterBtn} onPress={applyFilter} disabled={loadingPatients}>
-              <Text style={styles.btnText}>{loadingPatients ? 'Cargando...' : 'Filtrar'}</Text>
+              <AppText style={styles.btnText}>{loadingPatients ? 'Cargando...' : 'Filtrar'}</AppText>
             </TouchableOpacity>
           </View>
-          <Text style={styles.filterSummary}>Vista actual: {selectedPatientLabel}</Text>
-          {patientLoadError ? <Text style={styles.errorText}>{patientLoadError}</Text> : null}
+          <AppText style={styles.filterSummary}>Vista actual: {selectedPatientLabel}</AppText>
+          {patientLoadError ? <AppText style={styles.errorText}>{patientLoadError}</AppText> : null}
         </View>
 
         <View style={styles.calendarCard}>
           <View style={styles.calendarHeader}>
-            <Text style={styles.sectionTitle}>Calendario de consultas</Text>
-            <Text style={styles.calendarCaption}>
+            <AppText style={styles.sectionTitle}>Calendario de consultas</AppText>
+            <AppText style={styles.calendarCaption}>
               {selectedDate ? formatDateLabel(selectedDate) : 'Selecciona un dia'}
-            </Text>
+            </AppText>
           </View>
 
           {loading && data.length === 0 ? (
             <View style={styles.loadingBox}>
               <ActivityIndicator color="#29B6FF" />
-              <Text style={styles.loadingText}>Cargando agenda...</Text>
+              <AppText style={styles.loadingText}>Cargando agenda...</AppText>
             </View>
           ) : (
             <Calendar
@@ -394,22 +393,22 @@ export function ConsultaListScreen({ navigation }: Props) {
             disabled={!hasDayConsultas}
           >
             <View style={styles.historyToggleCopy}>
-              <Text style={styles.sectionTitle}>Consultas del dia</Text>
-              <Text style={styles.historyHelper}>
+              <AppText style={styles.sectionTitle}>Consultas del dia</AppText>
+              <AppText style={styles.historyHelper}>
                 {!hasDayConsultas
                   ? 'No hay consultas para desplegar en esta fecha'
                   : showDayConsultas
                     ? 'Ocultar consultas de la fecha seleccionada'
                     : 'Desplegar consultas de la fecha seleccionada'}
-              </Text>
+              </AppText>
             </View>
             <View style={styles.historyToggleActions}>
               <View style={styles.countBadge}>
-                <Text style={styles.countBadgeText}>{consultasForSelectedDay.length}</Text>
+                <AppText style={styles.countBadgeText}>{consultasForSelectedDay.length}</AppText>
               </View>
-              <Text style={[styles.historyToggleIcon, !hasDayConsultas && styles.historyToggleIconDisabled]}>
+              <AppText style={[styles.historyToggleIcon, !hasDayConsultas && styles.historyToggleIconDisabled]}>
                 {hasDayConsultas ? (showDayConsultas ? '-' : '+') : ''}
-              </Text>
+              </AppText>
             </View>
           </TouchableOpacity>
 
@@ -430,22 +429,22 @@ export function ConsultaListScreen({ navigation }: Props) {
             disabled={!hasHistory}
           >
             <View style={styles.historyToggleCopy}>
-              <Text style={styles.sectionTitle}>Historial completo</Text>
-              <Text style={styles.historyHelper}>
+              <AppText style={styles.sectionTitle}>Historial completo</AppText>
+              <AppText style={styles.historyHelper}>
                 {!hasHistory
                   ? 'No hay consultas registradas para mostrar'
                   : showHistory
                     ? 'Ocultar consultas anteriores'
                     : 'Desplegar consultas anteriores'}
-              </Text>
+              </AppText>
             </View>
             <View style={styles.historyToggleActions}>
               <View style={styles.countBadge}>
-                <Text style={styles.countBadgeText}>{data.length}</Text>
+                <AppText style={styles.countBadgeText}>{data.length}</AppText>
               </View>
-              <Text style={[styles.historyToggleIcon, !hasHistory && styles.historyToggleIconDisabled]}>
+              <AppText style={[styles.historyToggleIcon, !hasHistory && styles.historyToggleIconDisabled]}>
                 {hasHistory ? (showHistory ? '-' : '+') : ''}
-              </Text>
+              </AppText>
             </View>
           </TouchableOpacity>
 
@@ -456,7 +455,7 @@ export function ConsultaListScreen({ navigation }: Props) {
       </ScrollView>
 
       <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('ConsultaCreate')}>
-        <Text style={styles.fabText}>+</Text>
+        <AppText style={styles.fabText}>+</AppText>
       </TouchableOpacity>
     </View>
   );

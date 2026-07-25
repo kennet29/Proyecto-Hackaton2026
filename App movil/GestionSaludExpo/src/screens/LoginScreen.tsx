@@ -2,20 +2,21 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Modal,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import * as LocalAuthentication from 'expo-local-authentication';
+import { SvgUri } from 'react-native-svg';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
@@ -36,6 +37,31 @@ type LoginApiResponse = {
   message?: string;
 };
 
+const LOGIN_LOGO_SOURCE = require('../svg/Logo Pantalla Principal.svg');
+
+const LoginBrandLogo = ({ size }: { size: number }) => {
+  if (Platform.OS === 'web') {
+    return (
+      <Image
+        source={LOGIN_LOGO_SOURCE}
+        style={{ width: size, height: size }}
+        resizeMode="contain"
+        accessibilityLabel="Logo de Nica Prime"
+      />
+    );
+  }
+
+  const sourceUri = Image.resolveAssetSource(LOGIN_LOGO_SOURCE)?.uri;
+  return sourceUri ? (
+    <SvgUri
+      uri={sourceUri}
+      width={size}
+      height={size}
+      accessibilityLabel="Logo de Nica Prime"
+    />
+  ) : null;
+};
+
 const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => {
   if (!feedback) {
     return null;
@@ -48,14 +74,14 @@ const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => 
         isSuccess ? styles.feedbackSuccess : styles.feedbackError,
       ]}
     >
-      <Text
+      <AppText
         style={[
           styles.feedbackText,
           isSuccess ? styles.feedbackTextSuccess : styles.feedbackTextError,
         ]}
       >
         {feedback.message}
-      </Text>
+      </AppText>
     </View>
   );
 };
@@ -262,35 +288,45 @@ export function LoginScreen({ navigation }: Props) {
           <View style={styles.webBrandPanel}>
             <View style={styles.webBrandBadge}>
               <Ionicons name="medkit-outline" size={18} color="#071120" />
-              <Text style={styles.webBrandBadgeText}>NicaPlus</Text>
+              <AppText style={styles.webBrandBadgeText}>NicaPlus</AppText>
             </View>
-            <Text style={styles.webBrandTitle}>Tu panel clinico en un solo lugar</Text>
-            <Text style={styles.webBrandCopy}>
+            <View style={styles.webBrandLogo}>
+              <LoginBrandLogo size={210} />
+            </View>
+            <AppText style={styles.webBrandTitle}>Tu panel clinico en un solo lugar</AppText>
+            <AppText style={styles.webBrandCopy}>
               Organiza pacientes, consultas, recordatorios y seguimiento de bienestar desde una
               experiencia preparada para escritorio.
-            </Text>
+            </AppText>
             <View style={styles.webHighlights}>
               <View style={styles.webHighlightItem}>
-                <Ionicons name="shield-checkmark-outline" size={22} color="#38F28E" />
-                <Text style={styles.webHighlightText}>Acceso seguro</Text>
+                <Ionicons name="shield-checkmark-outline" size={22} color="#38E28E" />
+                <AppText style={styles.webHighlightText}>Acceso seguro</AppText>
               </View>
               <View style={styles.webHighlightItem}>
                 <Ionicons name="calendar-outline" size={22} color="#29B6FF" />
-                <Text style={styles.webHighlightText}>Agenda y controles</Text>
+                <AppText style={styles.webHighlightText}>Agenda y controles</AppText>
               </View>
               <View style={styles.webHighlightItem}>
                 <Ionicons name="analytics-outline" size={22} color="#FF4D73" />
-                <Text style={styles.webHighlightText}>Seguimiento continuo</Text>
+                <AppText style={styles.webHighlightText}>Seguimiento continuo</AppText>
               </View>
             </View>
           </View>
         ) : null}
       <View style={[styles.card, isWideLayout && styles.cardWide, isWebWide && styles.webCard]}>
-        <Text style={styles.welcome}>Bienvenido</Text>
-        <Text style={styles.subtitle}>Nos alegra tenerte de vuelta</Text>
+        <View style={styles.loginIntro}>
+          {!isWebWide ? (
+            <View style={styles.loginLogo}>
+              <LoginBrandLogo size={160} />
+            </View>
+          ) : null}
+          <AppText style={styles.welcome}>Bienvenido</AppText>
+          <AppText style={styles.subtitle}>Nos alegra tenerte de vuelta</AppText>
+        </View>
         <FeedbackBanner feedback={feedback} />
-        <Text style={styles.label}>Usuario</Text>
-        <TextInput
+        <AppText style={styles.label}>Usuario</AppText>
+        <AppTextInput
           style={styles.input}
           placeholder="Ej: usuario.demo"
           placeholderTextColor="#9FB3C8"
@@ -299,9 +335,9 @@ export function LoginScreen({ navigation }: Props) {
           value={username}
           onChangeText={(text) => setUsername(sanitizeUsername(text))}
         />
-        <Text style={styles.label}>Contraseña</Text>
+        <AppText style={styles.label}>Contraseña</AppText>
         <View style={styles.passwordWrapper}>
-          <TextInput
+          <AppTextInput
             style={[styles.input, styles.passwordInput]}
             placeholder="Escribe tu contraseña"
             placeholderTextColor="#9FB3C8"
@@ -310,28 +346,28 @@ export function LoginScreen({ navigation }: Props) {
             onChangeText={(text) => setPassword(text)}
           />
           <Pressable onPress={() => setShowPassword((prev) => !prev)} style={styles.togglePassword}>
-            <Text style={styles.togglePasswordText}>{showPassword ? 'Ocultar' : 'Ver'}</Text>
+            <AppText style={styles.togglePasswordText}>{showPassword ? 'Ocultar' : 'Ver'}</AppText>
           </Pressable>
         </View>
         <View style={styles.actions}>
-          <Text style={styles.remember}>Recordarme</Text>
+          <AppText style={styles.remember}>Recordarme</AppText>
           <TouchableOpacity onPress={() => navigation.navigate('CambiarContrasena')}>
-            <Text style={styles.forget}>Olvidé mi contraseña</Text>
+            <AppText style={styles.forget}>Olvidé mi contraseña</AppText>
           </TouchableOpacity>
         </View>
         <TouchableOpacity style={styles.primaryBtn} onPress={handleLogin} disabled={loading}>
           {loading ? (
             <ActivityIndicator color="#F4F8FF" />
           ) : (
-            <Text style={styles.btnText}>Iniciar</Text>
+            <AppText style={styles.btnText}>Iniciar</AppText>
           )}
         </TouchableOpacity>
         <View style={styles.fingerprintSection}>
           <View style={styles.fingerprintHeader}>
             <Ionicons name="finger-print-outline" size={22} color="#29B6FF" />
-            <Text style={styles.fingerprintTitle}>Huella digital</Text>
+            <AppText style={styles.fingerprintTitle}>Huella digital</AppText>
           </View>
-          <Text style={styles.fingerprintHint}>{fingerprintStatusMessage}</Text>
+          <AppText style={styles.fingerprintHint}>{fingerprintStatusMessage}</AppText>
           <TouchableOpacity
             style={[
               styles.fingerprintAction,
@@ -345,7 +381,7 @@ export function LoginScreen({ navigation }: Props) {
             {fingerprintLoading ? (
               <ActivityIndicator color="#29B6FF" />
             ) : (
-              <Text
+              <AppText
                 style={[
                   styles.fingerprintActionText,
                   (Platform.OS === 'web' || !fingerprintReady) &&
@@ -353,17 +389,17 @@ export function LoginScreen({ navigation }: Props) {
                 ]}
               >
                 {fingerprintReady ? 'Ingresar con huella' : 'Huella no disponible'}
-              </Text>
+              </AppText>
             )}
           </TouchableOpacity>
         </View>
-        <Text style={styles.footer}>
+        <AppText style={styles.footer}>
           ¿No tienes cuenta?
-          <Text style={styles.link} onPress={() => navigation.navigate('Registro')}>
+          <AppText style={styles.link} onPress={() => navigation.navigate('Registro')}>
             {' '}
             Registrarme
-          </Text>
-        </Text>
+          </AppText>
+        </AppText>
       </View>
       </View>
       <Modal
@@ -377,15 +413,15 @@ export function LoginScreen({ navigation }: Props) {
             <View style={styles.welcomeModalIcon}>
               <Ionicons name="shield-checkmark-outline" size={30} color={appColors.background} />
             </View>
-            <Text style={styles.welcomeModalEyebrow}>Sesión verificada</Text>
-            <Text style={styles.welcomeModalTitle}>
+            <AppText style={styles.welcomeModalEyebrow}>Sesión verificada</AppText>
+            <AppText style={styles.welcomeModalTitle}>
               Bienvenido, {welcomeSession?.user.username ?? 'usuario'}
-            </Text>
-            <Text style={styles.welcomeModalText}>
+            </AppText>
+            <AppText style={styles.welcomeModalText}>
               {welcomeSession?.message ?? 'Inicio de sesión exitoso. Tu panel de salud está listo.'}
-            </Text>
+            </AppText>
             <TouchableOpacity style={styles.welcomeModalButton} onPress={continueToApp}>
-              <Text style={styles.welcomeModalButtonText}>Entrar al panel</Text>
+              <AppText style={styles.welcomeModalButtonText}>Entrar al panel</AppText>
               <Ionicons name="arrow-forward" size={18} color={appColors.background} />
             </TouchableOpacity>
           </View>
@@ -408,7 +444,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   rootWide: {
-    paddingVertical: 48,
+    paddingVertical: 24,
   },
   authShell: {
     width: '100%',
@@ -416,7 +452,7 @@ const styles = StyleSheet.create({
   },
   authShellWide: {
     maxWidth: 1180,
-    minHeight: 640,
+    minHeight: 0,
     flexDirection: 'row',
     alignItems: 'stretch',
     justifyContent: 'center',
@@ -426,7 +462,7 @@ const styles = StyleSheet.create({
     flex: 1,
     maxWidth: 560,
     borderRadius: 28,
-    padding: 36,
+    padding: 28,
     backgroundColor: '#071120',
     justifyContent: 'space-between',
     shadowColor: '#000000',
@@ -449,30 +485,40 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
   },
+  webBrandLogo: {
+    width: 236,
+    height: 236,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    marginTop: 18,
+  },
   webBrandTitle: {
     color: '#F4F8FF',
-    fontSize: 44,
+    fontSize: 38,
     fontWeight: '900',
-    lineHeight: 50,
-    marginTop: 72,
+    lineHeight: 44,
+    marginTop: 18,
   },
   webBrandCopy: {
     color: '#C9D7E8',
-    fontSize: 17,
-    lineHeight: 27,
-    marginTop: 18,
+    fontSize: 15,
+    lineHeight: 23,
+    marginTop: 12,
     maxWidth: 470,
   },
   webHighlights: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 42,
+    marginTop: 24,
   },
   webHighlightItem: {
     flex: 1,
-    minHeight: 104,
-    borderRadius: 18,
-    padding: 16,
+    minHeight: 86,
+    borderRadius: 16,
+    padding: 12,
     justifyContent: 'space-between',
     backgroundColor: '#132238',
     borderWidth: 1,
@@ -502,11 +548,20 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     maxWidth: 460,
     borderRadius: 28,
-    padding: 36,
+    padding: 28,
     backgroundColor: '#FFFFFF',
     shadowOpacity: 0.12,
     shadowRadius: 30,
     shadowOffset: { width: 0, height: 18 },
+  },
+  loginIntro: {
+    marginBottom: 20,
+  },
+  loginLogo: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -10,
+    marginBottom: 8,
   },
   welcome: {
     fontSize: 24,
@@ -517,7 +572,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#9FB3C8',
-    marginBottom: 20,
   },
   label: {
     fontSize: 12,
@@ -719,8 +773,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   feedbackSuccess: {
-    backgroundColor: '#38F28E18',
-    borderColor: '#38F28E',
+    backgroundColor: '#38E28E18',
+    borderColor: '#38E28E',
   },
   feedbackError: {
     backgroundColor: '#FF4D7318',
@@ -731,7 +785,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   feedbackTextSuccess: {
-    color: '#38F28E',
+    color: '#38E28E',
   },
   feedbackTextError: {
     color: '#FF4D73',

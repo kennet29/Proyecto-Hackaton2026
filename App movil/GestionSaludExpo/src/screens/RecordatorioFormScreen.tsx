@@ -5,20 +5,19 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { API_URL } from '../config/api';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
 import { WebTimeInput } from '../components/WebTimeInput';
+import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 
 const webDateInputStyle = {
   flex: 1,
@@ -262,11 +261,10 @@ export function RecordatorioFormScreen() {
     setLoadingAppointments(true);
     setAppointmentError(null);
     try {
-      const response = await fetch(`${API_URL}/citamedica`, { headers: authHeaders });
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(payload?.message ?? 'No se pudieron cargar las citas');
-      }
+      const { data: payload } = await getJsonWithOfflineFallback<unknown>(
+        '/citamedica',
+        authHeaders,
+      );
       setAppointments(mapAppointments(Array.isArray(payload) ? payload : []));
     } catch (error) {
       setAppointmentError(error instanceof Error ? error.message : 'No se pudieron cargar las citas');
@@ -383,10 +381,17 @@ export function RecordatorioFormScreen() {
       if (result.status === 'queued') {
         Alert.alert(
           'Recordatorio en cola',
-          'No habia conexion. El recordatorio quedo guardado y se enviara cuando vuelva la red.',
+          result.localReminder === 'scheduled'
+            ? 'No había conexión. El recordatorio quedó programado en este dispositivo y se sincronizará después.'
+            : 'El recordatorio quedó guardado y se sincronizará cuando vuelva la red.',
         );
       } else {
-        Alert.alert('Recordatorio creado', 'La cita ya tiene su aviso programado.');
+        Alert.alert(
+          'Recordatorio creado',
+          result.localReminder === 'scheduled'
+            ? 'La cita tiene un aviso local que funcionará también sin conexión.'
+            : 'La cita ya tiene su aviso programado.',
+        );
       }
 
       setSelectedAppointmentId(null);
@@ -404,16 +409,16 @@ export function RecordatorioFormScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.heroCard}>
-        <Text style={styles.kicker}>NOTIFICACIONES</Text>
-        <Text style={styles.title}>Programar recordatorio</Text>
-        <Text style={styles.subtitle}>
+        <AppText style={styles.kicker}>NOTIFICACIONES</AppText>
+        <AppText style={styles.title}>Programar recordatorio</AppText>
+        <AppText style={styles.subtitle}>
           Elige una persona, toca la cita que quieres recordar y define cuándo avisar.
-        </Text>
+        </AppText>
       </View>
 
       <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>1. Persona</Text>
-        <Text style={styles.helperText}>Selecciona a quién pertenece el recordatorio.</Text>
+        <AppText style={styles.sectionTitle}>1. Persona</AppText>
+        <AppText style={styles.helperText}>Selecciona a quién pertenece el recordatorio.</AppText>
 
         <View style={styles.pickerWrapper}>
           <Picker
@@ -443,44 +448,44 @@ export function RecordatorioFormScreen() {
               <Ionicons name="person-outline" size={18} color={appColors.info} />
             </View>
             <View style={styles.personCopy}>
-              <Text style={styles.personName}>{selectedPatient.displayName}</Text>
-              <Text style={styles.personMeta}>
+              <AppText style={styles.personName}>{selectedPatient.displayName}</AppText>
+              <AppText style={styles.personMeta}>
                 {selectedPatient.parentesco ?? 'Paciente vinculado'}
                 {selectedPatient.sexo ? ` · ${selectedPatient.sexo}` : ''}
-              </Text>
+              </AppText>
             </View>
           </View>
         ) : null}
 
-        {patientError ? <Text style={styles.errorText}>{patientError}</Text> : null}
+        {patientError ? <AppText style={styles.errorText}>{patientError}</AppText> : null}
       </View>
 
       <View style={styles.sectionCard}>
         <View style={styles.sectionHeaderRow}>
           <View style={styles.sectionHeaderCopy}>
-            <Text style={styles.sectionTitle}>2. Registro disponible</Text>
-            <Text style={styles.helperText}>Estas son las citas a las que puedes asignar el aviso.</Text>
+            <AppText style={styles.sectionTitle}>2. Registro disponible</AppText>
+            <AppText style={styles.helperText}>Estas son las citas a las que puedes asignar el aviso.</AppText>
           </View>
           <TouchableOpacity style={styles.refreshPill} onPress={() => void fetchAppointments()}>
             <Ionicons name="refresh-outline" size={16} color={appColors.info} />
-            <Text style={styles.refreshPillText}>Actualizar</Text>
+            <AppText style={styles.refreshPillText}>Actualizar</AppText>
           </TouchableOpacity>
         </View>
 
         {loadingAppointments ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color={appColors.info} />
-            <Text style={styles.loadingText}>Cargando registros...</Text>
+            <AppText style={styles.loadingText}>Cargando registros...</AppText>
           </View>
         ) : availableAppointments.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="calendar-outline" size={22} color={appColors.textMuted} />
-            <Text style={styles.emptyTitle}>No hay citas disponibles</Text>
-            <Text style={styles.emptyText}>
+            <AppText style={styles.emptyTitle}>No hay citas disponibles</AppText>
+            <AppText style={styles.emptyText}>
               {selectedPatientId
                 ? 'Esta persona no tiene citas registradas todavia.'
                 : 'Primero selecciona una persona o registra una cita.'}
-            </Text>
+            </AppText>
           </View>
         ) : (
           <View style={styles.appointmentList}>
@@ -502,31 +507,31 @@ export function RecordatorioFormScreen() {
                   onPress={() => handleSelectAppointment(appointment)}
                 >
                   <View style={styles.appointmentTopRow}>
-                    <Text style={styles.appointmentTitle}>{patientLabel}</Text>
+                    <AppText style={styles.appointmentTitle}>{patientLabel}</AppText>
                     <View style={[styles.statePill, isActive && styles.statePillActive]}>
-                      <Text style={[styles.statePillText, isActive && styles.statePillTextActive]}>
+                      <AppText style={[styles.statePillText, isActive && styles.statePillTextActive]}>
                         {isActive ? 'Seleccionada' : appointment.estado ?? 'Programada'}
-                      </Text>
+                      </AppText>
                     </View>
                   </View>
-                  <Text style={styles.appointmentDate}>{formatDateTimeLabel(appointment.fechacita)}</Text>
-                  <Text style={styles.appointmentDetail}>
+                  <AppText style={styles.appointmentDate}>{formatDateTimeLabel(appointment.fechacita)}</AppText>
+                  <AppText style={styles.appointmentDetail}>
                     {appointment.motivo ?? appointment.especialidad ?? `Cita #${appointment.citaId}`}
-                  </Text>
+                  </AppText>
                 </TouchableOpacity>
               );
             })}
           </View>
         )}
 
-        {appointmentError ? <Text style={styles.errorText}>{appointmentError}</Text> : null}
+        {appointmentError ? <AppText style={styles.errorText}>{appointmentError}</AppText> : null}
       </View>
 
       <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>3. Aviso</Text>
-        <Text style={styles.helperText}>Configura cuándo se enviará y qué dirá el recordatorio.</Text>
+        <AppText style={styles.sectionTitle}>3. Aviso</AppText>
+        <AppText style={styles.helperText}>Configura cuándo se enviará y qué dirá el recordatorio.</AppText>
 
-        <Text style={styles.label}>Canal</Text>
+        <AppText style={styles.label}>Canal</AppText>
         <View style={styles.channelRow}>
           {CHANNEL_OPTIONS.map((option) => {
             const isActive = channel === option.value;
@@ -536,15 +541,15 @@ export function RecordatorioFormScreen() {
                 style={[styles.channelChip, isActive && styles.channelChipActive]}
                 onPress={() => setChannel(option.value)}
               >
-                <Text style={[styles.channelChipText, isActive && styles.channelChipTextActive]}>
+                <AppText style={[styles.channelChipText, isActive && styles.channelChipTextActive]}>
                   {option.label}
-                </Text>
+                </AppText>
               </TouchableOpacity>
             );
           })}
         </View>
 
-        <Text style={styles.label}>Fecha y hora</Text>
+        <AppText style={styles.label}>Fecha y hora</AppText>
         <View style={styles.dateTimeRow}>
           {Platform.OS === 'web' ? (
             <>
@@ -564,10 +569,10 @@ export function RecordatorioFormScreen() {
           ) : (
             <>
               <TouchableOpacity style={styles.dateButton} onPress={() => openPicker('date')}>
-                <Text style={styles.dateButtonText}>{formatDateLabel(notificationDate)}</Text>
+                <AppText style={styles.dateButtonText}>{formatDateLabel(notificationDate)}</AppText>
               </TouchableOpacity>
               <TouchableOpacity style={styles.dateButton} onPress={() => openPicker('time')}>
-                <Text style={styles.dateButtonText}>{formatTimeLabel(notificationTime)}</Text>
+                <AppText style={styles.dateButtonText}>{formatTimeLabel(notificationTime)}</AppText>
               </TouchableOpacity>
             </>
           )}
@@ -591,7 +596,7 @@ export function RecordatorioFormScreen() {
               }}
             />
             <TouchableOpacity style={styles.doneButton} onPress={() => setShowIOSDatePicker(false)}>
-              <Text style={styles.doneButtonText}>Listo</Text>
+              <AppText style={styles.doneButtonText}>Listo</AppText>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -610,13 +615,13 @@ export function RecordatorioFormScreen() {
               }}
             />
             <TouchableOpacity style={styles.doneButton} onPress={() => setShowIOSTimePicker(false)}>
-              <Text style={styles.doneButtonText}>Listo</Text>
+              <AppText style={styles.doneButtonText}>Listo</AppText>
             </TouchableOpacity>
           </View>
         ) : null}
 
-        <Text style={styles.label}>Mensaje</Text>
-        <TextInput
+        <AppText style={styles.label}>Mensaje</AppText>
+        <AppTextInput
           style={[styles.input, styles.multilineInput]}
           placeholder="Escribe el mensaje que verá la persona"
           placeholderTextColor={appColors.textMuted}
@@ -635,7 +640,7 @@ export function RecordatorioFormScreen() {
           ) : (
             <>
               <Ionicons name="notifications-outline" size={18} color={appColors.text} />
-              <Text style={styles.primaryButtonText}>Guardar recordatorio</Text>
+              <AppText style={styles.primaryButtonText}>Guardar recordatorio</AppText>
             </>
           )}
         </TouchableOpacity>

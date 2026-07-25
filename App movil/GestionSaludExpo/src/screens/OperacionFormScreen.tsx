@@ -5,11 +5,10 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import DateTimePicker, {
   DateTimePickerAndroid,
 } from '@react-native-community/datetimepicker';
@@ -23,6 +22,7 @@ import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients
 import type { RootStackParamList } from '../navigation/types';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate } from '../utils/localDate';
+import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 
 type TipoOperacion = {
   tipooperacionId: number;
@@ -118,7 +118,7 @@ const getStatusColors = (status?: string | null) => {
     normalized.includes('estable') ||
     normalized.includes('exit')
   ) {
-    return { backgroundColor: '#38F28E18', color: '#38F28E', borderColor: '#38F28E' };
+    return { backgroundColor: '#38E28E18', color: '#38E28E', borderColor: '#38E28E' };
   }
   return { backgroundColor: '#182A44', color: '#29B6FF', borderColor: '#29B6FF' };
 };
@@ -206,9 +206,10 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
   const fetchTypes = useCallback(async () => {
     setLoadingTypes(true);
     try {
-      const response = await fetch(`${API_URL}/tipooperacion`, { headers: authHeaders });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(body?.message ?? 'No se pudieron cargar los tipos');
+      const { data: body } = await getJsonWithOfflineFallback<unknown>(
+        '/tipooperacion',
+        authHeaders,
+      );
       setTypeOptions(
         (Array.isArray(body) ? body : [])
           .map((item: any) => ({
@@ -234,9 +235,10 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
     if (!token) return;
     setLoadingRecords(true);
     try {
-      const response = await fetch(`${API_URL}/operacion`, { headers: authHeaders });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(body?.message ?? 'No se pudieron cargar las operaciones');
+      const { data: body } = await getJsonWithOfflineFallback<unknown>(
+        '/operacion',
+        authHeaders,
+      );
       setRecords(
         (Array.isArray(body) ? body : [])
           .map((item: any, index: number) => ({
@@ -412,19 +414,19 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.heroCard}>
-          <Text style={styles.eyebrow}>Seguimiento quirurgico</Text>
-            <Text style={styles.title}>Operaciones</Text>
-            <Text style={styles.subtitle}>
+          <AppText style={styles.eyebrow}>Seguimiento quirurgico</AppText>
+            <AppText style={styles.title}>Operaciones</AppText>
+            <AppText style={styles.subtitle}>
             {isCreateMode
               ? 'Registra una nueva intervencion quirurgica en una vista dedicada para dejar el historial mas ordenado.'
               : 'Revisa antecedentes quirurgicos por persona y registra nuevas intervenciones con un historial mas claro.'}
-          </Text>
+          </AppText>
         </View>
 
         {!isCreateMode ? (
           <>
             <View style={styles.filterCard}>
-              <Text style={styles.label}>Filtrar por paciente</Text>
+              <AppText style={styles.label}>Filtrar por paciente</AppText>
               <View style={styles.pickerWrapper}>
                 <Picker
                   selectedValue={selectedPatientId}
@@ -448,29 +450,29 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                   ))}
                 </Picker>
               </View>
-              <Text style={styles.filterHint}>
+              <AppText style={styles.filterHint}>
                 {selectedPatientId
                   ? `Mostrando historial de ${patientNameById[Number(selectedPatientId)] ?? 'paciente'}`
                   : 'Mostrando el historial completo de tu grupo familiar'}
-              </Text>
+              </AppText>
             </View>
 
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Personas y operaciones</Text>
-              <Text style={styles.sectionSubtitle}>{`${visiblePatientSummaries.length} perfiles`}</Text>
+              <AppText style={styles.sectionTitle}>Personas y operaciones</AppText>
+              <AppText style={styles.sectionSubtitle}>{`${visiblePatientSummaries.length} perfiles`}</AppText>
             </View>
 
             {loadingRecords ? (
               <View style={styles.loadingCard}>
                 <ActivityIndicator color="#29B6FF" />
-                <Text style={styles.loadingText}>Cargando resumen de operaciones...</Text>
+                <AppText style={styles.loadingText}>Cargando resumen de operaciones...</AppText>
               </View>
             ) : visiblePatientSummaries.length === 0 ? (
               <View style={styles.emptyCard}>
-                <Text style={styles.emptyTitle}>Todavia no hay operaciones registradas</Text>
-                <Text style={styles.emptyText}>
+                <AppText style={styles.emptyTitle}>Todavia no hay operaciones registradas</AppText>
+                <AppText style={styles.emptyText}>
                   Usa el boton flotante para registrar la primera operacion de un paciente.
-                </Text>
+                </AppText>
               </View>
             ) : (
               visiblePatientSummaries.map((summary) => (
@@ -489,63 +491,63 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                 >
                   <View style={styles.summaryHeader}>
                     <View style={styles.summaryHeaderBody}>
-                      <Text style={styles.summaryName}>{summary.patientName}</Text>
-                      <Text style={styles.summaryMeta}>
+                      <AppText style={styles.summaryName}>{summary.patientName}</AppText>
+                      <AppText style={styles.summaryMeta}>
                         {summary.latestDate
                           ? `Ultima: ${formatRecordDate(summary.latestDate)}`
                           : 'Sin fecha reciente'}
-                      </Text>
+                      </AppText>
                     </View>
                     <View style={styles.summaryCountBadge}>
-                      <Text style={styles.summaryCountValue}>{summary.total}</Text>
-                      <Text style={styles.summaryCountLabel}>ops</Text>
+                      <AppText style={styles.summaryCountValue}>{summary.total}</AppText>
+                      <AppText style={styles.summaryCountLabel}>ops</AppText>
                     </View>
                   </View>
 
-                  <Text style={styles.summaryPrimary}>
+                  <AppText style={styles.summaryPrimary}>
                     {summary.latestType ?? 'Operacion registrada'}
-                  </Text>
-                  <Text style={styles.summarySecondary}>
+                  </AppText>
+                  <AppText style={styles.summarySecondary}>
                     {summary.complicationCount > 0
                       ? `${summary.complicationCount} con complicaciones registradas`
                       : 'Sin complicaciones reportadas'}
-                  </Text>
+                  </AppText>
 
                   {summary.operationNames.length > 0 ? (
                     <View style={styles.chipRow}>
                       {summary.operationNames.slice(0, 4).map((name) => (
                         <View key={`${summary.pacienteId}-${name}`} style={styles.chip}>
-                          <Text style={styles.chipText}>{name}</Text>
+                          <AppText style={styles.chipText}>{name}</AppText>
                         </View>
                       ))}
                     </View>
                   ) : null}
 
-                  <Text style={styles.summaryAction}>
+                  <AppText style={styles.summaryAction}>
                     {Number(selectedPatientId) === summary.pacienteId
                       ? 'Toca para volver a ver todos'
                       : 'Toca para filtrar este historial'}
-                  </Text>
+                  </AppText>
                 </TouchableOpacity>
               ))
             )}
 
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Historial de operaciones</Text>
-              <Text style={styles.sectionSubtitle}>{`${filteredRecords.length} registros`}</Text>
+              <AppText style={styles.sectionTitle}>Historial de operaciones</AppText>
+              <AppText style={styles.sectionSubtitle}>{`${filteredRecords.length} registros`}</AppText>
             </View>
 
             {loadingRecords ? (
               <View style={styles.loadingCard}>
                 <ActivityIndicator color="#29B6FF" />
-                <Text style={styles.loadingText}>Cargando historial...</Text>
+                <AppText style={styles.loadingText}>Cargando historial...</AppText>
               </View>
             ) : filteredRecords.length === 0 ? (
               <View style={styles.emptyCard}>
-                <Text style={styles.emptyTitle}>No hay operaciones para este filtro</Text>
-                <Text style={styles.emptyText}>
+                <AppText style={styles.emptyTitle}>No hay operaciones para este filtro</AppText>
+                <AppText style={styles.emptyText}>
                   Cambia el paciente seleccionado o registra una nueva operacion.
-                </Text>
+                </AppText>
               </View>
             ) : (
               filteredRecords.map((record) => {
@@ -562,7 +564,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                   >
                     <View style={styles.recordTopRow}>
                       <View style={styles.datePill}>
-                        <Text style={styles.datePillText}>{formatRecordDate(record.fechaoperacion)}</Text>
+                        <AppText style={styles.datePillText}>{formatRecordDate(record.fechaoperacion)}</AppText>
                       </View>
                       <View
                         style={[
@@ -573,34 +575,34 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                           },
                         ]}
                       >
-                        <Text style={[styles.statusPillText, { color: statusColors.color }]}>
+                        <AppText style={[styles.statusPillText, { color: statusColors.color }]}>
                           {normalizeText(record.estado) ?? 'programada'}
-                        </Text>
+                        </AppText>
                       </View>
                     </View>
 
-                    <Text style={styles.recordTitle}>{typeLabel}</Text>
+                    <AppText style={styles.recordTitle}>{typeLabel}</AppText>
                     {!selectedPatientId ? (
-                      <Text style={styles.recordPatient}>
+                      <AppText style={styles.recordPatient}>
                         {patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`}
-                      </Text>
+                      </AppText>
                     ) : null}
 
-                    <Text style={styles.recordText}>
+                    <AppText style={styles.recordText}>
                       Hospital: {normalizeText(record.hospital) ?? 'Sin dato'}
-                    </Text>
-                    <Text style={styles.recordText}>
+                    </AppText>
+                    <AppText style={styles.recordText}>
                       Cirujano: {normalizeText(record.cirujano) ?? 'Sin dato'}
-                    </Text>
-                    <Text style={styles.recordText}>
+                    </AppText>
+                    <AppText style={styles.recordText}>
                       Resultado: {normalizeText(record.resultado) ?? 'Sin dato'}
-                    </Text>
+                    </AppText>
                     {normalizeText(record.complicaciones) ? (
-                      <Text style={styles.recordAlertText}>
+                      <AppText style={styles.recordAlertText}>
                         Complicaciones: {normalizeText(record.complicaciones)}
-                      </Text>
+                      </AppText>
                     ) : (
-                      <Text style={styles.recordText}>Complicaciones: Sin dato</Text>
+                      <AppText style={styles.recordText}>Complicaciones: Sin dato</AppText>
                     )}
                   </View>
                 );
@@ -611,13 +613,13 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
 
         {isCreateMode ? (
           <View style={styles.formCard}>
-            <Text style={styles.formTitle}>Nueva operacion</Text>
-            <Text style={styles.formSubtitle}>
+            <AppText style={styles.formTitle}>Nueva operacion</AppText>
+            <AppText style={styles.formSubtitle}>
               Completa los datos del procedimiento para dejarlo visible en el historial del
               paciente.
-            </Text>
+            </AppText>
 
-            <Text style={styles.label}>Paciente</Text>
+            <AppText style={styles.label}>Paciente</AppText>
             <View style={styles.pickerWrapper}>
               <Picker
                 selectedValue={form.pacienteId}
@@ -642,7 +644,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
               </Picker>
             </View>
 
-            <Text style={styles.label}>Tipo de operacion</Text>
+            <AppText style={styles.label}>Tipo de operacion</AppText>
             <View style={styles.pickerWrapper}>
               <Picker
                 selectedValue={form.tipooperacionId}
@@ -667,9 +669,9 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
               </Picker>
             </View>
 
-            <Text style={styles.label}>Fecha</Text>
+            <AppText style={styles.label}>Fecha</AppText>
             <TouchableOpacity style={styles.dateButton} onPress={showDatePicker}>
-              <Text style={styles.dateButtonText}>{formatDisplayDate(form.fecha)}</Text>
+              <AppText style={styles.dateButtonText}>{formatDisplayDate(form.fecha)}</AppText>
             </TouchableOpacity>
 
             {Platform.OS === 'ios' && showIOSDatePicker ? (
@@ -687,33 +689,33 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                   style={styles.secondaryButton}
                   onPress={() => setShowIOSDatePicker(false)}
                 >
-                  <Text style={styles.secondaryButtonText}>Listo</Text>
+                  <AppText style={styles.secondaryButtonText}>Listo</AppText>
                 </TouchableOpacity>
               </View>
             ) : null}
 
-            <TextInput
+            <AppTextInput
               style={styles.input}
               placeholder="Nombre del procedimiento"
               placeholderTextColor="#9FB3C8"
               value={form.tipo}
               onChangeText={(value) => handleChange('tipo', value)}
             />
-            <TextInput
+            <AppTextInput
               style={styles.input}
               placeholder="Hospital"
               placeholderTextColor="#9FB3C8"
               value={form.hospital}
               onChangeText={(value) => handleChange('hospital', value)}
             />
-            <TextInput
+            <AppTextInput
               style={styles.input}
               placeholder="Cirujano"
               placeholderTextColor="#9FB3C8"
               value={form.cirujano}
               onChangeText={(value) => handleChange('cirujano', value)}
             />
-            <Text style={styles.label}>Estado</Text>
+            <AppText style={styles.label}>Estado</AppText>
             <View style={styles.pickerWrapper}>
               <Picker
                 style={styles.picker}
@@ -727,14 +729,14 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                 <Picker.Item label="Cancelada" value="cancelada" color={pickerItemColor} />
               </Picker>
             </View>
-            <TextInput
+            <AppTextInput
               style={styles.input}
               placeholder="Resultado"
               placeholderTextColor="#9FB3C8"
               value={form.resultado}
               onChangeText={(value) => handleChange('resultado', value)}
             />
-            <TextInput
+            <AppTextInput
               style={[styles.input, styles.multiline]}
               placeholder="Complicaciones"
               placeholderTextColor="#9FB3C8"
@@ -751,10 +753,10 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                   if (navigation.canGoBack()) navigation.goBack();
                 }}
               >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
+                <AppText style={styles.cancelButtonText}>Cancelar</AppText>
               </TouchableOpacity>
               <TouchableOpacity style={styles.primaryButton} onPress={handleSubmit}>
-                <Text style={styles.primaryButtonText}>Guardar</Text>
+                <AppText style={styles.primaryButtonText}>Guardar</AppText>
               </TouchableOpacity>
             </View>
           </View>
@@ -769,7 +771,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
             navigation.navigate('OperacionCreate');
           }}
         >
-          <Text style={styles.fabText}>+</Text>
+          <AppText style={styles.fabText}>+</AppText>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -920,18 +922,18 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: '#38F28E18',
+    backgroundColor: '#38E28E18',
     borderWidth: 1,
-    borderColor: '#38F28E',
+    borderColor: '#38E28E',
     alignItems: 'center',
   },
   summaryCountValue: {
-    color: '#38F28E',
+    color: '#38E28E',
     fontSize: 20,
     fontWeight: '900',
   },
   summaryCountLabel: {
-    color: '#38F28E',
+    color: '#38E28E',
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',

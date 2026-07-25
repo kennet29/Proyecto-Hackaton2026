@@ -4,11 +4,10 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -338,7 +337,7 @@ export function ConsultaFormScreen({ route }: Props) {
             if (field === 'notification-time') setShowIOSNotificationTimePicker(false);
           }}
         >
-          <Text style={styles.secondaryBtnText}>Listo</Text>
+          <AppText style={styles.secondaryBtnText}>Listo</AppText>
         </TouchableOpacity>
       </View>
     );
@@ -505,17 +504,17 @@ export function ConsultaFormScreen({ route }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.heroCard}>
-        <Text style={styles.kicker}>{isEditing ? 'EDITAR CONSULTA' : 'NUEVA CONSULTA'}</Text>
-        <Text style={styles.title}>{isEditing ? 'Actualizar consulta medica' : 'Registrar consulta medica'}</Text>
-        <Text style={styles.subtitle}>
+        <AppText style={styles.kicker}>{isEditing ? 'EDITAR CONSULTA' : 'NUEVA CONSULTA'}</AppText>
+        <AppText style={styles.title}>{isEditing ? 'Actualizar consulta medica' : 'Registrar consulta medica'}</AppText>
+        <AppText style={styles.subtitle}>
           Ajusta los datos clinicos y deja lista la notificacion de seguimiento desde la misma vista.
-        </Text>
+        </AppText>
       </View>
 
       <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>Datos de la consulta</Text>
+        <AppText style={styles.sectionTitle}>Datos de la consulta</AppText>
 
-        <Text style={styles.label}>Paciente o persona disponible</Text>
+        <AppText style={styles.label}>Paciente o persona disponible</AppText>
         <View style={styles.pickerWrapper}>
           <Picker
             style={styles.picker}
@@ -537,22 +536,22 @@ export function ConsultaFormScreen({ route }: Props) {
             ))}
           </Picker>
         </View>
-        {patientLoadError ? <Text style={styles.errorText}>{patientLoadError}</Text> : null}
+        {patientLoadError ? <AppText style={styles.errorText}>{patientLoadError}</AppText> : null}
 
-        <Text style={styles.label}>Fecha y hora de la consulta</Text>
+        <AppText style={styles.label}>Fecha y hora de la consulta</AppText>
         <View style={styles.dateTimeRow}>
           <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('consulta-date')}>
-            <Text style={styles.dateButtonText}>{formatDisplayDate(consultaDate)}</Text>
+            <AppText style={styles.dateButtonText}>{formatDisplayDate(consultaDate)}</AppText>
           </TouchableOpacity>
           <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('consulta-time')}>
-            <Text style={styles.dateButtonText}>{formatDisplayTime(consultaTime)}</Text>
+            <AppText style={styles.dateButtonText}>{formatDisplayTime(consultaTime)}</AppText>
           </TouchableOpacity>
         </View>
         {renderIOSPicker('consulta-date')}
         {renderIOSPicker('consulta-time')}
 
-        <Text style={styles.label}>Motivo</Text>
-        <TextInput
+        <AppText style={styles.label}>Motivo</AppText>
+        <AppTextInput
           style={styles.input}
           placeholder="Motivo principal de la consulta"
           placeholderTextColor="#9FB3C8"
@@ -560,8 +559,8 @@ export function ConsultaFormScreen({ route }: Props) {
           onChangeText={(value) => handleChange('motivo', value)}
         />
 
-        <Text style={styles.label}>Diagnostico</Text>
-        <TextInput
+        <AppText style={styles.label}>Diagnostico</AppText>
+        <AppTextInput
           style={[styles.input, styles.multiline]}
           placeholder="Diagnostico clinico"
           placeholderTextColor="#9FB3C8"
@@ -570,8 +569,8 @@ export function ConsultaFormScreen({ route }: Props) {
           onChangeText={(value) => handleChange('diagnostico', value)}
         />
 
-        <Text style={styles.label}>Tratamiento</Text>
-        <TextInput
+        <AppText style={styles.label}>Tratamiento</AppText>
+        <AppTextInput
           style={[styles.input, styles.multiline]}
           placeholder="Tratamiento o indicaciones"
           placeholderTextColor="#9FB3C8"
@@ -581,13 +580,13 @@ export function ConsultaFormScreen({ route }: Props) {
         />
 
         <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
-          <Text style={styles.primaryBtnText}>
+          <AppText style={styles.primaryBtnText}>
             {consulta
               ? 'Actualizar consulta'
               : hasNotificationDraft
                 ? 'Guardar consulta y notificacion'
                 : 'Guardar consulta'}
-          </Text>
+          </AppText>
         </TouchableOpacity>
       </View>
 
@@ -597,12 +596,12 @@ export function ConsultaFormScreen({ route }: Props) {
             <Ionicons name="notifications-outline" size={22} color="#071120" />
           </View>
           <View style={styles.notificationHeaderCopy}>
-            <Text style={styles.sectionTitle}>Notificación de seguimiento</Text>
-            <Text style={styles.sectionHelper}>
+            <AppText style={styles.sectionTitle}>Notificación de seguimiento</AppText>
+            <AppText style={styles.sectionHelper}>
               {notificationReady
                 ? 'Programa un aviso push vinculado a esta consulta médica.'
                 : 'Deja listo el aviso y se programara automaticamente cuando guardes la consulta.'}
-            </Text>
+            </AppText>
           </View>
         </View>
 
@@ -615,28 +614,28 @@ export function ConsultaFormScreen({ route }: Props) {
           <Ionicons
             name={notificationReady ? 'checkmark-circle-outline' : 'lock-closed-outline'}
             size={19}
-            color={notificationReady ? '#38F28E' : '#FF4D73'}
+            color={notificationReady ? '#38E28E' : '#FF4D73'}
           />
-          <Text
+          <AppText
             style={[
               styles.notificationStatusText,
               notificationReady ? styles.notificationStatusTextReady : styles.notificationStatusTextLocked,
             ]}
           >
             {notificationReady ? 'Lista para programar' : 'Lista para guardar con la consulta'}
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.notificationMetaRow}>
           <View style={styles.channelPill}>
             <Ionicons name="phone-portrait-outline" size={15} color="#29B6FF" />
-            <Text style={styles.channelPillText}>Push</Text>
+            <AppText style={styles.channelPillText}>Push</AppText>
           </View>
-          <Text style={styles.notificationMetaText}>Se enviará en la fecha y hora seleccionadas.</Text>
+          <AppText style={styles.notificationMetaText}>Se enviará en la fecha y hora seleccionadas.</AppText>
         </View>
 
-        <Text style={styles.label}>Mensaje del aviso</Text>
-        <TextInput
+        <AppText style={styles.label}>Mensaje del aviso</AppText>
+        <AppTextInput
           style={[styles.input, styles.multiline]}
           placeholder="Mensaje de la notificación"
           placeholderTextColor="#9FB3C8"
@@ -645,19 +644,19 @@ export function ConsultaFormScreen({ route }: Props) {
           onChangeText={(value) => handleNotificationChange('mensaje', value)}
         />
 
-        <Text style={styles.label}>Fecha y hora del aviso</Text>
+        <AppText style={styles.label}>Fecha y hora del aviso</AppText>
         <View style={styles.dateTimeRow}>
           <TouchableOpacity
             style={styles.dateButton}
             onPress={() => showPicker('notification-date')}
           >
-            <Text style={styles.dateButtonText}>{formatDisplayDate(notificationDate)}</Text>
+            <AppText style={styles.dateButtonText}>{formatDisplayDate(notificationDate)}</AppText>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.dateButton}
             onPress={() => showPicker('notification-time')}
           >
-            <Text style={styles.dateButtonText}>{formatDisplayTime(notificationTime)}</Text>
+            <AppText style={styles.dateButtonText}>{formatDisplayTime(notificationTime)}</AppText>
           </TouchableOpacity>
         </View>
         {renderIOSPicker('notification-date')}
@@ -669,9 +668,9 @@ export function ConsultaFormScreen({ route }: Props) {
           disabled={!notificationReady}
         >
           <Ionicons name="alarm-outline" size={18} color="#071120" />
-          <Text style={styles.notificationBtnText}>
+          <AppText style={styles.notificationBtnText}>
             {notificationReady ? 'Programar notificación' : 'Guarda la consulta primero'}
-          </Text>
+          </AppText>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -733,7 +732,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#38F28E',
+    backgroundColor: '#38E28E',
   },
   notificationHeaderCopy: {
     flex: 1,
@@ -748,8 +747,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   notificationStatusReady: {
-    backgroundColor: '#38F28E18',
-    borderColor: '#38F28E66',
+    backgroundColor: '#38E28E18',
+    borderColor: '#38E28E66',
   },
   notificationStatusLocked: {
     backgroundColor: '#FF4D7318',
@@ -761,7 +760,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   notificationStatusTextReady: {
-    color: '#38F28E',
+    color: '#38E28E',
   },
   notificationStatusTextLocked: {
     color: '#FF4D73',
@@ -907,7 +906,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#38F28E',
+    backgroundColor: '#38E28E',
     paddingVertical: 16,
     borderRadius: 14,
     marginTop: 6,

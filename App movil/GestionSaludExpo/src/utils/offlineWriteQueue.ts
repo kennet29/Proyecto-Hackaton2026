@@ -1,6 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiFetch, buildJsonHeaders, type ApiMethod, parseJsonResponse } from './apiClient';
 import { getTokenUserId } from './jwt';
+import {
+  syncLocalReminder,
+  type LocalReminderStatus,
+} from './localReminderScheduler';
 
 const OFFLINE_WRITE_QUEUE_KEY = '@gs_offline_write_queue_v2';
 const MAX_RETRY_DELAY_MS = 15 * 60 * 1000;
@@ -36,8 +40,8 @@ type SubmitOfflineWriteInput = {
 };
 
 type SubmitOfflineWriteResult<T> =
-  | { status: 'online'; data: T | null }
-  | { status: 'queued'; item: OfflineWriteQueueItem };
+  | { status: 'online'; data: T | null; localReminder: LocalReminderStatus }
+  | { status: 'queued'; item: OfflineWriteQueueItem; localReminder: LocalReminderStatus };
 
 export type OfflineWriteQueueSummary = {
   pending: number;
@@ -198,14 +202,29 @@ export async function submitJsonWithOfflineFallback<T = unknown>(
       throw new Error(message);
     }
 
-    return { status: 'online', data };
+    const localReminder = await syncLocalReminder({
+      ownerUserId,
+      operationId,
+      path: input.path,
+      method: input.method,
+      body: input.body,
+      responseData: data,
+    });
+    return { status: 'online', data, localReminder };
   } catch (error) {
     if (!isNetworkError(error)) {
       throw error;
     }
 
     const queued = await enqueuePreparedOfflineWrite(queuedItem);
-    return { status: 'queued', item: queued };
+    const localReminder = await syncLocalReminder({
+      ownerUserId,
+      operationId,
+      path: input.path,
+      method: input.method,
+      body: input.body,
+    });
+    return { status: 'queued', item: queued, localReminder };
   }
 }
 
@@ -270,6 +289,15 @@ export async function flushOfflineWriteQueue(
         });
 
         if (response.ok) {
+          const responseData = await parseJsonResponse<unknown>(response);
+          await syncLocalReminder({
+            ownerUserId,
+            operationId: item.operationId,
+            path: item.path,
+            method: item.method,
+            body: item.body,
+            responseData,
+          });
           synced += 1;
           continue;
         }

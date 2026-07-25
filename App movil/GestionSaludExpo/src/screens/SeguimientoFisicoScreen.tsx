@@ -6,11 +6,11 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   UIManager,
   View,
 } from 'react-native';
+import { AppText } from '../components/AppText';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import { Calendar, DateData } from 'react-native-calendars';
@@ -272,7 +272,7 @@ const getIntensityColor = (value?: string | null) => {
   const normalized = (value ?? '').toLowerCase();
   if (normalized === 'intensa') return '#FF4D73';
   if (normalized === 'moderada') return '#F9A826';
-  if (normalized === 'leve') return '#38F28E';
+  if (normalized === 'leve') return '#38E28E';
   return '#9FB3C8';
 };
 
@@ -292,7 +292,7 @@ const getAchievementCategoryLabel = (value: AchievementCategory) => {
 
 const getAchievementCategoryColor = (value: AchievementCategory) => {
   if (value === 'constancia') return '#29B6FF';
-  if (value === 'actividad') return '#38F28E';
+  if (value === 'actividad') return '#38E28E';
   return '#FF4D73';
 };
 
@@ -454,7 +454,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
           ? 'intensa'
           : existing.dotColor === '#F9A826'
             ? 'moderada'
-            : existing.dotColor === '#38F28E'
+            : existing.dotColor === '#38E28E'
               ? 'leve'
               : null,
       );
@@ -663,11 +663,11 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
             <Ionicons name="fitness-outline" size={26} color="#29B6FF" />
           </View>
           <View style={styles.heroCopy}>
-            <Text style={styles.heroEyebrow}>BIENESTAR Y ACTIVIDAD</Text>
-            <Text style={styles.heroTitle}>Seguimiento físico</Text>
-            <Text style={styles.heroText}>
+            <AppText style={styles.heroEyebrow}>BIENESTAR Y ACTIVIDAD</AppText>
+            <AppText style={styles.heroTitle}>Seguimiento físico</AppText>
+            <AppText style={styles.heroText}>
               Peso, ejercicio y actividad diaria en una sola vista.
-            </Text>
+            </AppText>
           </View>
           <TouchableOpacity
             style={styles.heroAddButton}
@@ -678,7 +678,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
             }
           >
             <Ionicons name="add" size={20} color="#071120" />
-            <Text style={styles.heroAddButtonText}>Nuevo registro</Text>
+            <AppText style={styles.heroAddButtonText}>Nuevo registro</AppText>
           </TouchableOpacity>
         </View>
 
@@ -687,14 +687,14 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
             <Ionicons name="person-outline" size={20} color="#29B6FF" />
           </View>
           <View style={styles.patientSelectorCopy}>
-            <Text style={styles.fieldEyebrow}>PACIENTE</Text>
+            <AppText style={styles.fieldEyebrow}>PACIENTE</AppText>
           {loadingPatients ? (
             <View style={styles.loadingBox}>
               <ActivityIndicator color="#29B6FF" />
-              <Text style={styles.loadingText}>Cargando pacientes...</Text>
+              <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
             </View>
           ) : patients.length === 0 ? (
-            <Text style={styles.emptyText}>No hay pacientes vinculados en esta cuenta.</Text>
+            <AppText style={styles.emptyText}>No hay pacientes vinculados en esta cuenta.</AppText>
           ) : (
             <View style={styles.pickerWrapper}>
               <Picker
@@ -716,25 +716,25 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
               </Picker>
             </View>
           )}
-          {patientError ? <Text style={styles.errorText}>{patientError}</Text> : null}
+          {patientError ? <AppText style={styles.errorText}>{patientError}</AppText> : null}
           </View>
         </View>
 
         <View style={styles.card}>
           <View style={styles.cardHeading}>
             <View>
-              <Text style={styles.sectionTitle}>Panorama actual</Text>
-              <Text style={styles.sectionSubtitle}>Indicadores acumulados del paciente</Text>
+              <AppText style={styles.sectionTitle}>Panorama actual</AppText>
+              <AppText style={styles.sectionSubtitle}>Indicadores acumulados del paciente</AppText>
             </View>
             <View style={styles.recordCountBadge}>
-              <Text style={styles.recordCountValue}>{resumen?.totalRegistros ?? 0}</Text>
-              <Text style={styles.recordCountLabel}>registros</Text>
+              <AppText style={styles.recordCountValue}>{resumen?.totalRegistros ?? 0}</AppText>
+              <AppText style={styles.recordCountLabel}>registros</AppText>
             </View>
           </View>
           {loadingData ? (
             <View style={styles.loadingBox}>
               <ActivityIndicator color="#29B6FF" />
-              <Text style={styles.loadingText}>Cargando resumen...</Text>
+              <AppText style={styles.loadingText}>Cargando resumen...</AppText>
             </View>
           ) : (
             <>
@@ -755,7 +755,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                   icon="timer-outline"
                   label="Ejercicio"
                   value={formatNumber(resumen?.ejercicio?.minutosTotales, ' min')}
-                  color="#38F28E"
+                  color="#38E28E"
                 />
                 <SummaryMetric
                   icon="footsteps-outline"
@@ -776,7 +776,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                   color="#2DD4BF"
                 />
               </View>
-              {dataError ? <Text style={styles.errorText}>{dataError}</Text> : null}
+              {dataError ? <AppText style={styles.errorText}>{dataError}</AppText> : null}
             </>
           )}
         </View>
@@ -784,15 +784,15 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
         <View style={styles.card}>
           <View style={styles.calendarHeader}>
             <View>
-              <Text style={styles.sectionTitle}>Calendario de registros</Text>
-              <Text style={styles.calendarSubtitle}>
+              <AppText style={styles.sectionTitle}>Calendario de registros</AppText>
+              <AppText style={styles.calendarSubtitle}>
                 Explora el mes y toca un día marcado para ver el detalle.
-              </Text>
+              </AppText>
             </View>
             <View style={styles.calendarPill}>
-              <Text style={styles.calendarPillText}>
+              <AppText style={styles.calendarPillText}>
                 {historial?.totalRegistros ?? 0} registros
-              </Text>
+              </AppText>
             </View>
           </View>
 
@@ -810,9 +810,9 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                 selectedDayBackgroundColor: '#29B6FF',
                 selectedDayTextColor: '#F4F8FF',
                 monthTextColor: '#071120',
-                textDayFontFamily: 'System',
-                textMonthFontFamily: 'System',
-                textDayHeaderFontFamily: 'System',
+                textDayFontFamily: 'SpaceGrotesk_400Regular',
+                textMonthFontFamily: 'Nunito_700Bold',
+                textDayHeaderFontFamily: 'SpaceGrotesk_600SemiBold',
               }}
               style={styles.calendar}
             />
@@ -820,16 +820,16 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
 
           <View style={styles.calendarLegend}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#38F28E' }]} />
-              <Text style={styles.legendText}>Leve</Text>
+              <View style={[styles.legendDot, { backgroundColor: '#38E28E' }]} />
+              <AppText style={styles.legendText}>Leve</AppText>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#F9A826' }]} />
-              <Text style={styles.legendText}>Moderada</Text>
+              <AppText style={styles.legendText}>Moderada</AppText>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#FF4D73' }]} />
-              <Text style={styles.legendText}>Intensa</Text>
+              <AppText style={styles.legendText}>Intensa</AppText>
             </View>
           </View>
 
@@ -837,8 +837,8 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
             <View style={styles.dayDetailBox}>
               <View style={styles.dayDetailHeader}>
                 <View>
-                  <Text style={styles.dayDetailEyebrow}>Detalle del día</Text>
-                  <Text style={styles.dayDetailTitle}>{formatDate(selectedDayRecord.fecha)}</Text>
+                  <AppText style={styles.dayDetailEyebrow}>Detalle del día</AppText>
+                  <AppText style={styles.dayDetailTitle}>{formatDate(selectedDayRecord.fecha)}</AppText>
                 </View>
                 <View
                   style={[
@@ -846,61 +846,61 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                     { backgroundColor: getIntensityColor(selectedDayRecord.intensidad) },
                   ]}
                 >
-                  <Text style={styles.dayIntensityBadgeText}>
+                  <AppText style={styles.dayIntensityBadgeText}>
                     {getIntensityLabel(selectedDayRecord.intensidad)}
-                  </Text>
+                  </AppText>
                 </View>
               </View>
 
               <View style={styles.dayDetailMetricsRow}>
                 <View style={styles.dayDetailMetricCard}>
-                  <Text style={styles.dayDetailMetricLabel}>Calorias</Text>
-                  <Text style={styles.dayDetailMetricValue}>
+                  <AppText style={styles.dayDetailMetricLabel}>Calorias</AppText>
+                  <AppText style={styles.dayDetailMetricValue}>
                     {formatNumber(selectedDayRecord.caloriasQuemadas)}
-                  </Text>
+                  </AppText>
                 </View>
                 <View style={styles.dayDetailMetricCard}>
-                  <Text style={styles.dayDetailMetricLabel}>Minutos</Text>
-                  <Text style={styles.dayDetailMetricValue}>
+                  <AppText style={styles.dayDetailMetricLabel}>Minutos</AppText>
+                  <AppText style={styles.dayDetailMetricValue}>
                     {formatNumber(selectedDayRecord.minutosEjercicio, ' min')}
-                  </Text>
+                  </AppText>
                 </View>
               </View>
 
               <View style={styles.dayDetailMetricsRow}>
                 <View style={styles.dayDetailMetricCard}>
-                  <Text style={styles.dayDetailMetricLabel}>Pasos</Text>
-                  <Text style={styles.dayDetailMetricValue}>
+                  <AppText style={styles.dayDetailMetricLabel}>Pasos</AppText>
+                  <AppText style={styles.dayDetailMetricValue}>
                     {formatNumber(selectedDayRecord.pasos)}
-                  </Text>
+                  </AppText>
                 </View>
                 <View style={styles.dayDetailMetricCard}>
-                  <Text style={styles.dayDetailMetricLabel}>Peso</Text>
-                  <Text style={styles.dayDetailMetricValue}>
+                  <AppText style={styles.dayDetailMetricLabel}>Peso</AppText>
+                  <AppText style={styles.dayDetailMetricValue}>
                     {formatNumber(selectedDayRecord.peso, ' kg')}
-                  </Text>
+                  </AppText>
                 </View>
               </View>
             </View>
           ) : (
             <View style={styles.calendarEmptyBox}>
-              <Text style={styles.emptyText}>
+              <AppText style={styles.emptyText}>
                 Selecciona un día marcado para ver el detalle del registro.
-              </Text>
+              </AppText>
             </View>
           )}
         </View>
 
         <View style={styles.sectionDivider}>
-          <Text style={styles.sectionDividerTitle}>Diagrama combinado</Text>
-          <Text style={styles.sectionDividerText}>
+          <AppText style={styles.sectionDividerTitle}>Diagrama combinado</AppText>
+          <AppText style={styles.sectionDividerText}>
             Vista unificada para comparar peso y calorías por fecha.
-          </Text>
+          </AppText>
         </View>
 
         <View style={[styles.card, styles.chartCard]}>
           <View style={styles.chartHeading}>
-            <Text style={styles.sectionTitle}>Tendencia en el tiempo</Text>
+            <AppText style={styles.sectionTitle}>Tendencia en el tiempo</AppText>
             <TouchableOpacity
               style={[styles.demoButton, showDemoData && styles.demoButtonActive]}
               onPress={() => setShowDemoData((previous) => !previous)}
@@ -912,20 +912,20 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                 size={16}
                 color={showDemoData ? '#071120' : '#F9A826'}
               />
-              <Text style={[styles.demoButtonText, showDemoData && styles.demoButtonTextActive]}>
+              <AppText style={[styles.demoButtonText, showDemoData && styles.demoButtonTextActive]}>
                 {showDemoData ? 'Datos reales' : 'Ver demo'}
-              </Text>
+              </AppText>
             </TouchableOpacity>
           </View>
-          <Text style={styles.chartSubtitle}>
+          <AppText style={styles.chartSubtitle}>
             Selecciona el rango para ver la tendencia por fecha en 7 días, quincenal, mensual, semestral o anual.
-          </Text>
+          </AppText>
           {showDemoData ? (
             <View style={styles.demoNotice}>
               <Ionicons name="information-circle-outline" size={17} color="#F9A826" />
-              <Text style={styles.demoNoticeText}>
+              <AppText style={styles.demoNoticeText}>
                 Modo demostración: estos 15 registros son temporales y no se guardan en el expediente.
-              </Text>
+              </AppText>
             </View>
           ) : null}
           <View style={styles.trendRangeRow}>
@@ -937,35 +937,35 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                   style={[styles.trendRangeChip, active && styles.trendRangeChipActive]}
                   onPress={() => setTrendRange(option.value)}
                 >
-                  <Text style={[styles.trendRangeChipText, active && styles.trendRangeChipTextActive]}>
+                  <AppText style={[styles.trendRangeChipText, active && styles.trendRangeChipTextActive]}>
                     {option.label}
-                  </Text>
+                  </AppText>
                 </TouchableOpacity>
               );
             })}
           </View>
-          <Text style={styles.trendSummaryText}>
+          <AppText style={styles.trendSummaryText}>
             Periodo activo: {trendRangeLabel}. Registros mostrados: {chartData.length}.
-          </Text>
+          </AppText>
           {chartData.length ? (
             <View style={styles.trendBlock}>
-              <Text style={styles.trendTitle}>Peso y calorías por fecha</Text>
+              <AppText style={styles.trendTitle}>Peso y calorías por fecha</AppText>
               <View style={styles.combinedLegendRow}>
                 <View style={styles.combinedLegendItem}>
                   <View style={[styles.combinedLegendSwatch, { backgroundColor: '#29B6FF' }]} />
-                  <Text style={styles.combinedLegendText}>Peso</Text>
+                  <AppText style={styles.combinedLegendText}>Peso</AppText>
                 </View>
                 <View style={styles.combinedLegendItem}>
                   <View style={[styles.combinedLegendSwatch, { backgroundColor: '#FF4D73' }]} />
-                  <Text style={styles.combinedLegendText}>Calorias</Text>
+                  <AppText style={styles.combinedLegendText}>Calorias</AppText>
                 </View>
               </View>
               <View style={styles.barChartFrame}>
                 <View style={styles.barChartYAxis}>
                   {weightAxisTicks.map((tick) => (
-                    <Text key={`weight-${tick}`} style={styles.barChartAxisLabel}>
+                    <AppText key={`weight-${tick}`} style={styles.barChartAxisLabel}>
                       {tick}
-                    </Text>
+                    </AppText>
                   ))}
                 </View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -1017,7 +1017,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                               ]}
                             />
                             {item.showMarkerLabel ? (
-                              <Text
+                              <AppText
                                 style={[
                                   styles.lineChartValueLabel,
                                   styles.lineChartWeightLabel,
@@ -1025,7 +1025,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                                 ]}
                               >
                                 P: {item.label}
-                              </Text>
+                              </AppText>
                             ) : null}
                           </>
                         ) : null}
@@ -1043,7 +1043,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                               ]}
                             />
                             {item.showMarkerLabel ? (
-                              <Text
+                              <AppText
                                 style={[
                                   styles.lineChartValueLabel,
                                   styles.lineChartCaloriesLabel,
@@ -1051,14 +1051,14 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                                 ]}
                               >
                                 C: {item.label}
-                              </Text>
+                              </AppText>
                             ) : null}
                           </>
                         ) : null}
                       </View>
                     ))}
                     {chartData.map((item, index) => (
-                      <Text
+                      <AppText
                         key={`date-label-${item.seguimientoFisicoId}`}
                         style={[
                           styles.lineChartDateLabel,
@@ -1066,21 +1066,21 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                         ]}
                       >
                         {formatTrendTick(item.fecha, trendRange)}
-                      </Text>
+                      </AppText>
                     ))}
                   </View>
                 </ScrollView>
                 <View style={[styles.barChartYAxis, styles.barChartYAxisRight]}>
                   {calorieAxisTicks.map((tick) => (
-                    <Text key={`calorie-${tick}`} style={[styles.barChartAxisLabel, styles.barChartAxisLabelRight]}>
+                    <AppText key={`calorie-${tick}`} style={[styles.barChartAxisLabel, styles.barChartAxisLabelRight]}>
                       {tick}
-                    </Text>
+                    </AppText>
                   ))}
                 </View>
               </View>
             </View>
           ) : (
-            <Text style={styles.emptyText}>Todavía no hay datos suficientes para el diagrama.</Text>
+            <AppText style={styles.emptyText}>Todavía no hay datos suficientes para el diagrama.</AppText>
           )}
         </View>
 
@@ -1090,11 +1090,11 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
             onPress={() => toggleExpandableSection(setShowPesoProgress)}
             activeOpacity={0.85}
           >
-            <Text style={styles.sectionTitle}>Progreso de peso</Text>
+            <AppText style={styles.sectionTitle}>Progreso de peso</AppText>
             <View style={styles.collapsibleAction}>
-              <Text style={styles.collapsibleActionText}>
+              <AppText style={styles.collapsibleActionText}>
                 {showPesoProgress ? 'Ocultar' : 'Mostrar'}
-              </Text>
+              </AppText>
               <Ionicons
                 name={showPesoProgress ? 'chevron-up' : 'chevron-down'}
                 size={17}
@@ -1106,15 +1106,15 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
             pesoProgress?.puntos?.length ? (
               pesoProgress.puntos.slice(-6).map((point) => (
                 <View key={`${point.fecha}-${point.peso}`} style={styles.listItem}>
-                  <Text style={styles.itemTitle}>{formatDate(point.fecha)}</Text>
-                  <Text style={styles.itemText}>{point.peso} kg</Text>
+                  <AppText style={styles.itemTitle}>{formatDate(point.fecha)}</AppText>
+                  <AppText style={styles.itemText}>{point.peso} kg</AppText>
                 </View>
               ))
             ) : (
-              <Text style={styles.emptyText}>Todavía no hay suficientes datos de peso.</Text>
+              <AppText style={styles.emptyText}>Todavía no hay suficientes datos de peso.</AppText>
             )
           ) : (
-            <Text style={styles.collapsedHint}>Despliega esta sección para ver el progreso.</Text>
+            <AppText style={styles.collapsedHint}>Despliega esta sección para ver el progreso.</AppText>
           )}
         </View>
 
@@ -1124,11 +1124,11 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
             onPress={() => toggleExpandableSection(setShowHistorialReciente)}
             activeOpacity={0.85}
           >
-            <Text style={styles.sectionTitle}>Historial reciente</Text>
+            <AppText style={styles.sectionTitle}>Historial reciente</AppText>
             <View style={styles.collapsibleAction}>
-              <Text style={styles.collapsibleActionText}>
+              <AppText style={styles.collapsibleActionText}>
                 {showHistorialReciente ? 'Ocultar' : 'Mostrar'}
-              </Text>
+              </AppText>
               <Ionicons
                 name={showHistorialReciente ? 'chevron-up' : 'chevron-down'}
                 size={17}
@@ -1144,39 +1144,39 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                 .slice(0, 6)
                 .map((item) => (
                   <View key={item.seguimientoFisicoId} style={styles.listItem}>
-                    <Text style={styles.itemTitle}>{formatDate(item.fecha)}</Text>
-                    <Text style={styles.itemText}>
+                    <AppText style={styles.itemTitle}>{formatDate(item.fecha)}</AppText>
+                    <AppText style={styles.itemText}>
                       Peso: {formatNumber(item.peso, ' kg')} - Ejercicio:{' '}
                       {formatNumber(item.minutosEjercicio, ' min')}
-                    </Text>
-                    <Text style={styles.itemText}>
+                    </AppText>
+                    <AppText style={styles.itemText}>
                       Pasos: {formatNumber(item.pasos)} - Calorias:{' '}
                       {formatNumber(item.caloriasQuemadas)}
-                    </Text>
-                    <Text style={styles.itemText}>
+                    </AppText>
+                    <AppText style={styles.itemText}>
                       Distancia: {formatNumber(item.distanciaKm, ' km')} - Intensidad:{' '}
                       {item.intensidad ?? 'N/D'}
-                    </Text>
+                    </AppText>
                     {item.tipoEjercicio ? (
-                      <Text style={styles.itemText}>Actividad: {item.tipoEjercicio}</Text>
+                      <AppText style={styles.itemText}>Actividad: {item.tipoEjercicio}</AppText>
                     ) : null}
-                    {item.notas ? <Text style={styles.itemText}>Nota: {item.notas}</Text> : null}
+                    {item.notas ? <AppText style={styles.itemText}>Nota: {item.notas}</AppText> : null}
                   </View>
                 ))
             ) : (
-              <Text style={styles.emptyText}>Todavía no hay registros para este paciente.</Text>
+              <AppText style={styles.emptyText}>Todavía no hay registros para este paciente.</AppText>
             )
           ) : (
-            <Text style={styles.collapsedHint}>Despliega esta sección para ver el historial.</Text>
+            <AppText style={styles.collapsedHint}>Despliega esta sección para ver el historial.</AppText>
           )}
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Logros</Text>
+          <AppText style={styles.sectionTitle}>Logros</AppText>
           {loadingData ? (
             <View style={styles.loadingBox}>
               <ActivityIndicator color="#29B6FF" />
-              <Text style={styles.loadingText}>Cargando logros...</Text>
+              <AppText style={styles.loadingText}>Cargando logros...</AppText>
             </View>
           ) : logros?.logros?.length ? (
             <>
@@ -1201,7 +1201,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
 
               {unlockedAchievements.length ? (
                 <>
-                  <Text style={styles.subsectionTitle}>Desbloqueados</Text>
+                  <AppText style={styles.subsectionTitle}>Desbloqueados</AppText>
                   <View style={styles.achievementGrid}>
                     {unlockedAchievements.map((achievement) => {
                       const accentColor = getAchievementCategoryColor(achievement.category);
@@ -1210,10 +1210,10 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                           key={achievement.code}
                           style={[styles.achievementBadge, { borderColor: accentColor }]}
                         >
-                          <Text style={[styles.achievementCategoryTag, { color: accentColor }]}>
+                          <AppText style={[styles.achievementCategoryTag, { color: accentColor }]}>
                             {getAchievementCategoryLabel(achievement.category)}
-                          </Text>
-                          <Text style={styles.achievementTitle}>{achievement.title}</Text>
+                          </AppText>
+                          <AppText style={styles.achievementTitle}>{achievement.title}</AppText>
                         </View>
                       );
                     })}
@@ -1223,25 +1223,25 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
 
               {logros.proximos.length ? (
                 <>
-                  <Text style={styles.subsectionTitle}>Proximos objetivos</Text>
+                  <AppText style={styles.subsectionTitle}>Proximos objetivos</AppText>
                   {logros.proximos.map((achievement) => {
                     const accentColor = getAchievementCategoryColor(achievement.category);
                     return (
                       <View key={achievement.code} style={styles.achievementProgressCard}>
                         <View style={styles.achievementProgressHeader}>
                           <View style={styles.achievementProgressTextGroup}>
-                            <Text style={styles.achievementTitle}>{achievement.title}</Text>
-                            <Text style={styles.achievementDescription}>
+                            <AppText style={styles.achievementTitle}>{achievement.title}</AppText>
+                            <AppText style={styles.achievementDescription}>
                               {achievement.description}
-                            </Text>
+                            </AppText>
                           </View>
-                          <Text style={[styles.achievementCategoryTag, { color: accentColor }]}>
+                          <AppText style={[styles.achievementCategoryTag, { color: accentColor }]}>
                             {achievement.progressPercent}%
-                          </Text>
+                          </AppText>
                         </View>
-                        <Text style={styles.achievementProgressText}>
+                        <AppText style={styles.achievementProgressText}>
                           {achievement.progressLabel}
-                        </Text>
+                        </AppText>
                         <View style={styles.achievementProgressTrack}>
                           <View
                             style={[
@@ -1293,8 +1293,8 @@ function SummaryMetric({
       <View style={[styles.summaryMetricIcon, { backgroundColor: `${color}18` }]}>
         <Ionicons name={icon} size={19} color={color} />
       </View>
-      <Text style={styles.summaryMetricValue}>{value}</Text>
-      <Text style={styles.summaryMetricLabel}>{label}</Text>
+      <AppText style={styles.summaryMetricValue}>{value}</AppText>
+      <AppText style={styles.summaryMetricLabel}>{label}</AppText>
     </View>
   );
 }
@@ -1302,8 +1302,8 @@ function SummaryMetric({
 function AchievementStat({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.achievementStat}>
-      <Text style={styles.achievementStatValue}>{value}</Text>
-      <Text style={styles.achievementStatLabel}>{label}</Text>
+      <AppText style={styles.achievementStatValue}>{value}</AppText>
+      <AppText style={styles.achievementStatLabel}>{label}</AppText>
     </View>
   );
 }
@@ -1372,7 +1372,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 7,
-    backgroundColor: '#38F28E',
+    backgroundColor: '#38E28E',
     borderRadius: 14,
     paddingHorizontal: 15,
     paddingVertical: 11,
@@ -2145,7 +2145,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#38F28E',
+    backgroundColor: '#38E28E',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',

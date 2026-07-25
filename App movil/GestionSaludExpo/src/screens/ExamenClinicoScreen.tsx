@@ -7,11 +7,10 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
@@ -465,7 +464,7 @@ export function ExamenClinicoScreen() {
           style={styles.iosDoneButton}
           onPress={() => setActiveIOSDatePicker(null)}
         >
-          <Text style={styles.iosDoneButtonText}>Listo</Text>
+          <AppText style={styles.iosDoneButtonText}>Listo</AppText>
         </TouchableOpacity>
       </View>
     );
@@ -634,39 +633,39 @@ export function ExamenClinicoScreen() {
       <ScrollView
         contentContainerStyle={styles.container}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => void refreshData()} tintColor="#38F28E" />
+          <RefreshControl refreshing={refreshing} onRefresh={() => void refreshData()} tintColor="#38E28E" />
         }
       >
         <View style={styles.heroCard}>
-          <Text style={styles.eyebrow}>EXPEDIENTE CLINICO</Text>
-          <Text style={styles.title}>Examenes clinicos</Text>
-          <Text style={styles.subtitle}>
+          <AppText style={styles.eyebrow}>EXPEDIENTE CLINICO</AppText>
+          <AppText style={styles.title}>Examenes clinicos</AppText>
+          <AppText style={styles.subtitle}>
             Registra resultados, genera PDF desde fotos y revisa el historial por paciente con la
             misma estructura que el resto del expediente.
-          </Text>
-          <Text style={styles.heroHint}>
+          </AppText>
+          <AppText style={styles.heroHint}>
             {hasValidPatient
               ? `Paciente activo: ${selectedPatientName}`
               : 'Selecciona un paciente para cargar consultas e historial.'}
-          </Text>
+          </AppText>
         </View>
 
         {screenError ? (
           <View style={styles.errorCard}>
-            <Text style={styles.errorTitle}>No se pudo completar la carga</Text>
-            <Text style={styles.errorText}>{screenError}</Text>
+            <AppText style={styles.errorTitle}>No se pudo completar la carga</AppText>
+            <AppText style={styles.errorText}>{screenError}</AppText>
           </View>
         ) : null}
 
         <View style={styles.formCard}>
-          <Text style={styles.formTitle}>Registrar examen</Text>
-          <Text style={styles.formIntro}>
+          <AppText style={styles.formTitle}>Registrar examen</AppText>
+          <AppText style={styles.formIntro}>
             Completa el resultado, vincula la consulta si aplica y adjunta la hoja escaneada o
             fotografiada.
-          </Text>
+          </AppText>
 
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Paciente</Text>
+            <AppText style={styles.label}>Paciente</AppText>
             <View style={styles.pickerWrapper}>
               <Picker
                 style={styles.picker}
@@ -693,11 +692,11 @@ export function ExamenClinicoScreen() {
                 ))}
               </Picker>
             </View>
-            <Text style={styles.fieldHint}>{`Trabajando con ${selectedPatientName}`}</Text>
+            <AppText style={styles.fieldHint}>{`Trabajando con ${selectedPatientName}`}</AppText>
           </View>
 
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Consulta medica relacionada</Text>
+            <AppText style={styles.label}>Consulta medica relacionada</AppText>
             <View style={styles.pickerWrapper}>
               <Picker
                 style={styles.picker}
@@ -727,12 +726,12 @@ export function ExamenClinicoScreen() {
                 ))}
               </Picker>
             </View>
-            <Text style={styles.fieldHint}>Opcional. Vinculalo si este examen pertenece a una consulta concreta.</Text>
+            <AppText style={styles.fieldHint}>Opcional. Vinculalo si este examen pertenece a una consulta concreta.</AppText>
           </View>
 
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Nombre del examen o estudio</Text>
-            <TextInput
+            <AppText style={styles.label}>Nombre del examen o estudio</AppText>
+            <AppTextInput
               style={styles.input}
               placeholder="Ej. Hemograma completo, Rayos X de torax"
               placeholderTextColor="#9FB3C8"
@@ -743,8 +742,8 @@ export function ExamenClinicoScreen() {
 
           <View style={styles.row}>
             <View style={styles.halfInput}>
-              <Text style={styles.label}>Tipo de examen</Text>
-              <TextInput
+              <AppText style={styles.label}>Tipo de examen</AppText>
+              <AppTextInput
                 style={styles.input}
                 placeholder="Ej. Laboratorio, imagen, cardiologia"
                 placeholderTextColor="#9FB3C8"
@@ -753,8 +752,8 @@ export function ExamenClinicoScreen() {
               />
             </View>
             <View style={styles.halfInput}>
-              <Text style={styles.label}>Laboratorio o centro</Text>
-              <TextInput
+              <AppText style={styles.label}>Laboratorio o centro</AppText>
+              <AppTextInput
                 style={styles.input}
                 placeholder="Nombre del laboratorio o clinica"
                 placeholderTextColor="#9FB3C8"
@@ -766,15 +765,15 @@ export function ExamenClinicoScreen() {
 
           <View style={styles.row}>
             <View style={styles.fieldColumn}>
-              <Text style={styles.label}>Fecha de toma del examen</Text>
+              <AppText style={styles.label}>Fecha de toma del examen</AppText>
               <TouchableOpacity style={styles.dateButton} onPress={() => showDatePicker('exam-date')}>
-                <Text style={styles.dateButtonText}>{formatDisplayDate(form.fechaExamen)}</Text>
+                <AppText style={styles.dateButtonText}>{formatDisplayDate(form.fechaExamen)}</AppText>
               </TouchableOpacity>
             </View>
             <View style={styles.fieldColumn}>
-              <Text style={styles.label}>Fecha de entrega del resultado</Text>
+              <AppText style={styles.label}>Fecha de entrega del resultado</AppText>
               <TouchableOpacity style={styles.dateButton} onPress={() => showDatePicker('result-date')}>
-                <Text style={styles.dateButtonText}>{formatDisplayDate(form.fechaResultado)}</Text>
+                <AppText style={styles.dateButtonText}>{formatDisplayDate(form.fechaResultado)}</AppText>
               </TouchableOpacity>
             </View>
           </View>
@@ -782,8 +781,8 @@ export function ExamenClinicoScreen() {
           {renderIOSDatePicker()}
 
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Resumen del resultado</Text>
-            <TextInput
+            <AppText style={styles.label}>Resumen del resultado</AppText>
+            <AppTextInput
               style={[styles.input, styles.multiline]}
               placeholder="Escribe los hallazgos principales o el resultado mas importante"
               placeholderTextColor="#9FB3C8"
@@ -793,8 +792,8 @@ export function ExamenClinicoScreen() {
             />
           </View>
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Observaciones clinicas</Text>
-            <TextInput
+            <AppText style={styles.label}>Observaciones clinicas</AppText>
+            <AppTextInput
               style={[styles.input, styles.multiline]}
               placeholder="Notas adicionales, contexto medico o indicaciones"
               placeholderTextColor="#9FB3C8"
@@ -805,18 +804,18 @@ export function ExamenClinicoScreen() {
           </View>
 
           <View style={styles.uploadCard}>
-            <Text style={styles.sectionTitle}>Documento o foto del examen</Text>
-            <Text style={styles.helperText}>
+            <AppText style={styles.sectionTitle}>Documento o foto del examen</AppText>
+            <AppText style={styles.helperText}>
               Toma una o varias fotos. El sistema las unira en un PDF antes de guardarlas con el
               registro.
-            </Text>
+            </AppText>
 
             <View style={styles.actionRow}>
               <TouchableOpacity style={styles.actionButton} onPress={handleTakePhoto}>
-                <Text style={styles.actionButtonText}>Tomar foto</Text>
+                <AppText style={styles.actionButtonText}>Tomar foto</AppText>
               </TouchableOpacity>
               <TouchableOpacity style={styles.actionButton} onPress={handlePickFromLibrary}>
-                <Text style={styles.actionButtonText}>Galeria</Text>
+                <AppText style={styles.actionButtonText}>Galeria</AppText>
               </TouchableOpacity>
             </View>
 
@@ -825,37 +824,37 @@ export function ExamenClinicoScreen() {
                 {photos.map((photo, index) => (
                   <View key={photo.id} style={styles.photoCard}>
                     <Image source={{ uri: photo.uri }} style={styles.photoPreview} />
-                    <Text style={styles.photoLabel}>{`Hoja ${index + 1}`}</Text>
+                    <AppText style={styles.photoLabel}>{`Hoja ${index + 1}`}</AppText>
                     <TouchableOpacity
                       style={styles.removePhotoButton}
                       onPress={() => removePhoto(photo.id)}
                     >
-                      <Text style={styles.removePhotoButtonText}>Quitar</Text>
+                      <AppText style={styles.removePhotoButtonText}>Quitar</AppText>
                     </TouchableOpacity>
                   </View>
                 ))}
               </View>
             ) : (
               <View style={styles.emptyCard}>
-                <Text style={styles.emptyTitle}>No hay hojas adjuntas</Text>
-                <Text style={styles.emptyText}>
+                <AppText style={styles.emptyTitle}>No hay hojas adjuntas</AppText>
+                <AppText style={styles.emptyText}>
                   Agrega fotos del examen para convertirlas en PDF y dejar evidencia en el
                   expediente.
-                </Text>
+                </AppText>
               </View>
             )}
 
             {pdfState ? (
               <View style={styles.pdfCard}>
-                <Text style={styles.pdfTitle}>PDF listo</Text>
-                <Text style={styles.pdfMeta}>{pdfState.fileName}</Text>
-                <Text style={styles.pdfMeta}>{`${pdfState.pageCount} pagina(s) generadas`}</Text>
+                <AppText style={styles.pdfTitle}>PDF listo</AppText>
+                <AppText style={styles.pdfMeta}>{pdfState.fileName}</AppText>
+                <AppText style={styles.pdfMeta}>{`${pdfState.pageCount} pagina(s) generadas`}</AppText>
               </View>
             ) : null}
 
             <View style={styles.formActions}>
               <TouchableOpacity style={styles.cancelButton} onPress={resetDraft}>
-                <Text style={styles.cancelButtonText}>Limpiar</Text>
+                <AppText style={styles.cancelButtonText}>Limpiar</AppText>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.secondaryButton, !photos.length && styles.disabledButton]}
@@ -866,9 +865,9 @@ export function ExamenClinicoScreen() {
                 }
                 disabled={!photos.length || generatingPdf}
               >
-                <Text style={styles.secondaryButtonText}>
+                <AppText style={styles.secondaryButtonText}>
                   {generatingPdf ? 'Generando...' : 'Generar PDF'}
-                </Text>
+                </AppText>
               </TouchableOpacity>
             </View>
 
@@ -877,42 +876,42 @@ export function ExamenClinicoScreen() {
               onPress={handleSubmit}
               disabled={submitting}
             >
-              <Text style={styles.primaryButtonText}>
+              <AppText style={styles.primaryButtonText}>
                 {submitting ? 'Guardando...' : 'Guardar examen'}
-              </Text>
+              </AppText>
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Historial de examenes</Text>
-          <Text style={styles.sectionSubtitle}>
+          <AppText style={styles.sectionTitle}>Historial de examenes</AppText>
+          <AppText style={styles.sectionSubtitle}>
             {hasValidPatient
               ? `${recentExams.length} registros de ${selectedPatientName}`
               : 'Selecciona un paciente para ver historial.'}
-          </Text>
+          </AppText>
         </View>
 
         {loadingExams ? (
           <View style={styles.loadingCard}>
-            <ActivityIndicator color="#38F28E" />
-            <Text style={styles.loadingText}>Cargando historial...</Text>
+            <ActivityIndicator color="#38E28E" />
+            <AppText style={styles.loadingText}>Cargando historial...</AppText>
           </View>
         ) : recentExams.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>No hay examenes para este paciente</Text>
-            <Text style={styles.emptyText}>
+            <AppText style={styles.emptyTitle}>No hay examenes para este paciente</AppText>
+            <AppText style={styles.emptyText}>
               {hasValidPatient
                 ? 'Todavia no se han registrado examenes clinicos en este expediente.'
                 : 'Selecciona un paciente para cargar consultas y examenes.'}
-            </Text>
+            </AppText>
           </View>
         ) : (
           recentExams.map((exam) => (
             <View key={exam.examenclinicoId} style={styles.recordCard}>
               <View style={styles.recordTopRow}>
                 <View style={styles.datePill}>
-                  <Text style={styles.datePillText}>{formatRecordDate(exam.fechaExamen)}</Text>
+                  <AppText style={styles.datePillText}>{formatRecordDate(exam.fechaExamen)}</AppText>
                 </View>
                 <View
                   style={[
@@ -920,28 +919,28 @@ export function ExamenClinicoScreen() {
                     exam.tieneArchivoPdf ? styles.statusPillSuccess : styles.statusPillPending,
                   ]}
                 >
-                  <Text
+                  <AppText
                     style={[
                       styles.statusPillText,
                       exam.tieneArchivoPdf ? styles.statusTextSuccess : styles.statusTextPending,
                     ]}
                   >
                     {exam.tieneArchivoPdf ? 'PDF adjunto' : 'Solo texto'}
-                  </Text>
+                  </AppText>
                 </View>
               </View>
 
-              <Text style={styles.recordTitle}>{exam.nombreExamen}</Text>
-              <Text style={styles.recordPatient}>{selectedPatientName}</Text>
-              <Text style={styles.recordText}>
+              <AppText style={styles.recordTitle}>{exam.nombreExamen}</AppText>
+              <AppText style={styles.recordPatient}>{selectedPatientName}</AppText>
+              <AppText style={styles.recordText}>
                 Tipo: {normalizeText(exam.tipoExamen) ?? 'Sin especificar'}
-              </Text>
-              <Text style={styles.recordText}>
+              </AppText>
+              <AppText style={styles.recordText}>
                 Laboratorio: {normalizeText(exam.laboratorio) ?? 'Sin dato'}
-              </Text>
-              <Text style={styles.recordText}>
+              </AppText>
+              <AppText style={styles.recordText}>
                 {exam.consultaId ? `Consulta vinculada: #${exam.consultaId}` : 'Sin consulta vinculada'}
-              </Text>
+              </AppText>
             </View>
           ))
         )}
@@ -1194,21 +1193,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   pdfCard: {
-    backgroundColor: '#38F28E18',
+    backgroundColor: '#38E28E18',
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#38F28E',
+    borderColor: '#38E28E',
     marginBottom: 14,
   },
   pdfTitle: {
-    color: '#38F28E',
+    color: '#38E28E',
     fontWeight: '800',
     fontSize: 16,
     marginBottom: 6,
   },
   pdfMeta: {
-    color: '#38F28E',
+    color: '#38E28E',
   },
   formActions: {
     flexDirection: 'row',
@@ -1245,7 +1244,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
-    backgroundColor: '#38F28E',
+    backgroundColor: '#38E28E',
   },
   primaryButtonText: {
     color: '#F4F8FF',
@@ -1318,8 +1317,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   statusPillSuccess: {
-    backgroundColor: '#38F28E18',
-    borderColor: '#38F28E',
+    backgroundColor: '#38E28E18',
+    borderColor: '#38E28E',
   },
   statusPillPending: {
     backgroundColor: '#182A44',
@@ -1330,7 +1329,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   statusTextSuccess: {
-    color: '#38F28E',
+    color: '#38E28E',
   },
   statusTextPending: {
     color: '#29B6FF',

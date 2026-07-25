@@ -18,6 +18,7 @@ import { MailModule } from "../mail/mail.module";
 import { PermisoAcceso } from "../modules/permisoacceso/permisoacceso.entity";
 import { PacienteAccessService } from "./paciente-access.service";
 import { UsuarioPaciente } from "../modules/usuariopaciente/usuariopaciente.entity";
+import { NanoModule } from "../nano/nano.module";
 
 /**
  * Agrupa controladores y proveedores del dominio auth.
@@ -34,6 +35,7 @@ import { UsuarioPaciente } from "../modules/usuariopaciente/usuariopaciente.enti
       UsuarioPaciente,
     ]),
     MailModule,
+    NanoModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

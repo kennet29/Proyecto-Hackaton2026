@@ -2,46 +2,59 @@ import React, { useCallback, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { AppText } from '../components/AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  loadNanoAppearanceId,
+  loadNanoAppearanceState,
   NanoAppearancePreview,
   NANO_APPEARANCES,
   saveNanoAppearanceId,
 } from '../components/NanoAppearancePreview';
+import { useAuth } from '../context/AuthContext';
 import { appColors, colorAlpha } from '../theme/colors';
+import { getNanoAppearanceUnlockRule } from '../utils/nanoAppearanceUnlocks';
 
 export function NanoConfiguracionScreen() {
+  const { token, user } = useAuth();
   const { width } = useWindowDimensions();
   const [selectedId, setSelectedId] = useState('base');
+  const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set(['base']));
   const [savedMessage, setSavedMessage] = useState('');
   const useThreeColumns = width >= 760;
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      loadNanoAppearanceId()
-        .then((appearanceId) => {
-          if (active) setSelectedId(appearanceId);
+      loadNanoAppearanceState(user?.id, token)
+        .then(({ selectedId: appearanceId, unlockedIds: unlockedAppearanceIds }) => {
+          if (active) {
+            setSelectedId(appearanceId);
+            setUnlockedIds(unlockedAppearanceIds);
+          }
         })
         .catch(() => undefined);
       return () => {
         active = false;
       };
-    }, []),
+    }, [token, user?.id]),
   );
 
   const selectAppearance = async (appearanceId: string, label: string) => {
     setSelectedId(appearanceId);
     setSavedMessage('');
     try {
-      await saveNanoAppearanceId(appearanceId);
+      const serverState = await saveNanoAppearanceId(
+        appearanceId,
+        user?.id,
+        token,
+      );
+      setSelectedId(serverState.selectedId);
+      setUnlockedIds(serverState.unlockedIds);
       setSavedMessage(`${label} se aplicó correctamente.`);
     } catch {
       setSavedMessage('No se pudo guardar la selección en este dispositivo.');
@@ -55,24 +68,26 @@ export function NanoConfiguracionScreen() {
           <Ionicons name="color-palette-outline" size={27} color={appColors.accent} />
         </View>
         <View style={styles.heroCopy}>
-          <Text style={styles.eyebrow}>CONFIGURACIÓN</Text>
-          <Text style={styles.title}>Apariencia de Nano</Text>
-          <Text style={styles.subtitle}>
+          <AppText style={styles.eyebrow}>CONFIGURACIÓN</AppText>
+          <AppText style={styles.title}>Apariencia de Nano</AppText>
+          <AppText style={styles.subtitle}>
             Selecciona el diseño que aparecerá en el acceso rápido del asistente.
-          </Text>
+          </AppText>
         </View>
       </View>
 
       {savedMessage ? (
         <View style={styles.feedback}>
           <Ionicons name="checkmark-circle-outline" size={18} color={appColors.success} />
-          <Text style={styles.feedbackText}>{savedMessage}</Text>
+          <AppText style={styles.feedbackText}>{savedMessage}</AppText>
         </View>
       ) : null}
 
       <View style={styles.grid}>
         {NANO_APPEARANCES.map((appearance) => {
           const selected = appearance.id === selectedId;
+          const unlocked = unlockedIds.has(appearance.id);
+          const unlockRule = getNanoAppearanceUnlockRule(appearance.id);
           return (
             <TouchableOpacity
               key={appearance.id}
@@ -80,11 +95,17 @@ export function NanoConfiguracionScreen() {
                 styles.card,
                 useThreeColumns ? styles.cardThreeColumns : styles.cardTwoColumns,
                 selected && styles.cardSelected,
+                !unlocked && styles.cardLocked,
               ]}
               onPress={() => void selectAppearance(appearance.id, appearance.label)}
+              disabled={!unlocked}
               accessibilityRole="button"
-              accessibilityState={{ selected }}
-              accessibilityLabel={`Seleccionar ${appearance.label}`}
+              accessibilityState={{ selected, disabled: !unlocked }}
+              accessibilityLabel={
+                unlocked
+                  ? `Seleccionar ${appearance.label}`
+                  : `${appearance.label}, bloqueado hasta iniciar sesión el ${unlockRule?.dateLabel}`
+              }
               activeOpacity={0.85}
             >
               <View style={styles.previewWrap}>
@@ -94,12 +115,21 @@ export function NanoConfiguracionScreen() {
                     <Ionicons name="checkmark" size={16} color={appColors.background} />
                   </View>
                 ) : null}
+                {!unlocked ? (
+                  <View style={styles.lockedBadge}>
+                    <Ionicons name="lock-closed" size={15} color={appColors.background} />
+                  </View>
+                ) : null}
               </View>
-              <Text style={styles.cardTitle}>{appearance.label}</Text>
-              <Text style={styles.cardDescription}>{appearance.description}</Text>
-              <Text style={[styles.cardAction, selected && styles.cardActionSelected]}>
-                {selected ? 'Seleccionado' : 'Elegir apariencia'}
-              </Text>
+              <AppText style={styles.cardTitle}>{appearance.label}</AppText>
+              <AppText style={styles.cardDescription}>{appearance.description}</AppText>
+              <AppText style={[styles.cardAction, selected && styles.cardActionSelected]}>
+                {!unlocked
+                  ? `Inicia sesión el ${unlockRule?.dateLabel}`
+                  : selected
+                    ? 'Seleccionado'
+                    : 'Elegir apariencia'}
+              </AppText>
             </TouchableOpacity>
           );
         })}
@@ -107,9 +137,9 @@ export function NanoConfiguracionScreen() {
 
       <View style={styles.infoCard}>
         <Ionicons name="phone-portrait-outline" size={20} color={appColors.info} />
-        <Text style={styles.infoText}>
+        <AppText style={styles.infoText}>
           La selección se guarda en este dispositivo y se refleja al volver al menú principal.
-        </Text>
+        </AppText>
       </View>
     </ScrollView>
   );
@@ -168,6 +198,7 @@ const styles = StyleSheet.create({
     borderColor: appColors.accent,
     backgroundColor: colorAlpha(appColors.accent, '0F'),
   },
+  cardLocked: { opacity: 0.58 },
   previewWrap: { position: 'relative', marginBottom: 12 },
   selectedBadge: {
     position: 'absolute',
@@ -177,6 +208,19 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     backgroundColor: appColors.success,
+    borderWidth: 2,
+    borderColor: appColors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lockedBadge: {
+    position: 'absolute',
+    right: -4,
+    bottom: -4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: appColors.textMuted,
     borderWidth: 2,
     borderColor: appColors.surface,
     alignItems: 'center',

@@ -29,6 +29,9 @@ describe("AuthService", () => {
     const tokenRevocationService = {
       revoke: jest.fn(),
     };
+    const nanoAppearanceService = {
+      registerLoginUnlocks: jest.fn(),
+    };
 
     const service = new AuthService(
       usersService as never,
@@ -37,6 +40,7 @@ describe("AuthService", () => {
       usuarioPacienteRepository as never,
       mailService as never,
       tokenRevocationService as never,
+      nanoAppearanceService as never,
     );
 
     return {
@@ -47,6 +51,7 @@ describe("AuthService", () => {
       usuarioPacienteRepository,
       mailService,
       tokenRevocationService,
+      nanoAppearanceService,
     };
   };
 
@@ -60,7 +65,13 @@ describe("AuthService", () => {
   });
 
   it("logs in with username and password", async () => {
-    const { service, usersService, jwtService, usuarioPacienteRepository } =
+    const {
+      service,
+      usersService,
+      jwtService,
+      usuarioPacienteRepository,
+      nanoAppearanceService,
+    } =
       buildService();
     usersService.findByUsername.mockResolvedValue({
       id: 7,
@@ -88,6 +99,7 @@ describe("AuthService", () => {
       pacienteIds: [30, 12],
     });
     expect(usersService.registerLogin).toHaveBeenCalledWith(7);
+    expect(nanoAppearanceService.registerLoginUnlocks).toHaveBeenCalledWith(7);
     expect(jwtService.signAsync).toHaveBeenCalledWith(
       expect.objectContaining({ sub: 7, pacienteId: 12 }),
       expect.objectContaining({ jwtid: expect.any(String) }),

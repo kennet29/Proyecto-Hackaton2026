@@ -10,11 +10,10 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -146,11 +145,11 @@ const MACRO_ACCENTS = {
   carbohydrates: '#38BDF8',
   protein: '#FF4D73',
   fat: '#FDBA74',
-  fiber: '#38F28E',
+  fiber: '#38E28E',
   sugar: '#F59E0B',
 } as const;
 
-const MICRO_ACCENTS = ['#29B6FF', '#38F28E', '#FDBA74', '#FF4D73', '#A3E635', '#F97316'];
+const MICRO_ACCENTS = ['#29B6FF', '#38E28E', '#FDBA74', '#FF4D73', '#A3E635', '#F97316'];
 const MAX_MEAL_NOTE_LENGTH = 180;
 
 function sanitizeMacronutrients(payload: AnalyzeMealResponse['macronutrients']): MacronutrientBreakdown | null {
@@ -681,8 +680,8 @@ export function NanoConsejeroScreen({ navigation }: Props) {
       >
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.eyebrow}>Asistente IA</Text>
-            <Text style={styles.title}>Nano</Text>
+            <AppText style={styles.eyebrow}>Asistente IA</AppText>
+            <AppText style={styles.title}>Nano</AppText>
           </View>
           <Pressable style={styles.closeButton} onPress={() => navigation.goBack()}>
             <Ionicons name="close" size={20} color={appColors.textSoft} />
@@ -692,9 +691,9 @@ export function NanoConsejeroScreen({ navigation }: Props) {
         <View style={styles.speechBubble}>
           <View style={styles.speechHeader}>
             <View style={styles.speechIndicator} />
-            <Text style={styles.speechTitle}>Analisis de comida</Text>
+            <AppText style={styles.speechTitle}>Analisis de comida</AppText>
           </View>
-          <Text style={styles.speechText}>{DIALOG_TEXT}</Text>
+          <AppText style={styles.speechText}>{DIALOG_TEXT}</AppText>
         </View>
 
         <View style={styles.viewSwitcher}>
@@ -708,14 +707,14 @@ export function NanoConsejeroScreen({ navigation }: Props) {
               size={16}
               color={activeView === 'capture' ? appColors.text : appColors.textMuted}
             />
-            <Text
+            <AppText
               style={[
                 styles.viewTabText,
                 activeView === 'capture' && styles.viewTabTextActive,
               ]}
             >
               Captura
-            </Text>
+            </AppText>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -728,24 +727,24 @@ export function NanoConsejeroScreen({ navigation }: Props) {
               size={16}
               color={activeView === 'results' ? appColors.text : appColors.textMuted}
             />
-            <Text
+            <AppText
               style={[
                 styles.viewTabText,
                 activeView === 'results' && styles.viewTabTextActive,
               ]}
             >
               Resultados
-            </Text>
+            </AppText>
           </TouchableOpacity>
         </View>
 
         {activeView === 'capture' ? (
           <>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>1. Para que quieres evaluar la comida</Text>
-          <Text style={styles.sectionSubtitle}>
+          <AppText style={styles.sectionTitle}>1. Para que quieres evaluar la comida</AppText>
+          <AppText style={styles.sectionSubtitle}>
             Selecciona el perfil que Nano debe considerar al revisar tu plato.
-          </Text>
+          </AppText>
 
           <View style={styles.goalList}>
             {FOOD_GOALS.map((goal) => {
@@ -767,8 +766,8 @@ export function NanoConsejeroScreen({ navigation }: Props) {
                     <Ionicons name={goal.icon} size={20} color={goal.accent} />
                   </View>
                   <View style={styles.goalContent}>
-                    <Text style={styles.goalLabel}>{goal.label}</Text>
-                    <Text style={styles.goalDescription}>{goal.description}</Text>
+                    <AppText style={styles.goalLabel}>{goal.label}</AppText>
+                    <AppText style={styles.goalDescription}>{goal.description}</AppText>
                   </View>
                   <Ionicons
                     name={isActive ? 'radio-button-on' : 'radio-button-off'}
@@ -782,10 +781,10 @@ export function NanoConsejeroScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>2. Toma la foto de tu comida</Text>
-          <Text style={styles.sectionSubtitle}>
+          <AppText style={styles.sectionTitle}>2. Toma la foto de tu comida</AppText>
+          <AppText style={styles.sectionSubtitle}>
             Usa la camara del telefono para capturar el plato que quieres evaluar.
-          </Text>
+          </AppText>
 
           <View style={styles.cameraCard}>
             {photo ? (
@@ -804,7 +803,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
                     />
                     <View style={styles.scanBadge}>
                       <Ionicons name="scan-outline" size={14} color={appColors.text} />
-                      <Text style={styles.scanBadgeText}>Escaneando composicion</Text>
+                      <AppText style={styles.scanBadgeText}>Escaneando composicion</AppText>
                     </View>
                   </View>
                 ) : null}
@@ -814,10 +813,10 @@ export function NanoConsejeroScreen({ navigation }: Props) {
                 <View style={styles.placeholderIcon}>
                   <Ionicons name="camera-outline" size={34} color={appColors.info} />
                 </View>
-                <Text style={styles.placeholderTitle}>Sin foto todavia</Text>
-                <Text style={styles.placeholderText}>
+                <AppText style={styles.placeholderTitle}>Sin foto todavia</AppText>
+                <AppText style={styles.placeholderText}>
                   Cuando tomes la foto aparecera aqui la vista previa de tu comida.
-                </Text>
+                </AppText>
               </View>
             )}
 
@@ -832,15 +831,15 @@ export function NanoConsejeroScreen({ navigation }: Props) {
                 size={16}
                 color={appColors.text}
               />
-              <Text style={styles.floatingCameraButtonText}>
+              <AppText style={styles.floatingCameraButtonText}>
                 {capturing ? 'Abriendo...' : photo ? 'Otra foto' : 'Tomar foto'}
-              </Text>
+              </AppText>
             </TouchableOpacity>
           </View>
 
           {photo ? (
             <View style={styles.photoMetaRow}>
-              <Text style={styles.photoMetaText}>Foto lista para analizar</Text>
+              <AppText style={styles.photoMetaText}>Foto lista para analizar</AppText>
               <TouchableOpacity
                 style={styles.removePhotoButton}
                 activeOpacity={0.9}
@@ -853,7 +852,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
                 }}
               >
                 <Ionicons name="trash-outline" size={16} color={appColors.accent} />
-                <Text style={styles.removePhotoButtonText}>Quitar foto</Text>
+                <AppText style={styles.removePhotoButtonText}>Quitar foto</AppText>
               </TouchableOpacity>
             </View>
           ) : null}
@@ -867,10 +866,10 @@ export function NanoConsejeroScreen({ navigation }: Props) {
               <Ionicons name="time-outline" size={18} color={appColors.info} />
             </View>
             <View style={styles.historyButtonCopy}>
-              <Text style={styles.historyButtonTitle}>Ver historial</Text>
-              <Text style={styles.historyButtonSubtitle}>
+              <AppText style={styles.historyButtonTitle}>Ver historial</AppText>
+              <AppText style={styles.historyButtonSubtitle}>
                 Revisa los ultimos analisis guardados de Nano.
-              </Text>
+              </AppText>
             </View>
             <Ionicons name="chevron-forward" size={18} color={appColors.textMuted} />
           </TouchableOpacity>
@@ -885,23 +884,23 @@ export function NanoConsejeroScreen({ navigation }: Props) {
               <Ionicons name="images-outline" size={18} color={appColors.accent} />
             </View>
             <View style={styles.historyButtonCopy}>
-              <Text style={styles.galleryButtonTitle}>Escoger de galeria</Text>
-              <Text style={styles.galleryButtonSubtitle}>
+              <AppText style={styles.galleryButtonTitle}>Escoger de galeria</AppText>
+              <AppText style={styles.galleryButtonSubtitle}>
                 Selecciona una foto guardada para analizarla con Nano.
-              </Text>
+              </AppText>
             </View>
             <Ionicons name="chevron-forward" size={18} color={appColors.textMuted} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>3. Nota opcional sobre la comida</Text>
-          <Text style={styles.sectionSubtitle}>
+          <AppText style={styles.sectionTitle}>3. Nota opcional sobre la comida</AppText>
+          <AppText style={styles.sectionSubtitle}>
             Si quieres, agrega una nota corta con contexto como ingredientes, porcion o preparacion.
-          </Text>
+          </AppText>
 
           <View style={styles.noteCard}>
-            <TextInput
+            <AppTextInput
               style={styles.noteInput}
               placeholder="Ejemplo: pollo a la plancha con poca sal y sin salsa"
               placeholderTextColor={appColors.textMuted}
@@ -911,7 +910,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
               multiline
               textAlignVertical="top"
             />
-            <Text style={styles.noteCounter}>{mealNote.trim().length}/{MAX_MEAL_NOTE_LENGTH}</Text>
+            <AppText style={styles.noteCounter}>{mealNote.trim().length}/{MAX_MEAL_NOTE_LENGTH}</AppText>
           </View>
         </View>
 
@@ -919,8 +918,8 @@ export function NanoConsejeroScreen({ navigation }: Props) {
           <View style={styles.summaryRow}>
             <Ionicons name="checkmark-circle-outline" size={20} color={selectedGoal.accent} />
             <View style={styles.summaryTextWrap}>
-              <Text style={styles.summaryLabel}>Objetivo seleccionado</Text>
-              <Text style={styles.summaryValue}>{selectedGoal.label}</Text>
+              <AppText style={styles.summaryLabel}>Objetivo seleccionado</AppText>
+              <AppText style={styles.summaryValue}>{selectedGoal.label}</AppText>
             </View>
           </View>
 
@@ -933,10 +932,10 @@ export function NanoConsejeroScreen({ navigation }: Props) {
               color={photo ? appColors.success : appColors.textMuted}
             />
             <View style={styles.summaryTextWrap}>
-              <Text style={styles.summaryLabel}>Estado de la foto</Text>
-              <Text style={styles.summaryValue}>
+              <AppText style={styles.summaryLabel}>Estado de la foto</AppText>
+              <AppText style={styles.summaryValue}>
                 {photo ? 'Foto lista para analizar' : 'Aun no has tomado la foto'}
-              </Text>
+              </AppText>
             </View>
           </View>
 
@@ -949,10 +948,10 @@ export function NanoConsejeroScreen({ navigation }: Props) {
               color={analysisText ? appColors.info : appColors.textMuted}
             />
             <View style={styles.summaryTextWrap}>
-              <Text style={styles.summaryLabel}>Respuesta de Nano</Text>
-              <Text style={styles.summaryValue}>
+              <AppText style={styles.summaryLabel}>Respuesta de Nano</AppText>
+              <AppText style={styles.summaryValue}>
                 {analysisText ? 'Lista para revisar' : 'Todavia no se ha generado'}
-              </Text>
+              </AppText>
             </View>
           </View>
         </View>
@@ -968,9 +967,9 @@ export function NanoConsejeroScreen({ navigation }: Props) {
           ) : (
             <Ionicons name="sparkles-outline" size={18} color={appColors.text} />
           )}
-          <Text style={styles.readyButtonText}>
+          <AppText style={styles.readyButtonText}>
             {submitting ? 'Analizando comida...' : 'Analizar con Nano'}
-          </Text>
+          </AppText>
         </TouchableOpacity>
           </>
         ) : null}
@@ -979,24 +978,24 @@ export function NanoConsejeroScreen({ navigation }: Props) {
           <View style={styles.analysisCard}>
             <View style={styles.analysisHeader}>
               <Ionicons name="chatbubble-ellipses-outline" size={20} color={appColors.info} />
-              <Text style={styles.analysisTitle}>Respuesta de Nano</Text>
+              <AppText style={styles.analysisTitle}>Respuesta de Nano</AppText>
             </View>
-            <Text style={styles.analysisIntro}>
+            <AppText style={styles.analysisIntro}>
               Esta recomendacion esta basada en la foto y en el objetivo que elegiste: {selectedGoal.label}.
-            </Text>
+            </AppText>
             <View style={styles.analysisPointList}>
               {(analysisPoints.length ? analysisPoints : [analysisText]).map((point, index) => (
                 <View key={`${point}-${index}`} style={styles.analysisPointRow}>
                   <View style={styles.analysisPointBullet}>
                     <Ionicons name="checkmark" size={12} color={appColors.text} />
                   </View>
-                  <Text style={styles.analysisPointText}>{point}</Text>
+                  <AppText style={styles.analysisPointText}>{point}</AppText>
                 </View>
               ))}
             </View>
-            <Text style={styles.analysisCaption}>
+            <AppText style={styles.analysisCaption}>
               Estos valores son estimados y sirven como guia rapida.
-            </Text>
+            </AppText>
           </View>
         ) : null}
 
@@ -1004,13 +1003,13 @@ export function NanoConsejeroScreen({ navigation }: Props) {
           <View style={styles.quickStatsCard}>
             <View style={styles.analysisHeader}>
               <Ionicons name="flash-outline" size={20} color={appColors.success} />
-              <Text style={styles.analysisTitle}>Datos principales</Text>
+              <AppText style={styles.analysisTitle}>Datos principales</AppText>
             </View>
             <View style={styles.quickStatsGrid}>
               {primaryHighlights.map((item) => (
                 <View key={item.key} style={styles.quickStatCard}>
-                  <Text style={[styles.quickStatLabel, { color: item.accent }]}>{item.label}</Text>
-                  <Text style={styles.quickStatValue}>{item.value}</Text>
+                  <AppText style={[styles.quickStatLabel, { color: item.accent }]}>{item.label}</AppText>
+                  <AppText style={styles.quickStatValue}>{item.value}</AppText>
                 </View>
               ))}
             </View>
@@ -1021,17 +1020,17 @@ export function NanoConsejeroScreen({ navigation }: Props) {
           <View style={styles.balanceCard}>
             <View style={styles.analysisHeader}>
               <Ionicons name="analytics-outline" size={20} color={appColors.accent} />
-              <Text style={styles.analysisTitle}>Balance del plato</Text>
+              <AppText style={styles.analysisTitle}>Balance del plato</AppText>
             </View>
-            <Text style={styles.balanceSubtitle}>
+            <AppText style={styles.balanceSubtitle}>
               Asi se reparte la mayor parte de la energia del plato.
-            </Text>
+            </AppText>
             <View style={styles.balanceList}>
               {composition.map((item) => (
                 <View key={item.key} style={styles.balanceRow}>
                   <View style={styles.balanceRowHeader}>
-                    <Text style={styles.balanceLabel}>{item.label}</Text>
-                    <Text style={styles.balanceValue}>{item.percentage}%</Text>
+                    <AppText style={styles.balanceLabel}>{item.label}</AppText>
+                    <AppText style={styles.balanceValue}>{item.percentage}%</AppText>
                   </View>
                   <View style={styles.balanceTrack}>
                     <View
@@ -1051,16 +1050,16 @@ export function NanoConsejeroScreen({ navigation }: Props) {
           <View style={styles.microSimpleCard}>
             <View style={styles.analysisHeader}>
               <Ionicons name="leaf-outline" size={20} color={appColors.info} />
-              <Text style={styles.analysisTitle}>Vitaminas y minerales destacados</Text>
+              <AppText style={styles.analysisTitle}>Vitaminas y minerales destacados</AppText>
             </View>
             <View style={styles.microChipGrid}>
               {micronutrientHighlights.map((item) => (
                 <View key={item.key} style={styles.microChip}>
-                  <Text style={styles.microChipLabel}>{item.label}</Text>
-                  <Text style={styles.microChipValue}>{item.amount}</Text>
-                  <Text style={[styles.microChipPercent, { color: item.accent }]}>
+                  <AppText style={styles.microChipLabel}>{item.label}</AppText>
+                  <AppText style={styles.microChipValue}>{item.amount}</AppText>
+                  <AppText style={[styles.microChipPercent, { color: item.accent }]}>
                     {Math.round(item.dailyValuePercent)}% aprox.
-                  </Text>
+                  </AppText>
                 </View>
               ))}
             </View>
@@ -1070,16 +1069,16 @@ export function NanoConsejeroScreen({ navigation }: Props) {
         {activeView === 'results' && !analysisText && !macronutrients && !micronutrients ? (
           <View style={styles.resultsEmptyCard}>
             <Ionicons name="sparkles-outline" size={24} color={appColors.info} />
-            <Text style={styles.resultsEmptyTitle}>Todavia no hay resultados</Text>
-            <Text style={styles.resultsEmptyText}>
+            <AppText style={styles.resultsEmptyTitle}>Todavia no hay resultados</AppText>
+            <AppText style={styles.resultsEmptyText}>
               Usa la vista de captura para tomar o escoger una foto y luego analizarla con Nano.
-            </Text>
+            </AppText>
             <TouchableOpacity
               style={styles.resultsEmptyButton}
               activeOpacity={0.9}
               onPress={() => setActiveView('capture')}
             >
-              <Text style={styles.resultsEmptyButtonText}>Ir a captura</Text>
+              <AppText style={styles.resultsEmptyButtonText}>Ir a captura</AppText>
             </TouchableOpacity>
           </View>
         ) : null}

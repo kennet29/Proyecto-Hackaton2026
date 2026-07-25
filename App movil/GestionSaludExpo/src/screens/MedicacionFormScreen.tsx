@@ -8,11 +8,10 @@ import {
   ScrollView,
   Switch,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Calendar, DateData } from 'react-native-calendars';
@@ -30,6 +29,7 @@ import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients
 import { appColors, colorAlpha } from '../theme/colors';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate } from '../utils/localDate';
+import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 import { WebTimeInput } from '../components/WebTimeInput';
 
 type PickerField =
@@ -348,17 +348,18 @@ export function MedicacionFormScreen({
     setLoadingRecords(true);
     setRecordsError(null);
     try {
-      const medicationResponse = await fetch(`${API_URL}/medicacion`, { headers: authHeaders });
-      const medicationBody = await medicationResponse.json().catch(() => null);
-      if (!medicationResponse.ok) {
-        throw new Error(medicationBody?.message ?? 'No se pudieron cargar las medicaciones');
-      }
+      const { data: medicationBody } = await getJsonWithOfflineFallback<unknown>(
+        '/medicacion',
+        authHeaders,
+      );
 
       let schedules: HorarioMedicacionRecord[] = [];
       try {
-        const scheduleResponse = await fetch(`${API_URL}/horariomedicamento`, { headers: authHeaders });
-        const scheduleBody = await scheduleResponse.json().catch(() => null);
-        if (scheduleResponse.ok && Array.isArray(scheduleBody)) {
+        const { data: scheduleBody } = await getJsonWithOfflineFallback<unknown>(
+          '/horariomedicamento',
+          authHeaders,
+        );
+        if (Array.isArray(scheduleBody)) {
           schedules = mapScheduleRecords(scheduleBody);
         }
       } catch {
@@ -513,7 +514,7 @@ export function MedicacionFormScreen({
         const existing = marks[startDate] ?? {};
         const dots = existing.dots ?? [];
         if (!dots.some((dot) => dot.key === `start-${record.medicacionId}`)) {
-          dots.push({ key: `start-${record.medicacionId}`, color: '#38F28E' });
+          dots.push({ key: `start-${record.medicacionId}`, color: '#38E28E' });
         }
         marks[startDate] = {
           ...existing,
@@ -743,7 +744,7 @@ export function MedicacionFormScreen({
             if (field === 'notificationTime') setShowIOSNotificationTimePicker(false);
           }}
         >
-          <Text style={styles.iosPickerDoneText}>Listo</Text>
+          <AppText style={styles.iosPickerDoneText}>Listo</AppText>
         </TouchableOpacity>
       </View>
     );
@@ -1031,10 +1032,17 @@ export function MedicacionFormScreen({
       if (offlineResult.status === 'queued') {
         Alert.alert(
           'Notificacion en cola',
-          'No habia conexion. La notificacion quedo pendiente y se enviara cuando vuelva la red.',
+          offlineResult.localReminder === 'scheduled'
+            ? 'No había conexión. La notificación quedó programada en este dispositivo y se sincronizará después.'
+            : 'La notificación quedó pendiente de sincronización. Revisa los permisos de notificaciones del dispositivo.',
         );
       } else {
-        Alert.alert('Notificacion creada', 'La notificacion push del tratamiento fue programada.');
+        Alert.alert(
+          'Notificacion creada',
+          offlineResult.localReminder === 'scheduled'
+            ? 'El aviso del tratamiento funcionará también sin conexión.'
+            : 'La notificación fue registrada. Revisa los permisos del dispositivo para recibirla localmente.',
+        );
       }
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo crear la notificacion');
@@ -1055,38 +1063,38 @@ export function MedicacionFormScreen({
             </View>
             <View style={styles.heroStatusPill}>
               <Ionicons name={isCreateMode ? 'create-outline' : 'calendar-outline'} size={14} color={appColors.info} />
-              <Text style={styles.heroStatusText}>{isCreateMode ? 'Formulario activo' : 'Historial'}</Text>
+              <AppText style={styles.heroStatusText}>{isCreateMode ? 'Formulario activo' : 'Historial'}</AppText>
             </View>
           </View>
-          <Text style={styles.kicker}>SEGUIMIENTO DE MEDICACION</Text>
+          <AppText style={styles.kicker}>SEGUIMIENTO DE MEDICACION</AppText>
           <View style={styles.header}>
-            <Text style={styles.title}>
+            <AppText style={styles.title}>
               {isCreateMode ? (isEditing ? 'Editar medicacion' : 'Nueva medicacion') : 'Medicaciones registradas'}
-            </Text>
-            <Text style={styles.subtitle}>
+            </AppText>
+            <AppText style={styles.subtitle}>
               {isCreateMode
                 ? isEditing
                   ? 'Actualiza el tratamiento, reemplaza la receta adjunta si hace falta y ajusta la hora programada.'
                   : 'Registra una nueva medicacion, define su hora y programa la notificacion del tratamiento si lo necesitas.'
                 : 'Revisa el calendario, despliega el historial cuando lo necesites y registra la hora de cada medicacion.'}
-            </Text>
+            </AppText>
           </View>
         </View>
 
-        {recordsError ? <Text style={styles.errorText}>{recordsError}</Text> : null}
+        {recordsError ? <AppText style={styles.errorText}>{recordsError}</AppText> : null}
 
         {!isCreateMode ? (
           <>
             <View style={styles.filterCard}>
-              <Text style={styles.label}>Paciente del historial</Text>
+              <AppText style={styles.label}>Paciente del historial</AppText>
               {loadingPatients ? (
                 <View style={styles.loadingRow}>
                   <ActivityIndicator color="#29B6FF" />
-                  <Text style={styles.loadingText}>Cargando personas...</Text>
+                  <AppText style={styles.loadingText}>Cargando personas...</AppText>
                 </View>
               ) : patientOptions.length === 0 ? (
                 <View style={styles.emptyBox}>
-                  <Text style={styles.emptyText}>No hay personas vinculadas para filtrar el historial.</Text>
+                  <AppText style={styles.emptyText}>No hay personas vinculadas para filtrar el historial.</AppText>
                 </View>
               ) : (
                 <View style={styles.pickerWrapper}>
@@ -1110,10 +1118,10 @@ export function MedicacionFormScreen({
             </View>
 
             <View style={styles.calendarCard}>
-              <Text style={styles.formTitle}>Calendario del tratamiento</Text>
-              <Text style={styles.sectionHelper}>
+              <AppText style={styles.formTitle}>Calendario del tratamiento</AppText>
+              <AppText style={styles.sectionHelper}>
                 Verde marca el inicio y rojo marca la finalizacion del tratamiento.
-              </Text>
+              </AppText>
               <Calendar
                 markingType="multi-dot"
                 markedDates={markedDates}
@@ -1144,36 +1152,36 @@ export function MedicacionFormScreen({
                 disabled={!hasDayRecords}
               >
                 <View style={styles.sectionToggleCopy}>
-                  <Text style={styles.formTitle}>Medicacion del dia</Text>
-                  <Text style={styles.sectionHelper}>
+                  <AppText style={styles.formTitle}>Medicacion del dia</AppText>
+                  <AppText style={styles.sectionHelper}>
                     {!hasDayRecords
                       ? 'No hay medicaciones para desplegar en esta fecha'
                       : showDaySection
                         ? 'Ocultar medicaciones de la fecha seleccionada'
                         : 'Desplegar medicaciones de la fecha seleccionada'}
-                  </Text>
+                  </AppText>
                 </View>
                 <View style={styles.sectionToggleActions}>
                   <View style={styles.countBadge}>
-                    <Text style={styles.countBadgeText}>{recordsForSelectedDay.length}</Text>
+                    <AppText style={styles.countBadgeText}>{recordsForSelectedDay.length}</AppText>
                   </View>
-                  <Text style={[styles.sectionToggleIcon, !hasDayRecords && styles.sectionToggleIconDisabled]}>
+                  <AppText style={[styles.sectionToggleIcon, !hasDayRecords && styles.sectionToggleIconDisabled]}>
                     {hasDayRecords ? (showDaySection ? '-' : '+') : ''}
-                  </Text>
+                  </AppText>
                 </View>
               </TouchableOpacity>
 
               {showDaySection && hasDayRecords ? (
                 <>
-                  <Text style={styles.dayLabel}>{formatDisplayDate(selectedDate, selectedDate)}</Text>
+                  <AppText style={styles.dayLabel}>{formatDisplayDate(selectedDate, selectedDate)}</AppText>
                   {recordsForSelectedDay.map((record) => {
                       const label = patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`;
                       return (
                         <View key={`day-${record.medicacionId}-${record.dayType}`} style={styles.medicationCard}>
                           <View style={styles.medicationHeader}>
                             <View>
-                              <Text style={styles.medicationName}>{record.nombre}</Text>
-                              <Text style={styles.medicationMeta}>{label}</Text>
+                              <AppText style={styles.medicationName}>{record.nombre}</AppText>
+                              <AppText style={styles.medicationMeta}>{label}</AppText>
                             </View>
                             <View
                               style={[
@@ -1181,25 +1189,25 @@ export function MedicacionFormScreen({
                                 record.dayType === 'fin' ? styles.dayTypeEnd : styles.dayTypeStart,
                               ]}
                             >
-                              <Text style={styles.dayTypeBadgeText}>
+                              <AppText style={styles.dayTypeBadgeText}>
                                 {record.dayType === 'fin' ? 'Finaliza' : 'Inicia'}
-                              </Text>
+                              </AppText>
                             </View>
                           </View>
-                          {record.dosis ? <Text style={styles.medicationDetail}>Dosis: {record.dosis}</Text> : null}
-                          {record.via ? <Text style={styles.medicationDetail}>Via: {record.via}</Text> : null}
+                          {record.dosis ? <AppText style={styles.medicationDetail}>Dosis: {record.dosis}</AppText> : null}
+                          {record.via ? <AppText style={styles.medicationDetail}>Via: {record.via}</AppText> : null}
                           {record.tieneArchivoReceta ? (
-                            <Text style={styles.medicationDetail}>
-                              Receta adjunta: <Text style={styles.medicationHighlight}>Si</Text>
-                            </Text>
+                            <AppText style={styles.medicationDetail}>
+                              Receta adjunta: <AppText style={styles.medicationHighlight}>Si</AppText>
+                            </AppText>
                           ) : null}
                           {record.horaprogramada ? (
-                            <Text style={styles.medicationDetail}>
+                            <AppText style={styles.medicationDetail}>
                               Hora:{' '}
-                              <Text style={styles.medicationHighlight}>
+                              <AppText style={styles.medicationHighlight}>
                                 {formatDisplayTime(record.horaprogramada)}
-                              </Text>
-                            </Text>
+                              </AppText>
+                            </AppText>
                           ) : null}
                         </View>
                       );
@@ -1220,8 +1228,8 @@ export function MedicacionFormScreen({
                 disabled={!hasHistoryRecords}
               >
                 <View style={styles.sectionToggleCopy}>
-                  <Text style={styles.formTitle}>Historial completo</Text>
-                  <Text style={styles.sectionHelper}>
+                  <AppText style={styles.formTitle}>Historial completo</AppText>
+                  <AppText style={styles.sectionHelper}>
                     {!hasHistoryRecords
                       ? activePatientId
                         ? 'Este paciente no tiene medicaciones para mostrar'
@@ -1229,15 +1237,15 @@ export function MedicacionFormScreen({
                       : showHistorySection
                         ? 'Ocultar medicaciones anteriores'
                         : 'Desplegar medicaciones anteriores'}
-                  </Text>
+                  </AppText>
                 </View>
                 <View style={styles.sectionToggleActions}>
                   <View style={styles.countBadge}>
-                    <Text style={styles.countBadgeText}>{visibleRecords.length}</Text>
+                    <AppText style={styles.countBadgeText}>{visibleRecords.length}</AppText>
                   </View>
-                  <Text style={[styles.sectionToggleIcon, !hasHistoryRecords && styles.sectionToggleIconDisabled]}>
+                  <AppText style={[styles.sectionToggleIcon, !hasHistoryRecords && styles.sectionToggleIconDisabled]}>
                     {hasHistoryRecords ? (showHistorySection ? '-' : '+') : ''}
-                  </Text>
+                  </AppText>
                 </View>
               </TouchableOpacity>
 
@@ -1245,7 +1253,7 @@ export function MedicacionFormScreen({
                 loadingRecords ? (
                   <View style={styles.stateBox}>
                     <ActivityIndicator color="#29B6FF" />
-                    <Text style={styles.stateText}>Cargando medicaciones...</Text>
+                    <AppText style={styles.stateText}>Cargando medicaciones...</AppText>
                   </View>
                 ) : (
                   visibleRecords.map((record) => {
@@ -1254,39 +1262,39 @@ export function MedicacionFormScreen({
                       <View key={record.medicacionId} style={styles.medicationCard}>
                         <View style={styles.medicationHeader}>
                           <View>
-                            <Text style={styles.medicationName}>{record.nombre}</Text>
-                            <Text style={styles.medicationMeta}>
+                            <AppText style={styles.medicationName}>{record.nombre}</AppText>
+                            <AppText style={styles.medicationMeta}>
                               {label} | {formatInterval(record.fechainicio, record.fechafin)}
-                            </Text>
+                            </AppText>
                           </View>
                         </View>
-                        {record.dosis ? <Text style={styles.medicationDetail}>Dosis: {record.dosis}</Text> : null}
-                        {record.via ? <Text style={styles.medicationDetail}>Via: {record.via}</Text> : null}
+                        {record.dosis ? <AppText style={styles.medicationDetail}>Dosis: {record.dosis}</AppText> : null}
+                        {record.via ? <AppText style={styles.medicationDetail}>Via: {record.via}</AppText> : null}
                         {record.indicaciones ? (
-                          <Text style={styles.medicationDetail}>Indicaciones: {record.indicaciones}</Text>
+                          <AppText style={styles.medicationDetail}>Indicaciones: {record.indicaciones}</AppText>
                         ) : null}
                         {record.horaprogramada ? (
-                          <Text style={styles.medicationDetail}>
+                          <AppText style={styles.medicationDetail}>
                             Hora programada:{' '}
-                            <Text style={styles.medicationHighlight}>
+                            <AppText style={styles.medicationHighlight}>
                               {formatDisplayTime(record.horaprogramada)}
-                            </Text>
-                          </Text>
+                            </AppText>
+                          </AppText>
                         ) : (
-                          <Text style={styles.medicationDetail}>Hora programada: Sin hora definida</Text>
+                          <AppText style={styles.medicationDetail}>Hora programada: Sin hora definida</AppText>
                         )}
                         {isDailyMedicationSchedule(record.frecuencia) && !record.fechafin ? (
-                          <Text style={styles.medicationDetail}>
+                          <AppText style={styles.medicationDetail}>
                             Tratamiento:{' '}
-                            <Text style={styles.medicationHighlight}>Permanente con recordatorio diario</Text>
-                          </Text>
+                            <AppText style={styles.medicationHighlight}>Permanente con recordatorio diario</AppText>
+                          </AppText>
                         ) : null}
-                        <Text style={styles.medicationDetail}>
+                        <AppText style={styles.medicationDetail}>
                           Receta adjunta:{' '}
-                          <Text style={styles.medicationHighlight}>
+                          <AppText style={styles.medicationHighlight}>
                             {record.tieneArchivoReceta ? record.nombreArchivoReceta ?? 'Disponible' : 'No'}
-                          </Text>
-                        </Text>
+                          </AppText>
+                        </AppText>
                         <TouchableOpacity
                           style={styles.editRecordButton}
                           onPress={() =>
@@ -1310,7 +1318,7 @@ export function MedicacionFormScreen({
                             })
                           }
                         >
-                          <Text style={styles.editRecordButtonText}>Editar medicacion</Text>
+                          <AppText style={styles.editRecordButtonText}>Editar medicacion</AppText>
                         </TouchableOpacity>
                       </View>
                     );
@@ -1325,15 +1333,15 @@ export function MedicacionFormScreen({
           <View style={styles.formCard}>
             <View style={styles.formHeaderCard}>
               <View style={styles.formHeaderCopy}>
-                <Text style={styles.kicker}>DATOS DEL TRATAMIENTO</Text>
-                <Text style={styles.formHeaderTitle}>{isEditing ? 'Actualiza la medicacion' : 'Registra la medicacion'}</Text>
-                <Text style={styles.formHeaderText}>
+                <AppText style={styles.kicker}>DATOS DEL TRATAMIENTO</AppText>
+                <AppText style={styles.formHeaderTitle}>{isEditing ? 'Actualiza la medicacion' : 'Registra la medicacion'}</AppText>
+                <AppText style={styles.formHeaderText}>
                   Completa paciente, medicamento e inicio. La hora, receta y notificacion son complementos opcionales.
-                </Text>
+                </AppText>
               </View>
               <View style={styles.progressBadge}>
-                <Text style={styles.progressBadgeValue}>{formProgress}%</Text>
-                <Text style={styles.progressBadgeLabel}>listo</Text>
+                <AppText style={styles.progressBadgeValue}>{formProgress}%</AppText>
+                <AppText style={styles.progressBadgeLabel}>listo</AppText>
               </View>
             </View>
 
@@ -1343,22 +1351,22 @@ export function MedicacionFormScreen({
                   <Ionicons name="person-outline" size={18} color={appColors.info} />
                 </View>
                 <View style={styles.stepCopy}>
-                  <Text style={styles.stepTitle}>1. Persona asociada</Text>
-                  <Text style={styles.stepHint}>Selecciona a quien pertenece este tratamiento.</Text>
+                  <AppText style={styles.stepTitle}>1. Persona asociada</AppText>
+                  <AppText style={styles.stepHint}>Selecciona a quien pertenece este tratamiento.</AppText>
                 </View>
               </View>
               {loadingPatients ? (
                 <View style={styles.loadingRow}>
                   <ActivityIndicator color="#29B6FF" />
-                  <Text style={styles.loadingText}>Cargando personas...</Text>
+                  <AppText style={styles.loadingText}>Cargando personas...</AppText>
                 </View>
               ) : patientOptions.length === 0 ? (
                 <View style={styles.emptyBox}>
-                  <Text style={styles.emptyText}>
+                  <AppText style={styles.emptyText}>
                     No hay personas vinculadas. Agrega una desde Personas Asociadas.
-                  </Text>
+                  </AppText>
                   <TouchableOpacity style={styles.secondaryBtn} onPress={fetchPatients}>
-                    <Text style={styles.secondaryBtnText}>Reintentar</Text>
+                    <AppText style={styles.secondaryBtnText}>Reintentar</AppText>
                   </TouchableOpacity>
                 </View>
               ) : (
@@ -1382,13 +1390,13 @@ export function MedicacionFormScreen({
               {form.pacienteId ? (
                 <View style={styles.selectedPatientCard}>
                   <Ionicons name="checkmark-circle" size={18} color={appColors.success} />
-                  <Text style={styles.selectedPatientText}>
+                  <AppText style={styles.selectedPatientText}>
                     {`Asignado a ${selectedPatientName ?? patientNameById[Number(form.pacienteId)] ?? 'la persona seleccionada'}`}
-                  </Text>
+                  </AppText>
                 </View>
               ) : null}
             </View>
-            {patientError ? <Text style={styles.errorText}>{patientError}</Text> : null}
+            {patientError ? <AppText style={styles.errorText}>{patientError}</AppText> : null}
 
             <View style={styles.formStepCard}>
               <View style={styles.stepHeader}>
@@ -1396,13 +1404,13 @@ export function MedicacionFormScreen({
                   <Ionicons name="medical-outline" size={18} color={appColors.info} />
                 </View>
                 <View style={styles.stepCopy}>
-                  <Text style={styles.stepTitle}>2. Medicamento e indicacion</Text>
-                  <Text style={styles.stepHint}>Registra nombre, dosis, via y notas de la receta.</Text>
+                  <AppText style={styles.stepTitle}>2. Medicamento e indicacion</AppText>
+                  <AppText style={styles.stepHint}>Registra nombre, dosis, via y notas de la receta.</AppText>
                 </View>
               </View>
               <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Nombre del medicamento</Text>
-                <TextInput
+                <AppText style={styles.label}>Nombre del medicamento</AppText>
+                <AppTextInput
                   style={styles.input}
                   placeholder="Ej. Amoxicilina, Ibuprofeno, Metformina"
                   placeholderTextColor="#9FB3C8"
@@ -1413,8 +1421,8 @@ export function MedicacionFormScreen({
 
               <View style={styles.formRow}>
                 <View style={styles.formColumn}>
-                  <Text style={styles.label}>Dosis indicada</Text>
-                  <TextInput
+                  <AppText style={styles.label}>Dosis indicada</AppText>
+                  <AppTextInput
                     style={styles.input}
                     placeholder="Ej. 500 mg, 1 tableta, 10 ml"
                     placeholderTextColor="#9FB3C8"
@@ -1423,8 +1431,8 @@ export function MedicacionFormScreen({
                   />
                 </View>
                 <View style={styles.formColumn}>
-                  <Text style={styles.label}>Via de administracion</Text>
-                  <TextInput
+                  <AppText style={styles.label}>Via de administracion</AppText>
+                  <AppTextInput
                     style={styles.input}
                     placeholder="Ej. Oral, intravenosa, topica"
                     placeholderTextColor="#9FB3C8"
@@ -1435,8 +1443,8 @@ export function MedicacionFormScreen({
               </View>
 
               <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Indicaciones de la receta</Text>
-                <TextInput
+                <AppText style={styles.label}>Indicaciones de la receta</AppText>
+                <AppTextInput
                   style={[styles.input, styles.multiline]}
                   placeholder="Ej. Tomar despues de los alimentos durante 7 dias"
                   placeholderTextColor="#9FB3C8"
@@ -1453,25 +1461,25 @@ export function MedicacionFormScreen({
                   <Ionicons name="time-outline" size={18} color={appColors.info} />
                 </View>
                 <View style={styles.stepCopy}>
-                  <Text style={styles.stepTitle}>3. Duracion y horario</Text>
-                  <Text style={styles.stepHint}>
+                  <AppText style={styles.stepTitle}>3. Duracion y horario</AppText>
+                  <AppText style={styles.stepHint}>
                     Define inicio, hora de toma y si el tratamiento es temporal o permanente.
-                  </Text>
+                  </AppText>
                 </View>
               </View>
 
               <View style={styles.dateGrid}>
                 <View style={styles.dateGridItem}>
-                  <Text style={styles.label}>Inicio</Text>
+                  <AppText style={styles.label}>Inicio</AppText>
                   <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('fechaInicio')}>
                     <Ionicons name="calendar-outline" size={18} color={appColors.info} />
-                    <Text style={styles.dateButtonText}>{formatDisplayDate(form.fechaInicio)}</Text>
+                    <AppText style={styles.dateButtonText}>{formatDisplayDate(form.fechaInicio)}</AppText>
                   </TouchableOpacity>
                   {renderIOSPicker('fechaInicio')}
                 </View>
 
                 <View style={styles.dateGridItem}>
-                  <Text style={styles.label}>Hora de toma</Text>
+                  <AppText style={styles.label}>Hora de toma</AppText>
                   {Platform.OS === 'web' ? (
                     <WebTimeInput
                       value={normalizeTimeString(form.horaMedicacion)}
@@ -1481,9 +1489,9 @@ export function MedicacionFormScreen({
                   ) : (
                     <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('horaMedicacion')}>
                       <Ionicons name="alarm-outline" size={18} color={appColors.info} />
-                      <Text style={styles.dateButtonText}>
+                      <AppText style={styles.dateButtonText}>
                         {form.horaMedicacion ? formatDisplayTime(form.horaMedicacion) : 'Opcional'}
-                      </Text>
+                      </AppText>
                     </TouchableOpacity>
                   )}
                   {renderIOSPicker('horaMedicacion')}
@@ -1491,17 +1499,17 @@ export function MedicacionFormScreen({
               </View>
 
               <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Tratamiento permanente</Text>
+                <AppText style={styles.label}>Tratamiento permanente</AppText>
                 <View style={[styles.toggleCard, isPermanentMedication && styles.toggleCardActive]}>
                   <TouchableOpacity
                     style={styles.toggleCopy}
                     activeOpacity={0.85}
                     onPress={() => setIsPermanentMedication((prev) => !prev)}
                   >
-                    <Text style={styles.toggleTitle}>Activar medicacion permanente</Text>
-                    <Text style={styles.toggleDescription}>
+                    <AppText style={styles.toggleTitle}>Activar medicacion permanente</AppText>
+                    <AppText style={styles.toggleDescription}>
                       Si la activas, no se pedira fecha de finalizacion y la hora de toma quedara como recordatorio diario.
-                    </Text>
+                    </AppText>
                   </TouchableOpacity>
                   <Switch
                     value={isPermanentMedication}
@@ -1514,27 +1522,27 @@ export function MedicacionFormScreen({
 
               {!isPermanentMedication ? (
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.label}>Finalizacion</Text>
+                  <AppText style={styles.label}>Finalizacion</AppText>
                   <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('fechaFin')}>
                     <Ionicons name="flag-outline" size={18} color={appColors.info} />
-                    <Text style={styles.dateButtonText}>
+                    <AppText style={styles.dateButtonText}>
                       {form.fechaFin ? formatDisplayDate(form.fechaFin) : 'Selecciona una fecha opcional'}
-                    </Text>
+                    </AppText>
                   </TouchableOpacity>
-                  <Text style={styles.fieldHint}>
+                  <AppText style={styles.fieldHint}>
                     Agregala si quieres dejar definido hasta cuando debe tomarse el medicamento.
-                  </Text>
+                  </AppText>
                 </View>
               ) : (
                 <View style={styles.permanentInfoCard}>
                   <Ionicons name="repeat-outline" size={18} color={appColors.success} />
                   <View style={styles.toggleCopy}>
-                    <Text style={styles.permanentInfoTitle}>Recordatorio diario</Text>
-                    <Text style={styles.permanentInfoText}>
+                    <AppText style={styles.permanentInfoTitle}>Recordatorio diario</AppText>
+                    <AppText style={styles.permanentInfoText}>
                       {form.horaMedicacion
                         ? `La medicacion quedara activa todos los dias a las ${formatDisplayTime(form.horaMedicacion)}.`
                         : 'Selecciona una hora de toma para activar el recordatorio diario.'}
-                    </Text>
+                    </AppText>
                   </View>
                 </View>
               )}
@@ -1547,25 +1555,25 @@ export function MedicacionFormScreen({
                   <Ionicons name="document-attach-outline" size={18} color={appColors.info} />
                 </View>
                 <View style={styles.stepCopy}>
-                  <Text style={styles.stepTitle}>Receta fisica adjunta</Text>
-                  <Text style={styles.stepHint}>
+                  <AppText style={styles.stepTitle}>Receta fisica adjunta</AppText>
+                  <AppText style={styles.stepHint}>
                     Adjunta una foto o un PDF de la receta para dejar respaldo.
-                  </Text>
+                  </AppText>
                 </View>
               </View>
 
               <View style={styles.attachmentActions}>
                 <TouchableOpacity style={styles.attachmentButton} onPress={handleTakePhoto}>
                   <Ionicons name="camera-outline" size={16} color={appColors.info} />
-                  <Text style={styles.attachmentButtonText}>Tomar foto</Text>
+                  <AppText style={styles.attachmentButtonText}>Tomar foto</AppText>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.attachmentButton} onPress={handlePickImage}>
                   <Ionicons name="image-outline" size={16} color={appColors.info} />
-                  <Text style={styles.attachmentButtonText}>Elegir imagen</Text>
+                  <AppText style={styles.attachmentButtonText}>Elegir imagen</AppText>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.attachmentButton} onPress={handlePickPdf}>
                   <Ionicons name="document-text-outline" size={16} color={appColors.info} />
-                  <Text style={styles.attachmentButtonText}>Elegir PDF</Text>
+                  <AppText style={styles.attachmentButtonText}>Elegir PDF</AppText>
                 </TouchableOpacity>
               </View>
 
@@ -1574,35 +1582,35 @@ export function MedicacionFormScreen({
                   {attachment.kind === 'image' ? (
                     <Image source={{ uri: attachment.uri }} style={styles.attachmentPreviewImage} />
                   ) : null}
-                  <Text style={styles.attachmentPreviewTitle}>{attachment.name}</Text>
-                  <Text style={styles.attachmentPreviewMeta}>
+                  <AppText style={styles.attachmentPreviewTitle}>{attachment.name}</AppText>
+                  <AppText style={styles.attachmentPreviewMeta}>
                     {attachment.kind === 'pdf' ? 'PDF seleccionado' : 'Imagen seleccionada'}
-                  </Text>
+                  </AppText>
                   <TouchableOpacity style={styles.removeAttachmentButton} onPress={clearAttachmentSelection}>
-                    <Text style={styles.removeAttachmentButtonText}>Quitar adjunto</Text>
+                    <AppText style={styles.removeAttachmentButtonText}>Quitar adjunto</AppText>
                   </TouchableOpacity>
                 </View>
               ) : existingAttachment && !removeExistingAttachment ? (
                 <View style={styles.attachmentPreviewCard}>
-                  <Text style={styles.attachmentPreviewTitle}>{existingAttachment.name}</Text>
-                  <Text style={styles.attachmentPreviewMeta}>
+                  <AppText style={styles.attachmentPreviewTitle}>{existingAttachment.name}</AppText>
+                  <AppText style={styles.attachmentPreviewMeta}>
                     {existingAttachment.mimeType === 'application/pdf' ? 'PDF guardado' : 'Imagen guardada'}
-                  </Text>
+                  </AppText>
                   <TouchableOpacity style={styles.removeAttachmentButton} onPress={clearAttachmentSelection}>
-                    <Text style={styles.removeAttachmentButtonText}>Eliminar adjunto actual</Text>
+                    <AppText style={styles.removeAttachmentButtonText}>Eliminar adjunto actual</AppText>
                   </TouchableOpacity>
                 </View>
               ) : removeExistingAttachment ? (
                 <View style={styles.emptyBox}>
-                  <Text style={styles.emptyText}>
+                  <AppText style={styles.emptyText}>
                     El adjunto actual se eliminara cuando guardes los cambios.
-                  </Text>
+                  </AppText>
                 </View>
               ) : (
                 <View style={styles.emptyBox}>
-                  <Text style={styles.emptyText}>
+                  <AppText style={styles.emptyText}>
                     Aun no has agregado una foto o PDF de la receta.
-                  </Text>
+                  </AppText>
                 </View>
               )}
             </View>
@@ -1611,12 +1619,12 @@ export function MedicacionFormScreen({
               <View style={styles.permanentInfoCard}>
                 <Ionicons name="notifications-outline" size={18} color={appColors.success} />
                 <View style={styles.toggleCopy}>
-                  <Text style={styles.permanentInfoTitle}>Medicacion diaria</Text>
-                  <Text style={styles.permanentInfoText}>
+                  <AppText style={styles.permanentInfoTitle}>Medicacion diaria</AppText>
+                  <AppText style={styles.permanentInfoText}>
                     {form.horaMedicacion
                       ? 'Al guardar, se activara el recordatorio diario de esta medicacion.'
                       : 'Define una hora de toma para que el recordatorio diario quede activo.'}
-                  </Text>
+                  </AppText>
                 </View>
               </View>
             ) : form.fechaFin ? (
@@ -1625,10 +1633,10 @@ export function MedicacionFormScreen({
                   <Ionicons name="notifications-outline" size={20} color={appColors.info} />
                 </View>
                 <View style={styles.inlineNotificationCopy}>
-                  <Text style={styles.inlineNotificationTitle}>Notificacion del tratamiento</Text>
-                  <Text style={styles.inlineNotificationHint}>
+                  <AppText style={styles.inlineNotificationTitle}>Notificacion del tratamiento</AppText>
+                  <AppText style={styles.inlineNotificationHint}>
                     Programa un aviso para recordar la finalizacion del tratamiento.
-                  </Text>
+                  </AppText>
                 </View>
                 <TouchableOpacity
                   style={[
@@ -1637,23 +1645,23 @@ export function MedicacionFormScreen({
                   ]}
                   onPress={() => setShowNotificationForm((prev) => !prev)}
                 >
-                  <Text style={styles.inlineNotificationToggleText}>
+                  <AppText style={styles.inlineNotificationToggleText}>
                     {showNotificationForm ? 'Ocultar' : 'Crear'}
-                  </Text>
+                  </AppText>
                 </TouchableOpacity>
               </View>
             ) : (
               <View style={styles.lockedNotificationCard}>
                 <Ionicons name="lock-closed-outline" size={18} color={appColors.textMuted} />
-                <Text style={styles.fieldHint}>
+                <AppText style={styles.fieldHint}>
                   Agrega una fecha de finalizacion si quieres crear una notificacion.
-                </Text>
+                </AppText>
               </View>
             )}
 
             <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
               <Ionicons name="save-outline" size={20} color={appColors.text} />
-              <Text style={styles.btnText}>{isEditing ? 'Guardar cambios' : 'Guardar medicacion'}</Text>
+              <AppText style={styles.btnText}>{isEditing ? 'Guardar cambios' : 'Guardar medicacion'}</AppText>
             </TouchableOpacity>
 
             {showNotificationForm ? (
@@ -1663,13 +1671,13 @@ export function MedicacionFormScreen({
                     <Ionicons name="notifications-outline" size={18} color={appColors.success} />
                   </View>
                   <View style={styles.stepCopy}>
-                    <Text style={styles.stepTitle}>Notificacion del tratamiento</Text>
-                    <Text style={styles.stepHint}>Se programara una notificacion push para la fecha elegida.</Text>
+                    <AppText style={styles.stepTitle}>Notificacion del tratamiento</AppText>
+                    <AppText style={styles.stepHint}>Se programara una notificacion push para la fecha elegida.</AppText>
                   </View>
                 </View>
 
-                <Text style={styles.label}>Mensaje del recordatorio</Text>
-                <TextInput
+                <AppText style={styles.label}>Mensaje del recordatorio</AppText>
+                <AppTextInput
                   style={[styles.input, styles.multiline]}
                   placeholder="Ej. Hoy finaliza el tratamiento indicado"
                   placeholderTextColor="#9FB3C8"
@@ -1678,13 +1686,13 @@ export function MedicacionFormScreen({
                   onChangeText={(value) => handleNotificationChange('mensaje', value)}
                 />
 
-                <Text style={styles.label}>Fecha y hora del aviso</Text>
+                <AppText style={styles.label}>Fecha y hora del aviso</AppText>
                 <View style={styles.dateTimeRow}>
                   <TouchableOpacity
                     style={[styles.dateButton, styles.dateTimeButton]}
                     onPress={() => showPicker('notificationDate')}
                   >
-                    <Text style={styles.dateButtonText}>{formatDisplayDate(notificationDate)}</Text>
+                    <AppText style={styles.dateButtonText}>{formatDisplayDate(notificationDate)}</AppText>
                   </TouchableOpacity>
                   {Platform.OS === 'web' ? (
                     <WebTimeInput
@@ -1697,7 +1705,7 @@ export function MedicacionFormScreen({
                       style={[styles.dateButton, styles.dateTimeButton]}
                       onPress={() => showPicker('notificationTime')}
                     >
-                      <Text style={styles.dateButtonText}>{formatDisplayTime(notificationTime)}</Text>
+                      <AppText style={styles.dateButtonText}>{formatDisplayTime(notificationTime)}</AppText>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -1706,7 +1714,7 @@ export function MedicacionFormScreen({
 
                 <TouchableOpacity style={styles.notificationBtn} onPress={handleCreateNotification}>
                   <Ionicons name="alarm-outline" size={20} color={appColors.background} />
-                  <Text style={styles.notificationBtnText}>Crear notificacion push</Text>
+                  <AppText style={styles.notificationBtnText}>Crear notificacion push</AppText>
                 </TouchableOpacity>
               </View>
             ) : null}
@@ -1716,7 +1724,7 @@ export function MedicacionFormScreen({
 
       {!isCreateMode ? (
         <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('MedicacionCreate')}>
-          <Text style={styles.fabText}>+</Text>
+          <AppText style={styles.fabText}>+</AppText>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -2238,7 +2246,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   notificationBtn: {
-    backgroundColor: '#38F28E',
+    backgroundColor: '#38E28E',
     paddingVertical: 16,
     borderRadius: 12,
     marginTop: 4,
@@ -2335,7 +2343,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   dayTypeStart: {
-    backgroundColor: '#38F28E18',
+    backgroundColor: '#38E28E18',
   },
   dayTypeEnd: {
     backgroundColor: '#FF4D7318',

@@ -8,7 +8,7 @@ export const appColors = {
   text: '#F4F8FF',
   textMuted: '#9FB3C8',
   textSoft: '#C9D7E8',
-  success: '#38F28E',
+  success: '#38E28E',
   info: '#29B6FF',
   accent: '#FF4D73',
   overlay: '#000000',

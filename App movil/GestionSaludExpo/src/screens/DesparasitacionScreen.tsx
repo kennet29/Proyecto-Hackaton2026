@@ -6,11 +6,10 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Calendar, type DateData } from 'react-native-calendars';
@@ -22,6 +21,7 @@ import type { RootStackParamList } from '../navigation/types';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
+import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 
 type DesparasitacionRecord = {
   desparasitacionId: number;
@@ -218,11 +218,10 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
       return;
     }
     try {
-      const response = await fetch(`${API_URL}/desparasitacion`, { headers: authHeaders });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(body?.message ?? 'No se pudo cargar el historial');
-      }
+      const { data: body } = await getJsonWithOfflineFallback<unknown>(
+        '/desparasitacion',
+        authHeaders,
+      );
       const items = Array.isArray(body)
         ? body
             .map((item) => normalizeRecord((item ?? {}) as Record<string, unknown>))
@@ -281,7 +280,7 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
         const existing = marks[applicationDate] ?? {};
         const dots = existing.dots ?? [];
         if (!dots.some((dot) => dot.key === `app-${record.desparasitacionId}`)) {
-          dots.push({ key: `app-${record.desparasitacionId}`, color: '#38F28E' });
+          dots.push({ key: `app-${record.desparasitacionId}`, color: '#38E28E' });
         }
         marks[applicationDate] = { ...existing, marked: true, dots };
       }
@@ -436,22 +435,22 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
         }
       >
         <View style={styles.heroCard}>
-          <Text style={styles.eyebrow}>CONTROL PREVENTIVO</Text>
-          <Text style={styles.title}>
+          <AppText style={styles.eyebrow}>CONTROL PREVENTIVO</AppText>
+          <AppText style={styles.title}>
             {isCreateMode ? 'Nuevo control de desparasitacion' : 'Desparasitacion'}
-          </Text>
-          <Text style={styles.subtitle}>
+          </AppText>
+          <AppText style={styles.subtitle}>
             {isCreateMode
               ? 'Registra la aplicacion, la dosis y deja programada la siguiente fecha si ya esta definida.'
               : 'Consulta aplicaciones pasadas, proximas fechas y el calendario preventivo por persona.'}
-          </Text>
+          </AppText>
         </View>
 
         {isCreateMode ? (
           <View style={styles.formCard}>
-            <Text style={styles.formTitle}>Registrar control</Text>
+            <AppText style={styles.formTitle}>Registrar control</AppText>
 
-            <Text style={styles.label}>Paciente</Text>
+            <AppText style={styles.label}>Paciente</AppText>
             <View style={styles.pickerWrapper}>
               <Picker
                 style={styles.picker}
@@ -476,9 +475,9 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
               </Picker>
             </View>
 
-            <Text style={styles.label}>Fecha de aplicacion</Text>
+            <AppText style={styles.label}>Fecha de aplicacion</AppText>
             <TouchableOpacity style={styles.dateButton} onPress={() => openDatePicker('fecha')}>
-              <Text style={styles.dateButtonText}>{formatDisplayDate(form.fecha)}</Text>
+              <AppText style={styles.dateButtonText}>{formatDisplayDate(form.fecha)}</AppText>
             </TouchableOpacity>
             {Platform.OS === 'ios' && showIOSFechaPicker ? (
               <View style={styles.iosPickerCard}>
@@ -497,12 +496,12 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
                   style={styles.secondaryButton}
                   onPress={() => setShowIOSFechaPicker(false)}
                 >
-                  <Text style={styles.secondaryButtonText}>Listo</Text>
+                  <AppText style={styles.secondaryButtonText}>Listo</AppText>
                 </TouchableOpacity>
               </View>
             ) : null}
 
-            <TextInput
+            <AppTextInput
               style={styles.input}
               placeholder="Producto utilizado"
               placeholderTextColor="#9FB3C8"
@@ -510,7 +509,7 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
               onChangeText={(value) => handleChange('producto', value)}
             />
 
-            <TextInput
+            <AppTextInput
               style={styles.input}
               placeholder="Dosis"
               placeholderTextColor="#9FB3C8"
@@ -518,12 +517,12 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
               onChangeText={(value) => handleChange('dosis', value)}
             />
 
-            <Text style={styles.label}>Proxima fecha</Text>
+            <AppText style={styles.label}>Proxima fecha</AppText>
             <TouchableOpacity
               style={styles.dateButton}
               onPress={() => openDatePicker('proximafecha')}
             >
-              <Text style={styles.dateButtonText}>{formatDisplayDate(form.proximafecha)}</Text>
+              <AppText style={styles.dateButtonText}>{formatDisplayDate(form.proximafecha)}</AppText>
             </TouchableOpacity>
             {Platform.OS === 'ios' && showIOSProximaPicker ? (
               <View style={styles.iosPickerCard}>
@@ -542,12 +541,12 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
                   style={styles.secondaryButton}
                   onPress={() => setShowIOSProximaPicker(false)}
                 >
-                  <Text style={styles.secondaryButtonText}>Listo</Text>
+                  <AppText style={styles.secondaryButtonText}>Listo</AppText>
                 </TouchableOpacity>
               </View>
             ) : null}
 
-            <TextInput
+            <AppTextInput
               style={[styles.input, styles.multiline]}
               placeholder="Observaciones"
               placeholderTextColor="#9FB3C8"
@@ -564,7 +563,7 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
                   if (navigation.canGoBack()) navigation.goBack();
                 }}
               >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
+                <AppText style={styles.cancelButtonText}>Cancelar</AppText>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.primaryButton, isSubmitting ? styles.disabledButton : null]}
@@ -574,7 +573,7 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
                 {isSubmitting ? (
                   <ActivityIndicator color="#F4F8FF" />
                 ) : (
-                  <Text style={styles.primaryButtonText}>Guardar</Text>
+                  <AppText style={styles.primaryButtonText}>Guardar</AppText>
                 )}
               </TouchableOpacity>
             </View>
@@ -582,7 +581,7 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
         ) : (
           <>
             <View style={styles.filterCard}>
-              <Text style={styles.label}>Filtrar por paciente</Text>
+              <AppText style={styles.label}>Filtrar por paciente</AppText>
               <View style={styles.pickerWrapper}>
                 <Picker
                   style={styles.picker}
@@ -609,28 +608,28 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
 
               {nextUpcomingRecord ? (
                 <View style={styles.highlightCard}>
-                  <Text style={styles.highlightLabel}>Proximo control sugerido</Text>
-                  <Text style={styles.highlightTitle}>
+                  <AppText style={styles.highlightLabel}>Proximo control sugerido</AppText>
+                  <AppText style={styles.highlightTitle}>
                     {nextUpcomingRecord.producto ?? 'Producto sin nombre'}
-                  </Text>
-                  <Text style={styles.highlightText}>
+                  </AppText>
+                  <AppText style={styles.highlightText}>
                     {`${patientNameById[nextUpcomingRecord.pacienteId] ?? `Paciente #${nextUpcomingRecord.pacienteId}`} | ${formatRecordDate(nextUpcomingRecord.proximafecha)}`}
-                  </Text>
+                  </AppText>
                 </View>
               ) : null}
             </View>
 
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Calendario preventivo</Text>
-              <Text style={styles.sectionSubtitle}>
+              <AppText style={styles.sectionTitle}>Calendario preventivo</AppText>
+              <AppText style={styles.sectionSubtitle}>
                 Verde: aplicacion realizada. Amarillo: siguiente fecha.
-              </Text>
+              </AppText>
             </View>
 
             {loading ? (
               <View style={styles.loadingCard}>
                 <ActivityIndicator color="#29B6FF" />
-                <Text style={styles.loadingText}>Cargando calendario...</Text>
+                <AppText style={styles.loadingText}>Cargando calendario...</AppText>
               </View>
             ) : (
               <View style={styles.calendarCard}>
@@ -655,31 +654,31 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
             )}
 
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Actividad del dia</Text>
-              <Text style={styles.sectionSubtitle}>{formatDisplayDate(selectedDate)}</Text>
+              <AppText style={styles.sectionTitle}>Actividad del dia</AppText>
+              <AppText style={styles.sectionSubtitle}>{formatDisplayDate(selectedDate)}</AppText>
             </View>
 
             {loading ? null : dayEntries.length === 0 ? (
               <View style={styles.emptyCard}>
-                <Text style={styles.emptyTitle}>No hay eventos en esta fecha</Text>
-                <Text style={styles.emptyText}>
+                <AppText style={styles.emptyTitle}>No hay eventos en esta fecha</AppText>
+                <AppText style={styles.emptyText}>
                   Selecciona otro dia del calendario para revisar aplicaciones o proximas fechas.
-                </Text>
+                </AppText>
               </View>
             ) : (
               dayEntries.map((entry) => (
                 <View key={`${entry.desparasitacionId}-${entry.dayType}`} style={styles.dayCard}>
                   <View style={styles.recordTopRow}>
-                    <Text style={styles.recordTitle}>
+                    <AppText style={styles.recordTitle}>
                       {entry.producto ?? 'Producto no definido'}
-                    </Text>
+                    </AppText>
                     <View
                       style={[
                         styles.badge,
                         entry.dayType === 'aplicacion' ? styles.badgeSuccess : styles.badgeWarning,
                       ]}
                     >
-                      <Text
+                      <AppText
                         style={[
                           styles.badgeText,
                           entry.dayType === 'aplicacion'
@@ -688,54 +687,54 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
                         ]}
                       >
                         {entry.dayType === 'aplicacion' ? 'Aplicacion' : 'Proxima fecha'}
-                      </Text>
+                      </AppText>
                     </View>
                   </View>
-                  <Text style={styles.recordText}>
+                  <AppText style={styles.recordText}>
                     Paciente: {patientNameById[entry.pacienteId] ?? `Paciente #${entry.pacienteId}`}
-                  </Text>
-                  <Text style={styles.recordText}>
+                  </AppText>
+                  <AppText style={styles.recordText}>
                     Dosis: {entry.dosis ?? 'Sin dato'}
-                  </Text>
+                  </AppText>
                   {entry.observaciones ? (
-                    <Text style={styles.recordText}>Observaciones: {entry.observaciones}</Text>
+                    <AppText style={styles.recordText}>Observaciones: {entry.observaciones}</AppText>
                   ) : null}
                 </View>
               ))
             )}
 
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Historial completo</Text>
-              <Text style={styles.sectionSubtitle}>{`${visibleRecords.length} registros`}</Text>
+              <AppText style={styles.sectionTitle}>Historial completo</AppText>
+              <AppText style={styles.sectionSubtitle}>{`${visibleRecords.length} registros`}</AppText>
             </View>
 
             {loading ? null : visibleRecords.length === 0 ? (
               <View style={styles.emptyCard}>
-                <Text style={styles.emptyTitle}>Sin registros</Text>
-                <Text style={styles.emptyText}>
+                <AppText style={styles.emptyTitle}>Sin registros</AppText>
+                <AppText style={styles.emptyText}>
                   Todavia no hay controles de desparasitacion para este paciente.
-                </Text>
+                </AppText>
               </View>
             ) : (
               visibleRecords.map((record) => (
                 <View key={record.desparasitacionId} style={styles.recordCard}>
-                  <Text style={styles.recordTitle}>
+                  <AppText style={styles.recordTitle}>
                     {record.producto ?? 'Producto no definido'}
-                  </Text>
-                  <Text style={styles.recordText}>
+                  </AppText>
+                  <AppText style={styles.recordText}>
                     Paciente: {patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`}
-                  </Text>
-                  <Text style={styles.recordText}>
+                  </AppText>
+                  <AppText style={styles.recordText}>
                     Aplicado: {formatRecordDate(record.fecha)}
-                  </Text>
-                  <Text style={styles.recordText}>
+                  </AppText>
+                  <AppText style={styles.recordText}>
                     Dosis: {record.dosis ?? 'Sin dato'}
-                  </Text>
-                  <Text style={styles.recordText}>
+                  </AppText>
+                  <AppText style={styles.recordText}>
                     Proxima fecha: {formatRecordDate(record.proximafecha)}
-                  </Text>
+                  </AppText>
                   {record.observaciones ? (
-                    <Text style={styles.recordText}>Observaciones: {record.observaciones}</Text>
+                    <AppText style={styles.recordText}>Observaciones: {record.observaciones}</AppText>
                   ) : null}
                 </View>
               ))
@@ -749,7 +748,7 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
           style={styles.fab}
           onPress={() => navigation.navigate('DesparasitacionCreate')}
         >
-          <Text style={styles.fabText}>+</Text>
+          <AppText style={styles.fabText}>+</AppText>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -934,8 +933,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   badgeSuccess: {
-    backgroundColor: '#38F28E18',
-    borderColor: '#38F28E',
+    backgroundColor: '#38E28E18',
+    borderColor: '#38E28E',
   },
   badgeWarning: {
     backgroundColor: '#FF4D7318',
@@ -946,7 +945,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   badgeTextSuccess: {
-    color: '#38F28E',
+    color: '#38E28E',
   },
   badgeTextWarning: {
     color: '#FF4D73',

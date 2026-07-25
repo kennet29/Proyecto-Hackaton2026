@@ -5,11 +5,10 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import DateTimePicker, {
   DateTimePickerAndroid,
 } from '@react-native-community/datetimepicker';
@@ -22,6 +21,7 @@ import type { RootStackParamList } from '../navigation/types';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
+import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 
 type AlergiaRecord = {
   alergiaId: number;
@@ -105,7 +105,7 @@ const getStatusColors = (status?: string | null) => {
   if (normalized.includes('inact')) {
     return { backgroundColor: '#FF4D7318', color: '#FF4D73', borderColor: '#FF4D73' };
   }
-  return { backgroundColor: '#38F28E18', color: '#38F28E', borderColor: '#38F28E' };
+  return { backgroundColor: '#38E28E18', color: '#38E28E', borderColor: '#38E28E' };
 };
 
 const getSeverityColors = (severity?: string | null) => {
@@ -201,9 +201,10 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
     if (!token) return;
     setLoadingRecords(true);
     try {
-      const response = await fetch(`${API_URL}/alergia`, { headers: authHeaders });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(body?.message ?? 'No se pudieron cargar las alergias');
+      const { data: body } = await getJsonWithOfflineFallback<unknown>(
+        '/alergia',
+        authHeaders,
+      );
       setRecords(
         (Array.isArray(body) ? body : [])
           .map((item: any, index: number) => ({
@@ -360,23 +361,23 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
 
   const renderForm = () => (
     <View style={styles.formCard}>
-      <Text style={styles.formTitle}>Nueva alergia</Text>
-      <Text style={styles.formSubtitle}>
+      <AppText style={styles.formTitle}>Nueva alergia</AppText>
+      <AppText style={styles.formSubtitle}>
         Registra el tipo, la reaccion y el manejo recomendado para que quede visible en el historial.
-      </Text>
+      </AppText>
 
-      <Text style={styles.label}>Paciente</Text>
+      <AppText style={styles.label}>Paciente</AppText>
       {loadingPatients ? (
         <View style={styles.loadingCard}>
           <ActivityIndicator color="#29B6FF" />
-          <Text style={styles.loadingText}>Cargando pacientes...</Text>
+          <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
         </View>
       ) : patientOptions.length === 0 ? (
         <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>No hay pacientes vinculados</Text>
-          <Text style={styles.emptyText}>
+          <AppText style={styles.emptyTitle}>No hay pacientes vinculados</AppText>
+          <AppText style={styles.emptyText}>
             Primero agrega una persona desde Gestionar Expediente.
-          </Text>
+          </AppText>
         </View>
       ) : (
         <View style={styles.pickerWrapper}>
@@ -399,35 +400,35 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
         </View>
       )}
 
-      <TextInput
+      <AppTextInput
         style={styles.input}
         placeholder="Tipo de alergia"
         placeholderTextColor="#9FB3C8"
         value={form.tipo}
         onChangeText={(value) => handleChange('tipo', value)}
       />
-      <TextInput
+      <AppTextInput
         style={styles.input}
         placeholder="Desencadenante"
         placeholderTextColor="#9FB3C8"
         value={form.desencadenante}
         onChangeText={(value) => handleChange('desencadenante', value)}
       />
-      <TextInput
+      <AppTextInput
         style={styles.input}
         placeholder="Severidad"
         placeholderTextColor="#9FB3C8"
         value={form.severidad}
         onChangeText={(value) => handleChange('severidad', value)}
       />
-      <TextInput
+      <AppTextInput
         style={styles.input}
         placeholder="Reaccion tipica"
         placeholderTextColor="#9FB3C8"
         value={form.reaccion}
         onChangeText={(value) => handleChange('reaccion', value)}
       />
-      <TextInput
+      <AppTextInput
         style={styles.input}
         placeholder="Tratamiento recomendado"
         placeholderTextColor="#9FB3C8"
@@ -435,9 +436,9 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
         onChangeText={(value) => handleChange('tratamiento', value)}
       />
 
-      <Text style={styles.label}>Fecha diagnostico</Text>
+      <AppText style={styles.label}>Fecha diagnostico</AppText>
       <TouchableOpacity style={styles.dateButton} onPress={openDatePicker}>
-        <Text style={styles.dateButtonText}>{formatDisplayDate(form.fechadiagnostico)}</Text>
+        <AppText style={styles.dateButtonText}>{formatDisplayDate(form.fechadiagnostico)}</AppText>
       </TouchableOpacity>
 
       {Platform.OS === 'ios' && showIOSDatePicker ? (
@@ -454,19 +455,19 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
             style={styles.secondaryButton}
             onPress={() => setShowIOSDatePicker(false)}
           >
-            <Text style={styles.secondaryButtonText}>Listo</Text>
+            <AppText style={styles.secondaryButtonText}>Listo</AppText>
           </TouchableOpacity>
         </View>
       ) : null}
 
-      <TextInput
+      <AppTextInput
         style={styles.input}
         placeholder="Estado"
         placeholderTextColor="#9FB3C8"
         value={form.estado}
         onChangeText={(value) => handleChange('estado', value)}
       />
-      <TextInput
+      <AppTextInput
         style={[styles.input, styles.multiline]}
         placeholder="Observaciones"
         placeholderTextColor="#9FB3C8"
@@ -485,7 +486,7 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
             }
           }}
         >
-          <Text style={styles.cancelButtonText}>Cancelar</Text>
+          <AppText style={styles.cancelButtonText}>Cancelar</AppText>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.primaryButton, isSubmitting ? styles.primaryButtonDisabled : null]}
@@ -495,7 +496,7 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
           {isSubmitting ? (
             <ActivityIndicator color="#F4F8FF" />
           ) : (
-            <Text style={styles.primaryButtonText}>Guardar</Text>
+            <AppText style={styles.primaryButtonText}>Guardar</AppText>
           )}
         </TouchableOpacity>
       </View>
@@ -506,11 +507,11 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
     return (
       <ScrollView contentContainerStyle={styles.container} style={styles.screen}>
         <View style={styles.heroCard}>
-          <Text style={styles.eyebrow}>Riesgos y reacciones</Text>
-          <Text style={styles.title}>Nueva alergia</Text>
-          <Text style={styles.subtitle}>
+          <AppText style={styles.eyebrow}>Riesgos y reacciones</AppText>
+          <AppText style={styles.title}>Nueva alergia</AppText>
+          <AppText style={styles.subtitle}>
             Registra el tipo, la reaccion y el manejo recomendado para que quede visible en el historial clinico.
-          </Text>
+          </AppText>
         </View>
         {renderForm()}
       </ScrollView>
@@ -521,15 +522,15 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.heroCard}>
-          <Text style={styles.eyebrow}>Riesgos y reacciones</Text>
-          <Text style={styles.title}>Alergias</Text>
-          <Text style={styles.subtitle}>
+          <AppText style={styles.eyebrow}>Riesgos y reacciones</AppText>
+          <AppText style={styles.title}>Alergias</AppText>
+          <AppText style={styles.subtitle}>
             Consulta el resumen por persona, detecta alergias activas y filtra el historial cuando lo necesites.
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.filterCard}>
-          <Text style={styles.label}>Filtrar por paciente</Text>
+          <AppText style={styles.label}>Filtrar por paciente</AppText>
           <View style={styles.pickerWrapper}>
             <Picker
               selectedValue={selectedPatientId}
@@ -553,29 +554,29 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
               ))}
             </Picker>
           </View>
-          <Text style={styles.filterHint}>
+          <AppText style={styles.filterHint}>
             {selectedPatientId
               ? `Mostrando alergias de ${patientNameById[Number(selectedPatientId)] ?? 'paciente'}`
               : 'Mostrando el historial alergico completo'}
-          </Text>
+          </AppText>
         </View>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Personas y alergias</Text>
-          <Text style={styles.sectionSubtitle}>{`${visibleSummaries.length} perfiles`}</Text>
+          <AppText style={styles.sectionTitle}>Personas y alergias</AppText>
+          <AppText style={styles.sectionSubtitle}>{`${visibleSummaries.length} perfiles`}</AppText>
         </View>
 
         {loadingRecords ? (
           <View style={styles.loadingCard}>
             <ActivityIndicator color="#29B6FF" />
-            <Text style={styles.loadingText}>Cargando resumen...</Text>
+            <AppText style={styles.loadingText}>Cargando resumen...</AppText>
           </View>
         ) : visibleSummaries.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>Todavia no hay alergias registradas</Text>
-            <Text style={styles.emptyText}>
+            <AppText style={styles.emptyTitle}>Todavia no hay alergias registradas</AppText>
+            <AppText style={styles.emptyText}>
               Usa el boton flotante para registrar la primera alergia de un paciente.
-            </Text>
+            </AppText>
           </View>
         ) : (
           visibleSummaries.map((summary) => (
@@ -594,56 +595,56 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
             >
               <View style={styles.summaryHeader}>
                 <View style={styles.summaryHeaderBody}>
-                  <Text style={styles.summaryName}>{summary.patientName}</Text>
-                  <Text style={styles.summaryMeta}>
+                  <AppText style={styles.summaryName}>{summary.patientName}</AppText>
+                  <AppText style={styles.summaryMeta}>
                     {summary.latestDate ? `Ultima: ${formatRecordDate(summary.latestDate)}` : 'Sin fecha reciente'}
-                  </Text>
+                  </AppText>
                 </View>
                 <View style={styles.summaryCountBadge}>
-                  <Text style={styles.summaryCountValue}>{summary.total}</Text>
-                  <Text style={styles.summaryCountLabel}>alergias</Text>
+                  <AppText style={styles.summaryCountValue}>{summary.total}</AppText>
+                  <AppText style={styles.summaryCountLabel}>alergias</AppText>
                 </View>
               </View>
-              <Text style={styles.summaryPrimary}>{`${summary.activeCount} activas`}</Text>
-              <Text style={styles.summarySecondary}>
+              <AppText style={styles.summaryPrimary}>{`${summary.activeCount} activas`}</AppText>
+              <AppText style={styles.summarySecondary}>
                 {summary.tipos.length > 0
                   ? summary.tipos.slice(0, 3).join(' Ã¢â‚¬Â¢ ')
                   : 'Sin tipos registrados'}
-              </Text>
+              </AppText>
               {summary.tipos.length > 0 ? (
                 <View style={styles.chipRow}>
                   {summary.tipos.slice(0, 4).map((tipo) => (
                     <View key={`${summary.pacienteId}-${tipo}`} style={styles.chip}>
-                      <Text style={styles.chipText}>{tipo}</Text>
+                      <AppText style={styles.chipText}>{tipo}</AppText>
                     </View>
                   ))}
                 </View>
               ) : null}
-              <Text style={styles.summaryAction}>
+              <AppText style={styles.summaryAction}>
                 {Number(selectedPatientId) === summary.pacienteId
                   ? 'Toca para volver a ver todos'
                   : 'Toca para filtrar este historial'}
-              </Text>
+              </AppText>
             </TouchableOpacity>
           ))
         )}
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Historial de alergias</Text>
-          <Text style={styles.sectionSubtitle}>{`${filteredRecords.length} registros`}</Text>
+          <AppText style={styles.sectionTitle}>Historial de alergias</AppText>
+          <AppText style={styles.sectionSubtitle}>{`${filteredRecords.length} registros`}</AppText>
         </View>
 
         {loadingRecords ? (
           <View style={styles.loadingCard}>
             <ActivityIndicator color="#29B6FF" />
-            <Text style={styles.loadingText}>Cargando historial...</Text>
+            <AppText style={styles.loadingText}>Cargando historial...</AppText>
           </View>
         ) : filteredRecords.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>No hay alergias para este filtro</Text>
-            <Text style={styles.emptyText}>
+            <AppText style={styles.emptyTitle}>No hay alergias para este filtro</AppText>
+            <AppText style={styles.emptyText}>
               Cambia el paciente seleccionado o registra una nueva alergia.
-            </Text>
+            </AppText>
           </View>
         ) : (
           filteredRecords.map((record) => {
@@ -653,7 +654,7 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
               <View key={record.alergiaId} style={styles.recordCard}>
                 <View style={styles.recordTopRow}>
                   <View style={styles.datePill}>
-                    <Text style={styles.datePillText}>{formatRecordDate(record.fechadiagnostico)}</Text>
+                    <AppText style={styles.datePillText}>{formatRecordDate(record.fechadiagnostico)}</AppText>
                   </View>
                   <View style={styles.statusRow}>
                     <View
@@ -665,9 +666,9 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
                         },
                       ]}
                     >
-                      <Text style={[styles.statusPillText, { color: severityColors.color }]}>
+                      <AppText style={[styles.statusPillText, { color: severityColors.color }]}>
                         {normalizeText(record.severidad) ?? 'Sin severidad'}
-                      </Text>
+                      </AppText>
                     </View>
                     <View
                       style={[
@@ -678,30 +679,30 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
                         },
                       ]}
                     >
-                      <Text style={[styles.statusPillText, { color: statusColors.color }]}>
+                      <AppText style={[styles.statusPillText, { color: statusColors.color }]}>
                         {normalizeText(record.estado) ?? 'Activa'}
-                      </Text>
+                      </AppText>
                     </View>
                   </View>
                 </View>
 
-                <Text style={styles.recordTitle}>{normalizeText(record.tipo) ?? 'Alergia'}</Text>
+                <AppText style={styles.recordTitle}>{normalizeText(record.tipo) ?? 'Alergia'}</AppText>
                 {!selectedPatientId ? (
-                  <Text style={styles.recordPatient}>
+                  <AppText style={styles.recordPatient}>
                     {patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`}
-                  </Text>
+                  </AppText>
                 ) : null}
-                <Text style={styles.recordText}>
+                <AppText style={styles.recordText}>
                   Desencadenante: {normalizeText(record.desencadenante) ?? 'Sin dato'}
-                </Text>
-                <Text style={styles.recordText}>
+                </AppText>
+                <AppText style={styles.recordText}>
                   Reaccion: {normalizeText(record.reaccion) ?? 'Sin dato'}
-                </Text>
-                <Text style={styles.recordText}>
+                </AppText>
+                <AppText style={styles.recordText}>
                   Tratamiento: {normalizeText(record.tratamiento) ?? 'Sin dato'}
-                </Text>
+                </AppText>
                 {normalizeText(record.observaciones) ? (
-                  <Text style={styles.recordText}>Notas: {normalizeText(record.observaciones)}</Text>
+                  <AppText style={styles.recordText}>Notas: {normalizeText(record.observaciones)}</AppText>
                 ) : null}
               </View>
             );
@@ -710,7 +711,7 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
       </ScrollView>
 
       <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('AlergiaCreate')}>
-        <Text style={styles.fabText}>+</Text>
+        <AppText style={styles.fabText}>+</AppText>
       </TouchableOpacity>
     </View>
   );

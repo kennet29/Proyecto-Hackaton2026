@@ -5,11 +5,10 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
@@ -318,11 +317,11 @@ const FeedbackBanner = ({ feedback }: { feedback: FeedbackState }) => {
   const isSuccess = feedback.type === 'success';
   return (
     <View style={[styles.feedbackBox, isSuccess ? styles.feedbackSuccess : styles.feedbackError]}>
-      <Text
+      <AppText
         style={[styles.feedbackText, isSuccess ? styles.feedbackTextSuccess : styles.feedbackTextError]}
       >
         {feedback.message}
-      </Text>
+      </AppText>
     </View>
   );
 };
@@ -748,26 +747,26 @@ export function ControlCronicoScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void fetchRecords()} />}
     >
       <View style={styles.heroCard}>
-        <Text style={styles.kicker}>SEGUIMIENTO CRONICO</Text>
+        <AppText style={styles.kicker}>SEGUIMIENTO CRONICO</AppText>
         <View style={styles.header}>
-          <Text style={styles.title}>Control cronico</Text>
-          <Text style={styles.subtitle}>
+          <AppText style={styles.title}>Control cronico</AppText>
+          <AppText style={styles.subtitle}>
             Registra mediciones, revisa el estado del paciente y deja programado el proximo control.
-          </Text>
+          </AppText>
         </View>
       </View>
 
       <FeedbackBanner feedback={feedback} />
 
       <View style={styles.filterCard}>
-        <Text style={styles.label}>Paciente</Text>
+        <AppText style={styles.label}>Paciente</AppText>
         {loadingPatients ? (
           <View style={styles.inlineState}>
             <ActivityIndicator color="#29B6FF" />
-            <Text style={styles.inlineStateText}>Cargando pacientes...</Text>
+            <AppText style={styles.inlineStateText}>Cargando pacientes...</AppText>
           </View>
         ) : patientOptions.length === 0 ? (
-          <Text style={styles.emptySelectText}>No hay pacientes vinculados disponibles.</Text>
+          <AppText style={styles.emptySelectText}>No hay pacientes vinculados disponibles.</AppText>
         ) : (
           <View style={styles.pickerWrapper}>
             <Picker
@@ -786,32 +785,32 @@ export function ControlCronicoScreen() {
             </Picker>
           </View>
         )}
-        <Text style={styles.filterHint}>{selectedPatientName}</Text>
+        <AppText style={styles.filterHint}>{selectedPatientName}</AppText>
       </View>
 
       <View style={styles.summaryCard}>
-        <Text style={styles.sectionTitle}>Condiciones del paciente</Text>
-        <Text style={styles.sectionSubtitle}>
+        <AppText style={styles.sectionTitle}>Condiciones del paciente</AppText>
+        <AppText style={styles.sectionSubtitle}>
           {patientCondiciones.length === 0
             ? 'Este paciente no tiene condiciones cronicas disponibles para seguimiento.'
             : 'Estas son las condiciones sobre las que puedes registrar controles.'}
-        </Text>
+        </AppText>
 
         {patientCondiciones.length === 0 ? (
-          <Text style={styles.emptySelectText}>
+          <AppText style={styles.emptySelectText}>
             Primero registra una condicion cronica para este paciente.
-          </Text>
+          </AppText>
         ) : (
           patientCondiciones.map((item) => (
             <View key={item.condicioncronicaId} style={styles.conditionBadgeRow}>
               <View>
-                <Text style={styles.conditionBadgeTitle}>
+                <AppText style={styles.conditionBadgeTitle}>
                   {tiposMap[item.tipocondicionId] ?? `Condicion #${item.tipocondicionId}`}
-                </Text>
-                <Text style={styles.conditionBadgeMeta}>{item.estado || 'Estado sin definir'}</Text>
+                </AppText>
+                <AppText style={styles.conditionBadgeMeta}>{item.estado || 'Estado sin definir'}</AppText>
               </View>
               <View style={styles.conditionStatusPill}>
-                <Text style={styles.conditionStatusText}>{item.estado || 'Activa'}</Text>
+                <AppText style={styles.conditionStatusText}>{item.estado || 'Activa'}</AppText>
               </View>
             </View>
           ))
@@ -819,25 +818,25 @@ export function ControlCronicoScreen() {
       </View>
 
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Historial de controles</Text>
-        <Text style={styles.sectionSubtitle}>
+        <AppText style={styles.sectionTitle}>Historial de controles</AppText>
+        <AppText style={styles.sectionSubtitle}>
           {filteredRecords.length === 1
             ? '1 control registrado'
             : `${filteredRecords.length} controles registrados`}
-        </Text>
+        </AppText>
       </View>
 
       {loading ? (
         <View style={styles.stateBox}>
           <ActivityIndicator color="#29B6FF" />
-          <Text style={styles.stateText}>Cargando historial...</Text>
+          <AppText style={styles.stateText}>Cargando historial...</AppText>
         </View>
       ) : filteredRecords.length === 0 ? (
         <View style={styles.stateBox}>
-          <Text style={styles.stateTitle}>Sin registros</Text>
-          <Text style={styles.stateText}>
+          <AppText style={styles.stateTitle}>Sin registros</AppText>
+          <AppText style={styles.stateText}>
             No hay controles cronicos para el paciente seleccionado.
-          </Text>
+          </AppText>
         </View>
       ) : (
         filteredRecords.map((record) => {
@@ -846,30 +845,30 @@ export function ControlCronicoScreen() {
             <View key={record.controlcronicoId} style={styles.card}>
               <View style={styles.cardTopRow}>
                 <View style={styles.cardTopCopy}>
-                  <Text style={styles.cardTitle}>
+                  <AppText style={styles.cardTitle}>
                     {tipoNombre ?? `Condicion #${record.condicioncronicaId}`}
-                  </Text>
-                  <Text style={styles.cardSubtitle}>
+                  </AppText>
+                  <AppText style={styles.cardSubtitle}>
                     Control: {formatRecordDateTime(record.fechacontrol)}
-                  </Text>
+                  </AppText>
                 </View>
                 <View style={styles.resultPill}>
-                  <Text style={styles.resultPillText}>{record.resultado || 'Sin resultado'}</Text>
+                  <AppText style={styles.resultPillText}>{record.resultado || 'Sin resultado'}</AppText>
                 </View>
               </View>
-              <Text style={styles.cardText}>Indicador: {record.indicador || 'Sin dato'}</Text>
-              <Text style={styles.cardText}>
+              <AppText style={styles.cardText}>Indicador: {record.indicador || 'Sin dato'}</AppText>
+              <AppText style={styles.cardText}>
                 Valor:{' '}
                 {record.valor !== null && record.valor !== undefined
                   ? `${record.valor}${record.unidad ? ` ${record.unidad}` : ''}`
                   : 'Sin dato'}
-              </Text>
-              <Text style={styles.cardText}>
+              </AppText>
+              <AppText style={styles.cardText}>
                 Proximo control: {formatRecordDate(record.proximocontrol)}
-              </Text>
-              <Text style={styles.cardText}>Medico: {record.medico || 'Sin dato'}</Text>
+              </AppText>
+              <AppText style={styles.cardText}>Medico: {record.medico || 'Sin dato'}</AppText>
               {record.conclusiones ? (
-                <Text style={styles.cardText}>Conclusiones: {record.conclusiones}</Text>
+                <AppText style={styles.cardText}>Conclusiones: {record.conclusiones}</AppText>
               ) : null}
             </View>
           );
@@ -878,16 +877,16 @@ export function ControlCronicoScreen() {
 
       {showForm ? (
         <View style={styles.formCard}>
-          <Text style={styles.formTitle}>Nuevo control</Text>
-          <Text style={styles.formSubtitle}>
+          <AppText style={styles.formTitle}>Nuevo control</AppText>
+          <AppText style={styles.formSubtitle}>
             Puedes agregar varias mediciones en el mismo control. Se guardan como registros separados con la misma fecha y hora.
-          </Text>
+          </AppText>
 
-          <Text style={styles.label}>Condicion cronica</Text>
+          <AppText style={styles.label}>Condicion cronica</AppText>
           {patientCondiciones.length === 0 ? (
-            <Text style={styles.emptySelectText}>
+            <AppText style={styles.emptySelectText}>
               Primero registra una condicion cronica para este paciente.
-            </Text>
+            </AppText>
           ) : (
             <View style={styles.pickerWrapper}>
               <Picker
@@ -907,9 +906,9 @@ export function ControlCronicoScreen() {
             </View>
           )}
 
-          <Text style={styles.label}>Fecha del control</Text>
+          <AppText style={styles.label}>Fecha del control</AppText>
           <TouchableOpacity style={styles.dateButton} onPress={() => openDatePicker('fechacontrol')}>
-            <Text style={styles.dateButtonText}>{formatDisplayDate(form.fechacontrol)}</Text>
+            <AppText style={styles.dateButtonText}>{formatDisplayDate(form.fechacontrol)}</AppText>
           </TouchableOpacity>
           {Platform.OS === 'ios' && showIOSControlPicker ? (
             <View style={styles.iosPickerWrapper}>
@@ -927,12 +926,12 @@ export function ControlCronicoScreen() {
                 style={styles.iosPickerDoneBtn}
                 onPress={() => setShowIOSControlPicker(false)}
               >
-                <Text style={styles.iosPickerDoneText}>Listo</Text>
+                <AppText style={styles.iosPickerDoneText}>Listo</AppText>
               </TouchableOpacity>
             </View>
           ) : null}
 
-          <Text style={styles.label}>Hora del control</Text>
+          <AppText style={styles.label}>Hora del control</AppText>
           {Platform.OS === 'web' ? (
             <WebTimeInput
               value={form.horacontrol}
@@ -941,7 +940,7 @@ export function ControlCronicoScreen() {
             />
           ) : (
             <TouchableOpacity style={styles.dateButton} onPress={openTimePicker}>
-              <Text style={styles.dateButtonText}>{formatDisplayTime(form.horacontrol)}</Text>
+              <AppText style={styles.dateButtonText}>{formatDisplayTime(form.horacontrol)}</AppText>
             </TouchableOpacity>
           )}
           {Platform.OS === 'ios' && showIOSControlTimePicker ? (
@@ -960,23 +959,23 @@ export function ControlCronicoScreen() {
                 style={styles.iosPickerDoneBtn}
                 onPress={() => setShowIOSControlTimePicker(false)}
               >
-                <Text style={styles.iosPickerDoneText}>Listo</Text>
+                <AppText style={styles.iosPickerDoneText}>Listo</AppText>
               </TouchableOpacity>
             </View>
           ) : null}
 
           <View style={styles.measurementsHeader}>
             <View style={styles.measurementsHeaderCopy}>
-              <Text style={styles.formTitle}>Mediciones</Text>
-              <Text style={styles.sectionSubtitle}>
+              <AppText style={styles.formTitle}>Mediciones</AppText>
+              <AppText style={styles.sectionSubtitle}>
                 {measurements.length === 1
                   ? 'Agrega el valor principal de este control'
                   : `${measurements.length} mediciones en este control`}
-              </Text>
+              </AppText>
             </View>
             <TouchableOpacity style={styles.addMeasurementBtn} onPress={addMeasurement}>
               <Ionicons name="add" size={18} color="#29B6FF" />
-              <Text style={styles.addMeasurementText}>Agregar</Text>
+              <AppText style={styles.addMeasurementText}>Agregar</AppText>
             </TouchableOpacity>
           </View>
 
@@ -995,15 +994,15 @@ export function ControlCronicoScreen() {
                   activeOpacity={0.85}
                 >
                   <View style={styles.measurementNumber}>
-                    <Text style={styles.measurementNumberText}>{index + 1}</Text>
+                    <AppText style={styles.measurementNumberText}>{index + 1}</AppText>
                   </View>
                   <View style={styles.measurementToggleCopy}>
-                    <Text style={styles.measurementTitle}>
+                    <AppText style={styles.measurementTitle}>
                       {measurement.indicador || `Medición ${index + 1}`}
-                    </Text>
-                    <Text style={styles.measurementSummary}>
+                    </AppText>
+                    <AppText style={styles.measurementSummary}>
                       {getMeasurementSummary(measurement)}
-                    </Text>
+                    </AppText>
                   </View>
                   <Ionicons
                     name={measurement.expanded ? 'chevron-up' : 'chevron-down'}
@@ -1022,7 +1021,7 @@ export function ControlCronicoScreen() {
 
               {measurement.expanded ? (
                 <View style={styles.measurementBody}>
-                  <Text style={styles.label}>Indicador</Text>
+                  <AppText style={styles.label}>Indicador</AppText>
                   <View style={styles.quickOptions}>
                     {measurementPresets.map((preset) => {
                       const active = measurement.indicador === preset.label;
@@ -1032,14 +1031,14 @@ export function ControlCronicoScreen() {
                           style={[styles.quickOption, active && styles.quickOptionActive]}
                           onPress={() => applyMeasurementPreset(measurement.id, preset)}
                         >
-                          <Text style={[styles.quickOptionText, active && styles.quickOptionTextActive]}>
+                          <AppText style={[styles.quickOptionText, active && styles.quickOptionTextActive]}>
                             {preset.label}
-                          </Text>
+                          </AppText>
                         </TouchableOpacity>
                       );
                     })}
                   </View>
-                  <TextInput
+                  <AppTextInput
                     style={styles.input}
                     placeholder="Otro indicador"
                     placeholderTextColor="#9FB3C8"
@@ -1049,8 +1048,8 @@ export function ControlCronicoScreen() {
 
                   <View style={styles.measurementFieldsRow}>
                     <View style={styles.measurementField}>
-                      <Text style={styles.label}>Valor</Text>
-                      <TextInput
+                      <AppText style={styles.label}>Valor</AppText>
+                      <AppTextInput
                         style={styles.input}
                         placeholder="Ej. 120"
                         placeholderTextColor="#9FB3C8"
@@ -1060,8 +1059,8 @@ export function ControlCronicoScreen() {
                       />
                     </View>
                     <View style={styles.measurementField}>
-                      <Text style={styles.label}>Unidad</Text>
-                      <TextInput
+                      <AppText style={styles.label}>Unidad</AppText>
+                      <AppTextInput
                         style={styles.input}
                         placeholder="mg/dL, mmHg..."
                         placeholderTextColor="#9FB3C8"
@@ -1071,7 +1070,7 @@ export function ControlCronicoScreen() {
                     </View>
                   </View>
 
-                  <Text style={styles.label}>Resultado</Text>
+                  <AppText style={styles.label}>Resultado</AppText>
                   <View style={styles.quickOptions}>
                     {resultOptions.map((result) => {
                       const active = measurement.resultado === result;
@@ -1081,14 +1080,14 @@ export function ControlCronicoScreen() {
                           style={[styles.resultOption, active && styles.resultOptionActive]}
                           onPress={() => handleMeasurementChange(measurement.id, 'resultado', result)}
                         >
-                          <Text style={[styles.resultOptionText, active && styles.resultOptionTextActive]}>
+                          <AppText style={[styles.resultOptionText, active && styles.resultOptionTextActive]}>
                             {result}
-                          </Text>
+                          </AppText>
                         </TouchableOpacity>
                       );
                     })}
                   </View>
-                  <TextInput
+                  <AppTextInput
                     style={styles.input}
                     placeholder="Escribe otro resultado u observación"
                     placeholderTextColor="#9FB3C8"
@@ -1100,8 +1099,8 @@ export function ControlCronicoScreen() {
             </View>
           ))}
 
-          <Text style={styles.label}>Conclusiones generales</Text>
-          <TextInput
+          <AppText style={styles.label}>Conclusiones generales</AppText>
+          <AppTextInput
             style={[styles.input, styles.multiline]}
             placeholder="Resumen clinico"
             placeholderTextColor="#9FB3C8"
@@ -1111,9 +1110,9 @@ export function ControlCronicoScreen() {
             numberOfLines={3}
           />
 
-          <Text style={styles.label}>Proximo control</Text>
+          <AppText style={styles.label}>Proximo control</AppText>
           <TouchableOpacity style={styles.dateButton} onPress={() => openDatePicker('proximocontrol')}>
-            <Text style={styles.dateButtonText}>{formatDisplayDate(form.proximocontrol)}</Text>
+            <AppText style={styles.dateButtonText}>{formatDisplayDate(form.proximocontrol)}</AppText>
           </TouchableOpacity>
           {Platform.OS === 'ios' && showIOSProximoPicker ? (
             <View style={styles.iosPickerWrapper}>
@@ -1131,13 +1130,13 @@ export function ControlCronicoScreen() {
                 style={styles.iosPickerDoneBtn}
                 onPress={() => setShowIOSProximoPicker(false)}
               >
-                <Text style={styles.iosPickerDoneText}>Listo</Text>
+                <AppText style={styles.iosPickerDoneText}>Listo</AppText>
               </TouchableOpacity>
             </View>
           ) : null}
 
-          <Text style={styles.label}>Medico</Text>
-          <TextInput
+          <AppText style={styles.label}>Medico</AppText>
+          <AppTextInput
             style={styles.input}
             placeholder="Responsable del control"
             placeholderTextColor="#9FB3C8"
@@ -1153,14 +1152,14 @@ export function ControlCronicoScreen() {
             {isSubmitting ? (
               <ActivityIndicator color="#F4F8FF" />
             ) : (
-              <Text style={styles.primaryBtnText}>Guardar control</Text>
+              <AppText style={styles.primaryBtnText}>Guardar control</AppText>
             )}
           </TouchableOpacity>
         </View>
       ) : null}
 
       <TouchableOpacity style={styles.fab} onPress={() => setShowForm((prev) => !prev)}>
-        <Text style={styles.fabText}>{showForm ? 'x' : '+'}</Text>
+        <AppText style={styles.fabText}>{showForm ? 'x' : '+'}</AppText>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -1209,8 +1208,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   feedbackSuccess: {
-    backgroundColor: '#38F28E18',
-    borderColor: '#38F28E',
+    backgroundColor: '#38E28E18',
+    borderColor: '#38E28E',
   },
   feedbackError: {
     backgroundColor: '#FF4D7318',
@@ -1221,7 +1220,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   feedbackTextSuccess: {
-    color: '#38F28E',
+    color: '#38E28E',
   },
   feedbackTextError: {
     color: '#FF4D73',
@@ -1296,10 +1295,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    backgroundColor: '#38F28E18',
+    backgroundColor: '#38E28E18',
   },
   conditionStatusText: {
-    color: '#38F28E',
+    color: '#38E28E',
     fontWeight: '800',
     fontSize: 11,
   },
@@ -1357,7 +1356,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cardSubtitle: {
-    color: '#38F28E',
+    color: '#38E28E',
     fontSize: 12,
   },
   resultPill: {
@@ -1528,8 +1527,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#132238',
   },
   resultOptionActive: {
-    borderColor: '#38F28E',
-    backgroundColor: '#38F28E18',
+    borderColor: '#38E28E',
+    backgroundColor: '#38E28E18',
   },
   resultOptionText: {
     color: '#C9D7E8',
@@ -1537,7 +1536,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   resultOptionTextActive: {
-    color: '#38F28E',
+    color: '#38E28E',
   },
   input: {
     borderWidth: 1,
@@ -1586,7 +1585,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   primaryBtn: {
-    backgroundColor: '#38F28E',
+    backgroundColor: '#38E28E',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
@@ -1606,7 +1605,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#38F28E',
+    backgroundColor: '#38E28E',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',

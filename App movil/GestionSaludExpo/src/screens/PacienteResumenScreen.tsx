@@ -1,14 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import {
+  NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   ActivityIndicator,
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText } from '../components/AppText';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackParamList } from '../navigation/types';
@@ -505,14 +506,14 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
           <MaterialCommunityIcons name="clipboard-pulse-outline" size={25} color={appColors.info} />
         </View>
         <View style={styles.headerCopy}>
-          <Text style={styles.eyebrow}>EXPEDIENTE CLÍNICO</Text>
-          <Text style={styles.pageTitle}>Resumen del paciente</Text>
-          <Text style={styles.pageSubtitle}>Información relevante para una lectura clínica rápida e integral.</Text>
+          <AppText style={styles.eyebrow}>EXPEDIENTE CLÍNICO</AppText>
+          <AppText style={styles.pageTitle}>Resumen del paciente</AppText>
+          <AppText style={styles.pageSubtitle}>Información relevante para una lectura clínica rápida e integral.</AppText>
         </View>
       </View>
 
       <View style={styles.selectorCard}>
-        <Text style={styles.fieldLabel}>Paciente</Text>
+        <AppText style={styles.fieldLabel}>Paciente</AppText>
         <View style={styles.pickerShell}>
           <Picker
             selectedValue={selectedPatientId}
@@ -544,7 +545,7 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
             size={18}
             color={dataSource === 'cache' ? '#F9A826' : appColors.accent}
           />
-          <Text style={styles.noticeText}>{error}</Text>
+          <AppText style={styles.noticeText}>{error}</AppText>
         </View>
       ) : null}
 
@@ -559,8 +560,8 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
       {(loadingPatients || loadingSummary) && !refreshing ? (
         <View style={styles.loadingCard}>
           <ActivityIndicator size="large" color={appColors.info} />
-          <Text style={styles.loadingTitle}>Preparando expediente</Text>
-          <Text style={styles.loadingText}>Estamos reuniendo la información clínica de {selectedLabel}.</Text>
+          <AppText style={styles.loadingTitle}>Preparando expediente</AppText>
+          <AppText style={styles.loadingText}>Estamos reuniendo la información clínica de {selectedLabel}.</AppText>
         </View>
       ) : null}
 
@@ -577,18 +578,18 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
           <View style={styles.patientCard}>
             <View style={styles.patientTop}>
               <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{getInitials(patientName)}</Text>
+                <AppText style={styles.avatarText}>{getInitials(patientName)}</AppText>
               </View>
               <View style={styles.patientIdentity}>
-                <Text style={styles.patientName}>{patientName}</Text>
-                <Text style={styles.patientId}>Expediente #{summary.patient.pacienteId}</Text>
+                <AppText style={styles.patientName}>{patientName}</AppText>
+                <AppText style={styles.patientId}>Expediente #{summary.patient.pacienteId}</AppText>
                 <View style={styles.tagRow}>
                   {summary.patient.edadAproximada !== null ? (
-                    <View style={styles.tag}><Text style={styles.tagText}>{summary.patient.edadAproximada} años</Text></View>
+                    <View style={styles.tag}><AppText style={styles.tagText}>{summary.patient.edadAproximada} años</AppText></View>
                   ) : null}
                   {formatGender(summary.patient.sexo) ? (
                     <View style={styles.tag}>
-                      <Text style={styles.tagText}>{formatGender(summary.patient.sexo)}</Text>
+                      <AppText style={styles.tagText}>{formatGender(summary.patient.sexo)}</AppText>
                     </View>
                   ) : null}
                 </View>
@@ -615,9 +616,9 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
                 size={15}
                 color={dataSource === 'cache' ? '#F9A826' : appColors.success}
               />
-              <Text style={styles.syncText}>
+              <AppText style={styles.syncText}>
                 {dataSource === 'cache' ? 'Copia local' : 'Sincronizado'} · {formatDateTime(summary.generatedAt)}
-              </Text>
+              </AppText>
             </View>
           </View>
 
@@ -630,7 +631,7 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
               <Ionicons name="reader-outline" size={21} color={appColors.info} />
             </View>
             <View style={styles.narrativeContent}>
-              <Text style={styles.narrativeLead}>{patientNarrative?.profile}</Text>
+              <AppText style={styles.narrativeLead}>{patientNarrative?.profile}</AppText>
               <NarrativeLine label="Expediente" text={patientNarrative?.records ?? ''} />
               <NarrativeLine label="Peso más reciente" text={patientNarrative?.weight ?? ''} />
               <NarrativeLine label="Hábitos y estilo de vida" text={patientNarrative?.habits ?? ''} />
@@ -655,18 +656,18 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
                 <Ionicons name="happy-outline" size={22} color="#C084FC" />
               </View>
               <View style={styles.mentalHealthHeaderCopy}>
-                <Text style={styles.mentalHealthTitle}>
+                <AppText style={styles.mentalHealthTitle}>
                   {mentalHealth
                     ? `${mentalHealth.recentRecords} ${
                         mentalHealth.recentRecords === 1 ? 'registro reciente' : 'registros recientes'
                       }`
                     : 'Sin registros recientes'}
-                </Text>
-                <Text style={styles.mentalHealthDate}>
+                </AppText>
+                <AppText style={styles.mentalHealthDate}>
                   {mentalHealth
                     ? `Último registro: ${formatDate(mentalHealth.latest.date)}`
                     : 'Toca para registrar cómo te sientes'}
-                </Text>
+                </AppText>
               </View>
               <Ionicons name="chevron-forward" size={19} color={appColors.textMuted} />
             </View>
@@ -674,23 +675,23 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
             {mentalHealth ? (
               <View style={styles.mentalMetricRow}>
                 <View style={styles.mentalMetric}>
-                  <Text style={styles.mentalMetricValue}>{mentalHealth.averageMood}/5</Text>
-                  <Text style={styles.mentalMetricLabel}>Ánimo</Text>
+                  <AppText style={styles.mentalMetricValue}>{mentalHealth.averageMood}/5</AppText>
+                  <AppText style={styles.mentalMetricLabel}>Ánimo</AppText>
                 </View>
                 <View style={styles.mentalMetricDivider} />
                 <View style={styles.mentalMetric}>
-                  <Text style={styles.mentalMetricValue}>{mentalHealth.averageStress}/5</Text>
-                  <Text style={styles.mentalMetricLabel}>Estrés</Text>
+                  <AppText style={styles.mentalMetricValue}>{mentalHealth.averageStress}/5</AppText>
+                  <AppText style={styles.mentalMetricLabel}>Estrés</AppText>
                 </View>
                 <View style={styles.mentalMetricDivider} />
                 <View style={styles.mentalMetric}>
-                  <Text style={styles.mentalMetricValue}>{mentalHealth.averageAnxiety}/5</Text>
-                  <Text style={styles.mentalMetricLabel}>Ansiedad</Text>
+                  <AppText style={styles.mentalMetricValue}>{mentalHealth.averageAnxiety}/5</AppText>
+                  <AppText style={styles.mentalMetricLabel}>Ansiedad</AppText>
                 </View>
               </View>
             ) : null}
 
-            <Text style={styles.mentalHealthSummary}>{mentalHealthSummary}</Text>
+            <AppText style={styles.mentalHealthSummary}>{mentalHealthSummary}</AppText>
           </TouchableOpacity>
 
           <SectionHeader
@@ -718,8 +719,8 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
                       />
                     </View>
                     <View style={styles.alertCopy}>
-                      <Text style={styles.alertTitle}>{alert.title}</Text>
-                      <Text style={styles.alertDetail}>{alert.detail}</Text>
+                      <AppText style={styles.alertTitle}>{alert.title}</AppText>
+                      <AppText style={styles.alertDetail}>{alert.detail}</AppText>
                     </View>
                   </View>
                 );
@@ -734,8 +735,8 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
                 <View style={[styles.metricIcon, { backgroundColor: colorAlpha(metric.color, '18') }]}>
                   <Ionicons name={metric.icon} size={19} color={metric.color} />
                 </View>
-                <Text style={styles.metricValue}>{metric.value}</Text>
-                <Text style={styles.metricLabel}>{metric.label}</Text>
+                <AppText style={styles.metricValue}>{metric.value}</AppText>
+                <AppText style={styles.metricLabel}>{metric.label}</AppText>
               </View>
             ))}
           </View>
@@ -747,11 +748,11 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
                 <Ionicons name="calendar-outline" size={21} color={appColors.info} />
               </View>
               <View style={styles.upcomingCopy}>
-                <Text style={styles.itemLabel}>PRÓXIMA CITA</Text>
-                <Text style={styles.itemTitle}>
+                <AppText style={styles.itemLabel}>PRÓXIMA CITA</AppText>
+                <AppText style={styles.itemTitle}>
                   {summary.upcoming.nextAppointment?.especialidad || 'Sin cita pendiente'}
-                </Text>
-                <Text style={styles.itemDetail}>
+                </AppText>
+                <AppText style={styles.itemDetail}>
                   {summary.upcoming.nextAppointment
                     ? `${formatDateTime(summary.upcoming.nextAppointment.fecha)}${
                         summary.upcoming.nextAppointment.motivo
@@ -759,7 +760,7 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
                           : ''
                       }`
                     : 'No hay citas programadas en este momento.'}
-                </Text>
+                </AppText>
               </View>
             </View>
             <View style={styles.divider} />
@@ -768,13 +769,13 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
                 <Ionicons name="pulse-outline" size={21} color={appColors.success} />
               </View>
               <View style={styles.upcomingCopy}>
-                <Text style={styles.itemLabel}>PRÓXIMO CONTROL</Text>
-                <Text style={styles.itemTitle}>{formatDate(summary.upcoming.nextFollowUp)}</Text>
-                <Text style={styles.itemDetail}>
+                <AppText style={styles.itemLabel}>PRÓXIMO CONTROL</AppText>
+                <AppText style={styles.itemTitle}>{formatDate(summary.upcoming.nextFollowUp)}</AppText>
+                <AppText style={styles.itemDetail}>
                   {summary.upcoming.nextFollowUp
                     ? 'Control indicado en el seguimiento clínico.'
                     : 'No hay un control de seguimiento programado.'}
-                </Text>
+                </AppText>
               </View>
             </View>
           </View>
@@ -796,15 +797,15 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
                       <MaterialCommunityIcons name="pill" size={20} color={appColors.success} />
                     </View>
                     <View style={styles.treatmentCopy}>
-                      <Text style={styles.itemTitle}>{item.nombre}</Text>
-                      <Text style={styles.treatmentDose}>
+                      <AppText style={styles.itemTitle}>{item.nombre}</AppText>
+                      <AppText style={styles.treatmentDose}>
                         {[item.dosis, item.viaAdministracion].filter(Boolean).join(' · ') || 'Dosis no especificada'}
-                      </Text>
-                      <Text style={styles.itemDetail}>{item.indicaciones || 'Sin indicaciones adicionales'}</Text>
-                      <Text style={styles.dateCaption}>
+                      </AppText>
+                      <AppText style={styles.itemDetail}>{item.indicaciones || 'Sin indicaciones adicionales'}</AppText>
+                      <AppText style={styles.dateCaption}>
                         Desde {formatDate(item.fechaInicio)}
                         {item.fechaFin ? ` hasta ${formatDate(item.fechaFin)}` : ' · tratamiento vigente'}
-                      </Text>
+                      </AppText>
                     </View>
                   </View>
                 </View>
@@ -825,11 +826,11 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
                   </View>
                   <View style={styles.timelineCopy}>
                     <View style={styles.timelineHeader}>
-                      <Text style={styles.timelineType}>{item.type}</Text>
-                      <Text style={styles.timelineDate}>{formatDateTime(item.date)}</Text>
+                      <AppText style={styles.timelineType}>{item.type}</AppText>
+                      <AppText style={styles.timelineDate}>{formatDateTime(item.date)}</AppText>
                     </View>
-                    <Text style={styles.itemTitle}>{item.title}</Text>
-                    <Text style={styles.itemDetail}>{item.detail}</Text>
+                    <AppText style={styles.itemTitle}>{item.title}</AppText>
+                    <AppText style={styles.itemDetail}>{item.detail}</AppText>
                   </View>
                 </View>
               ))
@@ -843,8 +844,8 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
             ) : (
               summary.carePointers.map((item, index) => (
                 <View key={`${item}-${index}`} style={styles.pointerRow}>
-                  <View style={styles.pointerNumber}><Text style={styles.pointerNumberText}>{index + 1}</Text></View>
-                  <Text style={styles.pointerText}>{item}</Text>
+                  <View style={styles.pointerNumber}><AppText style={styles.pointerNumberText}>{index + 1}</AppText></View>
+                  <AppText style={styles.pointerText}>{item}</AppText>
                 </View>
               ))
             )}
@@ -863,8 +864,8 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
                   <Ionicons name={area.icon} size={21} color={appColors.info} />
                 </View>
                 <View style={styles.areaCopy}>
-                  <Text style={styles.areaTitle}>{area.title}</Text>
-                  <Text style={styles.areaSubtitle}>{area.subtitle}</Text>
+                  <AppText style={styles.areaTitle}>{area.title}</AppText>
+                  <AppText style={styles.areaSubtitle}>{area.subtitle}</AppText>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={appColors.textMuted} />
               </TouchableOpacity>
@@ -880,11 +881,11 @@ function SectionHeader({ title, subtitle, badge }: { title: string; subtitle: st
   return (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionHeaderCopy}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        <Text style={styles.sectionSubtitle}>{subtitle}</Text>
+        <AppText style={styles.sectionTitle}>{title}</AppText>
+        <AppText style={styles.sectionSubtitle}>{subtitle}</AppText>
       </View>
       {badge !== undefined ? (
-        <View style={styles.countBadge}><Text style={styles.countBadgeText}>{badge}</Text></View>
+        <View style={styles.countBadge}><AppText style={styles.countBadgeText}>{badge}</AppText></View>
       ) : null}
     </View>
   );
@@ -905,8 +906,8 @@ function InfoItem({
     <View style={[styles.infoItem, wide && styles.infoItemWide]}>
       <Ionicons name={icon} size={16} color={appColors.info} />
       <View style={styles.infoCopy}>
-        <Text style={styles.infoLabel}>{label}</Text>
-        <Text style={styles.infoValue} numberOfLines={2}>{value}</Text>
+        <AppText style={styles.infoLabel}>{label}</AppText>
+        <AppText style={styles.infoValue} numberOfLines={2}>{value}</AppText>
       </View>
     </View>
   );
@@ -923,8 +924,8 @@ function NarrativeLine({
 }) {
   return (
     <View style={[styles.narrativeLine, last && styles.narrativeLineLast]}>
-      <Text style={styles.narrativeLabel}>{label}</Text>
-      <Text style={styles.narrativeText}>{text}</Text>
+      <AppText style={styles.narrativeLabel}>{label}</AppText>
+      <AppText style={styles.narrativeText}>{text}</AppText>
     </View>
   );
 }
@@ -936,8 +937,8 @@ function HealthyState() {
         <Ionicons name="checkmark-circle" size={25} color={appColors.success} />
       </View>
       <View style={styles.healthyCopy}>
-        <Text style={styles.healthyTitle}>Sin alertas prioritarias</Text>
-        <Text style={styles.itemDetail}>No se detectaron pendientes clínicos que requieran atención inmediata.</Text>
+        <AppText style={styles.healthyTitle}>Sin alertas prioritarias</AppText>
+        <AppText style={styles.itemDetail}>No se detectaron pendientes clínicos que requieran atención inmediata.</AppText>
       </View>
     </View>
   );
@@ -953,7 +954,7 @@ function EmptyInline({
   return (
     <View style={styles.emptyInline}>
       <Ionicons name={icon} size={22} color={appColors.textMuted} />
-      <Text style={styles.emptyInlineText}>{text}</Text>
+      <AppText style={styles.emptyInlineText}>{text}</AppText>
     </View>
   );
 }
@@ -970,8 +971,8 @@ function EmptyState({
   return (
     <View style={styles.emptyState}>
       <View style={styles.emptyStateIcon}><Ionicons name={icon} size={28} color={appColors.info} /></View>
-      <Text style={styles.emptyStateTitle}>{title}</Text>
-      <Text style={styles.emptyStateText}>{text}</Text>
+      <AppText style={styles.emptyStateTitle}>{title}</AppText>
+      <AppText style={styles.emptyStateText}>{text}</AppText>
     </View>
   );
 }

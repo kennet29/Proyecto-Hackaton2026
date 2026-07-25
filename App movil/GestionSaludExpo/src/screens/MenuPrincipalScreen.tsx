@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Modal, Platform, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Alert, FlatList, Modal, Platform, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { AppText } from '../components/AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -267,7 +268,7 @@ const managementOptions: OptionItem[] = [
     label: 'Pacientes',
     description: 'Registra o actualiza perfiles',
     icon: 'people-outline',
-    accent: '#38F28E',
+    accent: '#38E28E',
     navigateTo: 'PacienteForm',
   },
   {
@@ -283,7 +284,7 @@ const managementOptions: OptionItem[] = [
     label: 'Compartir Historial',
     description: 'Genera un enlace para que un medico vea el expediente autorizado',
     icon: 'share-social-outline',
-    accent: '#38F28E',
+    accent: '#38E28E',
     navigateTo: 'CompartirHistorial',
   },
   {
@@ -315,7 +316,7 @@ const managementOptions: OptionItem[] = [
     label: 'Contacto y Soporte',
     description: 'Canales de ayuda y soporte general',
     icon: 'chatbubbles-outline',
-    accent: '#38F28E',
+    accent: '#38E28E',
     navigateTo: 'Contacto',
   },
   {
@@ -359,7 +360,7 @@ const WEB_SCROLLBAR_CSS = `
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #38F28E 0%, #29B6FF 100%);
+    background: linear-gradient(180deg, #38E28E 0%, #29B6FF 100%);
   }
 `;
 
@@ -390,7 +391,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      loadNanoAppearanceId()
+      loadNanoAppearanceId(user?.id, token)
         .then((appearanceId) => {
           if (active) setNanoAppearanceId(appearanceId);
         })
@@ -398,7 +399,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
       return () => {
         active = false;
       };
-    }, []),
+    }, [token, user?.id]),
   );
 
   useEffect(() => {
@@ -472,7 +473,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
       <View style={[styles.heroTopRow, isWebWide && styles.webHeroTopRow]}>
         <View style={[styles.heroBadge, isWebWide && styles.webHeroBadge]}>
           <Ionicons name={activeMeta.icon} size={16} color="#29B6FF" />
-          <Text style={styles.heroBadgeText}>{activeMeta.label}</Text>
+          <AppText style={styles.heroBadgeText}>{activeMeta.label}</AppText>
         </View>
         <TouchableOpacity
           style={[styles.logoutButton, isWebWide && styles.webLogoutButton]}
@@ -481,11 +482,11 @@ export function MenuPrincipalScreen({ navigation }: Props) {
           <Ionicons name="log-out-outline" size={18} color="#F4F8FF" />
         </TouchableOpacity>
       </View>
-      <Text style={[styles.pageTitle, isWebWide && styles.webPageTitle]}>{activeMeta.title}</Text>
-      <Text style={[styles.userLabel, isWebWide && styles.webUserLabel]}>
+      <AppText style={[styles.pageTitle, isWebWide && styles.webPageTitle]}>{activeMeta.title}</AppText>
+      <AppText style={[styles.userLabel, isWebWide && styles.webUserLabel]}>
         Sesion activa: {user?.username ?? 'usuario'}{user?.role ? ` - ${user.role}` : ''}
-      </Text>
-      <Text style={[styles.pageSubtitle, isWebWide && styles.webPageSubtitle]}>{activeMeta.subtitle}</Text>
+      </AppText>
+      <AppText style={[styles.pageSubtitle, isWebWide && styles.webPageSubtitle]}>{activeMeta.subtitle}</AppText>
     </View>
   );
 
@@ -494,8 +495,8 @@ export function MenuPrincipalScreen({ navigation }: Props) {
       {isWebWide ? heroContent : null}
       {isWebWide ? (
         <View style={styles.webSectionHeader}>
-          <Text style={styles.webSectionTitle}>Accesos del modulo</Text>
-          <Text style={styles.webSectionMeta}>{activeOptions.length} opciones disponibles</Text>
+          <AppText style={styles.webSectionTitle}>Accesos del modulo</AppText>
+          <AppText style={styles.webSectionMeta}>{activeOptions.length} opciones disponibles</AppText>
         </View>
       ) : null}
     </>
@@ -524,7 +525,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                       color={isActive ? appColors.info : appColors.background}
                     />
                   </View>
-                  <Text style={[styles.navLabel, styles.webNavLabel, isActive && styles.navLabelActive]}>{tab.label}</Text>
+                  <AppText style={[styles.navLabel, styles.webNavLabel, isActive && styles.navLabelActive]}>{tab.label}</AppText>
                 </TouchableOpacity>
               );
             })}
@@ -555,8 +556,8 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                 <Ionicons name={item.icon} size={20} color={item.accent} />
               </View>
               <View style={styles.cardInfo}>
-                <Text style={styles.cardLabel}>{item.label}</Text>
-                <Text style={styles.cardDescription}>{item.description}</Text>
+                <AppText style={styles.cardLabel}>{item.label}</AppText>
+                <AppText style={styles.cardDescription}>{item.description}</AppText>
               </View>
               <Ionicons name="chevron-forward" size={18} color={appColors.textSoft} />
             </TouchableOpacity>
@@ -597,7 +598,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                     color={isActive ? appColors.info : appColors.background}
                   />
                 </View>
-                <Text style={[styles.navLabel, isWebWide && styles.webNavLabel, isActive && styles.navLabelActive]}>{tab.label}</Text>
+                <AppText style={[styles.navLabel, isWebWide && styles.webNavLabel, isActive && styles.navLabelActive]}>{tab.label}</AppText>
               </TouchableOpacity>
             );
           })}
@@ -616,17 +617,17 @@ export function MenuPrincipalScreen({ navigation }: Props) {
             <View style={styles.logoutIconWrap}>
               <Ionicons name="log-out-outline" size={30} color={appColors.accent} />
             </View>
-            <Text style={styles.logoutTitle}>Cerrar sesion</Text>
-            <Text style={styles.logoutMessage}>
+            <AppText style={styles.logoutTitle}>Cerrar sesion</AppText>
+            <AppText style={styles.logoutMessage}>
               Vas a salir de la cuenta {user?.username ?? 'actual'}. Podras volver a entrar cuando
               quieras con tus credenciales.
-            </Text>
+            </AppText>
             <View style={styles.logoutActions}>
               <TouchableOpacity style={styles.logoutSecondaryButton} onPress={cancelWebLogout}>
-                <Text style={styles.logoutSecondaryText}>Cancelar</Text>
+                <AppText style={styles.logoutSecondaryText}>Cancelar</AppText>
               </TouchableOpacity>
               <TouchableOpacity style={styles.logoutPrimaryButton} onPress={acceptWebLogout}>
-                <Text style={styles.logoutPrimaryText}>Salir</Text>
+                <AppText style={styles.logoutPrimaryText}>Salir</AppText>
                 <Ionicons name="arrow-forward" size={18} color={appColors.background} />
               </TouchableOpacity>
             </View>

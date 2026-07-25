@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { AppText } from '../components/AppText';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { obtenerTema } from '../data/educacion';
@@ -14,9 +15,9 @@ export function EducacionTemaScreen({ route, navigation }: Props) {
   if (!tema) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>no encontramos este tema.</Text>
+        <AppText style={styles.errorText}>no encontramos este tema.</AppText>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.backBtnText}>volver</Text>
+          <AppText style={styles.backBtnText}>volver</AppText>
         </TouchableOpacity>
       </View>
     );
@@ -24,44 +25,44 @@ export function EducacionTemaScreen({ route, navigation }: Props) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.label}>tema</Text>
-      <Text style={styles.title}>{tema.titulo}</Text>
-      <Text style={styles.description}>{tema.descripcion}</Text>
+      <AppText style={styles.label}>tema</AppText>
+      <AppText style={styles.title}>{tema.titulo}</AppText>
+      <AppText style={styles.description}>{tema.descripcion}</AppText>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>actividades</Text>
+        <AppText style={styles.sectionTitle}>actividades</AppText>
         {tema.actividades.map((actividad) => (
-          <Text key={actividad} style={styles.sectionText}>
+          <AppText key={actividad} style={styles.sectionText}>
             â€¢ {actividad}
-          </Text>
+          </AppText>
         ))}
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>recursos visuales</Text>
+        <AppText style={styles.sectionTitle}>recursos visuales</AppText>
         {tema.recursosVisuales.map((recurso) => (
-          <Text key={recurso} style={styles.sectionText}>
+          <AppText key={recurso} style={styles.sectionText}>
             â€¢ {recurso}
-          </Text>
+          </AppText>
         ))}
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>formatos recomendados</Text>
+        <AppText style={styles.sectionTitle}>formatos recomendados</AppText>
         {tema.formato.map((fmt) => (
-          <Text key={fmt} style={styles.sectionText}>
+          <AppText key={fmt} style={styles.sectionText}>
             â€¢ {fmt}
-          </Text>
+          </AppText>
         ))}
       </View>
 
       {tema.recordatorios && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>recordatorios / recompensas</Text>
+          <AppText style={styles.sectionTitle}>recordatorios / recompensas</AppText>
           {tema.recordatorios.map((rec) => (
-            <Text key={rec} style={[styles.sectionText, styles.highlight]}>
+            <AppText key={rec} style={[styles.sectionText, styles.highlight]}>
               â€¢ {rec}
-            </Text>
+            </AppText>
           ))}
         </View>
       )}

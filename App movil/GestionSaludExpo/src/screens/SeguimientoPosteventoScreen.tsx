@@ -5,11 +5,10 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText, AppTextInput } from '../components/AppText';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,7 +28,7 @@ const webDateInputStyle = {
   backgroundColor: '#0D1B2A',
   color: '#F4F8FF',
   padding: '0 14px',
-  fontFamily: 'Inter, "Segoe UI", Roboto, Arial, sans-serif',
+  fontFamily: '"SpaceGrotesk_400Regular", "Segoe UI", Arial, sans-serif',
   fontSize: 15,
   fontWeight: 700,
   outline: 'none',
@@ -69,7 +68,7 @@ const eventTypeOptions = [
 const statusOptions = [
   { value: 'activo', label: 'Activo', color: '#29B6FF' },
   { value: 'en observacion', label: 'En observación', color: '#FFB547' },
-  { value: 'cerrado', label: 'Cerrado', color: '#38F28E' },
+  { value: 'cerrado', label: 'Cerrado', color: '#38E28E' },
 ] as const;
 
 const todayString = () => toLocalDateOnlyString();
@@ -195,7 +194,7 @@ export function SeguimientoPosteventoScreen() {
 
   const renderDateField = (key: DateFieldKey, label: string) => (
     <>
-      <Text style={styles.label}>{label}</Text>
+      <AppText style={styles.label}>{label}</AppText>
       {Platform.OS === 'web' ? (
         React.createElement('input', {
           type: 'date',
@@ -206,7 +205,7 @@ export function SeguimientoPosteventoScreen() {
         })
       ) : (
         <TouchableOpacity style={styles.dateButton} onPress={() => openDatePicker(key)}>
-          <Text style={styles.dateButtonText}>{form[key] ? formatDate(form[key]) : 'Selecciona fecha'}</Text>
+          <AppText style={styles.dateButtonText}>{form[key] ? formatDate(form[key]) : 'Selecciona fecha'}</AppText>
         </TouchableOpacity>
       )}
       {Platform.OS === 'ios' && iosDateField === key ? (
@@ -222,7 +221,7 @@ export function SeguimientoPosteventoScreen() {
             }}
           />
           <TouchableOpacity style={styles.iosPickerDoneBtn} onPress={() => setIosDateField(null)}>
-            <Text style={styles.iosPickerDoneText}>Listo</Text>
+            <AppText style={styles.iosPickerDoneText}>Listo</AppText>
           </TouchableOpacity>
         </View>
       ) : null}
@@ -555,11 +554,11 @@ export function SeguimientoPosteventoScreen() {
           <Ionicons name="pulse-outline" size={28} color="#29B6FF" />
         </View>
         <View style={styles.heroCopy}>
-          <Text style={styles.kicker}>EVOLUCIÓN CLÍNICA</Text>
-          <Text style={styles.title}>Seguimiento de caso</Text>
-          <Text style={styles.subtitle}>
+          <AppText style={styles.kicker}>EVOLUCIÓN CLÍNICA</AppText>
+          <AppText style={styles.title}>Seguimiento de caso</AppText>
+          <AppText style={styles.subtitle}>
             Registra cómo evoluciona una operación, lesión o emergencia y define el próximo paso.
-          </Text>
+          </AppText>
         </View>
       </View>
 
@@ -569,11 +568,11 @@ export function SeguimientoPosteventoScreen() {
           <Ionicons name="folder-open-outline" size={20} color="#29B6FF" />
         </View>
         <View style={styles.blockHeaderCopy}>
-          <Text style={styles.blockTitle}>Caso relacionado</Text>
-          <Text style={styles.blockHint}>Selecciona la persona y el evento que deseas seguir.</Text>
+          <AppText style={styles.blockTitle}>Caso relacionado</AppText>
+          <AppText style={styles.blockHint}>Selecciona la persona y el evento que deseas seguir.</AppText>
         </View>
       </View>
-      <Text style={styles.label}>Paciente</Text>
+      <AppText style={styles.label}>Paciente</AppText>
       <View style={styles.pickerWrapper}>
         <Picker
           style={styles.picker}
@@ -599,7 +598,7 @@ export function SeguimientoPosteventoScreen() {
         </Picker>
       </View>
 
-      <Text style={styles.label}>Tipo de evento</Text>
+      <AppText style={styles.label}>Tipo de evento</AppText>
       <View style={styles.optionGrid}>
         {eventTypeOptions.map((option) => {
           const active = form.tipoEvento === option.value;
@@ -614,9 +613,9 @@ export function SeguimientoPosteventoScreen() {
                 size={20}
                 color={active ? '#071120' : '#29B6FF'}
               />
-              <Text style={[styles.eventOptionText, active && styles.eventOptionTextActive]}>
+              <AppText style={[styles.eventOptionText, active && styles.eventOptionTextActive]}>
                 {option.label}
-              </Text>
+              </AppText>
             </TouchableOpacity>
           );
         })}
@@ -624,9 +623,9 @@ export function SeguimientoPosteventoScreen() {
 
       {form.tipoEvento !== 'emergencia' ? (
         <>
-          <Text style={styles.label}>
+          <AppText style={styles.label}>
             {form.tipoEvento === 'operacion' ? 'Operacion relacionada' : 'Lesion relacionada'}
-          </Text>
+          </AppText>
           <View style={styles.pickerWrapper}>
             <Picker
               style={styles.picker}
@@ -656,8 +655,8 @@ export function SeguimientoPosteventoScreen() {
         </>
       ) : null}
 
-      <Text style={styles.label}>Titulo del seguimiento</Text>
-      <TextInput
+      <AppText style={styles.label}>Titulo del seguimiento</AppText>
+      <AppTextInput
         style={styles.input}
         placeholder="Escribe un titulo"
         placeholderTextColor="#F4F8FF"
@@ -679,11 +678,11 @@ export function SeguimientoPosteventoScreen() {
           <Ionicons name="analytics-outline" size={20} color="#29B6FF" />
         </View>
         <View style={styles.blockHeaderCopy}>
-          <Text style={styles.blockTitle}>Estado actual</Text>
-          <Text style={styles.blockHint}>Resume el avance y cualquier cambio observado.</Text>
+          <AppText style={styles.blockTitle}>Estado actual</AppText>
+          <AppText style={styles.blockHint}>Resume el avance y cualquier cambio observado.</AppText>
         </View>
       </View>
-      <Text style={styles.label}>Estado actual</Text>
+      <AppText style={styles.label}>Estado actual</AppText>
       <View style={styles.statusOptions}>
         {statusOptions.map((status) => {
           const active = form.estado === status.value;
@@ -697,19 +696,19 @@ export function SeguimientoPosteventoScreen() {
               onPress={() => handleChange('estado', status.value)}
             >
               <View style={[styles.statusDot, { backgroundColor: status.color }]} />
-              <Text style={[styles.statusOptionText, active && { color: status.color }]}>
+              <AppText style={[styles.statusOptionText, active && { color: status.color }]}>
                 {status.label}
-              </Text>
+              </AppText>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      <Text style={styles.label}>Nivel de dolor</Text>
+      <AppText style={styles.label}>Nivel de dolor</AppText>
       <View style={styles.painScale}>
         {Array.from({ length: 11 }, (_, level) => {
           const active = form.nivelDolor === String(level);
-          const color = level <= 3 ? '#38F28E' : level <= 6 ? '#FFB547' : '#FF4D73';
+          const color = level <= 3 ? '#38E28E' : level <= 6 ? '#FFB547' : '#FF4D73';
           return (
             <TouchableOpacity
               key={level}
@@ -719,18 +718,18 @@ export function SeguimientoPosteventoScreen() {
               ]}
               onPress={() => handleChange('nivelDolor', active ? '' : String(level))}
             >
-              <Text style={[styles.painLevelText, active && { color }]}>{level}</Text>
+              <AppText style={[styles.painLevelText, active && { color }]}>{level}</AppText>
             </TouchableOpacity>
           );
         })}
       </View>
       <View style={styles.painLegend}>
-        <Text style={styles.painLegendText}>Sin dolor</Text>
-        <Text style={styles.painLegendText}>Dolor intenso</Text>
+        <AppText style={styles.painLegendText}>Sin dolor</AppText>
+        <AppText style={styles.painLegendText}>Dolor intenso</AppText>
       </View>
 
-      <Text style={styles.label}>Evolucion general</Text>
-      <TextInput
+      <AppText style={styles.label}>Evolucion general</AppText>
+      <AppTextInput
         style={[styles.input, styles.multiline]}
         placeholder="Describe la evolucion"
         placeholderTextColor="#F4F8FF"
@@ -739,8 +738,8 @@ export function SeguimientoPosteventoScreen() {
         onChangeText={(value) => handleChange('evolucion', value)}
       />
 
-      <Text style={styles.label}>Sintomas o cambios observados</Text>
-      <TextInput
+      <AppText style={styles.label}>Sintomas o cambios observados</AppText>
+      <AppTextInput
         style={[styles.input, styles.multiline]}
         placeholder="Describe sintomas o cambios"
         placeholderTextColor="#F4F8FF"
@@ -754,12 +753,12 @@ export function SeguimientoPosteventoScreen() {
           <Ionicons name="home-outline" size={20} color="#29B6FF" />
         </View>
         <View style={styles.blockHeaderCopy}>
-          <Text style={styles.blockTitle}>Plan de seguimiento</Text>
-          <Text style={styles.blockHint}>Documenta el tratamiento y define si requiere atención.</Text>
+          <AppText style={styles.blockTitle}>Plan de seguimiento</AppText>
+          <AppText style={styles.blockHint}>Documenta el tratamiento y define si requiere atención.</AppText>
         </View>
       </View>
-      <Text style={styles.label}>Medicacion actual</Text>
-      <TextInput
+      <AppText style={styles.label}>Medicacion actual</AppText>
+      <AppTextInput
         style={[styles.input, styles.multiline]}
         placeholder="Medicamentos en uso"
         placeholderTextColor="#F4F8FF"
@@ -768,8 +767,8 @@ export function SeguimientoPosteventoScreen() {
         onChangeText={(value) => handleChange('medicacionActual', value)}
       />
 
-      <Text style={styles.label}>Cuidados en casa</Text>
-      <TextInput
+      <AppText style={styles.label}>Cuidados en casa</AppText>
+      <AppTextInput
         style={[styles.input, styles.multiline]}
         placeholder="Indica los cuidados"
         placeholderTextColor="#F4F8FF"
@@ -778,8 +777,8 @@ export function SeguimientoPosteventoScreen() {
         onChangeText={(value) => handleChange('cuidadosHogar', value)}
       />
 
-      <Text style={styles.label}>Notas adicionales</Text>
-      <TextInput
+      <AppText style={styles.label}>Notas adicionales</AppText>
+      <AppTextInput
         style={[styles.input, styles.multiline]}
         placeholder="Agrega notas complementarias"
         placeholderTextColor="#F4F8FF"
@@ -790,7 +789,7 @@ export function SeguimientoPosteventoScreen() {
 
       {renderDateField('proximoControl', 'Próximo control')}
 
-      <Text style={styles.label}>Prioridad</Text>
+      <AppText style={styles.label}>Prioridad</AppText>
       <View style={styles.toggleRow}>
         <TouchableOpacity
           style={[styles.attentionButton, requiereAtencion && styles.attentionButtonActive]}
@@ -799,17 +798,17 @@ export function SeguimientoPosteventoScreen() {
           <Ionicons
             name={requiereAtencion ? 'alert-circle' : 'checkmark-circle-outline'}
             size={21}
-            color={requiereAtencion ? '#FF4D73' : '#38F28E'}
+            color={requiereAtencion ? '#FF4D73' : '#38E28E'}
           />
           <View style={styles.attentionCopy}>
-            <Text style={[styles.attentionTitle, requiereAtencion && styles.attentionTitleActive]}>
+            <AppText style={[styles.attentionTitle, requiereAtencion && styles.attentionTitleActive]}>
               {requiereAtencion ? 'Requiere atención médica' : 'Evolución sin urgencia'}
-            </Text>
-            <Text style={styles.attentionHint}>
+            </AppText>
+            <AppText style={styles.attentionHint}>
               {requiereAtencion
                 ? 'El caso quedará marcado como prioritario.'
                 : 'Toca aquí si el caso necesita revisión prioritaria.'}
-            </Text>
+            </AppText>
           </View>
           <Ionicons name="chevron-forward" size={18} color="#9FB3C8" />
         </TouchableOpacity>
@@ -825,20 +824,20 @@ export function SeguimientoPosteventoScreen() {
         ) : (
           <Ionicons name="save-outline" size={20} color="#071120" />
         )}
-        <Text style={styles.saveBtnText}>{submitting ? 'Guardando...' : 'Guardar seguimiento'}</Text>
+        <AppText style={styles.saveBtnText}>{submitting ? 'Guardando...' : 'Guardar seguimiento'}</AppText>
       </TouchableOpacity>
       </View>
 
       <View style={styles.historyHeader}>
         <View>
-          <Text style={styles.sectionTitle}>Historial reciente</Text>
-          <Text style={styles.historyHint}>Últimas actualizaciones de la persona seleccionada.</Text>
+          <AppText style={styles.sectionTitle}>Historial reciente</AppText>
+          <AppText style={styles.historyHint}>Últimas actualizaciones de la persona seleccionada.</AppText>
         </View>
         <View style={styles.historyCount}>
-          <Text style={styles.historyCountText}>{recentEntries.length}</Text>
+          <AppText style={styles.historyCountText}>{recentEntries.length}</AppText>
         </View>
       </View>
-      {screenError ? <Text style={styles.errorText}>{screenError}</Text> : null}
+      {screenError ? <AppText style={styles.errorText}>{screenError}</AppText> : null}
       {loadingEntries ? (
         <ActivityIndicator color="#29B6FF" style={styles.loader} />
       ) : recentEntries.length ? (
@@ -846,8 +845,8 @@ export function SeguimientoPosteventoScreen() {
           <View key={entry.seguimientoPosteventoId} style={styles.entryCard}>
             <View style={styles.entryTopRow}>
               <View style={styles.entryTopCopy}>
-                <Text style={styles.entryTitle}>{entry.tituloEvento}</Text>
-                <Text style={styles.entryType}>{entry.tipoEvento}</Text>
+                <AppText style={styles.entryTitle}>{entry.tituloEvento}</AppText>
+                <AppText style={styles.entryType}>{entry.tipoEvento}</AppText>
               </View>
               <View
                 style={[
@@ -859,23 +858,23 @@ export function SeguimientoPosteventoScreen() {
                       : styles.entryStatusActive,
                 ]}
               >
-                <Text style={styles.entryStatusText}>{entry.estado}</Text>
+                <AppText style={styles.entryStatusText}>{entry.estado}</AppText>
               </View>
             </View>
-            <Text style={styles.entryMeta}>
+            <AppText style={styles.entryMeta}>
               Evento {formatDate(entry.fechaEvento)} · Seguimiento {formatDate(entry.fechaSeguimiento)}
-            </Text>
-            {buildEntryMeta(entry) ? <Text style={styles.entryHighlights}>{buildEntryMeta(entry)}</Text> : null}
-            {entry.notas ? <Text style={styles.entryNotes}>{entry.notas}</Text> : null}
+            </AppText>
+            {buildEntryMeta(entry) ? <AppText style={styles.entryHighlights}>{buildEntryMeta(entry)}</AppText> : null}
+            {entry.notas ? <AppText style={styles.entryNotes}>{entry.notas}</AppText> : null}
           </View>
         ))
       ) : (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>
+          <AppText style={styles.emptyStateText}>
             {hasValidPatient
               ? 'No hay seguimientos registrados para esta persona.'
               : 'Selecciona una persona para ver el historial del caso.'}
-          </Text>
+          </AppText>
         </View>
       )}
     </ScrollView>
@@ -1146,10 +1145,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 11,
     borderWidth: 1,
-    borderColor: '#38F28E55',
+    borderColor: '#38E28E55',
     borderRadius: 15,
     padding: 13,
-    backgroundColor: '#38F28E0C',
+    backgroundColor: '#38E28E0C',
   },
   attentionButtonActive: {
     borderColor: '#FF4D73',
@@ -1159,7 +1158,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   attentionTitle: {
-    color: '#38F28E',
+    color: '#38E28E',
     fontWeight: '900',
     fontSize: 14,
   },
@@ -1253,7 +1252,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFB54718',
   },
   entryStatusClosed: {
-    backgroundColor: '#38F28E18',
+    backgroundColor: '#38E28E18',
   },
   entryStatusText: {
     color: '#F4F8FF',

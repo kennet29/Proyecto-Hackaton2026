@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
+import { AppText } from '../components/AppText';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { nivelesEducativos } from '../data/educacion';
@@ -9,10 +10,10 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Educacion'>;
 export function EducacionScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Elige Un Nivel</Text>
-      <Text style={styles.subtitle}>
+      <AppText style={styles.title}>Elige Un Nivel</AppText>
+      <AppText style={styles.subtitle}>
         contenido educativo diseÃƒÂ±ado para niÃƒÂ±os, adolescentes y adultos
-      </Text>
+      </AppText>
 
       <FlatList
         data={nivelesEducativos}
@@ -22,12 +23,12 @@ export function EducacionScreen({ navigation }: Props) {
             style={styles.card}
             onPress={() => navigation.navigate('EducacionNivel', { nivelId: item.id })}
           >
-            <Text style={styles.cardLabel}>{item.nombre}</Text>
-            <Text style={styles.cardDescription}>{item.enfoque}</Text>
+            <AppText style={styles.cardLabel}>{item.nombre}</AppText>
+            <AppText style={styles.cardDescription}>{item.enfoque}</AppText>
             <View style={styles.tagRow}>
               {item.comoMostrar.slice(0, 3).map((tag) => (
                 <View key={tag} style={styles.tag}>
-                  <Text style={styles.tagText}>{tag}</Text>
+                  <AppText style={styles.tagText}>{tag}</AppText>
                 </View>
               ))}
             </View>

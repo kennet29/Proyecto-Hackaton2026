@@ -3,10 +3,10 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppText } from '../components/AppText';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -82,8 +82,8 @@ export function PacienteFormScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Pacientes</Text>
-            <Text style={styles.subtitle}>Administra las personas vinculadas a tu cuenta.</Text>
+            <AppText style={styles.title}>Pacientes</AppText>
+            <AppText style={styles.subtitle}>Administra las personas vinculadas a tu cuenta.</AppText>
           </View>
           <TouchableOpacity
             style={styles.addButton}
@@ -95,25 +95,25 @@ export function PacienteFormScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Pacientes de este usuario</Text>
+          <AppText style={styles.sectionTitle}>Pacientes de este usuario</AppText>
           <TouchableOpacity onPress={fetchLinkedPatients} disabled={loadingPatients}>
-            <Text style={styles.linkText}>{loadingPatients ? 'Cargando...' : 'Actualizar'}</Text>
+            <AppText style={styles.linkText}>{loadingPatients ? 'Cargando...' : 'Actualizar'}</AppText>
           </TouchableOpacity>
         </View>
 
-        {patientLoadError ? <Text style={styles.errorText}>{patientLoadError}</Text> : null}
+        {patientLoadError ? <AppText style={styles.errorText}>{patientLoadError}</AppText> : null}
 
         {loadingPatients ? (
           <View style={styles.loadingCard}>
             <ActivityIndicator size="large" color="#29B6FF" />
-            <Text style={styles.loadingText}>Cargando pacientes...</Text>
+            <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
           </View>
         ) : null}
 
         {!loadingPatients && linkedPatients.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>No hay pacientes vinculados</Text>
-            <Text style={styles.emptyText}>Usa el boton + para registrar el primero.</Text>
+            <AppText style={styles.emptyTitle}>No hay pacientes vinculados</AppText>
+            <AppText style={styles.emptyText}>Usa el boton + para registrar el primero.</AppText>
           </View>
         ) : null}
 
@@ -128,14 +128,14 @@ export function PacienteFormScreen({ navigation }: Props) {
                 <Ionicons name="person-outline" size={22} color="#29B6FF" />
               </View>
               <View style={styles.patientMain}>
-                <Text style={styles.patientName}>{patient.nombreCompleto}</Text>
-                <Text style={styles.patientId}>ID #{patient.pacienteId}</Text>
+                <AppText style={styles.patientName}>{patient.nombreCompleto}</AppText>
+                <AppText style={styles.patientId}>ID #{patient.pacienteId}</AppText>
               </View>
               <Ionicons name="create-outline" size={22} color="#29B6FF" />
             </View>
-            {patient.sexo ? <Text style={styles.patientMeta}>Genero: {patient.sexo}</Text> : null}
-            {patient.parentesco ? <Text style={styles.patientMeta}>Parentesco: {patient.parentesco}</Text> : null}
-            {patient.contacto ? <Text style={styles.patientMeta}>Contacto: {patient.contacto}</Text> : null}
+            {patient.sexo ? <AppText style={styles.patientMeta}>Genero: {patient.sexo}</AppText> : null}
+            {patient.parentesco ? <AppText style={styles.patientMeta}>Parentesco: {patient.parentesco}</AppText> : null}
+            {patient.contacto ? <AppText style={styles.patientMeta}>Contacto: {patient.contacto}</AppText> : null}
           </TouchableOpacity>
         ))}
       </ScrollView>
