@@ -66,6 +66,8 @@ import { NanoHistorialScreen } from './src/screens/NanoHistorialScreen';
 import { NanoConfiguracionScreen } from './src/screens/NanoConfiguracionScreen';
 import { ExamenClinicoScreen } from './src/screens/ExamenClinicoScreen';
 import { SeguimientoPosteventoScreen } from './src/screens/SeguimientoPosteventoScreen';
+import { MedicoRegistroScreen } from './src/screens/MedicoRegistroScreen';
+import { AdminSolicitudesMedicasScreen } from './src/screens/AdminSolicitudesMedicasScreen';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 import { useOfflineWriteSync } from './src/hooks/useOfflineWriteSync';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
@@ -167,6 +169,8 @@ const linking: LinkingOptions<RootStackParamList> = {
       NanoConfiguracion: 'nano/configuracion',
       ExamenClinico: 'examenes-clinicos',
       SeguimientoPostevento: 'seguimiento-caso',
+      MedicoRegistro: 'registro-medico',
+      AdminSolicitudes: 'admin',
       DocumentoForm: 'documentos',
       CompartirHistorial: 'compartir-historial',
       HistorialCompartido: 'historial-compartido/:token?',
@@ -189,14 +193,17 @@ const linking: LinkingOptions<RootStackParamList> = {
 };
 
 const PrivateNavigator = () => {
-  const { token, user } = useAuth();
+  const { initialPrivateRoute, token, user } = useAuth();
   usePushNotifications(token, user?.id ?? null);
   const offlineSync = useOfflineWriteSync(token, user?.id ?? null);
 
   return (
     <View style={styles.privateRoot}>
       <OfflineStatusBanner state={offlineSync} />
-      <Stack.Navigator initialRouteName="MenuPrincipal" screenOptions={sharedScreenOptions}>
+      <Stack.Navigator
+        initialRouteName={initialPrivateRoute ?? 'MenuPrincipal'}
+        screenOptions={sharedScreenOptions}
+      >
       <Stack.Screen
         name="MenuPrincipal"
         component={MenuPrincipalScreen}
@@ -340,6 +347,16 @@ const PrivateNavigator = () => {
         options={{ title: 'Seguimiento de Caso' }}
       />
       <Stack.Screen
+        name="MedicoRegistro"
+        component={MedicoRegistroScreen}
+        options={{ title: 'Registro de Médico' }}
+      />
+      <Stack.Screen
+        name="AdminSolicitudes"
+        component={AdminSolicitudesMedicasScreen}
+        options={{ title: 'Solicitudes médicas' }}
+      />
+      <Stack.Screen
         name="DocumentoForm"
         component={DocumentoFormScreen}
         options={{ title: 'Documentos' }}
@@ -426,6 +443,16 @@ const PublicNavigator = () => (
     />
     <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
     <Stack.Screen name="Registro" component={RegistroScreen} options={{ title: 'Registro' }} />
+    <Stack.Screen
+      name="MedicoRegistro"
+      component={MedicoRegistroScreen}
+      options={{ title: 'Crear cuenta médica' }}
+    />
+    <Stack.Screen
+      name="AdminSolicitudes"
+      component={AdminSolicitudesMedicasScreen}
+      options={{ title: 'Acceso administrativo' }}
+    />
     <Stack.Screen
       name="HistorialCompartido"
       component={HistorialCompartidoScreen}

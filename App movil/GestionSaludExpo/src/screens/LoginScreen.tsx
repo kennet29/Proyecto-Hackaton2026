@@ -96,7 +96,7 @@ const formatErrorMessage = (error: unknown): string => {
   return 'Ocurrió un error inesperado. Intenta nuevamente.';
 };
 
-export function LoginScreen({ navigation }: Props) {
+export function LoginScreen({ navigation, route }: Props) {
   const { width } = useWindowDimensions();
   const isWideLayout = width >= 760;
   const isWebWide = Platform.OS === 'web' && width >= 920;
@@ -204,7 +204,11 @@ export function LoginScreen({ navigation }: Props) {
     if (!welcomeSession) {
       return;
     }
-    login({ token: welcomeSession.accessToken, user: welcomeSession.user });
+    login({
+      token: welcomeSession.accessToken,
+      user: welcomeSession.user,
+      initialPrivateRoute: route.params?.afterLogin,
+    });
   };
 
   const handleLogin = async () => {

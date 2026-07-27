@@ -17,6 +17,7 @@ type AuthUser = {
 type LoginPayload = {
   token: string;
   user: AuthUser;
+  initialPrivateRoute?: 'MedicoRegistro' | 'AdminSolicitudes';
 };
 
 type LogoutOptions = {
@@ -28,6 +29,7 @@ interface AuthContextValue {
   token: string | null;
   user: AuthUser | null;
   sessionMessage: string | null;
+  initialPrivateRoute: 'MedicoRegistro' | 'AdminSolicitudes' | null;
   login: (payload: LoginPayload) => void;
   logout: (options?: LogoutOptions) => void;
   clearSessionMessage: () => void;
@@ -41,6 +43,7 @@ const AuthContext = createContext<AuthContextValue>({
   token: null,
   user: null,
   sessionMessage: null,
+  initialPrivateRoute: null,
   login: () => undefined,
   logout: () => undefined,
   clearSessionMessage: () => undefined,
@@ -51,6 +54,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [sessionMessage, setSessionMessage] = useState<string | null>(null);
+  const [initialPrivateRoute, setInitialPrivateRoute] = useState<
+    'MedicoRegistro' | 'AdminSolicitudes' | null
+  >(null);
   const expirationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearExpirationTimeout = () => {
@@ -66,6 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(null);
     setUser(null);
     setSessionMessage(message ?? null);
+    setInitialPrivateRoute(null);
     void clearStoredSession().catch((error) => {
       console.warn('[auth] no se pudo limpiar la sesion local', error);
     });
@@ -186,8 +193,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       token,
       user,
       sessionMessage,
-      login: ({ token: newToken, user: authUser }) => {
+      initialPrivateRoute,
+      login: ({ token: newToken, user: authUser, initialPrivateRoute: requestedRoute }) => {
         clearSessionMessage();
+        setInitialPrivateRoute(requestedRoute ?? null);
         setToken(newToken);
         setUser(authUser);
       },
@@ -196,7 +205,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       },
       clearSessionMessage,
     }),
-    [isHydrated, sessionMessage, token, user],
+    [initialPrivateRoute, isHydrated, sessionMessage, token, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

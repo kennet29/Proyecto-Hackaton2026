@@ -216,6 +216,11 @@ export function RegistroScreen({ navigation }: Props) {
       setFeedback({ type: 'success', message: successMessage });
       Alert.alert('Éxito', successMessage, [
         { text: 'Ir al login', onPress: () => navigation.replace('Login') },
+        {
+          text: 'Registro médico',
+          onPress: () =>
+            navigation.replace('Login', { afterLogin: 'MedicoRegistro' }),
+        },
       ]);
     } catch (error) {
       const message = formatErrorMessage(error);
@@ -387,6 +392,21 @@ export function RegistroScreen({ navigation }: Props) {
 
         <TouchableOpacity style={styles.secondaryBtn} onPress={() => navigation.navigate('Login')}>
           <AppText style={styles.secondaryLabel}>Ya tengo cuenta</AppText>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.medicalRegisterBtn}
+          onPress={() => navigation.navigate('MedicoRegistro')}
+          accessibilityLabel="Acceder al registro médico"
+        >
+          <AppText style={styles.medicalRegisterIcon}>⚕</AppText>
+          <View style={styles.medicalRegisterCopy}>
+            <AppText style={styles.medicalRegisterTitle}>Registro médico</AppText>
+            <AppText style={styles.medicalRegisterHint}>
+              Crea tu cuenta y registra tus credenciales profesionales
+            </AppText>
+          </View>
+          <AppText style={styles.medicalRegisterArrow}>›</AppText>
         </TouchableOpacity>
       </View>
       </View>
@@ -608,5 +628,40 @@ const styles = StyleSheet.create({
     color: '#071120',
     fontWeight: '600',
     fontSize: 14,
+  },
+  medicalRegisterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#29B6FF',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 10,
+    backgroundColor: '#EAF7FF',
+  },
+  medicalRegisterIcon: {
+    width: 34,
+    color: '#29B6FF',
+    fontSize: 25,
+    fontWeight: '800',
+  },
+  medicalRegisterCopy: {
+    flex: 1,
+  },
+  medicalRegisterTitle: {
+    color: '#071120',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  medicalRegisterHint: {
+    color: '#54708C',
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 2,
+  },
+  medicalRegisterArrow: {
+    color: '#29B6FF',
+    fontSize: 28,
+    marginLeft: 8,
   },
 });

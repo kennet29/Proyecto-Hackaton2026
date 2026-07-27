@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 import { Usuario } from "../../users/entities/user.entity";
 import { CreateMedicoregistroDto } from "./dto/create-medicoregistro.dto";
 import { UpdateMedicoregistroDto } from "./dto/update-medicoregistro.dto";
@@ -67,9 +67,44 @@ export class MedicoregistroService {
    * Find all.
    * @returns Colección de registros encontrados.
    */
-  findAll(): Promise<Medicoregistro[]> {
-    return this.medicoregistroRepository.find({
+  async findAll() {
+    const registros = await this.medicoregistroRepository.find({
       order: { fechasolicitud: "DESC", medicoregistroId: "DESC" },
+    });
+    const usuarioIds = [...new Set(registros.map((item) => item.usuarioId))];
+    const usuarios = usuarioIds.length
+      ? await this.usuarioRepository.find({
+          where: { id: In(usuarioIds) },
+          select: {
+            id: true,
+            username: true,
+            city: true,
+            country: true,
+            role: true,
+            creadoPor: true,
+          },
+        })
+      : [];
+    const usuarioPorId = new Map(usuarios.map((usuario) => [usuario.id, usuario]));
+
+    return registros.map((registro) => {
+      const { fotocodigominsa, fototitulo, ...solicitud } = registro;
+      const usuario = usuarioPorId.get(registro.usuarioId);
+      return {
+        ...solicitud,
+        tieneFotoCodigoMinsa: Boolean(fotocodigominsa?.length),
+        tieneFotoTitulo: Boolean(fototitulo?.length),
+        usuario: usuario
+          ? {
+              id: usuario.id,
+              username: usuario.username,
+              email: usuario.creadoPor ?? null,
+              city: usuario.city ?? null,
+              country: usuario.country ?? null,
+              role: usuario.role,
+            }
+          : null,
+      };
     });
   }
 

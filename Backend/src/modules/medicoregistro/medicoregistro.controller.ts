@@ -11,6 +11,7 @@ import {
 import { CreateMedicoregistroDto } from "./dto/create-medicoregistro.dto";
 import { UpdateMedicoregistroDto } from "./dto/update-medicoregistro.dto";
 import { MedicoregistroService } from "./medicoregistro.service";
+import { Roles } from "../../auth/decorators/roles.decorator";
 
 /**
  * Expone los endpoints HTTP del dominio medicoregistro.
@@ -34,6 +35,7 @@ export class MedicoregistroController {
    * @returns Colección de registros encontrados.
    */
   @Get()
+  @Roles("admin", "superadmin")
   findAll() {
     return this.medicoregistroService.findAll();
   }
@@ -54,6 +56,7 @@ export class MedicoregistroController {
    * @returns Resultado de la consulta solicitada.
    */
   @Get(":id")
+  @Roles("admin", "superadmin")
   findOne(@Param("id", ParseIntPipe) id: number) {
     return this.medicoregistroService.findOne(id);
   }
@@ -65,6 +68,7 @@ export class MedicoregistroController {
    * @returns Registro actualizado.
    */
   @Patch(":id")
+  @Roles("admin", "superadmin")
   update(
     @Param("id", ParseIntPipe) id: number,
     @Body() payload: UpdateMedicoregistroDto,
@@ -78,6 +82,7 @@ export class MedicoregistroController {
    * @returns La operación se completa sin devolver contenido.
    */
   @Delete(":id")
+  @Roles("admin", "superadmin")
   remove(@Param("id", ParseIntPipe) id: number) {
     return this.medicoregistroService.remove(id);
   }

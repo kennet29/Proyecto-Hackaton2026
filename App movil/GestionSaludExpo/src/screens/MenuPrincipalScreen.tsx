@@ -256,6 +256,14 @@ const wellnessOptions: OptionItem[] = [
 
 const managementOptions: OptionItem[] = [
   {
+    key: 'registro-medico',
+    label: 'Registrarme como médico',
+    description: 'Envía tus credenciales profesionales para solicitar acceso médico',
+    icon: 'medkit-outline',
+    accent: appColors.info,
+    navigateTo: 'MedicoRegistro',
+  },
+  {
     key: 'configurar-nano',
     label: 'Configurar Nano',
     description: 'Elige la apariencia del asistente desde una galería de diseños',
