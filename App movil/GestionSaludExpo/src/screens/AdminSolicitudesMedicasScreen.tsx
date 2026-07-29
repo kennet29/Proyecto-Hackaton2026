@@ -19,10 +19,14 @@ import { appColors, colorAlpha } from '../theme/colors';
 import { apiFetch, buildJsonHeaders, parseJsonResponse } from '../utils/apiClient';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AdminSolicitudes'>;
-type Estado = 'pendiente' | 'aprobado' | 'rechazado';
+export type Estado =
+  | 'pendiente'
+  | 'aprobado'
+  | 'rechazado'
+  | 'documentos_solicitados';
 type Filtro = 'todos' | Estado;
 
-type SolicitudMedica = {
+export type SolicitudMedica = {
   medicoregistroId: number;
   usuarioId: number;
   hospitaltrabajo: string;
@@ -71,16 +75,105 @@ const errorMessage = (body: ApiError | null) => {
   return body?.message || body?.error || 'No se pudieron cargar las solicitudes.';
 };
 
+// Datos temporales para revisar la interfaz. Se usan solo cuando la API no tiene solicitudes.
+export const DEMO_SOLICITUDES: SolicitudMedica[] = [
+  {
+    medicoregistroId: 1001,
+    usuarioId: 201,
+    hospitaltrabajo: 'Hospital Escuela Dr. Roberto Calderón',
+    titulo: 'Doctor en Medicina y Cirugía',
+    codigominsa: 'MINSA-45872',
+    numerolicencia: 'LIC-MED-2026-0148',
+    entidadcertificadora: 'Universidad Nacional Autónoma de Nicaragua',
+    especialidadprincipal: 'Medicina interna',
+    documentorespaldo: 'certificado-especialidad-medicina-interna.pdf',
+    estado: 'pendiente',
+    fechasolicitud: '2026-07-25T15:30:00.000Z',
+    observaciones: null,
+    tieneFotoCodigoMinsa: true,
+    tieneFotoTitulo: true,
+    usuario: {
+      id: 201,
+      username: 'dra.maria.lopez',
+      email: 'maria.lopez@ejemplo.com',
+      city: 'Managua',
+      country: 'Nicaragua',
+      role: 'paciente',
+    },
+  },
+  {
+    medicoregistroId: 1002,
+    usuarioId: 202,
+    hospitaltrabajo: 'Hospital Alemán Nicaragüense',
+    titulo: 'Doctor en Medicina',
+    codigominsa: 'MINSA-39104',
+    numerolicencia: 'LIC-MED-2026-0093',
+    entidadcertificadora: 'Universidad Americana',
+    especialidadprincipal: 'Pediatría',
+    documentorespaldo: null,
+    estado: 'aprobado',
+    fechasolicitud: '2026-07-20T09:15:00.000Z',
+    fecharevision: '2026-07-22T14:10:00.000Z',
+    observaciones: 'Credenciales verificadas y documentación completa.',
+    tieneFotoCodigoMinsa: true,
+    tieneFotoTitulo: true,
+    usuario: {
+      id: 202,
+      username: 'dr.carlos.mendez',
+      email: 'carlos.mendez@ejemplo.com',
+      city: 'Masaya',
+      country: 'Nicaragua',
+      role: 'medico',
+    },
+  },
+  {
+    medicoregistroId: 1003,
+    usuarioId: 203,
+    hospitaltrabajo: 'Clínica Médica San Rafael',
+    titulo: 'Médico general',
+    codigominsa: null,
+    numerolicencia: 'LIC-MED-2025-0771',
+    entidadcertificadora: 'Universidad Católica Redemptoris Mater',
+    especialidadprincipal: 'Medicina general',
+    documentorespaldo: null,
+    estado: 'rechazado',
+    fechasolicitud: '2026-07-18T17:45:00.000Z',
+    fecharevision: '2026-07-21T10:00:00.000Z',
+    observaciones: 'Falta adjuntar evidencia legible del código MINSA.',
+    tieneFotoCodigoMinsa: false,
+    tieneFotoTitulo: true,
+    usuario: {
+      id: 203,
+      username: 'dr.jose.rivas',
+      email: 'jose.rivas@ejemplo.com',
+      city: 'León',
+      country: 'Nicaragua',
+      role: 'paciente',
+    },
+  },
+];
+
+export const updateDemoSolicitud = (
+  solicitudId: number,
+  changes: Partial<SolicitudMedica>,
+) => {
+  const solicitud = DEMO_SOLICITUDES.find(
+    (item) => item.medicoregistroId === solicitudId,
+  );
+  if (solicitud) Object.assign(solicitud, changes);
+  return solicitud;
+};
+
 export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 980;
   const { token, user } = useAuth();
   const [solicitudes, setSolicitudes] = useState<SolicitudMedica[]>([]);
-  const [selected, setSelected] = useState<SolicitudMedica | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filtro>('todos');
+  const [usingDemo, setUsingDemo] = useState(false);
 
   const loadSolicitudes = useCallback(async () => {
     if (!token || !isAdminRole(user?.role)) {
@@ -95,7 +188,13 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
       });
       const body = await parseJsonResponse<SolicitudMedica[] & ApiError>(response);
       if (!response.ok) throw new Error(errorMessage(body));
-      setSolicitudes(Array.isArray(body) ? body : []);
+      const apiSolicitudes = Array.isArray(body) ? body : [];
+      setUsingDemo(apiSolicitudes.length === 0);
+      setSolicitudes(
+        apiSolicitudes.length
+          ? apiSolicitudes
+          : DEMO_SOLICITUDES.map((item) => ({ ...item })),
+      );
     } catch (loadError) {
       setError(
         loadError instanceof Error
@@ -116,7 +215,11 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
   const counts = useMemo(
     () => ({
       todos: solicitudes.length,
-      pendiente: solicitudes.filter((item) => item.estado === 'pendiente').length,
+      pendiente: solicitudes.filter(
+        (item) =>
+          item.estado === 'pendiente' ||
+          item.estado === 'documentos_solicitados',
+      ).length,
       aprobado: solicitudes.filter((item) => item.estado === 'aprobado').length,
       rechazado: solicitudes.filter((item) => item.estado === 'rechazado').length,
     }),
@@ -126,7 +229,13 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return solicitudes.filter((item) => {
-      if (filter !== 'todos' && item.estado !== filter) return false;
+      if (
+        filter !== 'todos' &&
+        item.estado !== filter &&
+        !(filter === 'pendiente' && item.estado === 'documentos_solicitados')
+      ) {
+        return false;
+      }
       if (!normalizedQuery) return true;
       return [
         item.usuario?.username,
@@ -185,6 +294,18 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
           </TouchableOpacity>
         </View>
 
+        {usingDemo ? (
+          <View style={styles.demoBanner}>
+            <Ionicons name="flask-outline" size={17} color="#F5B942" />
+            <View style={styles.demoBannerCopy}>
+              <AppText style={styles.demoBannerTitle}>Datos de demostración</AppText>
+              <AppText style={styles.demoBannerText}>
+                Estas solicitudes son ficticias y no están guardadas en la base de datos.
+              </AppText>
+            </View>
+          </View>
+        ) : null}
+
         <View style={styles.statsRow}>
           <StatCard label="Total" value={counts.todos} color={appColors.info} />
           <StatCard label="Pendientes" value={counts.pendiente} color="#F5B942" />
@@ -205,7 +326,15 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.filterRow}>
-              {(['todos', 'pendiente', 'aprobado', 'rechazado'] as Filtro[]).map((item) => (
+              {(
+                [
+                  'todos',
+                  'pendiente',
+                  'documentos_solicitados',
+                  'aprobado',
+                  'rechazado',
+                ] as Filtro[]
+              ).map((item) => (
                 <TouchableOpacity
                   key={item}
                   style={[styles.filterChip, filter === item && styles.filterChipActive]}
@@ -219,7 +348,9 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
                   >
                     {item === 'todos'
                       ? 'Todas'
-                      : `${item.charAt(0).toUpperCase()}${item.slice(1)}`}
+                      : item === 'documentos_solicitados'
+                        ? 'Documentos solicitados'
+                        : `${item.charAt(0).toUpperCase()}${item.slice(1)}`}
                   </AppText>
                 </TouchableOpacity>
               ))}
@@ -276,7 +407,15 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
                   <StatusBadge estado={item.estado} />
                 </View>
                 <View style={styles.actionCell}>
-                  <TouchableOpacity style={styles.detailButton} onPress={() => setSelected(item)}>
+                  <TouchableOpacity
+                    style={styles.detailButton}
+                    onPress={() =>
+                      navigation.navigate('AdminSolicitudDetalle', {
+                        solicitudId: item.medicoregistroId,
+                        demo: usingDemo,
+                      })
+                    }
+                  >
                     <Ionicons name="eye-outline" size={17} color={appColors.info} />
                     <AppText style={styles.detailButtonText}>Ver</AppText>
                   </TouchableOpacity>
@@ -290,7 +429,12 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
               <TouchableOpacity
                 key={item.medicoregistroId}
                 style={styles.mobileCard}
-                onPress={() => setSelected(item)}
+                onPress={() =>
+                  navigation.navigate('AdminSolicitudDetalle', {
+                    solicitudId: item.medicoregistroId,
+                    demo: usingDemo,
+                  })
+                }
               >
                 <View style={styles.mobileCardTop}>
                   <View style={styles.avatar}>
@@ -319,8 +463,6 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
           </View>
         )}
       </View>
-
-      <DetailModal solicitud={selected} onClose={() => setSelected(null)} />
     </ScrollView>
   );
 }
@@ -371,12 +513,18 @@ function StatusBadge({ estado }: { estado: Estado }) {
       ? appColors.success
       : estado === 'rechazado'
         ? appColors.accent
-        : '#F5B942';
+        : estado === 'documentos_solicitados'
+          ? '#8758C7'
+          : '#F5B942';
+  const label =
+    estado === 'documentos_solicitados'
+      ? 'Documentos solicitados'
+      : estado.charAt(0).toUpperCase() + estado.slice(1);
   return (
     <View style={[styles.statusBadge, { backgroundColor: colorAlpha(color, '18') }]}>
       <View style={[styles.statusDot, { backgroundColor: color }]} />
       <AppText style={[styles.statusText, { color }]}>
-        {estado.charAt(0).toUpperCase() + estado.slice(1)}
+        {label}
       </AppText>
     </View>
   );
@@ -389,55 +537,142 @@ function DetailModal({
   solicitud: SolicitudMedica | null;
   onClose: () => void;
 }) {
+  const { width } = useWindowDimensions();
+  const compact = width < 720;
   if (!solicitud) return null;
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalBackdrop}>
-        <View style={styles.modalCard}>
-          <View style={styles.modalHeader}>
-            <View>
-              <AppText style={styles.modalEyebrow}>EXPEDIENTE #{solicitud.medicoregistroId}</AppText>
-              <AppText style={styles.modalTitle}>
-                {solicitud.usuario?.username || `Usuario ${solicitud.usuarioId}`}
-              </AppText>
+        <View style={styles.modalFrame}>
+          <View style={styles.modalToolbar}>
+            <View style={styles.formatBadge}>
+              <Ionicons name="document-text-outline" size={16} color={appColors.info} />
+              <AppText style={styles.formatBadgeText}>Vista de solicitud · A4</AppText>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <Ionicons name="close" size={22} color={appColors.text} />
             </TouchableOpacity>
           </View>
-          <ScrollView contentContainerStyle={styles.modalContent}>
-            <View style={styles.modalStatusRow}>
-              <StatusBadge estado={solicitud.estado} />
-              <AppText style={styles.modalDate}>
-                Recibida el {formatDate(solicitud.fechasolicitud)}
+          <ScrollView
+            contentContainerStyle={styles.paperScroll}
+            showsVerticalScrollIndicator
+          >
+            <View style={[styles.a4Paper, compact && styles.a4PaperCompact]}>
+              <View style={[styles.paperHeader, compact && styles.paperHeaderCompact]}>
+                <View style={styles.paperBrand}>
+                  <View style={styles.paperLogo}>
+                    <Ionicons name="medkit" size={25} color="#FFFFFF" />
+                  </View>
+                  <View>
+                    <AppText style={styles.paperBrandName}>GESTIÓN SALUD</AppText>
+                    <AppText style={styles.paperBrandSub}>Registro de profesionales médicos</AppText>
+                  </View>
+                </View>
+                <View style={styles.folioBox}>
+                  <AppText style={styles.folioLabel}>SOLICITUD N.º</AppText>
+                  <AppText style={styles.folioValue}>
+                    {String(solicitud.medicoregistroId).padStart(6, '0')}
+                  </AppText>
+                  <AppText style={styles.folioDate}>{formatDate(solicitud.fechasolicitud)}</AppText>
+                </View>
+              </View>
+
+              <View style={styles.paperTitleBlock}>
+                <AppText style={styles.paperTitle}>SOLICITUD DE ACREDITACIÓN MÉDICA</AppText>
+                <AppText style={styles.paperSubtitle}>
+                  Formulario de ingreso y verificación de credenciales profesionales
+                </AppText>
+              </View>
+
+              <AppText style={styles.paperIntro}>
+                Por medio del presente documento, la persona solicitante pide la habilitación de
+                una cuenta profesional médica dentro de la plataforma Gestión Salud.
               </AppText>
+
+              <A4Section number="1" title="Información del solicitante">
+                <View style={styles.applicationGrid}>
+                  <ApplicationField
+                    label="Cuenta de usuario"
+                    value={solicitud.usuario?.username || `Usuario ${solicitud.usuarioId}`}
+                    compact={compact}
+                  />
+                  <ApplicationField
+                    label="Correo electrónico"
+                    value={solicitud.usuario?.email}
+                    compact={compact}
+                  />
+                  <ApplicationField label="Ciudad" value={solicitud.usuario?.city} compact={compact} />
+                  <ApplicationField label="País" value={solicitud.usuario?.country} compact={compact} />
+                </View>
+              </A4Section>
+
+              <A4Section number="2" title="Información profesional">
+                <View style={styles.applicationGrid}>
+                  <ApplicationField label="Título profesional" value={solicitud.titulo} compact={compact} />
+                  <ApplicationField label="Especialidad principal" value={solicitud.especialidadprincipal} compact={compact} />
+                  <ApplicationField label="Hospital o centro de trabajo" value={solicitud.hospitaltrabajo} compact={compact} />
+                  <ApplicationField label="Entidad certificadora" value={solicitud.entidadcertificadora} compact={compact} />
+                  <ApplicationField label="Número de licencia" value={solicitud.numerolicencia} compact={compact} />
+                  <ApplicationField label="Código MINSA" value={solicitud.codigominsa} compact={compact} />
+                </View>
+              </A4Section>
+
+              <A4Section number="3" title="Documentación presentada">
+                <View style={[styles.checkGrid, compact && styles.checkGridCompact]}>
+                  <CheckItem label="Fotografía del título profesional" checked={solicitud.tieneFotoTitulo} />
+                  <CheckItem label="Fotografía del código MINSA" checked={solicitud.tieneFotoCodigoMinsa} />
+                  <CheckItem label="Documento adicional de respaldo" checked={Boolean(solicitud.documentorespaldo)} />
+                </View>
+                {solicitud.documentorespaldo ? (
+                  <View style={styles.supportDocument}>
+                    <AppText style={styles.supportDocumentLabel}>Referencia del documento:</AppText>
+                    <AppText style={styles.supportDocumentValue}>{solicitud.documentorespaldo}</AppText>
+                  </View>
+                ) : null}
+              </A4Section>
+
+              <A4Section number="4" title="Declaración">
+                <AppText style={styles.declarationText}>
+                  Declaro que la información proporcionada en esta solicitud es verdadera y
+                  autorizo su revisión con fines de validación profesional. Comprendo que cualquier
+                  inconsistencia puede ocasionar el rechazo o la suspensión del permiso médico.
+                </AppText>
+                <View style={[styles.signatureRow, compact && styles.signatureRowCompact]}>
+                  <SignatureLine label="Firma del solicitante" />
+                  <SignatureLine label="Fecha" value={formatDate(solicitud.fechasolicitud)} />
+                </View>
+              </A4Section>
+
+              <View style={styles.internalBlock}>
+                <View style={styles.internalHeader}>
+                  <AppText style={styles.internalTitle}>USO EXCLUSIVO DE ADMINISTRACIÓN</AppText>
+                  <PaperStatus estado={solicitud.estado} />
+                </View>
+                <View style={styles.internalGrid}>
+                  <View style={styles.reviewCell}>
+                    <AppText style={styles.reviewLabel}>Fecha de revisión</AppText>
+                    <AppText style={styles.reviewValue}>{formatDate(solicitud.fecharevision)}</AppText>
+                  </View>
+                  <View style={styles.reviewCell}>
+                    <AppText style={styles.reviewLabel}>Revisado por</AppText>
+                    <AppText style={styles.reviewValue}>____________________________</AppText>
+                  </View>
+                </View>
+                <AppText style={styles.reviewLabel}>Observaciones</AppText>
+                <View style={styles.observationBox}>
+                  <AppText style={styles.observationPaperText}>
+                    {solicitud.observaciones || 'Sin observaciones registradas.'}
+                  </AppText>
+                </View>
+              </View>
+
+              <View style={styles.paperFooter}>
+                <AppText style={styles.paperFooterText}>
+                  Gestión Salud · Documento generado para revisión administrativa
+                </AppText>
+                <AppText style={styles.paperPage}>Página 1 de 1</AppText>
+              </View>
             </View>
-            <DetailSection title="Datos del solicitante" icon="person-outline">
-              <DetailRow label="Usuario" value={solicitud.usuario?.username} />
-              <DetailRow label="Correo" value={solicitud.usuario?.email} />
-              <DetailRow label="Ciudad" value={solicitud.usuario?.city} />
-              <DetailRow label="País" value={solicitud.usuario?.country} />
-            </DetailSection>
-            <DetailSection title="Credenciales profesionales" icon="medkit-outline">
-              <DetailRow label="Título" value={solicitud.titulo} />
-              <DetailRow label="Especialidad" value={solicitud.especialidadprincipal} />
-              <DetailRow label="Hospital" value={solicitud.hospitaltrabajo} />
-              <DetailRow label="Licencia" value={solicitud.numerolicencia} />
-              <DetailRow label="Código MINSA" value={solicitud.codigominsa} />
-              <DetailRow label="Entidad certificadora" value={solicitud.entidadcertificadora} />
-            </DetailSection>
-            <DetailSection title="Documentos" icon="documents-outline">
-              <DocumentState label="Fotografía del título" present={solicitud.tieneFotoTitulo} />
-              <DocumentState label="Fotografía del código MINSA" present={solicitud.tieneFotoCodigoMinsa} />
-              {solicitud.documentorespaldo ? (
-                <DetailRow label="Documento adicional" value={solicitud.documentorespaldo} />
-              ) : null}
-            </DetailSection>
-            {solicitud.observaciones ? (
-              <DetailSection title="Observaciones" icon="chatbox-outline">
-                <AppText style={styles.observationText}>{solicitud.observaciones}</AppText>
-              </DetailSection>
-            ) : null}
           </ScrollView>
         </View>
       </View>
@@ -445,46 +680,87 @@ function DetailModal({
   );
 }
 
-function DetailSection({
+function A4Section({
+  number,
   title,
-  icon,
   children,
 }: {
+  number: string;
   title: string;
-  icon: keyof typeof Ionicons.glyphMap;
   children: React.ReactNode;
 }) {
   return (
-    <View style={styles.detailSection}>
-      <View style={styles.detailSectionHeader}>
-        <Ionicons name={icon} size={18} color={appColors.info} />
-        <AppText style={styles.detailSectionTitle}>{title}</AppText>
+    <View style={styles.a4Section}>
+      <View style={styles.a4SectionHeader}>
+        <View style={styles.a4SectionNumber}>
+          <AppText style={styles.a4SectionNumberText}>{number}</AppText>
+        </View>
+        <AppText style={styles.a4SectionTitle}>{title.toUpperCase()}</AppText>
       </View>
-      {children}
+      <View style={styles.a4SectionBody}>{children}</View>
     </View>
   );
 }
 
-function DetailRow({ label, value }: { label: string; value?: string | null }) {
+function ApplicationField({
+  label,
+  value,
+  compact,
+}: {
+  label: string;
+  value?: string | null;
+  compact: boolean;
+}) {
   return (
-    <View style={styles.detailRow}>
-      <AppText style={styles.detailLabel}>{label}</AppText>
-      <AppText style={styles.detailValue}>{value || 'No indicado'}</AppText>
+    <View style={[styles.applicationField, compact && styles.applicationFieldCompact]}>
+      <AppText style={styles.applicationLabel}>{label.toUpperCase()}</AppText>
+      <AppText style={styles.applicationValue}>{value || 'No indicado'}</AppText>
     </View>
   );
 }
 
-function DocumentState({ label, present }: { label: string; present: boolean }) {
+function CheckItem({ label, checked }: { label: string; checked: boolean }) {
   return (
-    <View style={styles.documentRow}>
-      <Ionicons
-        name={present ? 'checkmark-circle' : 'remove-circle-outline'}
-        size={18}
-        color={present ? appColors.success : appColors.textMuted}
-      />
-      <AppText style={styles.documentLabel}>{label}</AppText>
-      <AppText style={[styles.documentState, present && styles.documentStatePresent]}>
-        {present ? 'Adjunto' : 'No adjunto'}
+    <View style={styles.checkItem}>
+      <View style={[styles.checkBox, checked && styles.checkBoxChecked]}>
+        {checked ? <Ionicons name="checkmark" size={12} color="#FFFFFF" /> : null}
+      </View>
+      <AppText style={styles.checkLabel}>{label}</AppText>
+      <AppText style={[styles.checkState, checked && styles.checkStatePresent]}>
+        {checked ? 'ADJUNTO' : 'NO ADJUNTO'}
+      </AppText>
+    </View>
+  );
+}
+
+function SignatureLine({ label, value }: { label: string; value?: string }) {
+  return (
+    <View style={styles.signature}>
+      <View style={styles.signatureLine}>
+        {value ? <AppText style={styles.signatureValue}>{value}</AppText> : null}
+      </View>
+      <AppText style={styles.signatureLabel}>{label}</AppText>
+    </View>
+  );
+}
+
+function PaperStatus({ estado }: { estado: Estado }) {
+  const color =
+    estado === 'aprobado'
+      ? '#168A55'
+      : estado === 'rechazado'
+        ? '#C8324E'
+        : estado === 'documentos_solicitados'
+          ? '#8758C7'
+          : '#A86F00';
+  const label =
+    estado === 'documentos_solicitados'
+      ? 'DOCUMENTOS SOLICITADOS'
+      : estado.toUpperCase();
+  return (
+    <View style={[styles.paperStatus, { borderColor: color }]}>
+      <AppText style={[styles.paperStatusText, { color }]}>
+        {label}
       </AppText>
     </View>
   );
@@ -502,6 +778,20 @@ const styles = StyleSheet.create({
   subtitle: { color: appColors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 },
   refreshButton: { flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 42, borderWidth: 1, borderColor: appColors.border, borderRadius: 11, paddingHorizontal: 13, marginTop: 12 },
   refreshText: { color: appColors.info, fontSize: 12, fontWeight: '800' },
+  demoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colorAlpha('#F5B942', '12'),
+    borderWidth: 1,
+    borderColor: colorAlpha('#F5B942', '55'),
+    borderRadius: 13,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+    marginBottom: 12,
+  },
+  demoBannerCopy: { flex: 1, marginLeft: 9 },
+  demoBannerTitle: { color: '#F5B942', fontSize: 11, fontWeight: '900' },
+  demoBannerText: { color: appColors.textMuted, fontSize: 9, marginTop: 2 },
   statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 },
   statCard: { minWidth: 140, flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 15, padding: 14 },
   statDot: { width: 9, height: 36, borderRadius: 5, marginRight: 12 },
@@ -556,24 +846,221 @@ const styles = StyleSheet.create({
   accessMessage: { color: appColors.textMuted, fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 7 },
   accessButton: { minHeight: 46, minWidth: 180, alignItems: 'center', justifyContent: 'center', borderRadius: 12, marginTop: 20 },
   accessButtonText: { color: appColors.background, fontWeight: '900' },
-  modalBackdrop: { flex: 1, backgroundColor: colorAlpha(appColors.overlay, 'B8'), alignItems: 'center', justifyContent: 'center', padding: 14 },
-  modalCard: { width: '100%', maxWidth: 680, maxHeight: '90%', backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 22, overflow: 'hidden' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1, borderBottomColor: appColors.borderStrong },
-  modalEyebrow: { color: appColors.info, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
-  modalTitle: { color: appColors.text, fontSize: 20, fontWeight: '900', marginTop: 3 },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: colorAlpha(appColors.overlay, 'D4'),
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 10,
+  },
+  modalFrame: {
+    width: '100%',
+    maxWidth: 850,
+    maxHeight: '96%',
+  },
+  modalToolbar: {
+    minHeight: 48,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  formatBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: appColors.surface,
+    borderWidth: 1,
+    borderColor: appColors.border,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  formatBadgeText: { color: appColors.textSoft, fontSize: 11, fontWeight: '700' },
   closeButton: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: appColors.backgroundMuted },
-  modalContent: { padding: 16, paddingBottom: 26 },
-  modalStatusRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
-  modalDate: { color: appColors.textMuted, fontSize: 10 },
-  detailSection: { backgroundColor: appColors.backgroundMuted, borderRadius: 14, padding: 14, marginBottom: 11 },
-  detailSectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 7, borderBottomWidth: 1, borderBottomColor: appColors.borderStrong, paddingBottom: 10, marginBottom: 4 },
-  detailSectionTitle: { color: appColors.text, fontSize: 13, fontWeight: '800' },
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 14, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colorAlpha(appColors.borderStrong, '88') },
-  detailLabel: { color: appColors.textMuted, fontSize: 10, flex: 1 },
-  detailValue: { color: appColors.textSoft, fontSize: 11, fontWeight: '700', flex: 1.5, textAlign: 'right' },
-  documentRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9 },
-  documentLabel: { color: appColors.textSoft, fontSize: 11, flex: 1, marginLeft: 8 },
-  documentState: { color: appColors.textMuted, fontSize: 10, fontWeight: '700' },
-  documentStatePresent: { color: appColors.success },
-  observationText: { color: appColors.textSoft, fontSize: 11, lineHeight: 18, paddingTop: 7 },
+  paperScroll: { alignItems: 'center', paddingBottom: 20 },
+  a4Paper: {
+    width: '100%',
+    maxWidth: 794,
+    minHeight: 1080,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 46,
+    paddingTop: 40,
+    paddingBottom: 28,
+    shadowColor: '#000000',
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 12,
+  },
+  a4PaperCompact: {
+    minHeight: 0,
+    paddingHorizontal: 18,
+    paddingTop: 22,
+    paddingBottom: 22,
+  },
+  paperHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingBottom: 18,
+    borderBottomWidth: 3,
+    borderBottomColor: '#12345A',
+  },
+  paperHeaderCompact: { gap: 12 },
+  paperBrand: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  paperLogo: {
+    width: 48,
+    height: 48,
+    borderRadius: 6,
+    backgroundColor: '#12345A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  paperBrandName: { color: '#12345A', fontSize: 18, fontWeight: '900', letterSpacing: 0.8 },
+  paperBrandSub: { color: '#59697A', fontSize: 8, marginTop: 3 },
+  folioBox: {
+    minWidth: 128,
+    borderWidth: 1,
+    borderColor: '#AAB4BF',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    alignItems: 'flex-end',
+  },
+  folioLabel: { color: '#6B7785', fontSize: 7, fontWeight: '800', letterSpacing: 0.7 },
+  folioValue: { color: '#12345A', fontSize: 16, fontWeight: '900', marginTop: 2 },
+  folioDate: { color: '#59697A', fontSize: 8, marginTop: 3 },
+  paperTitleBlock: { alignItems: 'center', paddingVertical: 22 },
+  paperTitle: { color: '#172A3D', fontSize: 18, fontWeight: '900', textAlign: 'center', letterSpacing: 0.6 },
+  paperSubtitle: { color: '#687583', fontSize: 9, textAlign: 'center', marginTop: 5 },
+  paperIntro: {
+    color: '#354454',
+    fontSize: 9,
+    lineHeight: 15,
+    textAlign: 'justify',
+    marginBottom: 16,
+  },
+  a4Section: {
+    borderWidth: 1,
+    borderColor: '#AAB4BF',
+    marginBottom: 14,
+  },
+  a4SectionHeader: {
+    minHeight: 31,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8EEF4',
+    borderBottomWidth: 1,
+    borderBottomColor: '#AAB4BF',
+  },
+  a4SectionNumber: {
+    width: 31,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#12345A',
+  },
+  a4SectionNumberText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
+  a4SectionTitle: { color: '#12345A', fontSize: 9, fontWeight: '900', letterSpacing: 0.7, marginLeft: 10 },
+  a4SectionBody: { padding: 10 },
+  applicationGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
+  applicationField: {
+    width: '50%',
+    minHeight: 48,
+    paddingHorizontal: 5,
+    paddingVertical: 6,
+  },
+  applicationFieldCompact: { width: '100%' },
+  applicationLabel: { color: '#687583', fontSize: 7, fontWeight: '800', letterSpacing: 0.4, marginBottom: 5 },
+  applicationValue: {
+    minHeight: 21,
+    color: '#172A3D',
+    fontSize: 10,
+    fontWeight: '700',
+    borderBottomWidth: 1,
+    borderBottomColor: '#7C8996',
+    paddingBottom: 4,
+  },
+  checkGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  checkGridCompact: { flexDirection: 'column' },
+  checkItem: {
+    flexGrow: 1,
+    minWidth: 190,
+    minHeight: 38,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D0D6DC',
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+  },
+  checkBox: {
+    width: 17,
+    height: 17,
+    borderWidth: 1,
+    borderColor: '#7C8996',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 7,
+  },
+  checkBoxChecked: { backgroundColor: '#168A55', borderColor: '#168A55' },
+  checkLabel: { color: '#354454', fontSize: 8, flex: 1 },
+  checkState: { color: '#87919B', fontSize: 6, fontWeight: '900', marginLeft: 5 },
+  checkStatePresent: { color: '#168A55' },
+  supportDocument: {
+    flexDirection: 'row',
+    marginTop: 9,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#D0D6DC',
+  },
+  supportDocumentLabel: { color: '#687583', fontSize: 8, marginRight: 6 },
+  supportDocumentValue: { color: '#172A3D', fontSize: 8, fontWeight: '700', flex: 1 },
+  declarationText: { color: '#354454', fontSize: 8, lineHeight: 14, textAlign: 'justify' },
+  signatureRow: { flexDirection: 'row', gap: 30, marginTop: 28 },
+  signatureRowCompact: { flexDirection: 'column', gap: 22 },
+  signature: { flex: 1, alignItems: 'center' },
+  signatureLine: {
+    width: '100%',
+    minHeight: 20,
+    justifyContent: 'flex-end',
+    borderBottomWidth: 1,
+    borderBottomColor: '#172A3D',
+  },
+  signatureValue: { color: '#172A3D', fontSize: 8, textAlign: 'center', paddingBottom: 3 },
+  signatureLabel: { color: '#687583', fontSize: 7, marginTop: 4 },
+  internalBlock: {
+    borderWidth: 2,
+    borderColor: '#12345A',
+    padding: 11,
+    marginTop: 2,
+  },
+  internalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 9,
+    borderBottomWidth: 1,
+    borderBottomColor: '#AAB4BF',
+  },
+  internalTitle: { color: '#12345A', fontSize: 8, fontWeight: '900', letterSpacing: 0.6 },
+  paperStatus: { borderWidth: 1.5, borderRadius: 2, paddingHorizontal: 8, paddingVertical: 4, transform: [{ rotate: '-2deg' }] },
+  paperStatusText: { fontSize: 8, fontWeight: '900', letterSpacing: 0.8 },
+  internalGrid: { flexDirection: 'row', gap: 12, marginVertical: 10 },
+  reviewCell: { flex: 1 },
+  reviewLabel: { color: '#687583', fontSize: 7, fontWeight: '800', marginBottom: 4 },
+  reviewValue: { color: '#172A3D', fontSize: 8, minHeight: 18 },
+  observationBox: { minHeight: 44, borderWidth: 1, borderColor: '#AAB4BF', padding: 7 },
+  observationPaperText: { color: '#354454', fontSize: 8, lineHeight: 13 },
+  paperFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: 13,
+    marginTop: 'auto',
+    borderTopWidth: 1,
+    borderTopColor: '#AAB4BF',
+  },
+  paperFooterText: { color: '#7C8996', fontSize: 7 },
+  paperPage: { color: '#7C8996', fontSize: 7 },
 });

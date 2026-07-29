@@ -68,6 +68,7 @@ import { ExamenClinicoScreen } from './src/screens/ExamenClinicoScreen';
 import { SeguimientoPosteventoScreen } from './src/screens/SeguimientoPosteventoScreen';
 import { MedicoRegistroScreen } from './src/screens/MedicoRegistroScreen';
 import { AdminSolicitudesMedicasScreen } from './src/screens/AdminSolicitudesMedicasScreen';
+import { AdminSolicitudDetalleScreen } from './src/screens/AdminSolicitudDetalleScreen';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 import { useOfflineWriteSync } from './src/hooks/useOfflineWriteSync';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
@@ -171,9 +172,10 @@ const linking: LinkingOptions<RootStackParamList> = {
       SeguimientoPostevento: 'seguimiento-caso',
       MedicoRegistro: 'registro-medico',
       AdminSolicitudes: 'admin',
+      AdminSolicitudDetalle: 'admin/solicitudes/:solicitudId',
       DocumentoForm: 'documentos',
       CompartirHistorial: 'compartir-historial',
-      HistorialCompartido: 'historial-compartido/:token?',
+      HistorialCompartido: 'medico/acceso-historial/:token?',
       RecordatorioForm: 'recordatorios/nuevo',
       RegistroDentalForm: 'registro-dental',
       RegistroDentalCreate: 'registro-dental/nuevo',
@@ -357,6 +359,11 @@ const PrivateNavigator = () => {
         options={{ title: 'Solicitudes médicas' }}
       />
       <Stack.Screen
+        name="AdminSolicitudDetalle"
+        component={AdminSolicitudDetalleScreen}
+        options={{ title: 'Detalle de solicitud médica' }}
+      />
+      <Stack.Screen
         name="DocumentoForm"
         component={DocumentoFormScreen}
         options={{ title: 'Documentos' }}
@@ -451,6 +458,11 @@ const PublicNavigator = () => (
     <Stack.Screen
       name="AdminSolicitudes"
       component={AdminSolicitudesMedicasScreen}
+      options={{ title: 'Acceso administrativo' }}
+    />
+    <Stack.Screen
+      name="AdminSolicitudDetalle"
+      component={AdminSolicitudDetalleScreen}
       options={{ title: 'Acceso administrativo' }}
     />
     <Stack.Screen

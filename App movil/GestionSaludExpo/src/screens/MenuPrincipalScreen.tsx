@@ -290,16 +290,16 @@ const managementOptions: OptionItem[] = [
   {
     key: 'compartir-historial',
     label: 'Compartir Historial',
-    description: 'Genera un enlace para que un medico vea el expediente autorizado',
+    description: 'Genera un código único de 6 números válido por una hora',
     icon: 'share-social-outline',
     accent: '#38E28E',
     navigateTo: 'CompartirHistorial',
   },
   {
     key: 'abrir-historial-compartido',
-    label: 'Abrir Historial Compartido',
-    description: 'Pega un enlace o codigo recibido para verlo dentro de la app',
-    icon: 'open-outline',
+    label: 'Acceso Médico por Código',
+    description: 'Ingresa el código del paciente para consultar y editar su historial',
+    icon: 'keypad-outline',
     accent: '#29B6FF',
     navigateTo: 'HistorialCompartido',
   },
@@ -393,7 +393,11 @@ export function MenuPrincipalScreen({ navigation }: Props) {
     [activeTab],
   );
 
-  const activeOptions = useMemo(() => optionsByTab[activeTab] ?? [], [activeTab]);
+  const activeOptions = useMemo(() => {
+    const options = optionsByTab[activeTab] ?? [];
+    if (user?.role?.trim().toLowerCase() === 'medico') return options;
+    return options.filter((item) => item.key !== 'abrir-historial-compartido');
+  }, [activeTab, user?.role]);
   const activeNanoAppearance = useMemo(() => getNanoAppearance(nanoAppearanceId), [nanoAppearanceId]);
 
   useFocusEffect(

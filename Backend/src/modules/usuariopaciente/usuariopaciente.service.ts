@@ -10,6 +10,7 @@ import { AuthenticatedUser } from "../../auth/auth.service";
 import { UsuarioPaciente } from "./usuariopaciente.entity";
 import { CreateUsuarioPacienteDto } from "./dto/create-usuariopaciente.dto";
 import { UpdateUsuarioPacienteDto } from "./dto/update-usuariopaciente.dto";
+import { PermisoAcceso } from "../permisoacceso/permisoacceso.entity";
 
 /**
  * Implementa la lógica de negocio y persistencia del dominio usuario paciente.
@@ -19,6 +20,8 @@ export class UsuarioPacienteService {
   constructor(
     @InjectRepository(UsuarioPaciente)
     private readonly usuarioPacienteRepository: Repository<UsuarioPaciente>,
+    @InjectRepository(PermisoAcceso)
+    private readonly permisoRepository: Repository<PermisoAcceso>,
   ) {}
 
   /**
@@ -64,14 +67,40 @@ export class UsuarioPacienteService {
    * @param actor Valor del parámetro `actor`.
    * @returns Resultado de la operación.
    */
-  async listMine(actor: AuthenticatedUser): Promise<UsuarioPaciente[]> {
+  async listMine(actor: AuthenticatedUser) {
     if (!actor.userId) {
       throw new BadRequestException("sesion invalida");
     }
-    return this.usuarioPacienteRepository.find({
+    const linked = await this.usuarioPacienteRepository.find({
       where: { usuarioId: actor.userId },
       order: { creadoEn: "DESC" },
     });
+    if (actor.role?.toLowerCase() !== "medico") {
+      return linked;
+    }
+
+    const activePermissions = await this.permisoRepository.find({
+      where: { medicoId: actor.userId, estado: "activo" },
+      order: { fechaInicio: "DESC" },
+    });
+    const now = Date.now();
+    const validPermissions = activePermissions.filter(
+      (permission) =>
+        !permission.fechaFin || permission.fechaFin.getTime() > now,
+    );
+    const linkedPatientIds = new Set(linked.map((item) => item.pacienteId));
+    const temporary = validPermissions
+      .filter((permission) => !linkedPatientIds.has(permission.pacienteId))
+      .map((permission) => ({
+        id: -permission.id,
+        usuarioId: actor.userId,
+        pacienteId: permission.pacienteId,
+        parentesco: "Acceso medico temporal",
+        esPrincipal: false,
+        notas: `Disponible hasta ${permission.fechaFin?.toISOString() ?? "nuevo aviso"}`,
+        creadoEn: permission.fechaInicio,
+      }));
+    return [...temporary, ...linked];
   }
 
   /**

@@ -10,6 +10,7 @@ export const medicoRegistroEstados = [
   "pendiente",
   "aprobado",
   "rechazado",
+  "documentos_solicitados",
 ] as const;
 
 /**

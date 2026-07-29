@@ -6,1011 +6,494 @@ import {
   Share,
   StyleSheet,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
-import { AppText, AppTextInput } from '../components/AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useAuth } from '../context/AuthContext';
+import { AppText, AppTextInput } from '../components/AppText';
 import { API_URL } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
-import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
+import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CompartirHistorial'>;
 
-type DoctorRegistry = {
+type Doctor = {
   usuarioId: number;
-  titulo: string | null;
-  especialidadprincipal: string | null;
-  hospitaltrabajo: string | null;
-  numerolicencia: string | null;
-  estado: string | null;
+  titulo?: string | null;
+  especialidadprincipal?: string | null;
+  hospitaltrabajo?: string | null;
+  numerolicencia?: string | null;
+  usuario?: { username?: string | null } | null;
 };
 
-type PermissionDuration = '15m' | '1h' | '1d';
-type PermissionType = 'temporal' | 'permanente';
-type ShareSectionKey =
-  | 'resumenClinico'
-  | 'consultasMedicas'
-  | 'examenesClinicos'
-  | 'medicaciones'
-  | 'vacunas'
-  | 'citasMedicas'
-  | 'saludMental';
-
-type GeneratedShareLink = {
-  shareUrl: string;
-  appUrl: string;
-  token: string;
+type GeneratedCode = {
+  code: string;
   expiresAt: string;
-  patientName: string;
-  doctorLabel: string;
+  pacienteId: number;
+  medicoId: number;
 };
 
-const SECTION_OPTIONS: Array<{ key: ShareSectionKey; label: string; helper: string }> = [
-  { key: 'resumenClinico', label: 'Resumen', helper: 'Datos principales del expediente' },
-  { key: 'consultasMedicas', label: 'Consultas', helper: 'Atenciones medicas registradas' },
-  { key: 'examenesClinicos', label: 'Examenes', helper: 'Resultados y examenes clinicos' },
-  { key: 'medicaciones', label: 'Medicacion', helper: 'Tratamientos y medicamentos' },
-  { key: 'vacunas', label: 'Vacunas', helper: 'Dosis y proximas aplicaciones' },
-  { key: 'citasMedicas', label: 'Citas', helper: 'Citas agendadas y seguimiento' },
-  { key: 'saludMental', label: 'Salud mental', helper: 'Historial y alertas relacionadas' },
-];
-
-const DEFAULT_SECTIONS: ShareSectionKey[] = [
-  'resumenClinico',
-  'consultasMedicas',
-  'examenesClinicos',
-  'medicaciones',
-];
-
-const TEST_DOCTOR_USERNAME = 'medico.prueba';
-const TEST_DOCTOR_PASSWORD = 'Medico123!';
-const TEST_DOCTOR_SQL = 'Base de datos/medico_prueba.sql';
-
-const SHARE_DURATION_OPTIONS = [
-  { value: 30, label: '30 min' },
-  { value: 60, label: '1 hora' },
-  { value: 180, label: '3 horas' },
-  { value: 1440, label: '24 horas' },
-] as const;
-
-const PERMISSION_DURATION_OPTIONS: Array<{ value: PermissionDuration; label: string }> = [
-  { value: '15m', label: '15 min' },
-  { value: '1h', label: '1 hora' },
-  { value: '1d', label: '1 dia' },
-];
-
-const normalizeText = (value: unknown) => {
-  if (value === null || value === undefined) return null;
-  const text = String(value).trim();
-  return text ? text : null;
-};
-
-const formatDateTime = (value?: string | null) => {
-  if (!value) return 'Sin fecha';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-  return parsed.toLocaleString('es-NI', {
+const formatDateTime = (value: string) =>
+  new Date(value).toLocaleString('es-NI', {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
-};
 
-const extractShareToken = (shareUrl: string, fallbackToken?: string | null) => {
-  if (fallbackToken) return String(fallbackToken);
-  try {
-    const parsed = new URL(shareUrl);
-    return parsed.pathname.split('/').filter(Boolean).pop() ?? shareUrl;
-  } catch {
-    return shareUrl.split('/').filter(Boolean).pop() ?? shareUrl;
-  }
-};
-
-const buildDoctorLabel = (doctor: DoctorRegistry) => {
-  const title = doctor.titulo ?? 'Medico registrado';
-  return `${title} #${doctor.usuarioId}`;
-};
-
-const buildDoctorSummary = (doctor: DoctorRegistry) => {
-  const summary = [doctor.especialidadprincipal, doctor.hospitaltrabajo].filter(Boolean).join(' - ');
-  if (summary) return summary;
-  return [doctor.especialidadprincipal, doctor.hospitaltrabajo].filter(Boolean).join(' · ') || 'Sin detalles';
-};
-
-const mapDoctors = (payload: any[]): DoctorRegistry[] =>
-  payload
-    .map((item) => {
-      const usuarioId = Number(item?.usuarioId ?? item?.usuarioid);
-      if (!Number.isFinite(usuarioId) || usuarioId <= 0) {
-        return null;
-      }
-      return {
-        usuarioId,
-        titulo: normalizeText(item?.titulo),
-        especialidadprincipal: normalizeText(item?.especialidadprincipal),
-        hospitaltrabajo: normalizeText(item?.hospitaltrabajo),
-        numerolicencia: normalizeText(item?.numerolicencia),
-        estado: normalizeText(item?.estado),
-      } satisfies DoctorRegistry;
-    })
-    .filter((item): item is DoctorRegistry => Boolean(item));
+const getDoctorName = (doctor: Doctor) =>
+  doctor.usuario?.username ||
+  doctor.titulo ||
+  `Médico #${doctor.usuarioId}`;
 
 export function CompartirHistorialScreen({ route }: Props) {
-  const { token, user } = useAuth();
-  const initialPatientId = route.params?.pacienteId;
-  const authHeaders = useMemo(() => {
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-    return headers;
-  }, [token]);
-
-  const [patients, setPatients] = useState<LinkedPatient[]>([]);
-  const [doctors, setDoctors] = useState<DoctorRegistry[]>([]);
-  const [selectedPatientId, setSelectedPatientId] = useState(
-    initialPatientId ? String(initialPatientId) : '',
+  const { width } = useWindowDimensions();
+  const desktop = width >= 920;
+  const { token } = useAuth();
+  const headers = useMemo(
+    () => ({
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    }),
+    [token],
   );
-  const [selectedDoctorId, setSelectedDoctorId] = useState('');
-  const [permissionType, setPermissionType] = useState<PermissionType>('temporal');
-  const [permissionDuration, setPermissionDuration] = useState<PermissionDuration>('1h');
-  const [shareDurationMinutes, setShareDurationMinutes] = useState<number>(60);
+  const [patients, setPatients] = useState<LinkedPatient[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [patientId, setPatientId] = useState(
+    route.params?.pacienteId ? String(route.params.pacienteId) : '',
+  );
+  const [doctorId, setDoctorId] = useState('');
   const [notes, setNotes] = useState('');
-  const [manualDoctorId, setManualDoctorId] = useState('');
-  const [selectedSections, setSelectedSections] = useState<ShareSectionKey[]>(DEFAULT_SECTIONS);
-  const [generatedLink, setGeneratedLink] = useState<GeneratedShareLink | null>(null);
+  const [generated, setGenerated] = useState<GeneratedCode | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const selectedPatient = useMemo(
-    () => patients.find((patient) => String(patient.pacienteId) === selectedPatientId) ?? null,
-    [patients, selectedPatientId],
+  const selectedPatient = patients.find(
+    (item) => String(item.pacienteId) === patientId,
+  );
+  const selectedDoctor = doctors.find(
+    (item) => String(item.usuarioId) === doctorId,
   );
 
-  const selectedDoctor = useMemo(
-    () => doctors.find((doctor) => String(doctor.usuarioId) === selectedDoctorId) ?? null,
-    [doctors, selectedDoctorId],
-  );
-
-  const effectiveDoctorId = useMemo(() => {
-    const selected = Number(selectedDoctorId);
-    if (Number.isFinite(selected) && selected > 0) {
-      return selected;
-    }
-    const manual = Number(manualDoctorId);
-    if (Number.isFinite(manual) && manual > 0) {
-      return manual;
-    }
-    return null;
-  }, [manualDoctorId, selectedDoctorId]);
-
-  const loadData = useCallback(async () => {
+  const load = useCallback(async () => {
     if (!token) {
-      setError('Necesitas iniciar sesion para compartir historial.');
+      setError('Inicia sesión para compartir un expediente.');
       setLoading(false);
       return;
     }
-
     setLoading(true);
     setError(null);
     try {
-      const [patientItems, doctorsResponse] = await Promise.all([
-        fetchLinkedPatients(authHeaders, { forceRefresh: true }),
-        fetch(`${API_URL}/medicoregistro`, { headers: authHeaders }),
+      const [patientItems, doctorResponse] = await Promise.all([
+        fetchLinkedPatients(headers, { forceRefresh: true }),
+        fetch(`${API_URL}/medicoregistro/catalogo/aprobados`, { headers }),
       ]);
-
-      const doctorsPayload = await doctorsResponse.json().catch(() => null);
-      if (!doctorsResponse.ok) {
-        throw new Error(doctorsPayload?.message ?? 'No se pudo cargar la lista de medicos');
+      const doctorPayload = await doctorResponse.json().catch(() => null);
+      if (!doctorResponse.ok) {
+        throw new Error(
+          doctorPayload?.message || 'No se pudo cargar el catálogo médico.',
+        );
       }
-
-      const mappedDoctors = mapDoctors(Array.isArray(doctorsPayload) ? doctorsPayload : []);
-      const approvedDoctors = mappedDoctors.filter((doctor) => (doctor.estado ?? '').toLowerCase() === 'aprobado');
-      const finalDoctors = approvedDoctors.length ? approvedDoctors : mappedDoctors;
-
+      const doctorItems = Array.isArray(doctorPayload)
+        ? doctorPayload.filter(
+            (item) => Number(item?.usuarioId) > 0,
+          )
+        : [];
       setPatients(patientItems);
-      setDoctors(finalDoctors);
-
-      const routePatient = initialPatientId ? String(initialPatientId) : '';
-      const routePatientExists = patientItems.some(
-        (patient) => String(patient.pacienteId) === routePatient,
-      );
-
-      if (routePatient && routePatientExists) {
-        setSelectedPatientId(routePatient);
-      } else if (!selectedPatientId && patientItems.length > 0) {
-        setSelectedPatientId(String(patientItems[0].pacienteId));
-      }
-      if (!selectedDoctorId && finalDoctors.length > 0) {
-        setSelectedDoctorId(String(finalDoctors[0].usuarioId));
-      }
+      setDoctors(doctorItems);
+      setPatientId((current) => {
+        if (
+          current &&
+          patientItems.some((item) => String(item.pacienteId) === current)
+        ) {
+          return current;
+        }
+        return String(patientItems[0]?.pacienteId ?? '');
+      });
+      setDoctorId((current) => current || String(doctorItems[0]?.usuarioId ?? ''));
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la informacion');
-      setPatients([]);
-      setDoctors([]);
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : 'No se pudo preparar el acceso.',
+      );
     } finally {
       setLoading(false);
     }
-  }, [authHeaders, initialPatientId, selectedDoctorId, selectedPatientId, token]);
+  }, [headers, token]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    void load();
+  }, [load]);
 
-  const toggleSection = (section: ShareSectionKey) => {
-    setSelectedSections((current) => {
-      if (current.includes(section)) {
-        if (current.length === 1) {
-          return current;
-        }
-        return current.filter((item) => item !== section);
-      }
-      return [...current, section];
-    });
-  };
-
-  const handleGenerateLink = async () => {
-    if (!selectedPatientId) {
-      Alert.alert('Falta la persona', 'Selecciona la persona cuyo historial quieres compartir.');
+  const generateCode = async () => {
+    if (!patientId || !doctorId) {
+      Alert.alert(
+        'Datos incompletos',
+        'Selecciona el paciente y el médico que recibirá el acceso.',
+      );
       return;
     }
-
-    if (!effectiveDoctorId) {
-      Alert.alert('Falta el medico', 'Selecciona un usuario medico o escribe su ID de usuario.');
-      return;
-    }
-
-    if (selectedSections.length === 0) {
-      Alert.alert('Faltan secciones', 'Selecciona al menos una parte del historial para compartir.');
-      return;
-    }
-
     setSubmitting(true);
+    setError(null);
     try {
-      const permissionResponse = await fetch(`${API_URL}/permiso-acceso/paciente/${selectedPatientId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeaders,
+      const response = await fetch(
+        `${API_URL}/permiso-acceso/paciente/${patientId}/codigo`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...headers },
+          body: JSON.stringify({
+            medicoId: Number(doctorId),
+            notas: notes.trim() || undefined,
+          }),
         },
-        body: JSON.stringify({
-          medicoId: effectiveDoctorId,
-          tipo: permissionType,
-          duracion: permissionType === 'temporal' ? permissionDuration : undefined,
-          notas: notes.trim() || undefined,
-        }),
-      });
-
-      const permissionPayload = await permissionResponse.json().catch(() => null);
-      if (!permissionResponse.ok) {
-        throw new Error(
-          permissionPayload?.message ??
-            'No se pudo crear el permiso. El usuario seleccionado debe tener rol medico.',
-        );
+      );
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(payload?.message || 'No se pudo generar el código.');
       }
-
-      const permisoId = Number(permissionPayload?.id ?? permissionPayload?.permisoId);
-      if (!Number.isFinite(permisoId)) {
-        throw new Error('El backend no devolvio un permiso valido');
-      }
-
-      const shareResponse = await fetch(`${API_URL}/permiso-acceso/${permisoId}/enlace`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeaders,
-        },
-        body: JSON.stringify({
-          duracionMinutos: shareDurationMinutes,
-          secciones: selectedSections,
-        }),
+      setGenerated({
+        code: String(payload.code),
+        expiresAt: String(payload.expiresAt),
+        pacienteId: Number(payload.pacienteId),
+        medicoId: Number(payload.medicoId),
       });
-
-      const sharePayload = await shareResponse.json().catch(() => null);
-      if (!shareResponse.ok) {
-        throw new Error(sharePayload?.message ?? 'No se pudo generar el enlace para compartir');
-      }
-
-      const doctorLabel = selectedDoctor
-        ? `${buildDoctorLabel(selectedDoctor)}${selectedDoctor.especialidadprincipal ? ` - ${selectedDoctor.especialidadprincipal}` : ''}`
-        : `Medico #${effectiveDoctorId}`;
-      const shareUrl = String(sharePayload?.shareUrl ?? '');
-      const shareToken = extractShareToken(shareUrl, sharePayload?.token);
-
-      setGeneratedLink({
-        shareUrl,
-        token: shareToken,
-        appUrl: `gestionsalud://historial-compartido/${encodeURIComponent(shareToken)}`,
-        expiresAt: String(sharePayload?.expiresAt ?? ''),
-        patientName: selectedPatient?.displayName ?? `Paciente #${selectedPatientId}`,
-        doctorLabel,
-      });
-      Alert.alert('Enlace creado', 'El historial ya se puede compartir por enlace.');
-    } catch (submitError) {
-      Alert.alert('Error', submitError instanceof Error ? submitError.message : 'No se pudo generar el enlace');
+    } catch (generateError) {
+      setError(
+        generateError instanceof Error
+          ? generateError.message
+          : 'No se pudo generar el código.',
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleShare = async () => {
-    if (!generatedLink) {
-      return;
-    }
-
-    try {
-      await Share.share({
-        message:
-          `Te comparto el historial medico de ${generatedLink.patientName}. ` +
-          `Abre en la app: ${generatedLink.appUrl}. ` +
-          `Codigo: ${generatedLink.token}. ` +
-          `Enlace web: ${generatedLink.shareUrl}. ` +
-          `Expira: ${formatDateTime(generatedLink.expiresAt)}.`,
-        url: generatedLink.shareUrl,
-      });
-    } catch (shareError) {
-      Alert.alert('No se pudo compartir', shareError instanceof Error ? shareError.message : 'Intenta nuevamente');
-    }
+  const shareCode = async () => {
+    if (!generated) return;
+    await Share.share({
+      message:
+        `Código temporal de Gestión Salud: ${generated.code}. ` +
+        `Úsalo con tu cuenta médica. El código vence el ${formatDateTime(
+          generated.expiresAt,
+        )} y habilita una hora de acceso al expediente.`,
+    });
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.heroCard}>
-        <AppText style={styles.kicker}>GESTION</AppText>
-        <AppText style={styles.title}>Compartir historial medico</AppText>
-        <AppText style={styles.subtitle}>
-          Crea un permiso para otro usuario. El backend solo lo aprobara si ese usuario tiene rol medico.
-        </AppText>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={[styles.hero, desktop && styles.heroDesktop]}>
+        <View style={styles.heroIcon}>
+          <Ionicons name="key-outline" size={30} color={appColors.info} />
+        </View>
+        <View style={styles.heroCopy}>
+          <AppText style={styles.eyebrow}>ACCESO MÉDICO TEMPORAL</AppText>
+          <AppText style={styles.title}>Comparte tu historial con 6 números</AppText>
+          <AppText style={styles.subtitle}>
+            El permiso comienza cuando el médico introduce el código y finaliza
+            automáticamente una hora después.
+          </AppText>
+        </View>
+        <View style={styles.timePill}>
+          <Ionicons name="time-outline" size={17} color={appColors.success} />
+          <AppText style={styles.timePillText}>1 hora</AppText>
+        </View>
+      </View>
+
+      <View style={styles.securityStrip}>
+        <SecurityItem icon="shield-checkmark-outline" text="Código único" />
+        <SecurityItem icon="medkit-outline" text="Solo el médico elegido" />
+        <SecurityItem icon="timer-outline" text="Expiración automática" />
       </View>
 
       {loading ? (
         <View style={styles.loadingCard}>
-          <ActivityIndicator color={appColors.info} />
-          <AppText style={styles.loadingText}>Cargando personas y medicos...</AppText>
+          <ActivityIndicator color={appColors.info} size="large" />
+          <AppText style={styles.loadingText}>Preparando pacientes y médicos...</AppText>
         </View>
       ) : (
-        <>
-          <View style={styles.sectionCard}>
-            <AppText style={styles.sectionTitle}>1. Persona</AppText>
-            <AppText style={styles.helperText}>Selecciona de quién vas a compartir la informacion.</AppText>
-            <View style={styles.chipList}>
-              {patients.map((patient) => {
-                const isActive = String(patient.pacienteId) === selectedPatientId;
-                return (
-                  <TouchableOpacity
-                    key={patient.pacienteId}
-                    style={[styles.personChip, isActive && styles.personChipActive]}
-                    onPress={() => setSelectedPatientId(String(patient.pacienteId))}
-                  >
-                    <AppText style={[styles.personChipText, isActive && styles.personChipTextActive]}>
-                      {patient.displayName}
-                    </AppText>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          <View style={styles.sectionCard}>
-            <AppText style={styles.sectionTitle}>2. Medico</AppText>
-            <AppText style={styles.helperText}>
-              Toca un medico disponible o escribe el ID de un usuario con permiso de medico.
-            </AppText>
-            <View style={styles.testDoctorBox}>
-              <View style={styles.testDoctorHeader}>
-                <Ionicons name="flask-outline" size={18} color={appColors.info} />
-                <AppText style={styles.testDoctorTitle}>Medico de prueba</AppText>
-              </View>
-              <AppText style={styles.testDoctorText}>Usuario: {TEST_DOCTOR_USERNAME}</AppText>
-              <AppText style={styles.testDoctorText}>Clave: {TEST_DOCTOR_PASSWORD}</AppText>
-              <AppText style={styles.testDoctorHint}>
-                Cargalo con {TEST_DOCTOR_SQL}; quedara con rol medico y registro aprobado.
+        <View style={[styles.layout, desktop && styles.layoutDesktop]}>
+          <View style={styles.formColumn}>
+            <StepCard number="1" title="Selecciona el expediente">
+              <AppText style={styles.helper}>
+                Elige el paciente cuyo historial deseas compartir.
               </AppText>
-            </View>
-
-            {doctors.length > 0 ? (
-              <View style={styles.doctorList}>
-                {doctors.map((doctor) => {
-                  const isActive = String(doctor.usuarioId) === selectedDoctorId;
+              <View style={styles.choiceGrid}>
+                {patients.map((patient) => {
+                  const active = String(patient.pacienteId) === patientId;
                   return (
                     <TouchableOpacity
-                      key={doctor.usuarioId}
-                      style={[styles.doctorCard, isActive && styles.doctorCardActive]}
+                      key={patient.pacienteId}
+                      style={[styles.choiceCard, active && styles.choiceCardActive]}
                       onPress={() => {
-                        setSelectedDoctorId(String(doctor.usuarioId));
-                        setManualDoctorId('');
+                        setPatientId(String(patient.pacienteId));
+                        setGenerated(null);
                       }}
                     >
-                      <View style={styles.doctorHeader}>
-                        <AppText style={styles.doctorTitle}>{buildDoctorLabel(doctor)}</AppText>
-                        {doctor.estado ? (
-                          <View style={styles.statusPill}>
-                            <AppText style={styles.statusPillText}>{doctor.estado}</AppText>
-                          </View>
-                        ) : null}
+                      <View style={[styles.choiceIcon, active && styles.choiceIconActive]}>
+                        <Ionicons
+                          name="person-outline"
+                          size={18}
+                          color={active ? appColors.background : appColors.info}
+                        />
                       </View>
-                      <AppText style={styles.doctorSubtitle}>
-                        Usuario ID: {doctor.usuarioId}
+                      <AppText style={[styles.choiceTitle, active && styles.choiceTitleActive]}>
+                        {patient.displayName}
                       </AppText>
-                      <AppText style={styles.doctorMeta}>{buildDoctorSummary(doctor)}</AppText>
-                      {doctor.numerolicencia ? (
-                        <AppText style={styles.doctorMeta}>Licencia: {doctor.numerolicencia}</AppText>
+                      {active ? (
+                        <Ionicons name="checkmark-circle" size={20} color={appColors.success} />
                       ) : null}
                     </TouchableOpacity>
                   );
                 })}
               </View>
-            ) : (
-              <View style={styles.emptyCard}>
-                <Ionicons name="medkit-outline" size={20} color={appColors.textMuted} />
-                <AppText style={styles.emptyText}>
-                  No se encontraron medicos en el catalogo. Puedes escribir el ID manualmente.
-                </AppText>
-              </View>
-            )}
+              {!patients.length ? (
+                <AppText style={styles.emptyText}>No hay pacientes asociados a tu cuenta.</AppText>
+              ) : null}
+            </StepCard>
 
-            <AppText style={styles.label}>ID del medico</AppText>
-            <AppTextInput
-              style={styles.input}
-              placeholder="Ejemplo: 12"
-              placeholderTextColor={appColors.textMuted}
-              keyboardType="numeric"
-              value={manualDoctorId}
-              onChangeText={(value) => {
-                setManualDoctorId(value.replace(/[^0-9]/g, ''));
-                setSelectedDoctorId('');
-              }}
-            />
-            <View style={styles.medicoRequirementBox}>
-              <Ionicons name="shield-checkmark-outline" size={18} color={appColors.success} />
-              <AppText style={styles.medicoRequirementText}>
-                El permiso se crea solamente si el usuario destino tiene rol medico en el backend.
+            <StepCard number="2" title="Selecciona al médico">
+              <AppText style={styles.helper}>
+                Por seguridad, el código solo podrá usarlo este profesional.
               </AppText>
-            </View>
-          </View>
-
-          <View style={styles.sectionCard}>
-            <AppText style={styles.sectionTitle}>3. Alcance del permiso</AppText>
-            <AppText style={styles.helperText}>Define cuánto tiempo vive el permiso principal.</AppText>
-
-            <View style={styles.segmentRow}>
-              <TouchableOpacity
-                style={[styles.segmentButton, permissionType === 'temporal' && styles.segmentButtonActive]}
-                onPress={() => setPermissionType('temporal')}
-              >
-                <AppText style={[styles.segmentButtonText, permissionType === 'temporal' && styles.segmentButtonTextActive]}>
-                  Temporal
-                </AppText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.segmentButton, permissionType === 'permanente' && styles.segmentButtonActive]}
-                onPress={() => setPermissionType('permanente')}
-              >
-                <AppText
-                  style={[styles.segmentButtonText, permissionType === 'permanente' && styles.segmentButtonTextActive]}
-                >
-                  Permanente
-                </AppText>
-              </TouchableOpacity>
-            </View>
-
-            {permissionType === 'temporal' ? (
-              <View style={styles.chipList}>
-                {PERMISSION_DURATION_OPTIONS.map((option) => {
-                  const isActive = permissionDuration === option.value;
+              <View style={styles.doctorList}>
+                {doctors.map((doctor) => {
+                  const active = String(doctor.usuarioId) === doctorId;
                   return (
                     <TouchableOpacity
-                      key={option.value}
-                      style={[styles.optionChip, isActive && styles.optionChipActive]}
-                      onPress={() => setPermissionDuration(option.value)}
+                      key={doctor.usuarioId}
+                      style={[styles.doctorCard, active && styles.doctorCardActive]}
+                      onPress={() => {
+                        setDoctorId(String(doctor.usuarioId));
+                        setGenerated(null);
+                      }}
                     >
-                      <AppText style={[styles.optionChipText, isActive && styles.optionChipTextActive]}>
-                        {option.label}
-                      </AppText>
+                      <View style={styles.doctorAvatar}>
+                        <Ionicons name="medkit-outline" size={21} color={appColors.info} />
+                      </View>
+                      <View style={styles.doctorCopy}>
+                        <AppText style={styles.doctorName}>{getDoctorName(doctor)}</AppText>
+                        <AppText style={styles.doctorMeta}>
+                          {[
+                            doctor.especialidadprincipal,
+                            doctor.hospitaltrabajo,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ') || 'Profesional médico verificado'}
+                        </AppText>
+                        {doctor.numerolicencia ? (
+                          <AppText style={styles.license}>
+                            Licencia {doctor.numerolicencia}
+                          </AppText>
+                        ) : null}
+                      </View>
+                      <Ionicons
+                        name={active ? 'radio-button-on' : 'radio-button-off'}
+                        size={22}
+                        color={active ? appColors.success : appColors.textMuted}
+                      />
                     </TouchableOpacity>
                   );
                 })}
               </View>
-            ) : null}
+              {!doctors.length ? (
+                <AppText style={styles.emptyText}>
+                  No hay médicos aprobados disponibles.
+                </AppText>
+              ) : null}
+            </StepCard>
 
-            <AppText style={styles.label}>Nota opcional</AppText>
-            <AppTextInput
-              style={[styles.input, styles.multilineInput]}
-              placeholder="Ejemplo: compartir para segunda opinion"
-              placeholderTextColor={appColors.textMuted}
-              multiline
-              value={notes}
-              onChangeText={setNotes}
-            />
+            <StepCard number="3" title="Nota opcional">
+              <AppTextInput
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Ejemplo: revisión de resultados y actualización de tratamiento"
+                placeholderTextColor={appColors.textMuted}
+                multiline
+                maxLength={200}
+                style={styles.notesInput}
+              />
+            </StepCard>
           </View>
 
-          <View style={styles.sectionCard}>
-            <AppText style={styles.sectionTitle}>4. Que quieres compartir</AppText>
-            <AppText style={styles.helperText}>
-              Marca solo las partes del historial que el medico necesita revisar.
-            </AppText>
-            <View style={styles.sectionGrid}>
-              {SECTION_OPTIONS.map((option) => {
-                const isActive = selectedSections.includes(option.key);
-                return (
-                  <TouchableOpacity
-                    key={option.key}
-                    style={[styles.sectionOption, isActive && styles.sectionOptionActive]}
-                    onPress={() => toggleSection(option.key)}
-                  >
-                    <AppText style={[styles.sectionOptionLabel, isActive && styles.sectionOptionLabelActive]}>
-                      {option.label}
-                    </AppText>
-                    <AppText style={styles.sectionOptionHelper}>{option.helper}</AppText>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+          <View style={[styles.codePanel, desktop && styles.codePanelDesktop]}>
+            <AppText style={styles.panelEyebrow}>CÓDIGO DE ACCESO</AppText>
+            {generated ? (
+              <>
+                <View style={styles.successIcon}>
+                  <Ionicons name="checkmark" size={28} color={appColors.background} />
+                </View>
+                <AppText style={styles.codeLabel}>Comparte estos 6 números</AppText>
+                <View style={styles.codeBox}>
+                  {generated.code.split('').map((digit, index) => (
+                    <View key={`${digit}-${index}`} style={styles.digitBox}>
+                      <AppText style={styles.digit}>{digit}</AppText>
+                    </View>
+                  ))}
+                </View>
+                <AppText style={styles.codeDescription}>
+                  Para {selectedDoctor ? getDoctorName(selectedDoctor) : 'el médico'} ·{' '}
+                  {selectedPatient?.displayName}
+                </AppText>
+                <View style={styles.expirationBox}>
+                  <Ionicons name="hourglass-outline" size={17} color="#F5B942" />
+                  <AppText style={styles.expirationText}>
+                    Código válido hasta {formatDateTime(generated.expiresAt)}
+                  </AppText>
+                </View>
+                <TouchableOpacity style={styles.shareButton} onPress={() => void shareCode()}>
+                  <Ionicons name="share-social-outline" size={18} color={appColors.background} />
+                  <AppText style={styles.shareButtonText}>Compartir código</AppText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.secondaryButton}
+                  onPress={() => setGenerated(null)}
+                >
+                  <AppText style={styles.secondaryButtonText}>Generar uno nuevo</AppText>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <View style={styles.placeholderIcon}>
+                  <Ionicons name="lock-closed-outline" size={34} color={appColors.info} />
+                </View>
+                <AppText style={styles.panelTitle}>Acceso protegido por una hora</AppText>
+                <AppText style={styles.panelText}>
+                  El médico podrá consultar y modificar el expediente únicamente
+                  durante la ventana autorizada.
+                </AppText>
+                <TouchableOpacity
+                  style={[
+                    styles.generateButton,
+                    (submitting || !patientId || !doctorId) && styles.buttonDisabled,
+                  ]}
+                  disabled={submitting || !patientId || !doctorId}
+                  onPress={() => void generateCode()}
+                >
+                  {submitting ? (
+                    <ActivityIndicator color={appColors.background} />
+                  ) : (
+                    <>
+                      <Ionicons name="key-outline" size={19} color={appColors.background} />
+                      <AppText style={styles.generateButtonText}>Generar código único</AppText>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
+            {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
           </View>
-
-          <View style={styles.sectionCard}>
-            <AppText style={styles.sectionTitle}>5. Tiempo del enlace</AppText>
-            <AppText style={styles.helperText}>Este es el tiempo durante el cual el enlace funcionara.</AppText>
-            <View style={styles.chipList}>
-              {SHARE_DURATION_OPTIONS.map((option) => {
-                const isActive = shareDurationMinutes === option.value;
-                return (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={[styles.optionChip, isActive && styles.optionChipActive]}
-                    onPress={() => setShareDurationMinutes(option.value)}
-                  >
-                    <AppText style={[styles.optionChipText, isActive && styles.optionChipTextActive]}>
-                      {option.label}
-                    </AppText>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <TouchableOpacity
-              style={[styles.primaryButton, submitting && styles.buttonDisabled]}
-              onPress={() => void handleGenerateLink()}
-              disabled={submitting}
-            >
-              {submitting ? (
-                <ActivityIndicator color={appColors.text} />
-              ) : (
-                <>
-                  <Ionicons name="link-outline" size={18} color={appColors.text} />
-                  <AppText style={styles.primaryButtonText}>Generar enlace</AppText>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {generatedLink ? (
-            <View style={styles.resultCard}>
-              <View style={styles.resultHeader}>
-                <Ionicons name="checkmark-circle-outline" size={22} color={appColors.success} />
-                <AppText style={styles.resultTitle}>Enlace listo</AppText>
-              </View>
-              <AppText style={styles.resultText}>Paciente: {generatedLink.patientName}</AppText>
-              <AppText style={styles.resultText}>Medico: {generatedLink.doctorLabel}</AppText>
-              <AppText style={styles.resultText}>Expira: {formatDateTime(generatedLink.expiresAt)}</AppText>
-              <AppText style={styles.resultLabel}>Enlace interno de app</AppText>
-              <View style={styles.linkBox}>
-                <AppText selectable style={styles.linkText}>{generatedLink.appUrl}</AppText>
-              </View>
-              <AppText style={styles.resultLabel}>Codigo para pegar en la app</AppText>
-              <View style={styles.linkBox}>
-                <AppText selectable style={styles.codeText}>{generatedLink.token}</AppText>
-              </View>
-              <AppText style={styles.resultLabel}>Enlace web</AppText>
-              <View style={styles.linkBox}>
-                <AppText selectable style={styles.linkText}>{generatedLink.shareUrl}</AppText>
-              </View>
-              <TouchableOpacity style={styles.shareButton} onPress={() => void handleShare()}>
-                <Ionicons name="share-social-outline" size={18} color={appColors.background} />
-                <AppText style={styles.shareButtonText}>Compartir enlace</AppText>
-              </TouchableOpacity>
-            </View>
-          ) : null}
-        </>
+        </View>
       )}
-
-      {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
-      <AppText style={styles.footerNote}>
-        Este enlace debe compartirse solo con el medico autorizado. Usuario activo: {user?.username ?? 'usuario'}.
-      </AppText>
     </ScrollView>
   );
 }
 
+function StepCard({
+  number,
+  title,
+  children,
+}: {
+  number: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={styles.stepCard}>
+      <View style={styles.stepHeader}>
+        <View style={styles.stepNumber}>
+          <AppText style={styles.stepNumberText}>{number}</AppText>
+        </View>
+        <AppText style={styles.stepTitle}>{title}</AppText>
+      </View>
+      {children}
+    </View>
+  );
+}
+
+function SecurityItem({
+  icon,
+  text,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  text: string;
+}) {
+  return (
+    <View style={styles.securityItem}>
+      <Ionicons name={icon} size={17} color={appColors.success} />
+      <AppText style={styles.securityText}>{text}</AppText>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    paddingBottom: 36,
-    backgroundColor: appColors.background,
-    gap: 16,
-  },
-  heroCard: {
-    backgroundColor: appColors.surfaceStrong,
-    borderRadius: 24,
-    padding: 22,
-    borderWidth: 1,
-    borderColor: appColors.borderStrong,
-  },
-  kicker: {
-    color: appColors.info,
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-    marginBottom: 8,
-  },
-  title: {
-    color: appColors.text,
-    fontSize: 27,
-    fontWeight: '800',
-  },
-  subtitle: {
-    color: appColors.textSoft,
-    fontSize: 14,
-    lineHeight: 21,
-    marginTop: 8,
-  },
-  loadingCard: {
-    borderRadius: 22,
-    padding: 22,
-    alignItems: 'center',
-    backgroundColor: appColors.surface,
-    borderWidth: 1,
-    borderColor: appColors.border,
-  },
-  loadingText: {
-    marginTop: 10,
-    color: appColors.textSoft,
-  },
-  sectionCard: {
-    backgroundColor: appColors.surface,
-    borderRadius: 22,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: appColors.border,
-  },
-  sectionTitle: {
-    color: appColors.text,
-    fontSize: 19,
-    fontWeight: '800',
-  },
-  helperText: {
-    color: appColors.textSoft,
-    fontSize: 13,
-    lineHeight: 19,
-    marginTop: 6,
-    marginBottom: 14,
-  },
-  chipList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  personChip: {
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: appColors.backgroundMuted,
-    borderWidth: 1,
-    borderColor: appColors.border,
-  },
-  personChipActive: {
-    backgroundColor: colorAlpha(appColors.info, '18'),
-    borderColor: colorAlpha(appColors.info, '60'),
-  },
-  personChipText: {
-    color: appColors.textSoft,
-    fontWeight: '700',
-  },
-  personChipTextActive: {
-    color: appColors.info,
-  },
-  testDoctorBox: {
-    borderRadius: 18,
-    padding: 14,
-    backgroundColor: colorAlpha(appColors.info, '10'),
-    borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '45'),
-    marginBottom: 14,
-    gap: 4,
-  },
-  testDoctorHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  testDoctorTitle: {
-    color: appColors.text,
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  testDoctorText: {
-    color: appColors.text,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  testDoctorHint: {
-    color: appColors.textSoft,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 4,
-  },
-  doctorList: {
-    gap: 12,
-  },
-  doctorCard: {
-    borderRadius: 18,
-    padding: 14,
-    backgroundColor: appColors.backgroundMuted,
-    borderWidth: 1,
-    borderColor: appColors.border,
-  },
-  doctorCardActive: {
-    borderColor: appColors.success,
-    backgroundColor: colorAlpha(appColors.success, '12'),
-  },
-  doctorHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  doctorTitle: {
-    color: appColors.text,
-    fontSize: 15,
-    fontWeight: '800',
-    flex: 1,
-  },
-  doctorSubtitle: {
-    color: appColors.info,
-    fontSize: 13,
-    fontWeight: '700',
-    marginTop: 8,
-  },
-  doctorMeta: {
-    color: appColors.textSoft,
-    fontSize: 12,
-    marginTop: 4,
-    lineHeight: 18,
-  },
-  statusPill: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: colorAlpha(appColors.success, '16'),
-  },
-  statusPillText: {
-    color: appColors.success,
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  emptyCard: {
-    borderRadius: 18,
-    padding: 14,
-    backgroundColor: appColors.backgroundMuted,
-    borderWidth: 1,
-    borderColor: appColors.border,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 12,
-  },
-  emptyText: {
-    color: appColors.textSoft,
-    flex: 1,
-    lineHeight: 18,
-  },
-  label: {
-    color: appColors.text,
-    fontSize: 14,
-    fontWeight: '700',
-    marginTop: 14,
-    marginBottom: 8,
-  },
-  input: {
-    borderRadius: 16,
-    padding: 14,
-    backgroundColor: appColors.backgroundMuted,
-    borderWidth: 1,
-    borderColor: appColors.border,
-    color: appColors.text,
-    fontSize: 15,
-  },
-  multilineInput: {
-    minHeight: 96,
-    textAlignVertical: 'top',
-  },
-  medicoRequirementBox: {
-    marginTop: 12,
-    borderRadius: 16,
-    padding: 12,
-    backgroundColor: colorAlpha(appColors.success, '10'),
-    borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '45'),
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  medicoRequirementText: {
-    color: appColors.textSoft,
-    flex: 1,
-    fontSize: 12,
-    lineHeight: 17,
-    fontWeight: '700',
-  },
-  segmentRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  segmentButton: {
-    flex: 1,
-    borderRadius: 16,
-    paddingVertical: 13,
-    alignItems: 'center',
-    backgroundColor: appColors.backgroundMuted,
-    borderWidth: 1,
-    borderColor: appColors.border,
-  },
-  segmentButtonActive: {
-    backgroundColor: colorAlpha(appColors.info, '18'),
-    borderColor: colorAlpha(appColors.info, '60'),
-  },
-  segmentButtonText: {
-    color: appColors.textSoft,
-    fontWeight: '800',
-  },
-  segmentButtonTextActive: {
-    color: appColors.info,
-  },
-  optionChip: {
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: appColors.backgroundMuted,
-    borderWidth: 1,
-    borderColor: appColors.border,
-  },
-  optionChipActive: {
-    backgroundColor: colorAlpha(appColors.success, '14'),
-    borderColor: colorAlpha(appColors.success, '55'),
-  },
-  optionChipText: {
-    color: appColors.textSoft,
-    fontWeight: '700',
-  },
-  optionChipTextActive: {
-    color: appColors.success,
-  },
-  sectionGrid: {
-    gap: 12,
-  },
-  sectionOption: {
-    borderRadius: 18,
-    padding: 14,
-    backgroundColor: appColors.backgroundMuted,
-    borderWidth: 1,
-    borderColor: appColors.border,
-  },
-  sectionOptionActive: {
-    backgroundColor: colorAlpha(appColors.accent, '12'),
-    borderColor: colorAlpha(appColors.accent, '55'),
-  },
-  sectionOptionLabel: {
-    color: appColors.text,
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  sectionOptionLabelActive: {
-    color: appColors.accent,
-  },
-  sectionOptionHelper: {
-    color: appColors.textSoft,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 6,
-  },
-  primaryButton: {
-    marginTop: 16,
-    minHeight: 54,
-    borderRadius: 16,
-    backgroundColor: appColors.info,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 10,
-  },
-  primaryButtonText: {
-    color: appColors.text,
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  resultCard: {
-    backgroundColor: colorAlpha(appColors.success, '10'),
-    borderRadius: 22,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '65'),
-  },
-  resultHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 12,
-  },
-  resultTitle: {
-    color: appColors.text,
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  resultText: {
-    color: appColors.textSoft,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 4,
-  },
-  resultLabel: {
-    color: appColors.text,
-    fontSize: 13,
-    fontWeight: '800',
-    marginTop: 14,
-    marginBottom: 6,
-  },
-  linkBox: {
-    marginTop: 14,
-    borderRadius: 16,
-    padding: 14,
-    backgroundColor: appColors.backgroundMuted,
-    borderWidth: 1,
-    borderColor: appColors.border,
-  },
-  linkText: {
-    color: appColors.text,
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  codeText: {
-    color: appColors.info,
-    fontSize: 12,
-    lineHeight: 18,
-    fontWeight: '800',
-  },
-  shareButton: {
-    marginTop: 14,
-    minHeight: 50,
-    borderRadius: 16,
-    backgroundColor: appColors.success,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 10,
-  },
-  shareButtonText: {
-    color: appColors.background,
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  errorText: {
-    color: appColors.accent,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  footerNote: {
-    color: appColors.textMuted,
-    fontSize: 12,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
+  screen: { flex: 1, backgroundColor: appColors.background },
+  content: { width: '100%', maxWidth: 1240, alignSelf: 'center', padding: 16, paddingBottom: 50 },
+  hero: { padding: 22, borderRadius: 24, borderWidth: 1, borderColor: appColors.borderStrong, backgroundColor: appColors.surfaceStrong },
+  heroDesktop: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 28 },
+  heroIcon: { width: 62, height: 62, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(appColors.info, '16'), marginRight: 17 },
+  heroCopy: { flex: 1 },
+  eyebrow: { color: appColors.info, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 },
+  title: { color: appColors.text, fontSize: 28, lineHeight: 35, fontWeight: '900', marginTop: 5 },
+  subtitle: { color: appColors.textSoft, fontSize: 13, lineHeight: 20, marginTop: 6, maxWidth: 720 },
+  timePill: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 7, borderRadius: 99, paddingHorizontal: 13, paddingVertical: 9, marginTop: 14, backgroundColor: colorAlpha(appColors.success, '13') },
+  timePillText: { color: appColors.success, fontSize: 11, fontWeight: '900' },
+  securityStrip: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginVertical: 14 },
+  securityItem: { flexGrow: 1, minWidth: 160, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, padding: 11, borderRadius: 13, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
+  securityText: { color: appColors.textSoft, fontSize: 10, fontWeight: '800' },
+  loadingCard: { minHeight: 260, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: appColors.surface },
+  loadingText: { color: appColors.textMuted, marginTop: 12 },
+  layout: { gap: 15 },
+  layoutDesktop: { flexDirection: 'row', alignItems: 'flex-start' },
+  formColumn: { flex: 1, gap: 13 },
+  stepCard: { padding: 18, borderRadius: 19, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
+  stepHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 9 },
+  stepNumber: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: appColors.info },
+  stepNumberText: { color: appColors.background, fontSize: 12, fontWeight: '900' },
+  stepTitle: { color: appColors.text, fontSize: 17, fontWeight: '900', marginLeft: 10 },
+  helper: { color: appColors.textMuted, fontSize: 11, lineHeight: 17, marginBottom: 12 },
+  choiceGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
+  choiceCard: { minWidth: 190, flex: 1, flexDirection: 'row', alignItems: 'center', gap: 9, padding: 12, borderRadius: 13, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted },
+  choiceCardActive: { borderColor: appColors.success, backgroundColor: colorAlpha(appColors.success, '0C') },
+  choiceIcon: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(appColors.info, '15') },
+  choiceIconActive: { backgroundColor: appColors.success },
+  choiceTitle: { flex: 1, color: appColors.textSoft, fontSize: 12, fontWeight: '800' },
+  choiceTitleActive: { color: appColors.text },
+  doctorList: { gap: 9 },
+  doctorCard: { flexDirection: 'row', alignItems: 'center', padding: 13, borderRadius: 14, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted },
+  doctorCardActive: { borderColor: appColors.success, backgroundColor: colorAlpha(appColors.success, '0C') },
+  doctorAvatar: { width: 43, height: 43, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 11, backgroundColor: colorAlpha(appColors.info, '15') },
+  doctorCopy: { flex: 1, minWidth: 0 },
+  doctorName: { color: appColors.text, fontSize: 13, fontWeight: '900' },
+  doctorMeta: { color: appColors.textSoft, fontSize: 10, marginTop: 3 },
+  license: { color: appColors.info, fontSize: 9, fontWeight: '800', marginTop: 4 },
+  notesInput: { minHeight: 90, padding: 13, borderRadius: 13, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted, color: appColors.text, fontSize: 12, textAlignVertical: 'top', outlineStyle: 'none' } as any,
+  emptyText: { color: appColors.textMuted, fontSize: 11, fontStyle: 'italic' },
+  codePanel: { width: '100%', padding: 22, alignItems: 'center', borderRadius: 21, borderWidth: 1, borderColor: appColors.borderStrong, backgroundColor: appColors.surfaceStrong },
+  codePanelDesktop: { width: 380, position: 'sticky', top: 14 } as any,
+  panelEyebrow: { color: appColors.info, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 },
+  placeholderIcon: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderRadius: 23, marginTop: 22, backgroundColor: colorAlpha(appColors.info, '14') },
+  panelTitle: { color: appColors.text, fontSize: 20, fontWeight: '900', textAlign: 'center', marginTop: 16 },
+  panelText: { color: appColors.textMuted, fontSize: 11, lineHeight: 18, textAlign: 'center', marginTop: 7 },
+  generateButton: { width: '100%', minHeight: 49, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, marginTop: 20, backgroundColor: appColors.info },
+  generateButtonText: { color: appColors.background, fontSize: 12, fontWeight: '900' },
+  buttonDisabled: { opacity: 0.45 },
+  successIcon: { width: 54, height: 54, alignItems: 'center', justifyContent: 'center', borderRadius: 18, marginTop: 18, backgroundColor: appColors.success },
+  codeLabel: { color: appColors.textSoft, fontSize: 11, fontWeight: '800', marginTop: 14 },
+  codeBox: { flexDirection: 'row', justifyContent: 'center', gap: 5, marginVertical: 13 },
+  digitBox: { width: 43, height: 58, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, borderColor: colorAlpha(appColors.info, '70'), backgroundColor: appColors.backgroundMuted },
+  digit: { color: appColors.text, fontSize: 29, fontWeight: '900' },
+  codeDescription: { color: appColors.textSoft, fontSize: 10, lineHeight: 16, textAlign: 'center' },
+  expirationBox: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 8, padding: 11, borderRadius: 11, marginTop: 13, backgroundColor: colorAlpha('#F5B942', '10') },
+  expirationText: { flex: 1, color: '#F5B942', fontSize: 9, lineHeight: 14, fontWeight: '700' },
+  shareButton: { width: '100%', minHeight: 47, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, marginTop: 15, backgroundColor: appColors.success },
+  shareButtonText: { color: appColors.background, fontSize: 12, fontWeight: '900' },
+  secondaryButton: { minHeight: 39, justifyContent: 'center', marginTop: 7 },
+  secondaryButtonText: { color: appColors.info, fontSize: 10, fontWeight: '800' },
+  errorText: { color: appColors.accent, fontSize: 10, lineHeight: 15, textAlign: 'center', marginTop: 12 },
 });

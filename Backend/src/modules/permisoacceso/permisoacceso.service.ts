@@ -6,8 +6,8 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
-import { createHmac, randomBytes, timingSafeEqual } from "crypto";
-import { DataSource, Repository } from "typeorm";
+import { createHmac, randomBytes, randomInt, timingSafeEqual } from "crypto";
+import { DataSource, In, Repository } from "typeorm";
 import { AuthenticatedUser } from "../../auth/auth.service";
 import { PacienteAccessService } from "../../auth/paciente-access.service";
 import { UsersService } from "../../users/users.service";
@@ -28,6 +28,8 @@ import {
 } from "./dto/create-permisoacceso-link.dto";
 import { CreatePermisoAccesoQrDto } from "./dto/create-permisoacceso-qr.dto";
 import { ClaimPermisoAccesoQrDto } from "./dto/claim-permisoacceso-qr.dto";
+import { CreatePermisoAccesoCodeDto } from "./dto/create-permisoacceso-code.dto";
+import { ClaimPermisoAccesoCodeDto } from "./dto/claim-permisoacceso-code.dto";
 import { UpdatePermisoAccesoDto } from "./dto/update-permisoacceso.dto";
 import { PermisoAcceso } from "./permisoacceso.entity";
 import { PermisoAccesoToken } from "./permisoacceso-token.entity";
@@ -132,6 +134,60 @@ export class PermisoaccesoService {
       creadoPor: actor.username,
     });
     return this.permisoRepository.save(permiso);
+  }
+
+  async createAccessCode(
+    pacienteId: number,
+    payload: CreatePermisoAccesoCodeDto,
+    actor: AuthenticatedUser,
+  ): Promise<{
+    code: string;
+    expiresAt: Date;
+    permisoId: number;
+    pacienteId: number;
+    medicoId: number;
+  }> {
+    await this.ensureActorControlsPaciente(actor, pacienteId);
+    const medico = await this.usersService.findOne(payload.medicoId);
+    if (medico.role?.toLowerCase() !== "medico") {
+      throw new BadRequestException(
+        "el usuario seleccionado no es un medico valido",
+      );
+    }
+
+    await this.deactivateExisting(pacienteId, payload.medicoId);
+    const now = new Date();
+    const codeExpiresAt = new Date(now.getTime() + 60 * 60 * 1000);
+    const permiso = await this.permisoRepository.save(
+      this.permisoRepository.create({
+        pacienteId,
+        medicoId: payload.medicoId,
+        tipo: "temporal",
+        duracion: "1h",
+        fechaInicio: now,
+        fechaFin: codeExpiresAt,
+        estado: "pendiente",
+        notas: payload.notas ?? null,
+        creadoPor: actor.username,
+      }),
+    );
+    const code = await this.generateUniqueSixDigitCode();
+    await this.tokenRepository.save(
+      this.tokenRepository.create({
+        token: code,
+        permisoId: permiso.id,
+        expiresAt: codeExpiresAt,
+        used: false,
+        creadoPor: actor.username,
+      }),
+    );
+    return {
+      code,
+      expiresAt: codeExpiresAt,
+      permisoId: permiso.id,
+      pacienteId,
+      medicoId: payload.medicoId,
+    };
   }
 
   /**
@@ -351,6 +407,107 @@ export class PermisoaccesoService {
     };
   }
 
+  async claimAccessCode(
+    payload: ClaimPermisoAccesoCodeDto,
+    actor: AuthenticatedUser,
+  ): Promise<{
+    message: string;
+    permisoId: number;
+    pacienteId: number;
+    expira: Date;
+  }> {
+    if (actor.role?.toLowerCase() !== "medico") {
+      throw new ForbiddenException(
+        "solo un medico puede utilizar un codigo temporal",
+      );
+    }
+    const record = await this.tokenRepository.findOne({
+      where: { token: payload.code },
+      relations: ["permiso"],
+    });
+    if (!record) {
+      throw new NotFoundException("codigo no encontrado");
+    }
+    if (record.used) {
+      throw new BadRequestException("este codigo ya fue utilizado");
+    }
+    if (record.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException("el codigo ya expiro, solicita uno nuevo");
+    }
+    const permiso = record.permiso;
+    if (permiso.medicoId !== actor.userId) {
+      throw new ForbiddenException(
+        "este codigo no esta asignado a tu cuenta medica",
+      );
+    }
+    if (permiso.estado !== "pendiente") {
+      throw new BadRequestException("el codigo ya no esta disponible");
+    }
+
+    const accessStartsAt = new Date();
+    const accessExpiresAt = new Date(accessStartsAt.getTime() + 60 * 60 * 1000);
+    permiso.estado = "activo";
+    permiso.fechaInicio = accessStartsAt;
+    permiso.fechaFin = accessExpiresAt;
+    permiso.duracion = "1h";
+    permiso.modificadoPor = actor.username;
+    record.used = true;
+    record.usedBy = actor.userId;
+    record.usedOn = accessStartsAt;
+    await this.dataSource.transaction(async (manager) => {
+      await manager.save(permiso);
+      await manager.save(record);
+    });
+    return {
+      message: "codigo validado y acceso temporal activado",
+      permisoId: permiso.id,
+      pacienteId: permiso.pacienteId,
+      expira: accessExpiresAt,
+    };
+  }
+
+  async getFullHistoryForDoctor(
+    pacienteId: number,
+    actor: AuthenticatedUser,
+  ) {
+    if (actor.role?.toLowerCase() !== "medico") {
+      throw new ForbiddenException(
+        "solo un medico puede consultar el historial temporal",
+      );
+    }
+    await this.pacienteAccessService.assertAccess(actor, pacienteId);
+    const permiso = await this.permisoRepository.findOne({
+      where: {
+        pacienteId,
+        medicoId: actor.userId,
+        estado: "activo",
+      },
+      order: { fechaInicio: "DESC" },
+    });
+    if (!permiso) {
+      throw new ForbiddenException("no existe un permiso temporal activo");
+    }
+    await this.ensurePermisoActivo(
+      permiso,
+      "el acceso temporal al historial ya expiro",
+    );
+    return {
+      generatedAt: new Date().toISOString(),
+      expiresAt: permiso.fechaFin?.toISOString() ?? null,
+      permiso: {
+        permisoId: permiso.id,
+        pacienteId,
+        medicoId: actor.userId,
+        estado: permiso.estado,
+        fechaInicio: permiso.fechaInicio.toISOString(),
+        fechaFin: permiso.fechaFin?.toISOString() ?? null,
+        notas: permiso.notas ?? null,
+      },
+      secciones: [...shareableSections],
+      data: await this.buildSharedData(pacienteId, [...shareableSections]),
+    };
+  }
+
   /**
    * List for paciente.
    * @param pacienteId Identificador asociado a paciente.
@@ -531,8 +688,21 @@ export class PermisoaccesoService {
     medicoId: number,
   ): Promise<void> {
     await this.permisoRepository.update(
-      { pacienteId, medicoId, estado: "activo" },
+      { pacienteId, medicoId, estado: In(["activo", "pendiente"]) },
       { estado: "revocado", fechaFin: new Date() },
+    );
+  }
+
+  private async generateUniqueSixDigitCode(): Promise<string> {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const code = String(randomInt(100000, 1000000));
+      const existing = await this.tokenRepository.findOne({
+        where: { token: code },
+      });
+      if (!existing) return code;
+    }
+    throw new BadRequestException(
+      "no se pudo generar un codigo unico, intenta nuevamente",
     );
   }
 

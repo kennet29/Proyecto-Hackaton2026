@@ -108,6 +108,55 @@ export class MedicoregistroService {
     });
   }
 
+  async findApprovedCatalog() {
+    const registros = await this.findAll();
+    const approved = registros
+      .filter((registro) => registro.estado === "aprobado")
+      .map((registro) => ({
+        medicoregistroId: registro.medicoregistroId,
+        usuarioId: registro.usuarioId,
+        titulo: registro.titulo,
+        especialidadprincipal: registro.especialidadprincipal,
+        hospitaltrabajo: registro.hospitaltrabajo,
+        numerolicencia: registro.numerolicencia,
+        estado: registro.estado,
+        usuario: registro.usuario
+          ? {
+              id: registro.usuario.id,
+              username: registro.usuario.username,
+            }
+          : null,
+      }));
+    const listedIds = new Set(approved.map((item) => item.usuarioId));
+    const medicalUsers = await this.usuarioRepository.find({
+      where: { role: "medico", activo: true },
+      select: {
+        id: true,
+        username: true,
+        role: true,
+        activo: true,
+      },
+    });
+    return [
+      ...approved,
+      ...medicalUsers
+        .filter((usuario) => !listedIds.has(usuario.id))
+        .map((usuario) => ({
+          medicoregistroId: null,
+          usuarioId: usuario.id,
+          titulo: "Médico verificado",
+          especialidadprincipal: null,
+          hospitaltrabajo: null,
+          numerolicencia: null,
+          estado: "aprobado",
+          usuario: {
+            id: usuario.id,
+            username: usuario.username,
+          },
+        })),
+    ];
+  }
+
   /**
    * Find one.
    * @param id Identificador del registro objetivo.
@@ -206,6 +255,15 @@ export class MedicoregistroService {
         entity.fecharevision = null;
       } else if (payload.fecharevision === undefined) {
         entity.fecharevision = new Date();
+      }
+      if (payload.estado === "aprobado") {
+        const usuario = await this.usuarioRepository.findOne({
+          where: { id: entity.usuarioId },
+        });
+        if (usuario && usuario.role?.toLowerCase() !== "medico") {
+          usuario.role = "medico";
+          await this.usuarioRepository.save(usuario);
+        }
       }
     }
     if (payload.fechasolicitud !== undefined) {

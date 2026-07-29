@@ -18,6 +18,8 @@ import { UpdatePermisoAccesoDto } from "./dto/update-permisoacceso.dto";
 import { CreatePermisoAccesoQrDto } from "./dto/create-permisoacceso-qr.dto";
 import { ClaimPermisoAccesoQrDto } from "./dto/claim-permisoacceso-qr.dto";
 import { CreatePermisoAccesoLinkDto } from "./dto/create-permisoacceso-link.dto";
+import { CreatePermisoAccesoCodeDto } from "./dto/create-permisoacceso-code.dto";
+import { ClaimPermisoAccesoCodeDto } from "./dto/claim-permisoacceso-code.dto";
 
 /**
  * Expone los endpoints HTTP del dominio permisoacceso.
@@ -40,6 +42,19 @@ export class PermisoaccesoController {
     @Req() req: Request,
   ) {
     return this.permisosService.grant(
+      pacienteId,
+      payload,
+      req.user as AuthenticatedUser,
+    );
+  }
+
+  @Post("paciente/:pacienteId/codigo")
+  createAccessCode(
+    @Param("pacienteId", ParseIntPipe) pacienteId: number,
+    @Body() payload: CreatePermisoAccesoCodeDto,
+    @Req() req: Request,
+  ) {
+    return this.permisosService.createAccessCode(
       pacienteId,
       payload,
       req.user as AuthenticatedUser,
@@ -71,6 +86,17 @@ export class PermisoaccesoController {
   @Get("mios")
   findForMedico(@Req() req: Request) {
     return this.permisosService.listForMedico(req.user as AuthenticatedUser);
+  }
+
+  @Get("medico/historial/:pacienteId")
+  getFullHistoryForDoctor(
+    @Param("pacienteId", ParseIntPipe) pacienteId: number,
+    @Req() req: Request,
+  ) {
+    return this.permisosService.getFullHistoryForDoctor(
+      pacienteId,
+      req.user as AuthenticatedUser,
+    );
   }
 
   /**
@@ -170,6 +196,17 @@ export class PermisoaccesoController {
   @Post("qr/claim")
   claimQr(@Body() payload: ClaimPermisoAccesoQrDto, @Req() req: Request) {
     return this.permisosService.claimQrToken(
+      payload,
+      req.user as AuthenticatedUser,
+    );
+  }
+
+  @Post("codigo/claim")
+  claimAccessCode(
+    @Body() payload: ClaimPermisoAccesoCodeDto,
+    @Req() req: Request,
+  ) {
+    return this.permisosService.claimAccessCode(
       payload,
       req.user as AuthenticatedUser,
     );

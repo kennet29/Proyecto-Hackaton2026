@@ -40,6 +40,11 @@ export class MedicoregistroController {
     return this.medicoregistroService.findAll();
   }
 
+  @Get("catalogo/aprobados")
+  findApprovedCatalog() {
+    return this.medicoregistroService.findApprovedCatalog();
+  }
+
   /**
    * Find by usuario.
    * @param usuarioId Identificador asociado a usuario.
