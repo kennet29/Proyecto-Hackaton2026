@@ -320,9 +320,13 @@ export class PermisoaccesoService {
       "el permiso del paciente ya expiro o fue revocado",
     );
 
-    const data = await this.buildSharedData(
+    const allowedSections = await this.getAllowedShareSections(
       payload.pacienteId,
       payload.secciones,
+    );
+    const data = await this.buildSharedData(
+      payload.pacienteId,
+      allowedSections,
     );
 
     return {
@@ -338,7 +342,7 @@ export class PermisoaccesoService {
         fechaFin: permiso.fechaFin ? permiso.fechaFin.toISOString() : null,
         notas: permiso.notas ?? null,
       },
-      secciones: payload.secciones,
+      secciones: allowedSections,
       data,
     };
   }
@@ -479,6 +483,10 @@ export class PermisoaccesoService {
       permiso,
       "el acceso temporal al historial ya expiro",
     );
+    const allowedSections = await this.getAllowedShareSections(
+      pacienteId,
+      [...shareableSections],
+    );
     return {
       generatedAt: new Date().toISOString(),
       expiresAt: permiso.fechaFin?.toISOString() ?? null,
@@ -491,8 +499,8 @@ export class PermisoaccesoService {
         fechaFin: permiso.fechaFin?.toISOString() ?? null,
         notas: permiso.notas ?? null,
       },
-      secciones: [...shareableSections],
-      data: await this.buildSharedData(pacienteId, [...shareableSections]),
+      secciones: allowedSections,
+      data: await this.buildSharedData(pacienteId, allowedSections),
     };
   }
 
@@ -872,6 +880,18 @@ export class PermisoaccesoService {
       }),
     );
     return Object.fromEntries(entries);
+  }
+
+  private async getAllowedShareSections(
+    pacienteId: number,
+    sections: ShareSection[],
+  ): Promise<ShareSection[]> {
+    if (!sections.includes("periodo")) return sections;
+    const paciente = await this.pacienteService.findOne(String(pacienteId));
+    const sexo = paciente.sexo?.trim().toUpperCase();
+    return sexo === "F"
+      ? sections
+      : sections.filter((section) => section !== "periodo");
   }
 
   /**
