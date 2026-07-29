@@ -13,7 +13,7 @@ export type PermisoTipo = "temporal" | "permanente";
 /**
  * Define el tipo permiso estado utilizado por el backend.
  */
-export type PermisoEstado = "pendiente" | "activo" | "revocado" | "expirado";
+export type PermisoEstado = "activo" | "revocado" | "expirado";
 
 /**
  * Entidad TypeORM que modela el recurso permiso acceso.

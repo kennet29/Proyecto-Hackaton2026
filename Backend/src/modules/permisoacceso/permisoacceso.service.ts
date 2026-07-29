@@ -7,7 +7,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from "crypto";
-import { DataSource, In, Repository } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 import { AuthenticatedUser } from "../../auth/auth.service";
 import { PacienteAccessService } from "../../auth/paciente-access.service";
 import { UsersService } from "../../users/users.service";
@@ -145,28 +145,20 @@ export class PermisoaccesoService {
     expiresAt: Date;
     permisoId: number;
     pacienteId: number;
-    medicoId: number;
   }> {
     await this.ensureActorControlsPaciente(actor, pacienteId);
-    const medico = await this.usersService.findOne(payload.medicoId);
-    if (medico.role?.toLowerCase() !== "medico") {
-      throw new BadRequestException(
-        "el usuario seleccionado no es un medico valido",
-      );
-    }
-
-    await this.deactivateExisting(pacienteId, payload.medicoId);
+    await this.invalidatePendingAccessCodes(pacienteId, actor.username);
     const now = new Date();
     const codeExpiresAt = new Date(now.getTime() + 60 * 60 * 1000);
     const permiso = await this.permisoRepository.save(
       this.permisoRepository.create({
         pacienteId,
-        medicoId: payload.medicoId,
+        medicoId: actor.userId,
         tipo: "temporal",
         duracion: "1h",
         fechaInicio: now,
         fechaFin: codeExpiresAt,
-        estado: "pendiente",
+        estado: "revocado",
         notas: payload.notas ?? null,
         creadoPor: actor.username,
       }),
@@ -186,7 +178,6 @@ export class PermisoaccesoService {
       expiresAt: codeExpiresAt,
       permisoId: permiso.id,
       pacienteId,
-      medicoId: payload.medicoId,
     };
   }
 
@@ -435,17 +426,14 @@ export class PermisoaccesoService {
       throw new BadRequestException("el codigo ya expiro, solicita uno nuevo");
     }
     const permiso = record.permiso;
-    if (permiso.medicoId !== actor.userId) {
-      throw new ForbiddenException(
-        "este codigo no esta asignado a tu cuenta medica",
-      );
-    }
-    if (permiso.estado !== "pendiente") {
+    if (permiso.estado !== "revocado") {
       throw new BadRequestException("el codigo ya no esta disponible");
     }
 
     const accessStartsAt = new Date();
     const accessExpiresAt = new Date(accessStartsAt.getTime() + 60 * 60 * 1000);
+    await this.deactivateExisting(permiso.pacienteId, actor.userId);
+    permiso.medicoId = actor.userId;
     permiso.estado = "activo";
     permiso.fechaInicio = accessStartsAt;
     permiso.fechaFin = accessExpiresAt;
@@ -688,7 +676,7 @@ export class PermisoaccesoService {
     medicoId: number,
   ): Promise<void> {
     await this.permisoRepository.update(
-      { pacienteId, medicoId, estado: In(["activo", "pendiente"]) },
+      { pacienteId, medicoId, estado: "activo" },
       { estado: "revocado", fechaFin: new Date() },
     );
   }
@@ -704,6 +692,34 @@ export class PermisoaccesoService {
     throw new BadRequestException(
       "no se pudo generar un codigo unico, intenta nuevamente",
     );
+  }
+
+  private async invalidatePendingAccessCodes(
+    pacienteId: number,
+    username: string,
+  ): Promise<void> {
+    const unusedTokens = await this.tokenRepository.find({
+      where: { used: false },
+      relations: ["permiso"],
+    });
+    const pendingTokens = unusedTokens.filter(
+      (record) =>
+        /^\d{6}$/.test(record.token) &&
+        record.permiso?.pacienteId === pacienteId &&
+        record.permiso?.creadoPor === username &&
+        record.permiso?.estado === "revocado",
+    );
+    if (!pendingTokens.length) return;
+    const now = new Date();
+    for (const record of pendingTokens) {
+      record.used = true;
+      record.usedOn = now;
+      record.permiso.fechaFin = now;
+    }
+    await this.dataSource.transaction(async (manager) => {
+      await manager.save(pendingTokens.map((record) => record.permiso));
+      await manager.save(pendingTokens);
+    });
   }
 
   /**

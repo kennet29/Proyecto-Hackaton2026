@@ -20,20 +20,10 @@ import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CompartirHistorial'>;
 
-type Doctor = {
-  usuarioId: number;
-  titulo?: string | null;
-  especialidadprincipal?: string | null;
-  hospitaltrabajo?: string | null;
-  numerolicencia?: string | null;
-  usuario?: { username?: string | null } | null;
-};
-
 type GeneratedCode = {
   code: string;
   expiresAt: string;
   pacienteId: number;
-  medicoId: number;
 };
 
 const formatDateTime = (value: string) =>
@@ -41,11 +31,6 @@ const formatDateTime = (value: string) =>
     dateStyle: 'medium',
     timeStyle: 'short',
   });
-
-const getDoctorName = (doctor: Doctor) =>
-  doctor.usuario?.username ||
-  doctor.titulo ||
-  `Médico #${doctor.usuarioId}`;
 
 export function CompartirHistorialScreen({ route }: Props) {
   const { width } = useWindowDimensions();
@@ -58,11 +43,9 @@ export function CompartirHistorialScreen({ route }: Props) {
     [token],
   );
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [patientId, setPatientId] = useState(
     route.params?.pacienteId ? String(route.params.pacienteId) : '',
   );
-  const [doctorId, setDoctorId] = useState('');
   const [notes, setNotes] = useState('');
   const [generated, setGenerated] = useState<GeneratedCode | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,10 +55,6 @@ export function CompartirHistorialScreen({ route }: Props) {
   const selectedPatient = patients.find(
     (item) => String(item.pacienteId) === patientId,
   );
-  const selectedDoctor = doctors.find(
-    (item) => String(item.usuarioId) === doctorId,
-  );
-
   const load = useCallback(async () => {
     if (!token) {
       setError('Inicia sesión para compartir un expediente.');
@@ -85,23 +64,10 @@ export function CompartirHistorialScreen({ route }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const [patientItems, doctorResponse] = await Promise.all([
-        fetchLinkedPatients(headers, { forceRefresh: true }),
-        fetch(`${API_URL}/medicoregistro/catalogo/aprobados`, { headers }),
-      ]);
-      const doctorPayload = await doctorResponse.json().catch(() => null);
-      if (!doctorResponse.ok) {
-        throw new Error(
-          doctorPayload?.message || 'No se pudo cargar el catálogo médico.',
-        );
-      }
-      const doctorItems = Array.isArray(doctorPayload)
-        ? doctorPayload.filter(
-            (item) => Number(item?.usuarioId) > 0,
-          )
-        : [];
+      const patientItems = await fetchLinkedPatients(headers, {
+        forceRefresh: true,
+      });
       setPatients(patientItems);
-      setDoctors(doctorItems);
       setPatientId((current) => {
         if (
           current &&
@@ -111,7 +77,6 @@ export function CompartirHistorialScreen({ route }: Props) {
         }
         return String(patientItems[0]?.pacienteId ?? '');
       });
-      setDoctorId((current) => current || String(doctorItems[0]?.usuarioId ?? ''));
     } catch (loadError) {
       setError(
         loadError instanceof Error
@@ -128,10 +93,10 @@ export function CompartirHistorialScreen({ route }: Props) {
   }, [load]);
 
   const generateCode = async () => {
-    if (!patientId || !doctorId) {
+    if (!patientId) {
       Alert.alert(
-        'Datos incompletos',
-        'Selecciona el paciente y el médico que recibirá el acceso.',
+        'Selecciona el expediente',
+        'Elige el paciente cuyo historial deseas compartir.',
       );
       return;
     }
@@ -144,7 +109,6 @@ export function CompartirHistorialScreen({ route }: Props) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...headers },
           body: JSON.stringify({
-            medicoId: Number(doctorId),
             notas: notes.trim() || undefined,
           }),
         },
@@ -157,7 +121,6 @@ export function CompartirHistorialScreen({ route }: Props) {
         code: String(payload.code),
         expiresAt: String(payload.expiresAt),
         pacienteId: Number(payload.pacienteId),
-        medicoId: Number(payload.medicoId),
       });
     } catch (generateError) {
       setError(
@@ -195,8 +158,8 @@ export function CompartirHistorialScreen({ route }: Props) {
           <AppText style={styles.eyebrow}>ACCESO MÉDICO TEMPORAL</AppText>
           <AppText style={styles.title}>Comparte tu historial con 6 números</AppText>
           <AppText style={styles.subtitle}>
-            El permiso comienza cuando el médico introduce el código y finaliza
-            automáticamente una hora después.
+            El primer médico verificado que introduzca el código recibirá el
+            permiso, que finalizará automáticamente una hora después.
           </AppText>
         </View>
         <View style={styles.timePill}>
@@ -207,14 +170,14 @@ export function CompartirHistorialScreen({ route }: Props) {
 
       <View style={styles.securityStrip}>
         <SecurityItem icon="shield-checkmark-outline" text="Código único" />
-        <SecurityItem icon="medkit-outline" text="Solo el médico elegido" />
+        <SecurityItem icon="medkit-outline" text="Se asigna al usarlo" />
         <SecurityItem icon="timer-outline" text="Expiración automática" />
       </View>
 
       {loading ? (
         <View style={styles.loadingCard}>
           <ActivityIndicator color={appColors.info} size="large" />
-          <AppText style={styles.loadingText}>Preparando pacientes y médicos...</AppText>
+          <AppText style={styles.loadingText}>Preparando tus expedientes...</AppText>
         </View>
       ) : (
         <View style={[styles.layout, desktop && styles.layoutDesktop]}>
@@ -257,58 +220,7 @@ export function CompartirHistorialScreen({ route }: Props) {
               ) : null}
             </StepCard>
 
-            <StepCard number="2" title="Selecciona al médico">
-              <AppText style={styles.helper}>
-                Por seguridad, el código solo podrá usarlo este profesional.
-              </AppText>
-              <View style={styles.doctorList}>
-                {doctors.map((doctor) => {
-                  const active = String(doctor.usuarioId) === doctorId;
-                  return (
-                    <TouchableOpacity
-                      key={doctor.usuarioId}
-                      style={[styles.doctorCard, active && styles.doctorCardActive]}
-                      onPress={() => {
-                        setDoctorId(String(doctor.usuarioId));
-                        setGenerated(null);
-                      }}
-                    >
-                      <View style={styles.doctorAvatar}>
-                        <Ionicons name="medkit-outline" size={21} color={appColors.info} />
-                      </View>
-                      <View style={styles.doctorCopy}>
-                        <AppText style={styles.doctorName}>{getDoctorName(doctor)}</AppText>
-                        <AppText style={styles.doctorMeta}>
-                          {[
-                            doctor.especialidadprincipal,
-                            doctor.hospitaltrabajo,
-                          ]
-                            .filter(Boolean)
-                            .join(' · ') || 'Profesional médico verificado'}
-                        </AppText>
-                        {doctor.numerolicencia ? (
-                          <AppText style={styles.license}>
-                            Licencia {doctor.numerolicencia}
-                          </AppText>
-                        ) : null}
-                      </View>
-                      <Ionicons
-                        name={active ? 'radio-button-on' : 'radio-button-off'}
-                        size={22}
-                        color={active ? appColors.success : appColors.textMuted}
-                      />
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-              {!doctors.length ? (
-                <AppText style={styles.emptyText}>
-                  No hay médicos aprobados disponibles.
-                </AppText>
-              ) : null}
-            </StepCard>
-
-            <StepCard number="3" title="Nota opcional">
+            <StepCard number="2" title="Nota opcional">
               <AppTextInput
                 value={notes}
                 onChangeText={setNotes}
@@ -337,8 +249,8 @@ export function CompartirHistorialScreen({ route }: Props) {
                   ))}
                 </View>
                 <AppText style={styles.codeDescription}>
-                  Para {selectedDoctor ? getDoctorName(selectedDoctor) : 'el médico'} ·{' '}
-                  {selectedPatient?.displayName}
+                  Expediente de {selectedPatient?.displayName}. El código se
+                  asignará al primer médico verificado que lo utilice.
                 </AppText>
                 <View style={styles.expirationBox}>
                   <Ionicons name="hourglass-outline" size={17} color="#F5B942" />
@@ -370,9 +282,9 @@ export function CompartirHistorialScreen({ route }: Props) {
                 <TouchableOpacity
                   style={[
                     styles.generateButton,
-                    (submitting || !patientId || !doctorId) && styles.buttonDisabled,
+                    (submitting || !patientId) && styles.buttonDisabled,
                   ]}
-                  disabled={submitting || !patientId || !doctorId}
+                  disabled={submitting || !patientId}
                   onPress={() => void generateCode()}
                 >
                   {submitting ? (
