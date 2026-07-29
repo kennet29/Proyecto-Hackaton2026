@@ -63,13 +63,109 @@ const SECTION_LABELS: Record<string, string> = {
   registrosMenstruales: 'Registros menstruales',
 };
 
+type SectionCategory = 'todos' | 'resumen' | 'atencion' | 'tratamientos' | 'seguimiento' | 'otros';
+
+const CATEGORY_LABELS: Record<SectionCategory, string> = {
+  todos: 'Todo',
+  resumen: 'Resumen',
+  atencion: 'Atención',
+  tratamientos: 'Tratamientos',
+  seguimiento: 'Seguimiento',
+  otros: 'Otros',
+};
+
+const SECTION_CATEGORIES: Record<string, Exclude<SectionCategory, 'todos'>> = {
+  resumenClinico: 'resumen',
+  consultasMedicas: 'atencion',
+  citasMedicas: 'atencion',
+  examenesClinicos: 'atencion',
+  documentosClinicos: 'atencion',
+  medicaciones: 'tratamientos',
+  vacunas: 'tratamientos',
+  alergias: 'tratamientos',
+  condicionesCronicas: 'tratamientos',
+  operaciones: 'tratamientos',
+  lesiones: 'tratamientos',
+  saludMental: 'seguimiento',
+  seguimientoFisico: 'seguimiento',
+  seguimientoPostevento: 'seguimiento',
+  periodo: 'seguimiento',
+  embarazos: 'seguimiento',
+  registroDental: 'seguimiento',
+  desparasitaciones: 'seguimiento',
+};
+
+const SECTION_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  resumenClinico: 'clipboard-outline',
+  consultasMedicas: 'medkit-outline',
+  citasMedicas: 'calendar-outline',
+  examenesClinicos: 'flask-outline',
+  documentosClinicos: 'document-text-outline',
+  medicaciones: 'medical-outline',
+  vacunas: 'shield-checkmark-outline',
+  alergias: 'warning-outline',
+  condicionesCronicas: 'pulse-outline',
+  saludMental: 'happy-outline',
+  seguimientoFisico: 'fitness-outline',
+  periodo: 'water-outline',
+  registroDental: 'sparkles-outline',
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  generatedAt: 'Actualizado',
+  pacienteId: 'N.º de expediente',
+  patientId: 'N.º de expediente',
+  nombres: 'Nombres',
+  apellidos: 'Apellidos',
+  fechaNacimiento: 'Fecha de nacimiento',
+  sexo: 'Sexo',
+  telefono: 'Teléfono',
+  email: 'Correo electrónico',
+  totalConsultas: 'Consultas',
+  condicionesActivas: 'Condiciones activas',
+  alergiasActivas: 'Alergias activas',
+  medicacionesActivas: 'Medicaciones activas',
+  examenesClinicos: 'Exámenes',
+  seguimientosActivos: 'Seguimientos activos',
+  citasPendientes: 'Citas pendientes',
+  recordatoriosPendientes: 'Recordatorios pendientes',
+  ultimaConsulta: 'Última consulta',
+  creadoEn: 'Creado',
+  modificadoEn: 'Última modificación',
+  fechaInicio: 'Fecha de inicio',
+  fechaFin: 'Fecha de finalización',
+};
+
 const isDoctor = (role?: string) => role?.trim().toLowerCase() === 'medico';
 
 const humanizeKey = (value: string) =>
+  FIELD_LABELS[value] ||
   value
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/[_-]+/g, ' ')
-    .trim();
+    .trim()
+    .replace(/^./, (letter) => letter.toUpperCase());
+
+const asRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+
+const getText = (value: unknown) =>
+  typeof value === 'string' || typeof value === 'number' ? String(value) : '';
+
+const getSectionCount = (value: unknown) =>
+  Array.isArray(value)
+    ? value.length
+    : value && typeof value === 'object'
+      ? Object.keys(value as object).length
+      : value === null || value === undefined || value === ''
+        ? 0
+        : 1;
+
+const looksLikeDate = (key: string, value: string) =>
+  /(fecha|date|at$|ultimaConsulta|creado|modificado)/i.test(key) &&
+  !Number.isNaN(new Date(value).getTime());
 
 const formatDateTime = (value?: string | null) => {
   if (!value) return 'Sin fecha';
@@ -99,6 +195,8 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
+  const [sectionQuery, setSectionQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState<SectionCategory>('todos');
 
   const headers = useMemo(
     () => ({
@@ -176,6 +274,43 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
     }
   }, [initialCode, redeemCode, token, user?.role]);
 
+  const sections = useMemo(() => (history ? Object.entries(history.data) : []), [history]);
+  const filteredSections = useMemo(() => {
+    const normalizedQuery = sectionQuery.trim().toLocaleLowerCase('es');
+    return sections.filter(([key, value]) => {
+      const category = SECTION_CATEGORIES[key] || 'otros';
+      const matchesCategory = activeCategory === 'todos' || category === activeCategory;
+      const label = SECTION_LABELS[key] || humanizeKey(key);
+      const searchableContent = normalizedQuery
+        ? `${label} ${JSON.stringify(value)}`.toLocaleLowerCase('es')
+        : '';
+      return matchesCategory && (!normalizedQuery || searchableContent.includes(normalizedQuery));
+    });
+  }, [activeCategory, sectionQuery, sections]);
+  const categoryCounts = useMemo(
+    () =>
+      sections.reduce<Record<SectionCategory, number>>(
+        (counts, [key]) => {
+          counts.todos += 1;
+          counts[SECTION_CATEGORIES[key] || 'otros'] += 1;
+          return counts;
+        },
+        { todos: 0, resumen: 0, atencion: 0, tratamientos: 0, seguimiento: 0, otros: 0 },
+      ),
+    [sections],
+  );
+  const clinicalSummary = asRecord(history?.data.resumenClinico);
+  const patient = asRecord(clinicalSummary.patient);
+  const overview = asRecord(clinicalSummary.overview);
+  const patientName =
+    [getText(patient.nombres), getText(patient.apellidos)].filter(Boolean).join(' ') ||
+    'Paciente';
+  const patientInitials = patientName
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+
   if (!token || !isDoctor(user?.role)) {
     return (
       <View style={styles.accessScreen}>
@@ -203,8 +338,6 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
       </View>
     );
   }
-
-  const sections = history ? Object.entries(history.data) : [];
 
   return (
     <ScrollView
@@ -343,6 +476,56 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
             </View>
           ) : null}
 
+          <View style={styles.patientCard}>
+            <View style={styles.patientMain}>
+              <View style={styles.patientAvatar}>
+                <AppText style={styles.patientInitials}>{patientInitials || 'P'}</AppText>
+              </View>
+              <View style={styles.patientIdentity}>
+                <AppText style={styles.patientOverline}>PACIENTE COMPARTIDO</AppText>
+                <AppText style={styles.patientName}>{patientName}</AppText>
+                <View style={styles.patientDetails}>
+                  <View style={styles.patientDetail}>
+                    <Ionicons name="folder-outline" size={14} color={appColors.info} />
+                    <AppText style={styles.patientDetailText}>
+                      Expediente #{getText(patient.pacienteId) || history.permiso.pacienteId}
+                    </AppText>
+                  </View>
+                  {getText(patient.sexo) ? (
+                    <View style={styles.patientDetail}>
+                      <Ionicons name="person-outline" size={14} color={appColors.info} />
+                      <AppText style={styles.patientDetailText}>{getText(patient.sexo)}</AppText>
+                    </View>
+                  ) : null}
+                  {getText(patient.fechaNacimiento) ? (
+                    <View style={styles.patientDetail}>
+                      <Ionicons name="calendar-outline" size={14} color={appColors.info} />
+                      <AppText style={styles.patientDetailText}>
+                        {formatDateTime(getText(patient.fechaNacimiento)).split(',')[0]}
+                      </AppText>
+                    </View>
+                  ) : null}
+                </View>
+              </View>
+            </View>
+            <View style={styles.metricsGrid}>
+              <ClinicalMetric icon="medkit-outline" label="Consultas" value={overview.totalConsultas} />
+              <ClinicalMetric
+                icon="pulse-outline"
+                label="Condiciones activas"
+                value={overview.condicionesActivas}
+                alert={Number(overview.condicionesActivas || 0) > 0}
+              />
+              <ClinicalMetric icon="medical-outline" label="Medicaciones" value={overview.medicacionesActivas} />
+              <ClinicalMetric
+                icon="warning-outline"
+                label="Alergias"
+                value={overview.alergiasActivas}
+                alert={Number(overview.alergiasActivas || 0) > 0}
+              />
+            </View>
+          </View>
+
           <View style={styles.historyHeading}>
             <View>
               <AppText style={styles.historyTitle}>Historial clínico completo</AppText>
@@ -357,6 +540,8 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
                 setHistory(null);
                 setCode('');
                 setError(null);
+                setSectionQuery('');
+                setActiveCategory('todos');
               }}
             >
               <Ionicons name="key-outline" size={16} color={appColors.info} />
@@ -364,14 +549,75 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
             </TouchableOpacity>
           </View>
 
+          <View style={styles.historyTools}>
+            <View style={styles.searchBox}>
+              <Ionicons name="search-outline" size={18} color={appColors.textMuted} />
+              <AppTextInput
+                value={sectionQuery}
+                onChangeText={setSectionQuery}
+                placeholder="Buscar en el historial"
+                placeholderTextColor={appColors.textMuted}
+                style={styles.searchInput}
+              />
+              {sectionQuery ? (
+                <TouchableOpacity onPress={() => setSectionQuery('')}>
+                  <Ionicons name="close-circle" size={18} color={appColors.textMuted} />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryList}
+            >
+              {(Object.keys(CATEGORY_LABELS) as SectionCategory[]).map((category) => (
+                <TouchableOpacity
+                  key={category}
+                  style={[
+                    styles.categoryChip,
+                    activeCategory === category && styles.categoryChipActive,
+                  ]}
+                  onPress={() => setActiveCategory(category)}
+                >
+                  <AppText
+                    style={[
+                      styles.categoryText,
+                      activeCategory === category && styles.categoryTextActive,
+                    ]}
+                  >
+                    {CATEGORY_LABELS[category]}
+                  </AppText>
+                  <View
+                    style={[
+                      styles.categoryCount,
+                      activeCategory === category && styles.categoryCountActive,
+                    ]}
+                  >
+                    <AppText style={styles.categoryCountText}>{categoryCounts[category]}</AppText>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
           <View style={[styles.sectionsGrid, desktop && styles.sectionsGridDesktop]}>
-            {sections.map(([sectionKey, value]) => (
+            {filteredSections.map(([sectionKey, value]) => (
               <HistorySection
                 key={sectionKey}
+                sectionKey={sectionKey}
                 title={SECTION_LABELS[sectionKey] || humanizeKey(sectionKey)}
                 value={value}
               />
             ))}
+            {!filteredSections.length ? (
+              <View style={styles.noResults}>
+                <Ionicons name="search-outline" size={27} color={appColors.textMuted} />
+                <AppText style={styles.noResultsTitle}>No encontramos esa sección</AppText>
+                <AppText style={styles.noResultsText}>
+                  Prueba otra búsqueda o selecciona la categoría Todo.
+                </AppText>
+              </View>
+            ) : null}
           </View>
         </>
       )}
@@ -379,13 +625,45 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
   );
 }
 
-function HistorySection({ title, value }: { title: string; value: unknown }) {
-  const [expanded, setExpanded] = useState(true);
-  const count = Array.isArray(value)
-    ? value.length
-    : value && typeof value === 'object'
-      ? Object.keys(value as object).length
-      : 0;
+function ClinicalMetric({
+  icon,
+  label,
+  value,
+  alert = false,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: unknown;
+  alert?: boolean;
+}) {
+  return (
+    <View style={styles.metricCard}>
+      <View style={[styles.metricIcon, alert && styles.metricIconAlert]}>
+        <Ionicons
+          name={icon}
+          size={17}
+          color={alert ? appColors.accent : appColors.info}
+        />
+      </View>
+      <View>
+        <AppText style={styles.metricValue}>{getText(value) || '0'}</AppText>
+        <AppText style={styles.metricLabel}>{label}</AppText>
+      </View>
+    </View>
+  );
+}
+
+function HistorySection({
+  sectionKey,
+  title,
+  value,
+}: {
+  sectionKey: string;
+  title: string;
+  value: unknown;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const count = getSectionCount(value);
   return (
     <View style={styles.sectionCard}>
       <TouchableOpacity
@@ -393,7 +671,11 @@ function HistorySection({ title, value }: { title: string; value: unknown }) {
         onPress={() => setExpanded((current) => !current)}
       >
         <View style={styles.sectionIcon}>
-          <Ionicons name="folder-open-outline" size={19} color={appColors.info} />
+          <Ionicons
+            name={SECTION_ICONS[sectionKey] || 'folder-outline'}
+            size={19}
+            color={appColors.info}
+          />
         </View>
         <View style={styles.sectionHeaderCopy}>
           <AppText style={styles.sectionTitle}>{title}</AppText>
@@ -412,7 +694,7 @@ function HistorySection({ title, value }: { title: string; value: unknown }) {
   );
 }
 
-function renderValue(value: unknown, depth = 0): React.ReactNode {
+function renderValue(value: unknown, depth = 0, fieldKey = ''): React.ReactNode {
   if (value === null || value === undefined || value === '') {
     return <AppText style={styles.emptyValue}>Sin información registrada</AppText>;
   }
@@ -421,7 +703,15 @@ function renderValue(value: unknown, depth = 0): React.ReactNode {
     typeof value === 'number' ||
     typeof value === 'boolean'
   ) {
-    return <AppText style={styles.valueText}>{String(value)}</AppText>;
+    const formatted =
+      typeof value === 'boolean'
+        ? value
+          ? 'Sí'
+          : 'No'
+        : typeof value === 'string' && looksLikeDate(fieldKey, value)
+          ? formatDateTime(value)
+          : String(value);
+    return <AppText style={styles.valueText}>{formatted}</AppText>;
   }
   if (Array.isArray(value)) {
     if (!value.length) {
@@ -432,7 +722,7 @@ function renderValue(value: unknown, depth = 0): React.ReactNode {
         {value.map((item, index) => (
           <View key={index} style={styles.recordCard}>
             <AppText style={styles.recordNumber}>REGISTRO {index + 1}</AppText>
-            {renderValue(item, depth + 1)}
+            {renderValue(item, depth + 1, fieldKey)}
           </View>
         ))}
       </View>
@@ -448,7 +738,7 @@ function renderValue(value: unknown, depth = 0): React.ReactNode {
         {entries.map(([key, item]) => (
           <View key={key} style={styles.field}>
             <AppText style={styles.fieldLabel}>{humanizeKey(key)}</AppText>
-            {renderValue(item, depth + 1)}
+            {renderValue(item, depth + 1, key)}
           </View>
         ))}
       </View>
@@ -499,11 +789,38 @@ const styles = StyleSheet.create({
   noteCopy: { flex: 1 },
   noteLabel: { color: appColors.info, fontSize: 9, fontWeight: '900' },
   noteText: { color: appColors.textSoft, fontSize: 11, lineHeight: 17, marginTop: 3 },
+  patientCard: { padding: 18, marginTop: 14, borderRadius: 18, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
+  patientMain: { flexDirection: 'row', alignItems: 'center' },
+  patientAvatar: { width: 58, height: 58, alignItems: 'center', justifyContent: 'center', borderRadius: 18, marginRight: 13, backgroundColor: colorAlpha(appColors.info, '18') },
+  patientInitials: { color: appColors.info, fontSize: 20, fontWeight: '900' },
+  patientIdentity: { flex: 1 },
+  patientOverline: { color: appColors.info, fontSize: 8, fontWeight: '900', letterSpacing: 1.1 },
+  patientName: { color: appColors.text, fontSize: 20, fontWeight: '900', marginTop: 3 },
+  patientDetails: { flexDirection: 'row', flexWrap: 'wrap', gap: 11, marginTop: 7 },
+  patientDetail: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  patientDetailText: { color: appColors.textMuted, fontSize: 10 },
+  metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginTop: 17 },
+  metricCard: { flex: 1, minWidth: 150, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 11, borderRadius: 13, backgroundColor: appColors.backgroundMuted },
+  metricIcon: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: colorAlpha(appColors.info, '12') },
+  metricIconAlert: { backgroundColor: colorAlpha(appColors.accent, '12') },
+  metricValue: { color: appColors.text, fontSize: 17, fontWeight: '900' },
+  metricLabel: { color: appColors.textMuted, fontSize: 8, marginTop: 1 },
   historyHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 22, marginBottom: 12 },
   historyTitle: { color: appColors.text, fontSize: 21, fontWeight: '900' },
   historySubtitle: { color: appColors.textMuted, fontSize: 10, marginTop: 3 },
   newCodeButton: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 39, paddingHorizontal: 12, borderRadius: 11, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
   newCodeText: { color: appColors.info, fontSize: 10, fontWeight: '800' },
+  historyTools: { gap: 10, padding: 11, marginBottom: 11, borderRadius: 16, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
+  searchBox: { minHeight: 43, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderRadius: 11, backgroundColor: appColors.backgroundMuted },
+  searchInput: { flex: 1, minHeight: 41, paddingHorizontal: 0, borderWidth: 0, color: appColors.text, fontSize: 11, outlineStyle: 'none' } as any,
+  categoryList: { gap: 7 },
+  categoryChip: { minHeight: 34, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 11, borderRadius: 10, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted },
+  categoryChipActive: { borderColor: appColors.info, backgroundColor: colorAlpha(appColors.info, '16') },
+  categoryText: { color: appColors.textMuted, fontSize: 9, fontWeight: '800' },
+  categoryTextActive: { color: appColors.info },
+  categoryCount: { minWidth: 19, height: 19, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderRadius: 10, backgroundColor: appColors.surfaceStrong },
+  categoryCountActive: { backgroundColor: colorAlpha(appColors.info, '24') },
+  categoryCountText: { color: appColors.textSoft, fontSize: 8, fontWeight: '900' },
   sectionsGrid: { gap: 11 },
   sectionsGridDesktop: {},
   sectionCard: { borderRadius: 17, borderWidth: 1, borderColor: appColors.border, overflow: 'hidden', backgroundColor: appColors.surface },
@@ -512,16 +829,19 @@ const styles = StyleSheet.create({
   sectionHeaderCopy: { flex: 1 },
   sectionTitle: { color: appColors.text, fontSize: 14, fontWeight: '900' },
   sectionCount: { color: appColors.textMuted, fontSize: 9, marginTop: 2 },
-  sectionBody: { padding: 13 },
-  objectGrid: { gap: 8 },
+  sectionBody: { padding: 13, backgroundColor: appColors.backgroundMuted },
+  objectGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   nestedObject: { gap: 7, marginTop: 5 },
-  field: { padding: 10, borderRadius: 10, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted },
+  field: { flex: 1, minWidth: 220, padding: 10, borderRadius: 10, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
   fieldLabel: { color: appColors.info, fontSize: 9, fontWeight: '900', textTransform: 'capitalize', marginBottom: 4 },
   valueText: { color: appColors.textSoft, fontSize: 10, lineHeight: 16 },
   emptyValue: { color: appColors.textMuted, fontSize: 10, fontStyle: 'italic' },
   arrayList: { gap: 8 },
   recordCard: { padding: 10, borderRadius: 11, borderWidth: 1, borderColor: colorAlpha(appColors.info, '25'), backgroundColor: colorAlpha(appColors.info, '07') },
   recordNumber: { color: appColors.info, fontSize: 8, fontWeight: '900', letterSpacing: 0.6, marginBottom: 6 },
+  noResults: { alignItems: 'center', padding: 28, borderRadius: 17, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
+  noResultsTitle: { color: appColors.text, fontSize: 14, fontWeight: '900', marginTop: 8 },
+  noResultsText: { color: appColors.textMuted, fontSize: 10, textAlign: 'center', marginTop: 4 },
   accessScreen: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20, backgroundColor: appColors.background },
   accessCard: { width: '100%', maxWidth: 440, alignItems: 'center', padding: 28, borderRadius: 23, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
   accessIcon: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderRadius: 23, backgroundColor: colorAlpha(appColors.info, '15') },
