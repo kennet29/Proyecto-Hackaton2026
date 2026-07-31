@@ -476,6 +476,28 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
             </View>
           ) : null}
 
+          <View style={[styles.reportPaper, desktop && styles.reportPaperDesktop]}>
+            <View style={styles.reportHeader}>
+              <View style={styles.reportBrand}>
+                <View style={styles.reportLogo}>
+                  <Ionicons name="medical" size={25} color="#FFFFFF" />
+                </View>
+                <View style={styles.reportBrandCopy}>
+                  <AppText style={styles.reportOrganization}>GESTIÓN SALUD</AppText>
+                  <AppText style={styles.reportTitle}>Reporte de historial clínico</AppText>
+                  <AppText style={styles.reportCaption}>Documento médico de consulta temporal</AppText>
+                </View>
+              </View>
+              <View style={styles.reportFolio}>
+                <AppText style={styles.reportFolioLabel}>N.º DE REPORTE</AppText>
+                <AppText style={styles.reportFolioValue}>
+                  HC-{history.permiso.pacienteId}-{history.permiso.permisoId}
+                </AppText>
+                <AppText style={styles.reportDate}>{formatDateTime(history.generatedAt)}</AppText>
+              </View>
+            </View>
+            <View style={styles.reportRule} />
+
           <View style={styles.patientCard}>
             <View style={styles.patientMain}>
               <View style={styles.patientAvatar}>
@@ -618,6 +640,14 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
                 </AppText>
               </View>
             ) : null}
+          </View>
+          <View style={styles.reportFooter}>
+            <View style={styles.reportFooterLine} />
+            <Ionicons name="shield-checkmark-outline" size={14} color="#607085" />
+            <AppText style={styles.reportFooterText}>
+              Información confidencial · Acceso autorizado por el paciente durante una hora
+            </AppText>
+          </View>
           </View>
         </>
       )}
@@ -789,59 +819,76 @@ const styles = StyleSheet.create({
   noteCopy: { flex: 1 },
   noteLabel: { color: appColors.info, fontSize: 9, fontWeight: '900' },
   noteText: { color: appColors.textSoft, fontSize: 11, lineHeight: 17, marginTop: 3 },
-  patientCard: { padding: 18, marginTop: 14, borderRadius: 18, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
+  reportPaper: { width: '100%', maxWidth: 980, alignSelf: 'center', padding: 18, marginTop: 18, borderRadius: 4, backgroundColor: '#FFFFFF', shadowColor: '#000000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 8 },
+  reportPaperDesktop: { paddingHorizontal: 42, paddingTop: 34, paddingBottom: 30 },
+  reportHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 18 },
+  reportBrand: { flex: 1, minWidth: 250, flexDirection: 'row', alignItems: 'center' },
+  reportLogo: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center', marginRight: 13, borderRadius: 4, backgroundColor: '#1769AA' },
+  reportBrandCopy: { flex: 1 },
+  reportOrganization: { color: '#1769AA', fontSize: 9, fontWeight: '900', letterSpacing: 1.7 },
+  reportTitle: { color: '#172033', fontSize: 22, lineHeight: 27, fontWeight: '900', marginTop: 2 },
+  reportCaption: { color: '#607085', fontSize: 9, marginTop: 2 },
+  reportFolio: { alignItems: 'flex-end', minWidth: 165 },
+  reportFolioLabel: { color: '#7B8796', fontSize: 7, fontWeight: '900', letterSpacing: 1.1 },
+  reportFolioValue: { color: '#172033', fontSize: 11, fontWeight: '900', marginTop: 3 },
+  reportDate: { color: '#607085', fontSize: 8, marginTop: 3 },
+  reportRule: { height: 2, marginTop: 20, backgroundColor: '#1769AA' },
+  patientCard: { paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: '#DCE2E8' },
   patientMain: { flexDirection: 'row', alignItems: 'center' },
-  patientAvatar: { width: 58, height: 58, alignItems: 'center', justifyContent: 'center', borderRadius: 18, marginRight: 13, backgroundColor: colorAlpha(appColors.info, '18') },
-  patientInitials: { color: appColors.info, fontSize: 20, fontWeight: '900' },
+  patientAvatar: { width: 58, height: 58, alignItems: 'center', justifyContent: 'center', borderRadius: 4, marginRight: 13, borderWidth: 1, borderColor: '#C9D9E8', backgroundColor: '#EDF5FB' },
+  patientInitials: { color: '#1769AA', fontSize: 20, fontWeight: '900' },
   patientIdentity: { flex: 1 },
-  patientOverline: { color: appColors.info, fontSize: 8, fontWeight: '900', letterSpacing: 1.1 },
-  patientName: { color: appColors.text, fontSize: 20, fontWeight: '900', marginTop: 3 },
+  patientOverline: { color: '#1769AA', fontSize: 8, fontWeight: '900', letterSpacing: 1.1 },
+  patientName: { color: '#172033', fontSize: 20, fontWeight: '900', marginTop: 3 },
   patientDetails: { flexDirection: 'row', flexWrap: 'wrap', gap: 11, marginTop: 7 },
   patientDetail: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  patientDetailText: { color: appColors.textMuted, fontSize: 10 },
+  patientDetailText: { color: '#526174', fontSize: 10 },
   metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginTop: 17 },
-  metricCard: { flex: 1, minWidth: 150, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 11, borderRadius: 13, backgroundColor: appColors.backgroundMuted },
-  metricIcon: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: colorAlpha(appColors.info, '12') },
-  metricIconAlert: { backgroundColor: colorAlpha(appColors.accent, '12') },
-  metricValue: { color: appColors.text, fontSize: 17, fontWeight: '900' },
-  metricLabel: { color: appColors.textMuted, fontSize: 8, marginTop: 1 },
+  metricCard: { flex: 1, minWidth: 145, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 11, borderLeftWidth: 3, borderLeftColor: '#1769AA', backgroundColor: '#F4F7FA' },
+  metricIcon: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 16, backgroundColor: '#E3F0F9' },
+  metricIconAlert: { backgroundColor: '#FCE8ED' },
+  metricValue: { color: '#172033', fontSize: 17, fontWeight: '900' },
+  metricLabel: { color: '#607085', fontSize: 8, marginTop: 1 },
   historyHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 22, marginBottom: 12 },
-  historyTitle: { color: appColors.text, fontSize: 21, fontWeight: '900' },
-  historySubtitle: { color: appColors.textMuted, fontSize: 10, marginTop: 3 },
-  newCodeButton: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 39, paddingHorizontal: 12, borderRadius: 11, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
-  newCodeText: { color: appColors.info, fontSize: 10, fontWeight: '800' },
-  historyTools: { gap: 10, padding: 11, marginBottom: 11, borderRadius: 16, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
-  searchBox: { minHeight: 43, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderRadius: 11, backgroundColor: appColors.backgroundMuted },
-  searchInput: { flex: 1, minHeight: 41, paddingHorizontal: 0, borderWidth: 0, color: appColors.text, fontSize: 11, outlineStyle: 'none' } as any,
+  historyTitle: { color: '#172033', fontSize: 19, fontWeight: '900' },
+  historySubtitle: { color: '#607085', fontSize: 9, marginTop: 3 },
+  newCodeButton: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36, paddingHorizontal: 11, borderRadius: 3, borderWidth: 1, borderColor: '#B9C9D8', backgroundColor: '#FFFFFF' },
+  newCodeText: { color: '#1769AA', fontSize: 9, fontWeight: '800' },
+  historyTools: { gap: 10, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: '#D7E0E8', backgroundColor: '#F4F7FA' },
+  searchBox: { minHeight: 41, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: '#D7E0E8', backgroundColor: '#FFFFFF' },
+  searchInput: { flex: 1, minHeight: 39, paddingHorizontal: 0, borderWidth: 0, color: '#172033', fontSize: 10, outlineStyle: 'none' } as any,
   categoryList: { gap: 7 },
-  categoryChip: { minHeight: 34, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 11, borderRadius: 10, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted },
-  categoryChipActive: { borderColor: appColors.info, backgroundColor: colorAlpha(appColors.info, '16') },
-  categoryText: { color: appColors.textMuted, fontSize: 9, fontWeight: '800' },
-  categoryTextActive: { color: appColors.info },
-  categoryCount: { minWidth: 19, height: 19, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderRadius: 10, backgroundColor: appColors.surfaceStrong },
-  categoryCountActive: { backgroundColor: colorAlpha(appColors.info, '24') },
-  categoryCountText: { color: appColors.textSoft, fontSize: 8, fontWeight: '900' },
+  categoryChip: { minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 10, borderWidth: 1, borderColor: '#CCD7E1', backgroundColor: '#FFFFFF' },
+  categoryChipActive: { borderColor: '#1769AA', backgroundColor: '#E8F2F9' },
+  categoryText: { color: '#607085', fontSize: 8, fontWeight: '800' },
+  categoryTextActive: { color: '#1769AA' },
+  categoryCount: { minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderRadius: 9, backgroundColor: '#E8EDF2' },
+  categoryCountActive: { backgroundColor: '#CFE3F2' },
+  categoryCountText: { color: '#3F5266', fontSize: 7, fontWeight: '900' },
   sectionsGrid: { gap: 11 },
   sectionsGridDesktop: {},
-  sectionCard: { borderRadius: 17, borderWidth: 1, borderColor: appColors.border, overflow: 'hidden', backgroundColor: appColors.surface },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', padding: 14, backgroundColor: appColors.surfaceStrong },
-  sectionIcon: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 12, marginRight: 10, backgroundColor: colorAlpha(appColors.info, '13') },
+  sectionCard: { borderWidth: 1, borderColor: '#D7E0E8', overflow: 'hidden', backgroundColor: '#FFFFFF' },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', padding: 12, borderLeftWidth: 3, borderLeftColor: '#1769AA', backgroundColor: '#F7F9FB' },
+  sectionIcon: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', marginRight: 10, backgroundColor: '#E8F2F9' },
   sectionHeaderCopy: { flex: 1 },
-  sectionTitle: { color: appColors.text, fontSize: 14, fontWeight: '900' },
-  sectionCount: { color: appColors.textMuted, fontSize: 9, marginTop: 2 },
-  sectionBody: { padding: 13, backgroundColor: appColors.backgroundMuted },
+  sectionTitle: { color: '#172033', fontSize: 12, fontWeight: '900' },
+  sectionCount: { color: '#718096', fontSize: 8, marginTop: 2 },
+  sectionBody: { padding: 13, borderTopWidth: 1, borderTopColor: '#D7E0E8', backgroundColor: '#FFFFFF' },
   objectGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   nestedObject: { gap: 7, marginTop: 5 },
-  field: { flex: 1, minWidth: 220, padding: 10, borderRadius: 10, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
-  fieldLabel: { color: appColors.info, fontSize: 9, fontWeight: '900', textTransform: 'capitalize', marginBottom: 4 },
-  valueText: { color: appColors.textSoft, fontSize: 10, lineHeight: 16 },
-  emptyValue: { color: appColors.textMuted, fontSize: 10, fontStyle: 'italic' },
+  field: { flex: 1, minWidth: 220, maxWidth: '100%', paddingVertical: 9, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: '#E5E9ED', backgroundColor: '#FFFFFF' },
+  fieldLabel: { color: '#607085', fontSize: 7, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
+  valueText: { color: '#202B3C', fontSize: 10, lineHeight: 16 },
+  emptyValue: { color: '#8995A3', fontSize: 10, fontStyle: 'italic' },
   arrayList: { gap: 8 },
-  recordCard: { padding: 10, borderRadius: 11, borderWidth: 1, borderColor: colorAlpha(appColors.info, '25'), backgroundColor: colorAlpha(appColors.info, '07') },
-  recordNumber: { color: appColors.info, fontSize: 8, fontWeight: '900', letterSpacing: 0.6, marginBottom: 6 },
-  noResults: { alignItems: 'center', padding: 28, borderRadius: 17, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
-  noResultsTitle: { color: appColors.text, fontSize: 14, fontWeight: '900', marginTop: 8 },
-  noResultsText: { color: appColors.textMuted, fontSize: 10, textAlign: 'center', marginTop: 4 },
+  recordCard: { padding: 10, borderLeftWidth: 2, borderLeftColor: '#8FB8D8', backgroundColor: '#F7F9FB' },
+  recordNumber: { color: '#1769AA', fontSize: 7, fontWeight: '900', letterSpacing: 0.8, marginBottom: 6 },
+  noResults: { alignItems: 'center', padding: 28, borderWidth: 1, borderColor: '#D7E0E8', backgroundColor: '#F7F9FB' },
+  noResultsTitle: { color: '#172033', fontSize: 14, fontWeight: '900', marginTop: 8 },
+  noResultsText: { color: '#607085', fontSize: 10, textAlign: 'center', marginTop: 4 },
+  reportFooter: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 24, paddingTop: 14 },
+  reportFooterLine: { width: '100%', height: 1, marginBottom: 7, backgroundColor: '#D7E0E8' },
+  reportFooterText: { color: '#607085', fontSize: 8, textAlign: 'center' },
   accessScreen: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20, backgroundColor: appColors.background },
   accessCard: { width: '100%', maxWidth: 440, alignItems: 'center', padding: 28, borderRadius: 23, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
   accessIcon: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderRadius: 23, backgroundColor: colorAlpha(appColors.info, '15') },
