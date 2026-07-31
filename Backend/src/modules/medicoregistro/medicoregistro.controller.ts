@@ -2,16 +2,20 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   ParseIntPipe,
   Patch,
   Post,
+  Req,
 } from "@nestjs/common";
+import { Request } from "express";
 import { CreateMedicoregistroDto } from "./dto/create-medicoregistro.dto";
 import { UpdateMedicoregistroDto } from "./dto/update-medicoregistro.dto";
 import { MedicoregistroService } from "./medicoregistro.service";
 import { Roles } from "../../auth/decorators/roles.decorator";
+import { AuthenticatedUser } from "../../auth/auth.service";
 
 /**
  * Expone los endpoints HTTP del dominio medicoregistro.
@@ -26,7 +30,8 @@ export class MedicoregistroController {
    * @returns Registro creado.
    */
   @Post()
-  create(@Body() payload: CreateMedicoregistroDto) {
+  create(@Body() payload: CreateMedicoregistroDto, @Req() req: Request) {
+    this.assertSelfOrAdmin(req.user as AuthenticatedUser, payload.usuarioId);
     return this.medicoregistroService.create(payload);
   }
 
@@ -51,7 +56,11 @@ export class MedicoregistroController {
    * @returns Resultado de la operación.
    */
   @Get("usuario/:usuarioId")
-  findByUsuario(@Param("usuarioId", ParseIntPipe) usuarioId: number) {
+  findByUsuario(
+    @Param("usuarioId", ParseIntPipe) usuarioId: number,
+    @Req() req: Request,
+  ) {
+    this.assertSelfOrAdmin(req.user as AuthenticatedUser, usuarioId);
     return this.medicoregistroService.findByUsuario(usuarioId);
   }
 
@@ -90,5 +99,16 @@ export class MedicoregistroController {
   @Roles("admin", "superadmin")
   remove(@Param("id", ParseIntPipe) id: number) {
     return this.medicoregistroService.remove(id);
+  }
+
+  private assertSelfOrAdmin(user: AuthenticatedUser, usuarioId: number): void {
+    const role = user.role?.trim().toLowerCase();
+    if (
+      user.userId !== usuarioId &&
+      role !== "admin" &&
+      role !== "superadmin"
+    ) {
+      throw new ForbiddenException("no puedes consultar datos de otro usuario");
+    }
   }
 }

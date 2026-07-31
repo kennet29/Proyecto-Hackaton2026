@@ -32,8 +32,12 @@ export class PacienteController {
    * @returns Registro creado.
    */
   @Post()
-  create(@Body() payload: CreatePacienteDto) {
-    return this.pacienteservice.create(payload);
+  create(@Body() payload: CreatePacienteDto, @Req() req: Request) {
+    const actor = req.user as AuthenticatedUser;
+    return this.pacienteservice.create({
+      ...payload,
+      creadopor: actor.username,
+    });
   }
 
   /**

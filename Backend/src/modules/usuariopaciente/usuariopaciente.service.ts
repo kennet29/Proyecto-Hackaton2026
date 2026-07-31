@@ -11,6 +11,7 @@ import { UsuarioPaciente } from "./usuariopaciente.entity";
 import { CreateUsuarioPacienteDto } from "./dto/create-usuariopaciente.dto";
 import { UpdateUsuarioPacienteDto } from "./dto/update-usuariopaciente.dto";
 import { PermisoAcceso } from "../permisoacceso/permisoacceso.entity";
+import { Paciente } from "../paciente/paciente.entity";
 
 /**
  * Implementa la lógica de negocio y persistencia del dominio usuario paciente.
@@ -22,6 +23,8 @@ export class UsuarioPacienteService {
     private readonly usuarioPacienteRepository: Repository<UsuarioPaciente>,
     @InjectRepository(PermisoAcceso)
     private readonly permisoRepository: Repository<PermisoAcceso>,
+    @InjectRepository(Paciente)
+    private readonly pacienteRepository: Repository<Paciente>,
   ) {}
 
   /**
@@ -43,6 +46,22 @@ export class UsuarioPacienteService {
     if (actor.userId !== usuarioId && !this.isAdmin(actor)) {
       throw new ForbiddenException(
         "no puedes registrar pacientes para otros usuarios",
+      );
+    }
+    const paciente = await this.pacienteRepository.findOne({
+      where: { pacienteId: payload.pacienteId },
+    });
+    if (!paciente) {
+      throw new NotFoundException("paciente no encontrado");
+    }
+    if (
+      !this.isAdmin(actor) &&
+      actor.pacienteId !== payload.pacienteId &&
+      paciente.creadopor?.trim().toLowerCase() !==
+        actor.username.trim().toLowerCase()
+    ) {
+      throw new ForbiddenException(
+        "no puedes vincularte a un expediente creado por otro usuario",
       );
     }
     const existing = await this.usuarioPacienteRepository.findOne({

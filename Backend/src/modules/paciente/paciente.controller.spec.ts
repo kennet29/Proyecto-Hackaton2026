@@ -31,9 +31,14 @@ describe("PacienteController", () => {
     pacienteService.create.mockReturnValue({ pacienteId: 1 });
     pacienteService.findAll.mockReturnValue([{ pacienteId: 1 }]);
 
-    expect(controller.create(payload as never)).toEqual({ pacienteId: 1 });
+    expect(controller.create(payload as never, { user } as never)).toEqual({
+      pacienteId: 1,
+    });
     expect(controller.findAll()).toEqual([{ pacienteId: 1 }]);
-    expect(pacienteService.create).toHaveBeenCalledWith(payload);
+    expect(pacienteService.create).toHaveBeenCalledWith({
+      ...payload,
+      creadopor: user.username,
+    });
   });
 
   it("checks access before returning a patient", async () => {

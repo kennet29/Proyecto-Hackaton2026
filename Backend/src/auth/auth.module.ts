@@ -2,7 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
-import { APP_GUARD } from "@nestjs/core";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { SignOptions } from "jsonwebtoken";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { UsersModule } from "../users/users.module";
@@ -19,6 +19,9 @@ import { PermisoAcceso } from "../modules/permisoacceso/permisoacceso.entity";
 import { PacienteAccessService } from "./paciente-access.service";
 import { UsuarioPaciente } from "../modules/usuariopaciente/usuariopaciente.entity";
 import { NanoModule } from "../nano/nano.module";
+import { PatientResourceAccessService } from "./patient-resource-access.service";
+import { PatientResourceAccessInterceptor } from "./interceptors/patient-resource-access.interceptor";
+import { ResourcePolicyGuard } from "./guards/resource-policy.guard";
 
 /**
  * Agrupa controladores y proveedores del dominio auth.
@@ -57,6 +60,7 @@ import { NanoModule } from "../nano/nano.module";
     JwtStrategy,
     TokenRevocationService,
     PacienteAccessService,
+    PatientResourceAccessService,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
@@ -64,6 +68,14 @@ import { NanoModule } from "../nano/nano.module";
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ResourcePolicyGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: PatientResourceAccessInterceptor,
     },
   ],
   exports: [PacienteAccessService],
