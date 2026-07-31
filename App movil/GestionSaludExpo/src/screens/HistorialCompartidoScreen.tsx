@@ -167,6 +167,59 @@ const looksLikeDate = (key: string, value: string) =>
   /(fecha|date|at$|ultimaConsulta|creado|modificado)/i.test(key) &&
   !Number.isNaN(new Date(value).getTime());
 
+const countLabel = (value: unknown, singular: string, plural: string) => {
+  const count = Number(value || 0);
+  return `${count} ${count === 1 ? singular : plural}`;
+};
+
+const buildHistoryNarrative = (
+  patientName: string,
+  patient: Record<string, unknown>,
+  overview: Record<string, unknown>,
+) => {
+  const age = Number(patient.edadAproximada);
+  const rawGender = getText(patient.sexo).trim().toLowerCase();
+  const gender = ['m', 'masculino', 'hombre'].includes(rawGender)
+    ? 'masculino'
+    : ['f', 'femenino', 'mujer'].includes(rawGender)
+      ? 'femenina'
+      : '';
+  const profile = Number.isFinite(age) && age > 0
+    ? `Paciente ${gender ? `${gender} ` : ''}de ${age} años`
+    : gender
+      ? `Paciente ${gender}`
+      : 'Paciente con información demográfica parcial';
+  const medications = Number(overview.medicacionesActivas || 0);
+  const lastConsultation = getText(overview.ultimaConsulta);
+  const pendingAppointments = Number(overview.citasPendientes || 0);
+
+  return `${patientName}. ${profile}. El expediente registra ${countLabel(
+    overview.totalConsultas,
+    'consulta médica',
+    'consultas médicas',
+  )}, ${countLabel(overview.examenesClinicos, 'examen clínico', 'exámenes clínicos')} y ${countLabel(
+    overview.vacunasAplicadas,
+    'vacuna aplicada',
+    'vacunas aplicadas',
+  )}. Actualmente presenta ${countLabel(
+    overview.condicionesActivas,
+    'condición activa',
+    'condiciones activas',
+  )} y ${countLabel(overview.alergiasActivas, 'alergia activa', 'alergias activas')}; ${
+    medications
+      ? `mantiene ${countLabel(medications, 'medicación activa', 'medicaciones activas')}`
+      : 'no mantiene medicaciones activas'
+  }.${
+    lastConsultation
+      ? ` La última consulta registrada fue el ${formatDateTime(lastConsultation)}.`
+      : ' No hay una última consulta fechada.'
+  }${
+    pendingAppointments
+      ? ` Tiene ${countLabel(pendingAppointments, 'cita pendiente', 'citas pendientes')}.`
+      : ' No tiene citas pendientes registradas.'
+  }`;
+};
+
 const formatDateTime = (value?: string | null) => {
   if (!value) return 'Sin fecha';
   const date = new Date(value);
@@ -310,6 +363,7 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
     .slice(0, 2)
     .map((part) => part.charAt(0).toUpperCase())
     .join('');
+  const historyNarrative = buildHistoryNarrative(patientName, patient, overview);
 
   if (!token || !isDoctor(user?.role)) {
     return (
@@ -545,6 +599,20 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
                 value={overview.alergiasActivas}
                 alert={Number(overview.alergiasActivas || 0) > 0}
               />
+            </View>
+            <View style={styles.clinicalNarrative}>
+              <View style={styles.clinicalNarrativeHeading}>
+                <Ionicons name="reader-outline" size={17} color="#1769AA" />
+                <AppText style={styles.clinicalNarrativeTitle}>
+                  Síntesis del historial
+                </AppText>
+              </View>
+              <AppText style={styles.clinicalNarrativeText}>
+                {historyNarrative}
+              </AppText>
+              <AppText style={styles.clinicalNarrativeNote}>
+                Resumen generado automáticamente a partir de los registros disponibles.
+              </AppText>
             </View>
           </View>
 
@@ -849,6 +917,11 @@ const styles = StyleSheet.create({
   metricIconAlert: { backgroundColor: '#FCE8ED' },
   metricValue: { color: '#172033', fontSize: 17, fontWeight: '900' },
   metricLabel: { color: '#607085', fontSize: 8, marginTop: 1 },
+  clinicalNarrative: { marginTop: 17, paddingVertical: 14, paddingHorizontal: 15, borderLeftWidth: 3, borderLeftColor: '#1769AA', backgroundColor: '#F4F7FA' },
+  clinicalNarrativeHeading: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 8 },
+  clinicalNarrativeTitle: { color: '#1769AA', fontSize: 10, fontWeight: '900', letterSpacing: 0.6, textTransform: 'uppercase' },
+  clinicalNarrativeText: { color: '#283548', fontSize: 11, lineHeight: 18, textAlign: 'justify' },
+  clinicalNarrativeNote: { color: '#7B8796', fontSize: 7, fontStyle: 'italic', marginTop: 8 },
   historyHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 22, marginBottom: 12 },
   historyTitle: { color: '#172033', fontSize: 19, fontWeight: '900' },
   historySubtitle: { color: '#607085', fontSize: 9, marginTop: 3 },
