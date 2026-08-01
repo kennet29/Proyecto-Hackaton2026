@@ -16,12 +16,12 @@ import { AppText, AppTextInput } from '../components/AppText';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { SvgUri } from 'react-native-svg';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { loadFingerprintTemplate } from '../utils/fingerprint';
 import { appColors, colorAlpha } from '../theme/colors';
+import { getNanoAppearance } from '../components/NanoAppearancePreview';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 type FeedbackState = { type: 'success' | 'error'; message: string } | null;
@@ -37,30 +37,16 @@ type LoginApiResponse = {
   message?: string;
 };
 
-const LOGIN_LOGO_SOURCE = require('../svg/Logo Pantalla Principal.svg');
+const DEFAULT_NANO_APPEARANCE = getNanoAppearance('base');
 
-const LoginBrandLogo = ({ size }: { size: number }) => {
-  if (Platform.OS === 'web') {
-    return (
-      <Image
-        source={LOGIN_LOGO_SOURCE}
-        style={{ width: size, height: size }}
-        resizeMode="contain"
-        accessibilityLabel="Logo de Nica Prime"
-      />
-    );
-  }
-
-  const sourceUri = Image.resolveAssetSource(LOGIN_LOGO_SOURCE)?.uri;
-  return sourceUri ? (
-    <SvgUri
-      uri={sourceUri}
-      width={size}
-      height={size}
-      accessibilityLabel="Logo de Nica Prime"
-    />
-  ) : null;
-};
+const LoginBrandLogo = ({ size }: { size: number }) => (
+  <Image
+    source={DEFAULT_NANO_APPEARANCE.source}
+    style={{ width: size, height: size, borderRadius: size * 0.22 }}
+    resizeMode="contain"
+    accessibilityLabel="Nano"
+  />
+);
 
 const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => {
   if (!feedback) {
@@ -295,7 +281,7 @@ export function LoginScreen({ navigation, route }: Props) {
               <AppText style={styles.webBrandBadgeText}>NicaPlus</AppText>
             </View>
             <View style={styles.webBrandLogo}>
-              <LoginBrandLogo size={210} />
+              <LoginBrandLogo size={125} />
             </View>
             <AppText style={styles.webBrandTitle}>Tu panel clinico en un solo lugar</AppText>
             <AppText style={styles.webBrandCopy}>
@@ -319,14 +305,16 @@ export function LoginScreen({ navigation, route }: Props) {
           </View>
         ) : null}
       <View style={[styles.card, isWideLayout && styles.cardWide, isWebWide && styles.webCard]}>
-        <View style={styles.loginIntro}>
+        <View style={[styles.loginIntro, !isWebWide && styles.loginIntroWithLogo]}>
+          <View style={styles.loginIntroCopy}>
+            <AppText style={styles.welcome}>Bienvenido</AppText>
+            <AppText style={styles.subtitle}>Nos alegra tenerte de vuelta</AppText>
+          </View>
           {!isWebWide ? (
             <View style={styles.loginLogo}>
-              <LoginBrandLogo size={160} />
+              <LoginBrandLogo size={72} />
             </View>
           ) : null}
-          <AppText style={styles.welcome}>Bienvenido</AppText>
-          <AppText style={styles.subtitle}>Nos alegra tenerte de vuelta</AppText>
         </View>
         <FeedbackBanner feedback={feedback} />
         <AppText style={styles.label}>Usuario</AppText>
@@ -561,11 +549,18 @@ const styles = StyleSheet.create({
   loginIntro: {
     marginBottom: 20,
   },
+  loginIntroWithLogo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  loginIntroCopy: {
+    flex: 1,
+  },
   loginLogo: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -10,
-    marginBottom: 8,
+    marginLeft: 16,
   },
   welcome: {
     fontSize: 24,

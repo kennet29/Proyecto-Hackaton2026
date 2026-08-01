@@ -771,7 +771,7 @@ function HistorySection({
         <View style={styles.sectionIcon}>
           <Ionicons
             name={SECTION_ICONS[sectionKey] || 'folder-outline'}
-            size={19}
+            size={17}
             color={appColors.info}
           />
         </View>
@@ -783,7 +783,7 @@ function HistorySection({
         </View>
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
-          size={19}
+          size={17}
           color={appColors.textMuted}
         />
       </TouchableOpacity>
@@ -938,14 +938,14 @@ const styles = StyleSheet.create({
   categoryCount: { minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderRadius: 9, backgroundColor: '#E8EDF2' },
   categoryCountActive: { backgroundColor: '#CFE3F2' },
   categoryCountText: { color: '#3F5266', fontSize: 7, fontWeight: '900' },
-  sectionsGrid: { gap: 11 },
+  sectionsGrid: { gap: 7 },
   sectionsGridDesktop: {},
   sectionCard: { borderWidth: 1, borderColor: '#D7E0E8', overflow: 'hidden', backgroundColor: '#FFFFFF' },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', padding: 12, borderLeftWidth: 3, borderLeftColor: '#1769AA', backgroundColor: '#F7F9FB' },
-  sectionIcon: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', marginRight: 10, backgroundColor: '#E8F2F9' },
+  sectionHeader: { minHeight: 44, flexDirection: 'row', alignItems: 'center', paddingVertical: 7, paddingHorizontal: 10, borderLeftWidth: 3, borderLeftColor: '#1769AA', backgroundColor: '#F7F9FB' },
+  sectionIcon: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', marginRight: 8, backgroundColor: '#E8F2F9' },
   sectionHeaderCopy: { flex: 1 },
-  sectionTitle: { color: '#172033', fontSize: 12, fontWeight: '900' },
-  sectionCount: { color: '#718096', fontSize: 8, marginTop: 2 },
+  sectionTitle: { color: '#172033', fontSize: 11, fontWeight: '900' },
+  sectionCount: { color: '#718096', fontSize: 7, marginTop: 1 },
   sectionBody: { padding: 13, borderTopWidth: 1, borderTopColor: '#D7E0E8', backgroundColor: '#FFFFFF' },
   objectGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   nestedObject: { gap: 7, marginTop: 5 },
