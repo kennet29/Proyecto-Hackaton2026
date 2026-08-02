@@ -258,6 +258,22 @@ const wellnessOptions: OptionItem[] = [
 
 const managementOptions: OptionItem[] = [
   {
+    key: 'admin-solicitudes',
+    label: 'Solicitudes médicas',
+    description: 'Revisa y decide las solicitudes de acceso para médicos',
+    icon: 'shield-checkmark-outline',
+    accent: '#F5B942',
+    navigateTo: 'AdminSolicitudes',
+  },
+  {
+    key: 'admin-clinicas',
+    label: 'Administrar clínicas',
+    description: 'Crea, edita y controla las clínicas de la plataforma',
+    icon: 'business-outline',
+    accent: '#29B6FF',
+    navigateTo: 'AdminClinicas',
+  },
+  {
     key: 'registro-medico',
     label: 'Registrarme como médico',
     description: 'Envía tus credenciales profesionales para solicitar acceso médico',
@@ -424,9 +440,13 @@ export function MenuPrincipalScreen({ navigation }: Props) {
 
   const activeOptions = useMemo<OptionItem[]>(() => {
     const options = optionsByTab[activeTab] ?? [];
-    const permittedOptions = user?.role?.trim().toLowerCase() === 'medico'
-      ? options
-      : options.filter((item) => item.key !== 'abrir-historial-compartido');
+    const role = user?.role?.trim().toLowerCase();
+    const isAdmin = role === 'admin' || role === 'superadmin';
+    const permittedOptions = options.filter((item) => {
+      if (item.key.startsWith('admin-')) return isAdmin;
+      if (item.key === 'abrir-historial-compartido') return role === 'medico';
+      return true;
+    });
 
     if (activeTab !== 'gestion') return permittedOptions;
 

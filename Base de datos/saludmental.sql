@@ -43,6 +43,9 @@ BEGIN
     documentorespaldo NVARCHAR(260) NULL,
     fotocodigominsa VARBINARY(MAX) NULL,
     fototitulo VARBINARY(MAX) NULL,
+    documentocedula VARBINARY(MAX) NULL,
+    documentocedulanombre NVARCHAR(260) NULL,
+    documentocedulamimetype NVARCHAR(100) NULL,
     estado NVARCHAR(30) NOT NULL CONSTRAINT DF_medicoregistro_estado DEFAULT N'pendiente',
     fechasolicitud DATETIME2(7) NOT NULL CONSTRAINT DF_medicoregistro_fechasolicitud DEFAULT SYSDATETIME(),
     fecharevision DATETIME2(7) NULL,
@@ -63,6 +66,15 @@ BEGIN
 
   IF COL_LENGTH('dbo.medicoregistro', 'titulo') IS NULL
     ALTER TABLE dbo.medicoregistro ADD titulo NVARCHAR(150) NULL;
+
+  IF COL_LENGTH('dbo.medicoregistro', 'documentocedula') IS NULL
+    ALTER TABLE dbo.medicoregistro ADD documentocedula VARBINARY(MAX) NULL;
+
+  IF COL_LENGTH('dbo.medicoregistro', 'documentocedulanombre') IS NULL
+    ALTER TABLE dbo.medicoregistro ADD documentocedulanombre NVARCHAR(260) NULL;
+
+  IF COL_LENGTH('dbo.medicoregistro', 'documentocedulamimetype') IS NULL
+    ALTER TABLE dbo.medicoregistro ADD documentocedulamimetype NVARCHAR(100) NULL;
 END;
 
 IF OBJECT_ID('dbo.medicoregistro', 'U') IS NOT NULL

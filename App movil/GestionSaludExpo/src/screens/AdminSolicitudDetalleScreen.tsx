@@ -300,6 +300,10 @@ export function AdminSolicitudDetalleScreen({ navigation, route }: Props) {
               <DocumentRow label="Título profesional" available={solicitud.tieneFotoTitulo} />
               <DocumentRow label="Código MINSA" available={solicitud.tieneFotoCodigoMinsa} />
               <DocumentRow
+                label={solicitud.documentocedulaNombre || 'Cédula de identidad'}
+                available={solicitud.tieneDocumentoCedula}
+              />
+              <DocumentRow
                 label={solicitud.documentorespaldo || 'Documento adicional de respaldo'}
                 available={Boolean(solicitud.documentorespaldo)}
               />

@@ -2,7 +2,7 @@ import { NivelEducativoId } from '../data/educacion';
 
 export type RootStackParamList = {
   IniciarSesion: undefined;
-  Login: { afterLogin?: 'MedicoRegistro' | 'AdminSolicitudes' } | undefined;
+  Login: { afterLogin?: 'MedicoRegistro' | 'AdminSolicitudes' | 'AdminClinicas' } | undefined;
   CambiarContrasena: undefined;
   SobreNosotros: undefined;
   Contacto: undefined;
@@ -84,6 +84,7 @@ export type RootStackParamList = {
   MedicoRegistro: undefined;
   AdminSolicitudes: undefined;
   AdminSolicitudDetalle: { solicitudId: number; demo?: boolean };
+  AdminClinicas: undefined;
   Educacion: undefined;
   EducacionNivel: { nivelId: NivelEducativoId };
   EducacionTema: { nivelId: NivelEducativoId; temaId: string };

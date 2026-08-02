@@ -42,6 +42,9 @@ export type SolicitudMedica = {
   observaciones?: string | null;
   tieneFotoCodigoMinsa: boolean;
   tieneFotoTitulo: boolean;
+  tieneDocumentoCedula: boolean;
+  documentocedulaNombre?: string | null;
+  documentocedulaMimeType?: string | null;
   usuario?: {
     id: number;
     username: string;
@@ -70,6 +73,20 @@ const formatDate = (value?: string | null) => {
   }).format(date);
 };
 
+const getDocumentProgress = (solicitud: SolicitudMedica) => {
+  const uploadedDocuments = [
+    solicitud.tieneFotoTitulo,
+    solicitud.tieneFotoCodigoMinsa,
+    solicitud.tieneDocumentoCedula,
+  ].filter(Boolean).length;
+
+  return {
+    uploadedDocuments,
+    totalDocuments: 3,
+    percentage: Math.round((uploadedDocuments / 3) * 100),
+  };
+};
+
 const errorMessage = (body: ApiError | null) => {
   if (Array.isArray(body?.message)) return body.message.join('\n');
   return body?.message || body?.error || 'No se pudieron cargar las solicitudes.';
@@ -92,6 +109,9 @@ export const DEMO_SOLICITUDES: SolicitudMedica[] = [
     observaciones: null,
     tieneFotoCodigoMinsa: true,
     tieneFotoTitulo: true,
+    tieneDocumentoCedula: true,
+    documentocedulaNombre: 'cedula-maria-lopez.pdf',
+    documentocedulaMimeType: 'application/pdf',
     usuario: {
       id: 201,
       username: 'dra.maria.lopez',
@@ -117,6 +137,7 @@ export const DEMO_SOLICITUDES: SolicitudMedica[] = [
     observaciones: 'Credenciales verificadas y documentación completa.',
     tieneFotoCodigoMinsa: true,
     tieneFotoTitulo: true,
+    tieneDocumentoCedula: false,
     usuario: {
       id: 202,
       username: 'dr.carlos.mendez',
@@ -142,6 +163,7 @@ export const DEMO_SOLICITUDES: SolicitudMedica[] = [
     observaciones: 'Falta adjuntar evidencia legible del código MINSA.',
     tieneFotoCodigoMinsa: false,
     tieneFotoTitulo: true,
+    tieneDocumentoCedula: false,
     usuario: {
       id: 203,
       username: 'dr.jose.rivas',
@@ -277,6 +299,19 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.shell}>
+        <View style={styles.adminTabs}>
+          <View style={[styles.adminTab, styles.adminTabActive]}>
+            <Ionicons name="medkit-outline" size={17} color={appColors.background} />
+            <AppText style={[styles.adminTabText, styles.adminTabTextActive]}>Solicitudes médicas</AppText>
+          </View>
+          <TouchableOpacity
+            style={styles.adminTab}
+            onPress={() => navigation.navigate('AdminClinicas')}
+          >
+            <Ionicons name="business-outline" size={17} color={appColors.textMuted} />
+            <AppText style={styles.adminTabText}>Clínicas</AppText>
+          </TouchableOpacity>
+        </View>
         <View style={[styles.hero, isDesktop && styles.heroDesktop]}>
           <View style={styles.heroIcon}>
             <Ionicons name="shield-checkmark-outline" size={28} color={appColors.info} />
@@ -382,6 +417,7 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
             <View style={[styles.tableRow, styles.tableHeader]}>
               <AppText style={[styles.headerCell, styles.applicantCell]}>Solicitante</AppText>
               <AppText style={[styles.headerCell, styles.professionCell]}>Credenciales</AppText>
+              <AppText style={[styles.headerCell, styles.documentsCell]}>Documentos</AppText>
               <AppText style={[styles.headerCell, styles.centerCell]}>Fecha</AppText>
               <AppText style={[styles.headerCell, styles.centerCell]}>Estado</AppText>
               <AppText style={[styles.headerCell, styles.actionCell]}>Detalle</AppText>
@@ -399,6 +435,9 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
                   <AppText style={styles.primaryText}>{item.titulo}</AppText>
                   <AppText style={styles.secondaryText}>{item.hospitaltrabajo}</AppText>
                   <AppText style={styles.tertiaryText}>Lic. {item.numerolicencia}</AppText>
+                </View>
+                <View style={styles.documentsCell}>
+                  <DocumentProgress solicitud={item} />
                 </View>
                 <AppText style={[styles.secondaryText, styles.centerCell]}>
                   {formatDate(item.fechasolicitud)}
@@ -451,6 +490,9 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
                 <View style={styles.mobileDivider} />
                 <AppText style={styles.mobileTitle}>{item.titulo}</AppText>
                 <AppText style={styles.secondaryText}>{item.hospitaltrabajo}</AppText>
+                <View style={styles.mobileDocuments}>
+                  <DocumentProgress solicitud={item} />
+                </View>
                 <View style={styles.mobileFooter}>
                   <AppText style={styles.tertiaryText}>{formatDate(item.fechasolicitud)}</AppText>
                   <View style={styles.viewLink}>
@@ -526,6 +568,46 @@ function StatusBadge({ estado }: { estado: Estado }) {
       <AppText style={[styles.statusText, { color }]}>
         {label}
       </AppText>
+    </View>
+  );
+}
+
+function DocumentProgress({ solicitud }: { solicitud: SolicitudMedica }) {
+  const { uploadedDocuments, totalDocuments, percentage } =
+    getDocumentProgress(solicitud);
+  const color =
+    percentage === 100
+      ? appColors.success
+      : percentage === 0
+        ? appColors.accent
+        : appColors.info;
+
+  return (
+    <View
+      style={styles.documentProgress}
+      accessibilityRole="progressbar"
+      accessibilityLabel={`Documentos adjuntos: ${uploadedDocuments} de ${totalDocuments}`}
+      accessibilityValue={{ min: 0, max: 100, now: percentage }}
+    >
+      <View style={styles.documentProgressHeader}>
+        <AppText style={styles.documentProgressCount}>
+          {uploadedDocuments} de {totalDocuments}
+        </AppText>
+        <AppText style={[styles.documentProgressPercentage, { color }]}>
+          {percentage}%
+        </AppText>
+      </View>
+      <View style={styles.documentProgressTrack}>
+        <View
+          style={[
+            styles.documentProgressFill,
+            {
+              backgroundColor: color,
+              width: `${percentage}%` as `${number}%`,
+            },
+          ]}
+        />
+      </View>
     </View>
   );
 }
@@ -621,6 +703,7 @@ function DetailModal({
                 <View style={[styles.checkGrid, compact && styles.checkGridCompact]}>
                   <CheckItem label="Fotografía del título profesional" checked={solicitud.tieneFotoTitulo} />
                   <CheckItem label="Fotografía del código MINSA" checked={solicitud.tieneFotoCodigoMinsa} />
+                  <CheckItem label="Cédula de identidad (imagen o PDF)" checked={solicitud.tieneDocumentoCedula} />
                   <CheckItem label="Documento adicional de respaldo" checked={Boolean(solicitud.documentorespaldo)} />
                 </View>
                 {solicitud.documentorespaldo ? (
@@ -769,6 +852,11 @@ function PaperStatus({ estado }: { estado: Estado }) {
 const styles = StyleSheet.create({
   container: { flexGrow: 1, backgroundColor: 'transparent', padding: 16, paddingBottom: 48 },
   shell: { width: '100%', maxWidth: 1280, alignSelf: 'center' },
+  adminTabs: { alignSelf: 'flex-start', flexDirection: 'row', gap: 7, padding: 5, marginBottom: 14, borderWidth: 1, borderColor: appColors.border, borderRadius: 14, backgroundColor: appColors.surface },
+  adminTab: { minHeight: 38, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 13, borderRadius: 10 },
+  adminTabActive: { backgroundColor: appColors.info },
+  adminTabText: { color: appColors.textMuted, fontSize: 11, fontWeight: '800' },
+  adminTabTextActive: { color: appColors.background },
   hero: { backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 20, padding: 18, marginBottom: 14 },
   heroDesktop: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24 },
   heroIcon: { width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(appColors.info, '16'), marginRight: 15 },
@@ -819,6 +907,7 @@ const styles = StyleSheet.create({
   headerCell: { color: appColors.textMuted, fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
   applicantCell: { flex: 1.35, paddingRight: 12 },
   professionCell: { flex: 1.5, paddingRight: 12 },
+  documentsCell: { width: 150, paddingHorizontal: 12 },
   centerCell: { width: 126, alignItems: 'center', textAlign: 'center' },
   actionCell: { width: 90, alignItems: 'flex-end' },
   primaryText: { color: appColors.text, fontSize: 13, fontWeight: '800' },
@@ -833,12 +922,19 @@ const styles = StyleSheet.create({
   mobileCardCopy: { flex: 1, minWidth: 0 },
   mobileDivider: { height: 1, backgroundColor: appColors.borderStrong, marginVertical: 12 },
   mobileTitle: { color: appColors.text, fontSize: 13, fontWeight: '800', marginBottom: 2 },
+  mobileDocuments: { marginTop: 12 },
   mobileFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
   viewLink: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   viewLinkText: { color: appColors.info, fontSize: 10, fontWeight: '800' },
   statusBadge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', borderRadius: 20, paddingHorizontal: 9, paddingVertical: 6 },
   statusDot: { width: 6, height: 6, borderRadius: 3, marginRight: 5 },
   statusText: { fontSize: 9, fontWeight: '900' },
+  documentProgress: { width: '100%' },
+  documentProgressHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  documentProgressCount: { color: appColors.textMuted, fontSize: 9, fontWeight: '700' },
+  documentProgressPercentage: { fontSize: 11, fontWeight: '900' },
+  documentProgressTrack: { height: 7, overflow: 'hidden', borderRadius: 4, backgroundColor: appColors.backgroundMuted },
+  documentProgressFill: { height: '100%', borderRadius: 4 },
   accessRoot: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', padding: 20 },
   accessCard: { width: '100%', maxWidth: 430, alignItems: 'center', backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 22, padding: 28 },
   accessIcon: { width: 68, height: 68, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 17 },

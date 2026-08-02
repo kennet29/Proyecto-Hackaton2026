@@ -86,6 +86,28 @@ export class Medicoregistro {
   @Column({ name: "fototitulo", type: "varbinary", nullable: true })
   fototitulo?: Buffer | null;
 
+  /** Documento de identidad adjunto como imagen o PDF. */
+  @Column({ name: "documentocedula", type: "varbinary", nullable: true })
+  documentocedula?: Buffer | null;
+
+  /** Nombre original del archivo de cédula. */
+  @Column({
+    name: "documentocedulanombre",
+    type: "nvarchar",
+    length: 260,
+    nullable: true,
+  })
+  documentocedulaNombre?: string | null;
+
+  /** Tipo MIME del archivo de cédula. */
+  @Column({
+    name: "documentocedulamimetype",
+    type: "nvarchar",
+    length: 100,
+    nullable: true,
+  })
+  documentocedulaMimeType?: string | null;
+
   /**
    * Estado actual registrado en `estado`.
    */

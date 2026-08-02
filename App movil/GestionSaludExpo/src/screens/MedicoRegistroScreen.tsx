@@ -10,6 +10,8 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -22,6 +24,13 @@ import { apiFetch, buildJsonHeaders, parseJsonResponse } from '../utils/apiClien
 type Props = NativeStackScreenProps<RootStackParamList, 'MedicoRegistro'>;
 type Feedback = { type: 'success' | 'error'; message: string } | null;
 type SelectedImage = { uri: string; base64: string; name: string };
+type SelectedDocument = {
+  uri: string;
+  base64: string;
+  name: string;
+  mimeType: string;
+  kind: 'image' | 'pdf';
+};
 type MedicoRegistro = {
   medicoregistroId: number;
   estado: 'pendiente' | 'aprobado' | 'rechazado';
@@ -67,6 +76,7 @@ export function MedicoRegistroScreen({ navigation }: Props) {
   const [especialidadPrincipal, setEspecialidadPrincipal] = useState('');
   const [fotoCodigoMinsa, setFotoCodigoMinsa] = useState<SelectedImage | null>(null);
   const [fotoTitulo, setFotoTitulo] = useState<SelectedImage | null>(null);
+  const [documentoCedula, setDocumentoCedula] = useState<SelectedDocument | null>(null);
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [checking, setChecking] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -136,6 +146,71 @@ export function MedicoRegistroScreen({ navigation }: Props) {
       base64: asset.base64,
       name: asset.fileName || `${label}.jpg`,
     });
+  };
+
+  const chooseCedulaDocument = async () => {
+    setFeedback(null);
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/*', 'application/pdf'],
+        multiple: false,
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled || !result.assets?.length) return;
+
+      const asset = result.assets[0];
+      if (asset.size && asset.size > 3 * 1024 * 1024) {
+        setFeedback({
+          type: 'error',
+          message: 'La imagen o PDF de la cédula no puede superar 3 MB.',
+        });
+        return;
+      }
+
+      const isPdf =
+        asset.mimeType === 'application/pdf' || asset.name.toLowerCase().endsWith('.pdf');
+      const mimeType = isPdf ? 'application/pdf' : asset.mimeType || 'image/jpeg';
+      if (!isPdf && !mimeType.startsWith('image/')) {
+        setFeedback({
+          type: 'error',
+          message: 'Selecciona una imagen o un archivo PDF para la cédula.',
+        });
+        return;
+      }
+
+      let base64: string;
+      const webFile = asset.file;
+      if (Platform.OS === 'web' && webFile) {
+        base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () =>
+            typeof reader.result === 'string'
+              ? resolve(reader.result)
+              : reject(new Error('No se pudo leer el archivo.'));
+          reader.onerror = () => reject(new Error('No se pudo leer el archivo.'));
+          reader.readAsDataURL(webFile);
+        });
+      } else {
+        const file = new FileSystem.File(asset.uri);
+        base64 = `data:${mimeType};base64,${await file.base64()}`;
+      }
+
+      setDocumentoCedula({
+        uri: asset.uri,
+        base64,
+        name: asset.name || `cedula.${isPdf ? 'pdf' : 'jpg'}`,
+        mimeType,
+        kind: isPdf ? 'pdf' : 'image',
+      });
+    } catch (error) {
+      setFeedback({
+        type: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'No se pudo seleccionar el documento de cédula.',
+      });
+    }
   };
 
   const submit = async () => {
@@ -234,6 +309,9 @@ export function MedicoRegistroScreen({ navigation }: Props) {
           especialidadprincipal: especialidadPrincipal.trim() || null,
           fotocodigominsaBase64: fotoCodigoMinsa?.base64 || null,
           fototituloBase64: fotoTitulo?.base64 || null,
+          documentocedulaBase64: documentoCedula?.base64 || null,
+          documentocedulaNombre: documentoCedula?.name || null,
+          documentocedulaMimeType: documentoCedula?.mimeType || null,
           creadopor: activeUser.username,
         }),
       });
@@ -432,11 +510,18 @@ export function MedicoRegistroScreen({ navigation }: Props) {
                 step={!token || !user?.id ? '03' : '02'}
                 icon="documents-outline"
                 title="Documentos de respaldo"
-                description="Opcionales, pero recomendados para agilizar la validación."
+                description="Adjunta tus documentos en imagen; la cédula también puede enviarse en PDF."
               />
               <View style={isTablet ? styles.uploadGrid : undefined}>
                 <ImageSelector label="Fotografía del título" image={fotoTitulo} onPress={() => void chooseImage(setFotoTitulo, 'título')} onRemove={() => setFotoTitulo(null)} wide={isTablet} />
                 <ImageSelector label="Fotografía del código MINSA" image={fotoCodigoMinsa} onPress={() => void chooseImage(setFotoCodigoMinsa, 'código MINSA')} onRemove={() => setFotoCodigoMinsa(null)} wide={isTablet} />
+                <DocumentSelector
+                  label="Cédula de identidad (imagen o PDF)"
+                  document={documentoCedula}
+                  onPress={() => void chooseCedulaDocument()}
+                  onRemove={() => setDocumentoCedula(null)}
+                  wide={isTablet}
+                />
               </View>
             </View>
 
@@ -580,6 +665,44 @@ function ImageSelector(props: {
         <TouchableOpacity style={styles.uploadButton} onPress={props.onPress}>
           <Ionicons name="image-outline" size={20} color={appColors.info} />
           <AppText style={styles.uploadText}>Seleccionar fotografía</AppText>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
+function DocumentSelector(props: {
+  label: string;
+  document: SelectedDocument | null;
+  onPress: () => void;
+  onRemove: () => void;
+  wide?: boolean;
+}) {
+  return (
+    <View style={[styles.imageBlock, props.wide && styles.imageBlockWide]}>
+      <AppText style={styles.label}>{props.label}</AppText>
+      {props.document ? (
+        <View style={styles.previewRow}>
+          {props.document.kind === 'image' ? (
+            <Image source={{ uri: props.document.base64 }} style={styles.preview} />
+          ) : (
+            <View style={styles.pdfPreview}>
+              <Ionicons name="document-text-outline" size={30} color={appColors.accent} />
+              <AppText style={styles.pdfPreviewText}>PDF</AppText>
+            </View>
+          )}
+          <View style={styles.previewInfo}>
+            <AppText style={styles.fileName} numberOfLines={2}>{props.document.name}</AppText>
+            <TouchableOpacity onPress={props.onRemove}>
+              <AppText style={styles.removeText}>Quitar documento</AppText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <TouchableOpacity style={styles.uploadButton} onPress={props.onPress}>
+          <Ionicons name="document-attach-outline" size={22} color={appColors.info} />
+          <AppText style={styles.uploadText}>Seleccionar imagen o PDF</AppText>
+          <AppText style={styles.uploadHint}>Máximo 3 MB</AppText>
         </TouchableOpacity>
       )}
     </View>
@@ -797,10 +920,11 @@ const styles = StyleSheet.create({
   questionOptionText: { color: appColors.textSoft, fontSize: 11, flexShrink: 1 },
   uploadGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     marginHorizontal: -6,
   },
   imageBlock: { marginBottom: 8 },
-  imageBlockWide: { flex: 1, paddingHorizontal: 6 },
+  imageBlockWide: { width: '50%', paddingHorizontal: 6 },
   uploadButton: {
     minHeight: 104,
     borderWidth: 1,
@@ -814,6 +938,7 @@ const styles = StyleSheet.create({
     backgroundColor: colorAlpha(appColors.info, '0C'),
   },
   uploadText: { color: appColors.info, fontWeight: '700', fontSize: 12 },
+  uploadHint: { color: appColors.textMuted, fontSize: 9 },
   previewRow: {
     minHeight: 104,
     flexDirection: 'row',
@@ -824,6 +949,8 @@ const styles = StyleSheet.create({
     padding: 9,
   },
   preview: { width: 72, height: 72, borderRadius: 10, backgroundColor: appColors.backgroundMuted },
+  pdfPreview: { width: 72, height: 72, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(appColors.accent, '12') },
+  pdfPreviewText: { color: appColors.accent, fontSize: 9, fontWeight: '900', marginTop: 2 },
   previewInfo: { flex: 1, marginLeft: 12 },
   fileName: { color: appColors.textSoft, fontSize: 12 },
   removeText: { color: appColors.accent, fontSize: 11, fontWeight: '700', marginTop: 7 },

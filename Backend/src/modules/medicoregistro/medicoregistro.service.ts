@@ -53,6 +53,11 @@ export class MedicoregistroService {
       null;
     entity.fototitulo =
       this.decodeBase64(payload.fototituloBase64, "fototitulo") ?? null;
+    entity.documentocedula =
+      this.decodeBase64(payload.documentocedulaBase64, "documentocedula") ??
+      null;
+    entity.documentocedulaNombre = payload.documentocedulaNombre ?? null;
+    entity.documentocedulaMimeType = payload.documentocedulaMimeType ?? null;
     entity.estado = "pendiente";
     entity.fechasolicitud = payload.creadoen ?? new Date();
     entity.observaciones = payload.observaciones ?? null;
@@ -88,12 +93,13 @@ export class MedicoregistroService {
     const usuarioPorId = new Map(usuarios.map((usuario) => [usuario.id, usuario]));
 
     return registros.map((registro) => {
-      const { fotocodigominsa, fototitulo, ...solicitud } = registro;
+      const { fotocodigominsa, fototitulo, documentocedula, ...solicitud } = registro;
       const usuario = usuarioPorId.get(registro.usuarioId);
       return {
         ...solicitud,
         tieneFotoCodigoMinsa: Boolean(fotocodigominsa?.length),
         tieneFotoTitulo: Boolean(fototitulo?.length),
+        tieneDocumentoCedula: Boolean(documentocedula?.length),
         usuario: usuario
           ? {
               id: usuario.id,
@@ -248,6 +254,17 @@ export class MedicoregistroService {
     if (payload.fototituloBase64 !== undefined) {
       entity.fototitulo =
         this.decodeBase64(payload.fototituloBase64, "fototitulo") ?? null;
+    }
+    if (payload.documentocedulaBase64 !== undefined) {
+      entity.documentocedula =
+        this.decodeBase64(payload.documentocedulaBase64, "documentocedula") ??
+        null;
+    }
+    if (payload.documentocedulaNombre !== undefined) {
+      entity.documentocedulaNombre = payload.documentocedulaNombre ?? null;
+    }
+    if (payload.documentocedulaMimeType !== undefined) {
+      entity.documentocedulaMimeType = payload.documentocedulaMimeType ?? null;
     }
     if (payload.estado !== undefined) {
       entity.estado = payload.estado;

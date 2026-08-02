@@ -17,7 +17,7 @@ type AuthUser = {
 type LoginPayload = {
   token: string;
   user: AuthUser;
-  initialPrivateRoute?: 'MedicoRegistro' | 'AdminSolicitudes';
+  initialPrivateRoute?: 'MedicoRegistro' | 'AdminSolicitudes' | 'AdminClinicas';
 };
 
 type LogoutOptions = {
@@ -29,7 +29,7 @@ interface AuthContextValue {
   token: string | null;
   user: AuthUser | null;
   sessionMessage: string | null;
-  initialPrivateRoute: 'MedicoRegistro' | 'AdminSolicitudes' | null;
+  initialPrivateRoute: 'MedicoRegistro' | 'AdminSolicitudes' | 'AdminClinicas' | null;
   login: (payload: LoginPayload) => void;
   logout: (options?: LogoutOptions) => void;
   clearSessionMessage: () => void;
@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AuthUser | null>(null);
   const [sessionMessage, setSessionMessage] = useState<string | null>(null);
   const [initialPrivateRoute, setInitialPrivateRoute] = useState<
-    'MedicoRegistro' | 'AdminSolicitudes' | null
+    'MedicoRegistro' | 'AdminSolicitudes' | 'AdminClinicas' | null
   >(null);
   const expirationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
