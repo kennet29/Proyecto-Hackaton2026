@@ -116,7 +116,7 @@ const getSeverityColors = (severity?: string | null) => {
   if (normalized.includes('moder')) {
     return { backgroundColor: '#FF4D7318', color: '#FF4D73', borderColor: '#FF4D73' };
   }
-  return { backgroundColor: '#182A44', color: '#29B6FF', borderColor: '#29B6FF' };
+  return { backgroundColor: '#071120', color: '#29B6FF', borderColor: '#29B6FF' };
 };
 
 export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
@@ -608,7 +608,7 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
               <AppText style={styles.summaryPrimary}>{`${summary.activeCount} activas`}</AppText>
               <AppText style={styles.summarySecondary}>
                 {summary.tipos.length > 0
-                  ? summary.tipos.slice(0, 3).join(' Ã¢â‚¬Â¢ ')
+                  ? summary.tipos.slice(0, 3).join(' • ')
                   : 'Sin tipos registrados'}
               </AppText>
               {summary.tipos.length > 0 ? (
@@ -861,7 +861,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: '#182A44',
+    backgroundColor: '#071120',
     borderWidth: 1,
     borderColor: '#29B6FF',
     alignItems: 'center',

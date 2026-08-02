@@ -1106,13 +1106,13 @@ export function RecordatorioListScreen() {
 const styles = StyleSheet.create({
   scroller: {
     flex: 1,
-    backgroundColor: appColors.background,
+    backgroundColor: 'transparent',
   },
   container: {
     flexGrow: 1,
     padding: 20,
     paddingBottom: 36,
-    backgroundColor: appColors.background,
+    backgroundColor: 'transparent',
     gap: 16,
   },
   containerWide: {

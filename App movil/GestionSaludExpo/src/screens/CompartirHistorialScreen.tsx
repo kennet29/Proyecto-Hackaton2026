@@ -344,7 +344,7 @@ function SecurityItem({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: appColors.background },
+  screen: { flex: 1, backgroundColor: 'transparent' },
   content: { width: '100%', maxWidth: 1240, alignSelf: 'center', padding: 16, paddingBottom: 50 },
   hero: { padding: 22, borderRadius: 24, borderWidth: 1, borderColor: appColors.borderStrong, backgroundColor: appColors.surfaceStrong },
   heroDesktop: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 28 },

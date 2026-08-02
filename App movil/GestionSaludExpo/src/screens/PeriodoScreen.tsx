@@ -639,14 +639,14 @@ export function PeriodoScreen() {
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: appColors.background,
+    backgroundColor: 'transparent',
   },
   container: {
     flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 32,
-    backgroundColor: appColors.background,
+    backgroundColor: 'transparent',
     gap: 14,
   },
   hero: {

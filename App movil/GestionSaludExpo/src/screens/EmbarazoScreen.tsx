@@ -756,7 +756,7 @@ function PickerInput({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: appColors.background },
+  screen: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: 16, paddingBottom: 42 },
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   headerIcon: {

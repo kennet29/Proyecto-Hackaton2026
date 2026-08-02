@@ -492,7 +492,7 @@ function DecisionButton({
 }
 
 const styles = StyleSheet.create({
-  page: { flexGrow: 1, backgroundColor: appColors.background, padding: 14, paddingBottom: 48 },
+  page: { flexGrow: 1, backgroundColor: 'transparent', padding: 14, paddingBottom: 48 },
   content: { width: '100%', maxWidth: 1220, alignSelf: 'center' },
   topbar: { minHeight: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   backButton: { flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 42, paddingHorizontal: 13, borderRadius: 11, backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border },
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
   decisionText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900', textAlign: 'center' },
   errorText: { color: appColors.accent, fontSize: 10, lineHeight: 15, marginBottom: 3 },
   successText: { color: appColors.success, fontSize: 10, lineHeight: 15, marginBottom: 3 },
-  centerState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: appColors.background },
+  centerState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: 'transparent' },
   stateTitle: { color: appColors.text, fontSize: 21, fontWeight: '900', textAlign: 'center', marginTop: 12 },
   stateText: { maxWidth: 430, color: appColors.textMuted, fontSize: 12, lineHeight: 19, textAlign: 'center', marginTop: 7 },
   stateButton: { minHeight: 45, minWidth: 170, alignItems: 'center', justifyContent: 'center', borderRadius: 12, marginTop: 18, paddingHorizontal: 16, backgroundColor: appColors.info },

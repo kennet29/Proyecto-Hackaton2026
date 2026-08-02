@@ -767,7 +767,7 @@ function PaperStatus({ estado }: { estado: Estado }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: appColors.background, padding: 16, paddingBottom: 48 },
+  container: { flexGrow: 1, backgroundColor: 'transparent', padding: 16, paddingBottom: 48 },
   shell: { width: '100%', maxWidth: 1280, alignSelf: 'center' },
   hero: { backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 20, padding: 18, marginBottom: 14 },
   heroDesktop: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24 },
@@ -839,7 +839,7 @@ const styles = StyleSheet.create({
   statusBadge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', borderRadius: 20, paddingHorizontal: 9, paddingVertical: 6 },
   statusDot: { width: 6, height: 6, borderRadius: 3, marginRight: 5 },
   statusText: { fontSize: 9, fontWeight: '900' },
-  accessRoot: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: appColors.background, padding: 20 },
+  accessRoot: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', padding: 20 },
   accessCard: { width: '100%', maxWidth: 430, alignItems: 'center', backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 22, padding: 28 },
   accessIcon: { width: 68, height: 68, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 17 },
   accessTitle: { color: appColors.text, fontSize: 22, fontWeight: '900', textAlign: 'center' },

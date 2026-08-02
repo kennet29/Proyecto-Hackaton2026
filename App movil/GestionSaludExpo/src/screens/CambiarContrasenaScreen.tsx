@@ -350,7 +350,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: appColors.background },
+  screen: { flex: 1, backgroundColor: 'transparent' },
   scrollContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   shell: { width: '100%', maxWidth: 760, gap: 18 },
   shellDesktop: { maxWidth: 1180, flexDirection: 'row', alignItems: 'stretch', gap: 28 },

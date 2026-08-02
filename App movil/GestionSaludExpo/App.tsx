@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
-import { LinkingOptions, NavigationContainer } from '@react-navigation/native';
+import { DefaultTheme, LinkingOptions, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
@@ -15,6 +15,7 @@ import { SpaceGrotesk_600SemiBold } from '@expo-google-fonts/space-grotesk/600Se
 import { SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk/700Bold';
 import { RootStackParamList } from './src/navigation/types';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { BackgroundModeProvider, useBackgroundMode } from './src/context/BackgroundModeContext';
 import { IniciarSesionScreen } from './src/screens/IniciarSesionScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { CambiarContrasenaScreen } from './src/screens/CambiarContrasenaScreen';
@@ -480,6 +481,7 @@ const PublicNavigator = () => (
 
 const RootNavigator = () => {
   const { isHydrated, token } = useAuth();
+  const { mode } = useBackgroundMode();
 
   if (!isHydrated) {
     return (
@@ -490,9 +492,18 @@ const RootNavigator = () => {
   }
 
   return (
-    <View style={styles.appRoot}>
+    <View style={[styles.appRoot, { backgroundColor: mode === 'light' ? '#FFFFFF' : appColors.background }]}>
       <View style={styles.appFrame}>
-        <NavigationContainer linking={linking}>
+        <NavigationContainer
+          linking={linking}
+          theme={{
+            ...DefaultTheme,
+            colors: {
+              ...DefaultTheme.colors,
+              background: mode === 'light' ? '#FFFFFF' : appColors.background,
+            },
+          }}
+        >
           {token ? <PrivateNavigator /> : <PublicNavigator />}
         </NavigationContainer>
       </View>
@@ -541,12 +552,14 @@ export default function App() {
   }
 
   return (
-    <AuthProvider>
-      <AppErrorBoundary>
-        <StatusBar style="light" />
-        <RootNavigator />
-      </AppErrorBoundary>
-    </AuthProvider>
+    <BackgroundModeProvider>
+      <AuthProvider>
+        <AppErrorBoundary>
+          <StatusBar style="light" />
+          <RootNavigator />
+        </AppErrorBoundary>
+      </AuthProvider>
+    </BackgroundModeProvider>
   );
 }
 
@@ -560,7 +573,7 @@ const styles = StyleSheet.create({
   appFrame: {
     flex: 1,
     width: '100%',
-    backgroundColor: appColors.background,
+    backgroundColor: 'transparent',
   },
   privateRoot: {
     flex: 1,

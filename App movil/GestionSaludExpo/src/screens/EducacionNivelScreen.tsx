@@ -31,7 +31,7 @@ export function EducacionNivelScreen({ route, navigation }: Props) {
       <AppText style={styles.subtitle}>{nivel.enfoque}</AppText>
 
       <View style={styles.section}>
-        <AppText style={styles.sectionTitle}>CÃƒÆ’Ã‚Â³mo lo explicamos</AppText>
+        <AppText style={styles.sectionTitle}>Cómo lo explicamos</AppText>
         <View style={styles.tagRow}>
           {nivel.comoMostrar.map((item) => (
             <View key={item} style={styles.tag}>

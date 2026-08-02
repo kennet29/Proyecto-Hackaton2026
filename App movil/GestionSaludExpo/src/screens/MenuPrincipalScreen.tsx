@@ -9,6 +9,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { appColors, colorAlpha } from '../theme/colors';
+import { useBackgroundMode } from '../context/BackgroundModeContext';
 import {
   getNanoAppearance,
   loadNanoAppearanceId,
@@ -26,6 +27,7 @@ type OptionItem = {
   accent: string;
   navigateTo?: keyof RootStackParamList;
   actionTab?: MenuTabKey;
+  action?: 'toggle-background';
 };
 
 type TabMeta = {
@@ -380,6 +382,7 @@ function WellnessAssistantIcon({ appearance }: { appearance: NanoAppearance }) {
 
 export function MenuPrincipalScreen({ navigation }: Props) {
   const { token, logout, user } = useAuth();
+  const { mode, toggleBackground } = useBackgroundMode();
   const [activeTab, setActiveTab] = useState<MenuTabKey>('inicio');
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [nanoAppearanceId, setNanoAppearanceId] = useState('base');
@@ -387,17 +390,60 @@ export function MenuPrincipalScreen({ navigation }: Props) {
   const isWideLayout = width >= 760;
   const isWebWide = Platform.OS === 'web' && width >= 1040;
   const gridColumns = isWebWide ? 3 : isWideLayout ? 2 : 1;
+  const isLightMode = mode === 'light';
+  const theme = isLightMode
+    ? {
+        background: '#F4F8FC',
+        surface: '#FFFFFF',
+        surfaceStrong: '#EAF2FA',
+        webSurface: '#FFFFFF',
+        text: '#10203A',
+        textSoft: '#45627E',
+        textMuted: '#6D8195',
+        border: '#C8D8E8',
+        borderStrong: '#A9C6DF',
+        icon: '#10203A',
+      }
+    : {
+        background: appColors.background,
+        surface: appColors.surface,
+        surfaceStrong: appColors.surfaceStrong,
+        webSurface: '#102039',
+        text: appColors.text,
+        textSoft: appColors.textSoft,
+        textMuted: appColors.textMuted,
+        border: appColors.border,
+        borderStrong: appColors.borderStrong,
+        icon: appColors.background,
+      };
 
   const activeMeta = useMemo(
     () => tabMeta.find((item) => item.key === activeTab) ?? tabMeta[0],
     [activeTab],
   );
 
-  const activeOptions = useMemo(() => {
+  const activeOptions = useMemo<OptionItem[]>(() => {
     const options = optionsByTab[activeTab] ?? [];
-    if (user?.role?.trim().toLowerCase() === 'medico') return options;
-    return options.filter((item) => item.key !== 'abrir-historial-compartido');
-  }, [activeTab, user?.role]);
+    const permittedOptions = user?.role?.trim().toLowerCase() === 'medico'
+      ? options
+      : options.filter((item) => item.key !== 'abrir-historial-compartido');
+
+    if (activeTab !== 'gestion') return permittedOptions;
+
+    return [
+      {
+        key: 'modo-claro',
+        label: isLightMode ? 'Modo oscuro' : 'Modo claro',
+        description: isLightMode
+          ? 'Cambia la interfaz nuevamente a la apariencia oscura.'
+          : 'Usa fondos claros para una visualizacion mas luminosa.',
+        icon: isLightMode ? 'moon-outline' : 'sunny-outline',
+        accent: isLightMode ? '#596B80' : '#F59E0B',
+        action: 'toggle-background' as const,
+      },
+      ...permittedOptions,
+    ];
+  }, [activeTab, isLightMode, user?.role]);
   const activeNanoAppearance = useMemo(() => getNanoAppearance(nanoAppearanceId), [nanoAppearanceId]);
 
   useFocusEffect(
@@ -470,6 +516,10 @@ export function MenuPrincipalScreen({ navigation }: Props) {
   };
 
   const handleOptionPress = (item: OptionItem) => {
+    if (item.action === 'toggle-background') {
+      toggleBackground();
+      return;
+    }
     if (item.actionTab) {
       setActiveTab(item.actionTab);
       return;
@@ -481,7 +531,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
   };
 
   const heroContent = (
-    <View style={[styles.heroCard, isWebWide && styles.webHeroCard]}>
+    <View style={[styles.heroCard, { backgroundColor: theme.surfaceStrong, borderColor: theme.borderStrong }, isWebWide && styles.webHeroCard, isWebWide && { backgroundColor: theme.surfaceStrong, borderColor: theme.borderStrong }]}>
       <View style={[styles.heroTopRow, isWebWide && styles.webHeroTopRow]}>
         <View style={[styles.heroBadge, isWebWide && styles.webHeroBadge]}>
           <Ionicons name={activeMeta.icon} size={16} color="#29B6FF" />
@@ -491,14 +541,14 @@ export function MenuPrincipalScreen({ navigation }: Props) {
           style={[styles.logoutButton, isWebWide && styles.webLogoutButton]}
           onPress={confirmLogout}
         >
-          <Ionicons name="log-out-outline" size={18} color="#F4F8FF" />
+          <Ionicons name="log-out-outline" size={18} color={theme.text} />
         </TouchableOpacity>
       </View>
-      <AppText style={[styles.pageTitle, isWebWide && styles.webPageTitle]}>{activeMeta.title}</AppText>
+      <AppText style={[styles.pageTitle, { color: theme.text }, isWebWide && styles.webPageTitle]}>{activeMeta.title}</AppText>
       <AppText style={[styles.userLabel, isWebWide && styles.webUserLabel]}>
         Sesion activa: {user?.username ?? 'usuario'}{user?.role ? ` - ${user.role}` : ''}
       </AppText>
-      <AppText style={[styles.pageSubtitle, isWebWide && styles.webPageSubtitle]}>{activeMeta.subtitle}</AppText>
+      <AppText style={[styles.pageSubtitle, { color: theme.textSoft }, isWebWide && styles.webPageSubtitle]}>{activeMeta.subtitle}</AppText>
     </View>
   );
 
@@ -507,19 +557,19 @@ export function MenuPrincipalScreen({ navigation }: Props) {
       {isWebWide ? heroContent : null}
       {isWebWide ? (
         <View style={styles.webSectionHeader}>
-          <AppText style={styles.webSectionTitle}>Accesos del modulo</AppText>
-          <AppText style={styles.webSectionMeta}>{activeOptions.length} opciones disponibles</AppText>
+          <AppText style={[styles.webSectionTitle, { color: theme.text }]}>Accesos del modulo</AppText>
+          <AppText style={[styles.webSectionMeta, { color: theme.textMuted }]}>{activeOptions.length} opciones disponibles</AppText>
         </View>
       ) : null}
     </>
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <View style={[styles.container, isWebWide && styles.webContainer]}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top']}>
+      <View style={[styles.container, { backgroundColor: theme.background }, isWebWide && styles.webContainer]}>
         <View style={[styles.contentShell, isWideLayout && styles.contentShellWide, isWebWide && styles.webContentShell]}>
         {isWebWide ? (
-          <View style={[styles.navbar, styles.webNavbar]}>
+          <View style={[styles.navbar, { backgroundColor: theme.surfaceStrong }, styles.webNavbar]}>
             {tabMeta.map((tab) => {
               const isActive = activeTab === tab.key;
               return (
@@ -534,10 +584,10 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                     <Ionicons
                       name={tab.icon}
                       size={22}
-                      color={isActive ? appColors.info : appColors.background}
+                      color={isActive ? appColors.info : theme.icon}
                     />
                   </View>
-                  <AppText style={[styles.navLabel, styles.webNavLabel, isActive && styles.navLabelActive]}>{tab.label}</AppText>
+                  <AppText style={[styles.navLabel, { color: theme.textMuted }, styles.webNavLabel, isActive && styles.navLabelActive]}>{tab.label}</AppText>
                 </TouchableOpacity>
               );
             })}
@@ -560,7 +610,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                 styles.card,
                 gridColumns > 1 && styles.gridCard,
                 isWebWide && styles.webCard,
-                { borderColor: item.accent },
+                { borderColor: item.accent, backgroundColor: isWebWide ? theme.webSurface : theme.surface },
               ]}
               onPress={() => handleOptionPress(item)}
             >
@@ -568,10 +618,10 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                 <Ionicons name={item.icon} size={20} color={item.accent} />
               </View>
               <View style={styles.cardInfo}>
-                <AppText style={styles.cardLabel}>{item.label}</AppText>
-                <AppText style={styles.cardDescription}>{item.description}</AppText>
+                <AppText style={[styles.cardLabel, { color: theme.text }]}>{item.label}</AppText>
+                <AppText style={[styles.cardDescription, { color: theme.textSoft }]}>{item.description}</AppText>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={appColors.textSoft} />
+              <Ionicons name="chevron-forward" size={18} color={theme.textSoft} />
             </TouchableOpacity>
           )}
           contentContainerStyle={[
@@ -592,7 +642,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
         ) : null}
 
         {!isWebWide ? (
-        <View style={styles.navbar}>
+        <View style={[styles.navbar, { backgroundColor: theme.surfaceStrong }]}>
           {tabMeta.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
@@ -607,10 +657,10 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                   <Ionicons
                     name={tab.icon}
                     size={22}
-                    color={isActive ? appColors.info : appColors.background}
+                    color={isActive ? appColors.info : theme.icon}
                   />
                 </View>
-                <AppText style={[styles.navLabel, isWebWide && styles.webNavLabel, isActive && styles.navLabelActive]}>{tab.label}</AppText>
+                <AppText style={[styles.navLabel, { color: theme.textMuted }, isWebWide && styles.webNavLabel, isActive && styles.navLabelActive]}>{tab.label}</AppText>
               </TouchableOpacity>
             );
           })}

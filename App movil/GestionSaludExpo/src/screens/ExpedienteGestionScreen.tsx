@@ -554,7 +554,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: appColors.background,
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

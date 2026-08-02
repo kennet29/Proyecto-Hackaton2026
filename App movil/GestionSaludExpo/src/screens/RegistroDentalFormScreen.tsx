@@ -1197,7 +1197,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
               </AppText>
               <AppText style={styles.summarySecondary}>
                 {summary.odontologos.length > 0
-                  ? `Odontologos: ${summary.odontologos.slice(0, 2).join(' Ã¢â‚¬Â¢ ')}`
+                  ? `Odontologos: ${summary.odontologos.slice(0, 2).join(' • ')}`
                   : 'Sin profesional registrado'}
               </AppText>
               <AppText style={styles.summaryAction}>

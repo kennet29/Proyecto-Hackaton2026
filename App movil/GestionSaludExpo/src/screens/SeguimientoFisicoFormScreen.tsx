@@ -353,13 +353,13 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
               >
                 <AppText style={styles.templateTitle}>{formatDate(record.fecha)}</AppText>
                 <AppText style={styles.templateText}>
-                  Peso: {formatNumber(record.peso, ' kg')} Â· Minutos: {formatNumber(record.minutosEjercicio, ' min')}
+                  Peso: {formatNumber(record.peso, ' kg')} · Minutos: {formatNumber(record.minutosEjercicio, ' min')}
                 </AppText>
                 <AppText style={styles.templateText}>
-                  Pasos: {formatNumber(record.pasos)} Â· Calorias: {formatNumber(record.caloriasQuemadas)}
+                  Pasos: {formatNumber(record.pasos)} · Calorias: {formatNumber(record.caloriasQuemadas)}
                 </AppText>
                 <AppText style={styles.templateText}>
-                  Distancia: {formatNumber(record.distanciaKm, ' km')} Â· Intensidad: {record.intensidad ?? 'N/D'}
+                  Distancia: {formatNumber(record.distanciaKm, ' km')} · Intensidad: {record.intensidad ?? 'N/D'}
                 </AppText>
                 {record.tipoEjercicio ? (
                   <AppText style={styles.templateText}>Actividad: {record.tipoEjercicio}</AppText>

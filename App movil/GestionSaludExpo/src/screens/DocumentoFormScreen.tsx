@@ -795,7 +795,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 24,
     paddingBottom: 110,
-    backgroundColor: appColors.background,
+    backgroundColor: 'transparent',
     gap: 16,
   },
   heroCard: {
@@ -828,7 +828,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: appColors.background,
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: colorAlpha(appColors.info, '44'),
   },

@@ -166,7 +166,7 @@ export function NanoHistorialScreen({}: Props) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: appColors.background,
+    backgroundColor: 'transparent',
   },
   loadingWrap: {
     flex: 1,

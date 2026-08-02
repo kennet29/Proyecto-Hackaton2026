@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   heroCard: {
-    backgroundColor: '#182A44',
+    backgroundColor: '#071120',
     borderRadius: 28,
     padding: 22,
     borderWidth: 1,
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   filterCard: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 22,
     padding: 16,
     borderWidth: 1,
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   calendarCard: {
-    backgroundColor: '#F4F8FF',
+    backgroundColor: '#071120',
     borderRadius: 24,
     padding: 16,
   },
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   dailySection: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 22,
     padding: 16,
     borderWidth: 1,
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   historySection: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 22,
     padding: 16,
     borderWidth: 1,
@@ -647,7 +647,7 @@ const styles = StyleSheet.create({
     borderColor: '#1B3355',
   },
   historyCard: {
-    backgroundColor: '#182A44',
+    backgroundColor: '#071120',
   },
   cardTopRow: {
     flexDirection: 'row',

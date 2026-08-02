@@ -217,7 +217,7 @@ export function CondicionTipoSelectorScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: appColors.background,
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 24,
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 12,
-    backgroundColor: appColors.background,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },

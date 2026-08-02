@@ -12,7 +12,7 @@ export function EducacionScreen({ navigation }: Props) {
     <SafeAreaView style={styles.container}>
       <AppText style={styles.title}>Elige Un Nivel</AppText>
       <AppText style={styles.subtitle}>
-        contenido educativo diseÃƒÂ±ado para niÃƒÂ±os, adolescentes y adultos
+        contenido educativo diseñado para niños, adolescentes y adultos
       </AppText>
 
       <FlatList

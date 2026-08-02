@@ -775,7 +775,7 @@ const styles = StyleSheet.create({
     borderColor: '#38E28E',
   },
   statusPillPending: {
-    backgroundColor: '#182A44',
+    backgroundColor: '#071120',
     borderColor: '#29B6FF',
   },
   statusPillText: {

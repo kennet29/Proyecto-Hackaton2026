@@ -1176,7 +1176,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   heroCard: {
-    backgroundColor: '#182A44',
+    backgroundColor: '#071120',
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
@@ -1226,7 +1226,7 @@ const styles = StyleSheet.create({
     color: '#FF4D73',
   },
   filterCard: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
@@ -1243,7 +1243,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#27496D',
     overflow: 'hidden',
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
   },
   picker: {
     color: '#F4F8FF',
@@ -1253,7 +1253,7 @@ const styles = StyleSheet.create({
     color: '#29B6FF',
   },
   summaryCard: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
@@ -1273,7 +1273,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   conditionBadgeRow: {
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     borderRadius: 14,
     padding: 14,
     flexDirection: 'row',
@@ -1315,7 +1315,7 @@ const styles = StyleSheet.create({
     color: '#C9D7E8',
   },
   stateBox: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 20,
     alignItems: 'center',
@@ -1334,7 +1334,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   card: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 16,
     gap: 6,
@@ -1360,7 +1360,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   resultPill: {
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 7,
@@ -1376,7 +1376,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   formCard: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 20,
     padding: 18,
     gap: 12,
@@ -1406,7 +1406,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -1418,7 +1418,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   measurementCard: {
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     borderRadius: 16,
     padding: 12,
     borderWidth: 1,
@@ -1495,7 +1495,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: '#27496D',
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
   },
   quickOptionActive: {
     borderColor: '#29B6FF',
@@ -1524,7 +1524,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: '#27496D',
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
   },
   resultOptionActive: {
     borderColor: '#38E28E',
@@ -1545,7 +1545,7 @@ const styles = StyleSheet.create({
     padding: 14,
     fontSize: 15,
     color: '#F4F8FF',
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     marginBottom: 12,
   },
   multiline: {
@@ -1558,7 +1558,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 14,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     marginBottom: 12,
   },
   dateButtonText: {
@@ -1570,7 +1570,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#27496D',
     borderRadius: 16,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     overflow: 'hidden',
     marginBottom: 12,
   },

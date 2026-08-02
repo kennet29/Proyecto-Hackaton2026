@@ -653,7 +653,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     paddingBottom: 36,
-    backgroundColor: appColors.background,
+    backgroundColor: 'transparent',
     gap: 16,
   },
   heroCard: {

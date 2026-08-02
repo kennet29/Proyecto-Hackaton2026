@@ -146,7 +146,7 @@ export function NanoConfiguracionScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: appColors.background },
+  screen: { flex: 1, backgroundColor: 'transparent' },
   content: { width: '100%', maxWidth: 980, alignSelf: 'center', padding: 18, paddingBottom: 42 },
   hero: {
     flexDirection: 'row',

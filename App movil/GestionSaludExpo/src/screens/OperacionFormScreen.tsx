@@ -120,7 +120,7 @@ const getStatusColors = (status?: string | null) => {
   ) {
     return { backgroundColor: '#38E28E18', color: '#38E28E', borderColor: '#38E28E' };
   }
-  return { backgroundColor: '#182A44', color: '#29B6FF', borderColor: '#29B6FF' };
+  return { backgroundColor: '#071120', color: '#29B6FF', borderColor: '#29B6FF' };
 };
 
 type OperacionFormScreenProps = {

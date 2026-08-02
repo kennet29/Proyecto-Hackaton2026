@@ -1105,7 +1105,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   heroCard: {
-    backgroundColor: '#182A44',
+    backgroundColor: '#071120',
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
@@ -1129,14 +1129,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   filterCard: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
     borderColor: '#27496D',
   },
   formCard: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
@@ -1160,13 +1160,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 12,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
   },
   picker: {
     color: '#F4F8FF',
   },
   conditionInputCard: {
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 12,
     borderWidth: 1,
@@ -1229,7 +1229,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 12,
     marginBottom: 12,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
   },
   dateButtonText: {
     color: '#F4F8FF',
@@ -1241,7 +1241,7 @@ const styles = StyleSheet.create({
     borderColor: '#27496D',
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     marginBottom: 12,
   },
   secondaryBtn: {
@@ -1260,7 +1260,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 12,
     fontSize: 15,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     color: '#F4F8FF',
   },
   attachmentsCard: {
@@ -1426,7 +1426,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#9FB3C8',
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
   },
   cancelBtnText: {
     color: '#C9D7E8',
@@ -1461,7 +1461,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   stateBox: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 18,
     alignItems: 'center',
@@ -1479,7 +1479,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   personCard: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
@@ -1520,7 +1520,7 @@ const styles = StyleSheet.create({
   conditionRow: {
     borderRadius: 14,
     padding: 14,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     gap: 4,
   },
   conditionHeader: {
@@ -1543,7 +1543,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   card: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,

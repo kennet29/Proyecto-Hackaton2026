@@ -978,7 +978,7 @@ function EmptyState({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: appColors.background },
+  screen: { flex: 1, backgroundColor: 'transparent' },
   content: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 44 },
   pageHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 18 },
   headerIcon: {

@@ -25,7 +25,7 @@ const webDateInputStyle = {
   minHeight: 52,
   borderRadius: 14,
   border: '1px solid #27496D',
-  backgroundColor: '#0D1B2A',
+  backgroundColor: '#071120',
   color: '#F4F8FF',
   padding: '0 14px',
   fontFamily: '"SpaceGrotesk_400Regular", "Segoe UI", Arial, sans-serif',
@@ -896,7 +896,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#27496D',
     borderRadius: 22,
-    backgroundColor: '#182A44',
+    backgroundColor: '#071120',
   },
   heroIcon: {
     width: 56,
@@ -931,7 +931,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#27496D',
     borderRadius: 22,
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
   },
   blockHeader: {
     flexDirection: 'row',
@@ -982,7 +982,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginBottom: 12,
     overflow: 'hidden',
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
   },
   picker: {
     color: '#F4F8FF',
@@ -1005,7 +1005,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#27496D',
     borderRadius: 14,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
   },
   eventOptionActive: {
     borderColor: '#29B6FF',
@@ -1025,7 +1025,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 12,
     fontSize: 16,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     color: '#F4F8FF',
   },
   row: {
@@ -1047,7 +1047,7 @@ const styles = StyleSheet.create({
     borderColor: '#27496D',
     borderRadius: 14,
     paddingHorizontal: 14,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     justifyContent: 'center',
     marginBottom: 12,
   },
@@ -1061,7 +1061,7 @@ const styles = StyleSheet.create({
     borderColor: '#27496D',
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     marginBottom: 12,
   },
   iosPickerDoneBtn: {
@@ -1069,7 +1069,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#27496D',
     paddingVertical: 10,
     alignItems: 'center',
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
   },
   iosPickerDoneText: {
     color: '#29B6FF',
@@ -1096,7 +1096,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#27496D',
     borderRadius: 14,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
   },
   statusDot: {
     width: 8,
@@ -1120,7 +1120,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#27496D',
     borderRadius: 12,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
   },
   painLevelText: {
     color: '#C9D7E8',
@@ -1212,7 +1212,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   entryCard: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
@@ -1279,7 +1279,7 @@ const styles = StyleSheet.create({
     borderColor: '#132238',
     borderRadius: 16,
     padding: 16,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     marginBottom: 12,
   },
   emptyStateText: {

@@ -29,7 +29,7 @@ const webPickerInputStyle = {
   minHeight: 52,
   borderRadius: 14,
   border: '1px solid #27496D',
-  backgroundColor: '#0D1B2A',
+  backgroundColor: '#071120',
   color: '#F4F8FF',
   padding: '0 14px',
   fontFamily: '"SpaceGrotesk_400Regular", "Segoe UI", Arial, sans-serif',
@@ -819,7 +819,7 @@ export function VacunaFormScreen() {
                       <View>
                         <AppText style={styles.vaccineName}>{record.nombre}</AppText>
                         <AppText style={styles.vaccineMeta}>
-                          {label} Ã‚Â· Aplicada {formatRecordDate(record.fechaaplicacion)}
+                          {label} · Aplicada {formatRecordDate(record.fechaaplicacion)}
                         </AppText>
                       </View>
                     </View>
@@ -1060,7 +1060,7 @@ const styles = StyleSheet.create({
     paddingTop: 26,
   },
   heroCard: {
-    backgroundColor: '#101D31',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 20,
     borderWidth: 1,
@@ -1088,7 +1088,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   filterCard: {
-    backgroundColor: '#101D31',
+    backgroundColor: '#071120',
     borderRadius: 14,
     padding: 16,
     gap: 10,
@@ -1096,7 +1096,7 @@ const styles = StyleSheet.create({
     borderColor: '#27496D',
   },
   calendarCard: {
-    backgroundColor: '#101D31',
+    backgroundColor: '#071120',
     borderRadius: 16,
     padding: 18,
     gap: 12,
@@ -1104,7 +1104,7 @@ const styles = StyleSheet.create({
     borderColor: '#27496D',
   },
   daySection: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 20,
     padding: 18,
     gap: 12,
@@ -1112,7 +1112,7 @@ const styles = StyleSheet.create({
     borderColor: '#27496D',
   },
   recordsSection: {
-    backgroundColor: '#101D31',
+    backgroundColor: '#071120',
     borderRadius: 16,
     padding: 18,
     gap: 12,
@@ -1120,7 +1120,7 @@ const styles = StyleSheet.create({
     borderColor: '#27496D',
   },
   formCard: {
-    backgroundColor: '#101D31',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 22,
     gap: 14,
@@ -1129,7 +1129,7 @@ const styles = StyleSheet.create({
   },
   notificationCard: {
     marginTop: 8,
-    backgroundColor: '#182A44',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 16,
     gap: 12,
@@ -1207,7 +1207,7 @@ const styles = StyleSheet.create({
     borderColor: '#27496D',
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
   },
   picker: {
     color: '#F4F8FF',
@@ -1218,7 +1218,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 16,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
   },
   fixedChannelText: {
     color: '#F4F8FF',
@@ -1231,7 +1231,7 @@ const styles = StyleSheet.create({
     borderColor: '#27496D',
     borderRadius: 16,
     padding: 14,
-    backgroundColor: '#182A44',
+    backgroundColor: '#071120',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1271,7 +1271,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 14,
     fontSize: 16,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     color: '#F4F8FF',
   },
   webDateInput: {
@@ -1291,7 +1291,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     minHeight: 52,
     paddingHorizontal: 14,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
     justifyContent: 'center',
   },
   dateButtonText: {
@@ -1341,7 +1341,7 @@ const styles = StyleSheet.create({
     color: '#C9D7E8',
   },
   stateBox: {
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 18,
     padding: 18,
     alignItems: 'center',
@@ -1361,7 +1361,7 @@ const styles = StyleSheet.create({
   emptyBox: {
     borderWidth: 1,
     borderColor: '#27496D',
-    backgroundColor: '#132238',
+    backgroundColor: '#071120',
     borderRadius: 14,
     padding: 14,
     gap: 8,
@@ -1441,14 +1441,14 @@ const styles = StyleSheet.create({
     borderColor: '#27496D',
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#0D1B2A',
+    backgroundColor: '#071120',
   },
   iosPickerDoneBtn: {
     borderTopWidth: 1,
     borderTopColor: '#27496D',
     paddingVertical: 10,
     alignItems: 'center',
-    backgroundColor: '#182A44',
+    backgroundColor: '#071120',
   },
   iosPickerDoneText: {
     color: '#29B6FF',

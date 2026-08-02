@@ -1090,13 +1090,13 @@ export function NanoConsejeroScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: appColors.background,
+    backgroundColor: 'transparent',
   },
   scrollContent: {
     paddingHorizontal: 24,
     paddingTop: 18,
     paddingBottom: 28,
-    backgroundColor: appColors.background,
+    backgroundColor: 'transparent',
   },
   headerRow: {
     flexDirection: 'row',

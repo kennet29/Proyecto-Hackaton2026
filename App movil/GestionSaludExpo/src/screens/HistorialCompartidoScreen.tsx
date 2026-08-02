@@ -846,7 +846,7 @@ function renderValue(value: unknown, depth = 0, fieldKey = ''): React.ReactNode 
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: appColors.background },
+  screen: { flex: 1, backgroundColor: 'transparent' },
   content: { width: '100%', maxWidth: 1240, alignSelf: 'center', padding: 16, paddingBottom: 50 },
   hero: { padding: 22, borderRadius: 23, borderWidth: 1, borderColor: appColors.borderStrong, backgroundColor: appColors.surfaceStrong },
   heroDesktop: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 28 },
@@ -962,7 +962,7 @@ const styles = StyleSheet.create({
   reportFooter: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 24, paddingTop: 14 },
   reportFooterLine: { width: '100%', height: 1, marginBottom: 7, backgroundColor: '#D7E0E8' },
   reportFooterText: { color: '#607085', fontSize: 8, textAlign: 'center' },
-  accessScreen: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20, backgroundColor: appColors.background },
+  accessScreen: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20, backgroundColor: 'transparent' },
   accessCard: { width: '100%', maxWidth: 440, alignItems: 'center', padding: 28, borderRadius: 23, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
   accessIcon: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderRadius: 23, backgroundColor: colorAlpha(appColors.info, '15') },
   accessTitle: { color: appColors.text, fontSize: 21, fontWeight: '900', textAlign: 'center', marginTop: 15 },

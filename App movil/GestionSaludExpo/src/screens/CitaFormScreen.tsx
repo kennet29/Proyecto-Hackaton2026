@@ -811,7 +811,7 @@ export function CitaFormScreen() {
 
       }
 
-      Alert.alert("Cita creada", "La cita quedÃ³ registrada");
+      Alert.alert("Cita creada", "La cita quedó registrada");
 
       setForm({ pacienteId: "", fecha: "", especialidad: "", motivo: "" });
 
@@ -825,7 +825,7 @@ export function CitaFormScreen() {
 
     } catch (error) {
 
-      Alert.alert("Error", error instanceof Error ? error.message : "FallÃ³ la peticiÃ³n");
+      Alert.alert("Error", error instanceof Error ? error.message : "Falló la petición");
 
     } finally {
 
@@ -923,7 +923,7 @@ export function CitaFormScreen() {
 
             <AppText style={styles.emptyText}>
 
-              No hay personas vinculadas. RegÃ­stralas desde Gestionar Expediente.
+              No hay personas vinculadas. Regístralas desde Gestionar Expediente.
 
             </AppText>
 
@@ -971,7 +971,7 @@ export function CitaFormScreen() {
 
         {appointmentsForSelectedDay.length === 0 ? (
 
-          <AppText style={styles.emptyText}>No hay citas para este dÃ­a.</AppText>
+          <AppText style={styles.emptyText}>No hay citas para este día.</AppText>
 
         ) : (
 
@@ -1073,7 +1073,7 @@ export function CitaFormScreen() {
 
                       person.parentesco
 
-                        ? `${person.displayName} Â· ${person.parentesco}`
+                        ? `${person.displayName} · ${person.parentesco}`
 
                         : person.displayName
 
@@ -1250,7 +1250,7 @@ export function CitaFormScreen() {
       )}
 
       <TouchableOpacity style={styles.fab} onPress={() => setShowForm((prev) => !prev)}>
-        <AppText style={styles.fabText}>{showForm ? "Ã—" : "+"}</AppText>
+        <AppText style={styles.fabText}>{showForm ? "×" : "+"}</AppText>
       </TouchableOpacity>
     </ScrollView>
 
@@ -1286,7 +1286,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 20,
 
-    backgroundColor: "#132238",
+    backgroundColor: "#071120",
 
     padding: 12,
 
@@ -1336,7 +1336,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 20,
 
-    backgroundColor: "#132238",
+    backgroundColor: "#071120",
 
     padding: 16,
 
@@ -1482,7 +1482,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 20,
 
-    backgroundColor: "#132238",
+    backgroundColor: "#071120",
 
     padding: 16,
 
@@ -1534,7 +1534,7 @@ const styles = StyleSheet.create({
 
     borderColor: "#27496D",
 
-    backgroundColor: "#132238",
+    backgroundColor: "#071120",
 
     borderRadius: 12,
 
@@ -1568,7 +1568,7 @@ const styles = StyleSheet.create({
 
   formCard: {
 
-    backgroundColor: "#132238",
+    backgroundColor: "#071120",
 
     borderRadius: 20,
 
@@ -1632,7 +1632,7 @@ const styles = StyleSheet.create({
 
     paddingHorizontal: 14,
 
-    backgroundColor: "#0D1B2A",
+    backgroundColor: "#071120",
 
   },
 
@@ -1654,7 +1654,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 16,
 
-    backgroundColor: "#0D1B2A",
+    backgroundColor: "#071120",
 
     overflow: "hidden",
 
@@ -1670,7 +1670,7 @@ const styles = StyleSheet.create({
 
     alignItems: "center",
 
-    backgroundColor: "#182A44",
+    backgroundColor: "#071120",
 
   },
 
