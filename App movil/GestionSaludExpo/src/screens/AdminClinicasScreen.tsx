@@ -18,6 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
 import { apiFetch, buildJsonHeaders, parseJsonResponse } from '../utils/apiClient';
+import { LocationMapPicker } from '../components/LocationMapPicker';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AdminClinicas'>;
 type ClinicFilter = 'todas' | 'activas' | 'inactivas';
@@ -688,6 +689,14 @@ function ClinicEditor(props: {
   onSave: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<EditorTab>('datos');
+  const latitude = Number(props.form.latitud);
+  const longitude = Number(props.form.longitud);
+  const hasMapCoordinates = Boolean(
+    props.form.latitud.trim() &&
+      props.form.longitud.trim() &&
+      Number.isFinite(latitude) &&
+      Number.isFinite(longitude),
+  );
 
   useEffect(() => {
     if (props.visible) setActiveTab('datos');
@@ -748,6 +757,14 @@ function ClinicEditor(props: {
               <FormField label="Latitud" value={props.form.latitud} onChangeText={(value) => props.onChange('latitud', value)} wide={props.desktop} placeholder="12.1364" />
               <FormField label="Longitud" value={props.form.longitud} onChangeText={(value) => props.onChange('longitud', value)} wide={props.desktop} placeholder="-86.2514" />
               </View>
+              <LocationMapPicker
+                latitude={hasMapCoordinates ? latitude : null}
+                longitude={hasMapCoordinates ? longitude : null}
+                onLocationChange={(nextLatitude, nextLongitude) => {
+                  props.onChange('latitud', nextLatitude.toFixed(6));
+                  props.onChange('longitud', nextLongitude.toFixed(6));
+                }}
+              />
               <AppText style={styles.formLabel}>Descripción</AppText>
               <AppTextInput
                 multiline
