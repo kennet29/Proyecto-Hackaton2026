@@ -424,6 +424,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
 
   const activeOptions = useMemo<OptionItem[]>(() => {
     const options = optionsByTab[activeTab] ?? [];
+    const isAdmin = ['admin', 'superadmin'].includes(user?.role?.trim().toLowerCase() ?? '');
     const permittedOptions = user?.role?.trim().toLowerCase() === 'medico'
       ? options
       : options.filter((item) => item.key !== 'abrir-historial-compartido');
@@ -441,6 +442,16 @@ export function MenuPrincipalScreen({ navigation }: Props) {
         accent: isLightMode ? '#596B80' : '#F59E0B',
         action: 'toggle-background' as const,
       },
+      ...(isAdmin
+        ? [{
+            key: 'administrar-clinicas',
+            label: 'Clínicas y Servicios',
+            description: 'Administra instituciones de salud, su catálogo y los servicios disponibles.',
+            icon: 'business-outline' as const,
+            accent: appColors.success,
+            navigateTo: 'AdminInstituciones' as const,
+          }]
+        : []),
       ...permittedOptions,
     ];
   }, [activeTab, isLightMode, user?.role]);
