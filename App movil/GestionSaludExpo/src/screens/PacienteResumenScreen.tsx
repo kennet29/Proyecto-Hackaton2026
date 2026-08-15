@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { AppText } from '../components/AppText';
@@ -360,6 +361,8 @@ const clinicalAreas: ClinicalArea[] = [
 ];
 
 export function PacienteResumenScreen({ navigation, route }: Props) {
+  const { width } = useWindowDimensions();
+  const isDesktopLayout = width >= 1024;
   const { token, user } = useAuth();
   const [patientOptions, setPatientOptions] = useState<LinkedPatient[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState('');
@@ -827,7 +830,9 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
                   <View style={styles.timelineCopy}>
                     <View style={styles.timelineHeader}>
                       <AppText style={styles.timelineType}>{item.type}</AppText>
-                      <AppText style={styles.timelineDate}>{formatDateTime(item.date)}</AppText>
+                      <AppText style={[styles.timelineDate, isDesktopLayout && styles.timelineDateDesktop]}>
+                        {formatDateTime(item.date)}
+                      </AppText>
                     </View>
                     <AppText style={styles.itemTitle}>{item.title}</AppText>
                     <AppText style={styles.itemDetail}>{item.detail}</AppText>
@@ -1310,6 +1315,7 @@ const styles = StyleSheet.create({
   timelineHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
   timelineType: { color: appColors.info, fontSize: 9, fontWeight: '900', letterSpacing: 0.8, textTransform: 'uppercase' },
   timelineDate: { color: appColors.textMuted, fontSize: 9, textAlign: 'right', maxWidth: '48%' },
+  timelineDateDesktop: { fontSize: 11, lineHeight: 16 },
   pointerRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 13 },
   pointerNumber: {
     width: 25,

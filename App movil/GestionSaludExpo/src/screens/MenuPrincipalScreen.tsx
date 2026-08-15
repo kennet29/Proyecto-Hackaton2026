@@ -461,6 +461,16 @@ export function MenuPrincipalScreen({ navigation }: Props) {
         accent: isLightMode ? '#596B80' : '#F59E0B',
         action: 'toggle-background' as const,
       },
+      ...(isAdmin
+        ? [{
+            key: 'administrar-clinicas',
+            label: 'Clínicas y Servicios',
+            description: 'Administra instituciones de salud, su catálogo y los servicios disponibles.',
+            icon: 'business-outline' as const,
+            accent: appColors.success,
+            navigateTo: 'AdminInstituciones' as const,
+          }]
+        : []),
       ...permittedOptions,
     ];
   }, [activeTab, isLightMode, user?.role]);

@@ -71,6 +71,7 @@ import { MedicoRegistroScreen } from './src/screens/MedicoRegistroScreen';
 import { AdminSolicitudesMedicasScreen } from './src/screens/AdminSolicitudesMedicasScreen';
 import { AdminSolicitudDetalleScreen } from './src/screens/AdminSolicitudDetalleScreen';
 import { AdminClinicasScreen } from './src/screens/AdminClinicasScreen';
+import { AdminInstitucionesScreen } from './src/screens/AdminInstitucionesScreen';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 import { useOfflineWriteSync } from './src/hooks/useOfflineWriteSync';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
@@ -176,6 +177,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       AdminSolicitudes: 'admin',
       AdminSolicitudDetalle: 'admin/solicitudes/:solicitudId',
       AdminClinicas: 'admin/clinicas',
+      AdminInstituciones: 'admin/instituciones',
       DocumentoForm: 'documentos',
       CompartirHistorial: 'compartir-historial',
       HistorialCompartido: 'medico/acceso-historial/:token?',
@@ -372,6 +374,11 @@ const PrivateNavigator = () => {
         options={{ title: 'Administración de clínicas' }}
       />
       <Stack.Screen
+        name="AdminInstituciones"
+        component={AdminInstitucionesScreen}
+        options={{ title: 'Clínicas y servicios' }}
+      />
+      <Stack.Screen
         name="DocumentoForm"
         component={DocumentoFormScreen}
         options={{ title: 'Documentos' }}
@@ -476,6 +483,11 @@ const PublicNavigator = () => (
     <Stack.Screen
       name="AdminClinicas"
       component={AdminClinicasScreen}
+      options={{ title: 'Acceso administrativo' }}
+    />
+    <Stack.Screen
+      name="AdminInstituciones"
+      component={AdminInstitucionesScreen}
       options={{ title: 'Acceso administrativo' }}
     />
     <Stack.Screen
