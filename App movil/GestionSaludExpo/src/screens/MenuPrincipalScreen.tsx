@@ -259,8 +259,8 @@ const wellnessOptions: OptionItem[] = [
 const managementOptions: OptionItem[] = [
   {
     key: 'admin-solicitudes',
-    label: 'Solicitudes médicas',
-    description: 'Revisa y decide las solicitudes de acceso para médicos',
+    label: 'Revisar solicitudes médicas',
+    description: 'Revisa y decide las solicitudes de acceso profesional.',
     icon: 'shield-checkmark-outline',
     accent: '#F5B942',
     navigateTo: 'AdminSolicitudes',
@@ -275,7 +275,7 @@ const managementOptions: OptionItem[] = [
   },
   {
     key: 'registro-medico',
-    label: 'Registrarme como médico',
+    label: 'Enviar solicitud médica',
     description: 'Envía tus credenciales profesionales para solicitar acceso médico',
     icon: 'medkit-outline',
     accent: appColors.info,
@@ -288,6 +288,14 @@ const managementOptions: OptionItem[] = [
     icon: 'color-palette-outline',
     accent: '#C084FC',
     navigateTo: 'NanoConfiguracion',
+  },
+  {
+    key: 'premium',
+    label: 'Gestión Salud Premium',
+    description: 'Conoce los planes Premium y sus beneficios para tu cuidado.',
+    icon: 'diamond-outline',
+    accent: '#F5B942',
+    navigateTo: 'Premium',
   },
   {
     key: 'paciente',
@@ -444,6 +452,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
     const isAdmin = role === 'admin' || role === 'superadmin';
     const permittedOptions = options.filter((item) => {
       if (item.key.startsWith('admin-')) return isAdmin;
+      if (item.key === 'registro-medico') return !isAdmin;
       if (item.key === 'abrir-historial-compartido') return role === 'medico';
       return true;
     });

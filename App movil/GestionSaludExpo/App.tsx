@@ -22,6 +22,7 @@ import { CambiarContrasenaScreen } from './src/screens/CambiarContrasenaScreen';
 import { MenuPrincipalScreen } from './src/screens/MenuPrincipalScreen';
 import { SobreNosotrosScreen } from './src/screens/SobreNosotrosScreen';
 import { ContactoScreen } from './src/screens/ContactoScreen';
+import { PremiumScreen } from './src/screens/PremiumScreen';
 import { PacienteFormScreen } from './src/screens/PacienteFormScreen';
 import { PacienteEditorScreen } from './src/screens/PacienteEditorScreen';
 import { ConsultaFormScreen } from './src/screens/ConsultaFormScreen';
@@ -195,6 +196,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       RecordatorioList: 'recordatorios',
       SobreNosotros: 'sobre-nosotros',
       Contacto: 'contacto',
+      Premium: 'premium',
     },
   },
 };
@@ -449,6 +451,11 @@ const PrivateNavigator = () => {
         name="SobreNosotros"
         component={SobreNosotrosScreen}
         options={{ title: 'Sobre Nosotros' }}
+      />
+      <Stack.Screen
+        name="Premium"
+        component={PremiumScreen}
+        options={{ title: 'Gestión Salud Premium' }}
       />
       <Stack.Screen name="Contacto" component={ContactoScreen} options={{ title: 'Contacto' }} />
       </Stack.Navigator>

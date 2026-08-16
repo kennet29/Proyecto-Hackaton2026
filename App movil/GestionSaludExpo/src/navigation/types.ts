@@ -6,6 +6,7 @@ export type RootStackParamList = {
   CambiarContrasena: undefined;
   SobreNosotros: undefined;
   Contacto: undefined;
+  Premium: undefined;
   MenuLoading: undefined;
   MenuPrincipal: undefined;
   PacienteResumen: { pacienteId?: number } | undefined;

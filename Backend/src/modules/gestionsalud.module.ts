@@ -54,6 +54,7 @@ import { InstitucionespecialidadModule } from "./institucionespecialidad/institu
 import { SeguimientofisicoModule } from "./seguimientofisico/seguimientofisico.module";
 import { ExamenclinicoModule } from "./examenclinico/examenclinico.module";
 import { SeguimientoposteventoModule } from "./seguimientopostevento/seguimientopostevento.module";
+import { SuscripcionPremiumModule } from "./suscripcionpremium/suscripcionpremium.module";
 
 /**
  * Agrupa controladores y proveedores del dominio gestion salud.
@@ -115,6 +116,7 @@ import { SeguimientoposteventoModule } from "./seguimientopostevento/seguimiento
     SeguimientofisicoModule,
     ExamenclinicoModule,
     SeguimientoposteventoModule,
+    SuscripcionPremiumModule,
   ],
   exports: [
     PacienteModule,
@@ -172,6 +174,7 @@ import { SeguimientoposteventoModule } from "./seguimientopostevento/seguimiento
     SeguimientofisicoModule,
     ExamenclinicoModule,
     SeguimientoposteventoModule,
+    SuscripcionPremiumModule,
   ],
 })
 export class GestionSaludModule {}
