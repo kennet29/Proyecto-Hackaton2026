@@ -33,7 +33,7 @@ export function EducacionTemaScreen({ route, navigation }: Props) {
         <AppText style={styles.sectionTitle}>actividades</AppText>
         {tema.actividades.map((actividad) => (
           <AppText key={actividad} style={styles.sectionText}>
-            â€¢ {actividad}
+            • {actividad}
           </AppText>
         ))}
       </View>
@@ -42,7 +42,7 @@ export function EducacionTemaScreen({ route, navigation }: Props) {
         <AppText style={styles.sectionTitle}>recursos visuales</AppText>
         {tema.recursosVisuales.map((recurso) => (
           <AppText key={recurso} style={styles.sectionText}>
-            â€¢ {recurso}
+            • {recurso}
           </AppText>
         ))}
       </View>
@@ -51,7 +51,7 @@ export function EducacionTemaScreen({ route, navigation }: Props) {
         <AppText style={styles.sectionTitle}>formatos recomendados</AppText>
         {tema.formato.map((fmt) => (
           <AppText key={fmt} style={styles.sectionText}>
-            â€¢ {fmt}
+            • {fmt}
           </AppText>
         ))}
       </View>
@@ -61,7 +61,7 @@ export function EducacionTemaScreen({ route, navigation }: Props) {
           <AppText style={styles.sectionTitle}>recordatorios / recompensas</AppText>
           {tema.recordatorios.map((rec) => (
             <AppText key={rec} style={[styles.sectionText, styles.highlight]}>
-              â€¢ {rec}
+              • {rec}
             </AppText>
           ))}
         </View>

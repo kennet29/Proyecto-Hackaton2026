@@ -8,7 +8,7 @@ import { createNotificacionSchema } from "../../modules/notificacion/dto/create-
 export const scheduleNotificationSchema = createNotificacionSchema
   .omit({ fechaprogramada: true })
   .extend({
-    scheduleText: z.string().min(3, "describe el momento de env�o"),
+    scheduleText: z.string().min(3, "describe el momento de envío"),
     timezone: z.string().min(2).optional(),
     referenceDate: z.coerce.date().optional(),
   });
