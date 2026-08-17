@@ -1,13 +1,18 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 import { SuscripcionPremiumService } from "../suscripcionpremium/suscripcionpremium.service";
+import { Usuario } from "../../users/entities/user.entity";
 import { CrearPagoPremiumDto, RevisarPagoPremiumDto } from "./dto/pago-premium.dto";
 import { PagoPremium } from "./pagopremium.entity";
 
 @Injectable()
 export class PagoPremiumService {
-  constructor(@InjectRepository(PagoPremium) private readonly repository: Repository<PagoPremium>, private readonly subscriptions: SuscripcionPremiumService) {}
+  constructor(
+    @InjectRepository(PagoPremium) private readonly repository: Repository<PagoPremium>,
+    @InjectRepository(Usuario) private readonly usersRepository: Repository<Usuario>,
+    private readonly subscriptions: SuscripcionPremiumService,
+  ) {}
 
   async crear(usuarioId: number, payload: CrearPagoPremiumDto) {
     const content = Buffer.from(payload.comprobanteBase64.replace(/^data:[^;]+;base64,/, ""), "base64");
@@ -16,7 +21,18 @@ export class PagoPremiumService {
     return this.resumen(await this.repository.save(payment));
   }
 
-  async listar() { return (await this.repository.find({ order: { creadoEn: "DESC" } })).map((item) => this.resumen(item)); }
+  async listar() {
+    const payments = await this.repository.find({ order: { creadoEn: "DESC" } });
+    const userIds = [...new Set(payments.map((payment) => payment.usuarioId))];
+    const users = userIds.length
+      ? await this.usersRepository.find({ where: { id: In(userIds) }, select: { id: true, username: true } })
+      : [];
+    const namesByUserId = new Map(users.map((user) => [user.id, user.username]));
+    return payments.map((item) => ({
+      ...this.resumen(item),
+      usuario: { id: item.usuarioId, username: namesByUserId.get(item.usuarioId) ?? `Usuario #${item.usuarioId}` },
+    }));
+  }
   async misPagos(usuarioId: number) { return (await this.repository.find({ where: { usuarioId }, order: { creadoEn: "DESC" } })).map((item) => this.resumen(item)); }
 
   async revisar(id: number, payload: RevisarPagoPremiumDto, admin: string) {

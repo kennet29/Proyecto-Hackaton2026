@@ -462,12 +462,12 @@ export function MenuPrincipalScreen({ navigation }: Props) {
     return [
       {
         key: 'modo-claro',
-        label: isLightMode ? 'Modo oscuro' : 'Modo claro',
+        label: isLightMode ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro',
         description: isLightMode
-          ? 'Cambia la interfaz nuevamente a la apariencia oscura.'
-          : 'Usa fondos claros para una visualizacion mas luminosa.',
+          ? 'Reduce el brillo con azul nocturno y contraste suave.'
+          : 'Usa fondos blancos, azul intenso y mayor luminosidad.',
         icon: isLightMode ? 'moon-outline' : 'sunny-outline',
-        accent: isLightMode ? '#596B80' : '#F59E0B',
+        accent: '#0B6FEA',
         action: 'toggle-background' as const,
       },
       ...(isAdmin
@@ -577,24 +577,24 @@ export function MenuPrincipalScreen({ navigation }: Props) {
   };
 
   const heroContent = (
-    <View style={[styles.heroCard, { backgroundColor: theme.surfaceStrong, borderColor: theme.borderStrong }, isWebWide && styles.webHeroCard, isWebWide && { backgroundColor: theme.surfaceStrong, borderColor: theme.borderStrong }]}>
+    <View style={[styles.heroCard, isWebWide && styles.webHeroCard]}>
       <View style={[styles.heroTopRow, isWebWide && styles.webHeroTopRow]}>
         <View style={[styles.heroBadge, isWebWide && styles.webHeroBadge]}>
-          <Ionicons name={activeMeta.icon} size={16} color="#29B6FF" />
+          <Ionicons name={activeMeta.icon} size={16} color="#0B6FEA" />
           <AppText style={styles.heroBadgeText}>{activeMeta.label}</AppText>
         </View>
         <TouchableOpacity
           style={[styles.logoutButton, isWebWide && styles.webLogoutButton]}
           onPress={confirmLogout}
         >
-          <Ionicons name="log-out-outline" size={18} color={theme.text} />
+          <Ionicons name="log-out-outline" size={18} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
-      <AppText style={[styles.pageTitle, { color: theme.text }, isWebWide && styles.webPageTitle]}>{activeMeta.title}</AppText>
-      <AppText style={[styles.userLabel, isWebWide && styles.webUserLabel]}>
+      <AppText style={[styles.pageTitle, styles.heroTitle, isWebWide && styles.webPageTitle]}>{activeMeta.title}</AppText>
+      <AppText style={[styles.userLabel, styles.heroUserLabel, isWebWide && styles.webUserLabel]}>
         Sesion activa: {user?.username ?? 'usuario'}{user?.role ? ` - ${user.role}` : ''}
       </AppText>
-      <AppText style={[styles.pageSubtitle, { color: theme.textSoft }, isWebWide && styles.webPageSubtitle]}>{activeMeta.subtitle}</AppText>
+      <AppText style={[styles.pageSubtitle, styles.heroSubtitle, isWebWide && styles.webPageSubtitle]}>{activeMeta.subtitle}</AppText>
     </View>
   );
 
@@ -657,17 +657,32 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                 gridColumns > 1 && styles.gridCard,
                 isWebWide && styles.webCard,
                 { borderColor: item.accent, backgroundColor: isWebWide ? theme.webSurface : theme.surface },
+                isLightMode && item.action !== 'toggle-background' && styles.lightModeCard,
+                item.action === 'toggle-background' && styles.themeCard,
+                item.action === 'toggle-background' && {
+                  backgroundColor: isLightMode ? '#EAF3FF' : '#0D2B55',
+                  borderColor: '#0B6FEA',
+                },
               ]}
               onPress={() => handleOptionPress(item)}
+              accessibilityRole="button"
+              accessibilityLabel={item.label}
+              accessibilityHint="Alterna entre modo claro y modo oscuro"
             >
-              <View style={[styles.cardIcon, { backgroundColor: `${item.accent}22` }]}>
+              <View style={[styles.cardIcon, { backgroundColor: `${item.accent}22` }, item.action === 'toggle-background' && styles.themeIcon]}>
                 <Ionicons name={item.icon} size={20} color={item.accent} />
               </View>
               <View style={styles.cardInfo}>
                 <AppText style={[styles.cardLabel, { color: theme.text }]}>{item.label}</AppText>
                 <AppText style={[styles.cardDescription, { color: theme.textSoft }]}>{item.description}</AppText>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={theme.textSoft} />
+              {item.action === 'toggle-background' ? (
+                <View style={[styles.themeToggle, { backgroundColor: isLightMode ? '#0B6FEA' : '#5D87BE' }]}>
+                  <View style={[styles.themeToggleThumb, isLightMode ? styles.themeToggleThumbLight : styles.themeToggleThumbDark]}>
+                    <Ionicons name={isLightMode ? 'sunny' : 'moon'} size={14} color="#0B6FEA" />
+                  </View>
+                </View>
+              ) : <Ionicons name="chevron-forward" size={18} color={theme.textSoft} />}
             </TouchableOpacity>
           )}
           contentContainerStyle={[
@@ -775,20 +790,25 @@ const styles = StyleSheet.create({
     maxWidth: 1360,
   },
   heroCard: {
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: '#0B6FEA',
     borderRadius: 24,
     padding: 18,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: appColors.borderStrong,
+    borderColor: '#2C8CFA',
+    shadowColor: '#0B6FEA',
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
   webHeroCard: {
     borderRadius: 18,
     paddingHorizontal: 22,
     paddingVertical: 16,
     marginBottom: 16,
-    backgroundColor: '#10203A',
-    borderColor: '#2E5F8A',
+    backgroundColor: '#0B6FEA',
+    borderColor: '#2C8CFA',
   },
   heroTopRow: {
     flexDirection: 'row',
@@ -803,7 +823,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: '#FFFFFF',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -815,7 +835,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   heroBadgeText: {
-    color: appColors.textSoft,
+    color: '#0B6FEA',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -823,11 +843,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: appColors.surface,
+    backgroundColor: '#FFFFFF22',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: '#FFFFFF66',
   },
   webLogoutButton: {
     width: 34,
@@ -921,6 +941,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '800',
   },
+  heroTitle: {
+    color: '#FFFFFF',
+  },
   webPageTitle: {
     fontSize: 28,
   },
@@ -930,6 +953,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 8,
   },
+  heroUserLabel: {
+    color: '#DCEEFF',
+  },
   webUserLabel: {
     marginTop: 4,
   },
@@ -938,6 +964,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 6,
     lineHeight: 21,
+  },
+  heroSubtitle: {
+    color: '#EAF3FF',
   },
   webPageSubtitle: {
     maxWidth: 680,
@@ -987,6 +1016,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
   },
+  lightModeCard: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E1EAF4',
+    borderLeftColor: '#0B6FEA',
+    borderLeftWidth: 8,
+    shadowColor: '#163B68',
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  themeCard: {
+    borderWidth: 2,
+    shadowColor: '#0B6FEA',
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
+  },
   webCard: {
     minHeight: 118,
     borderRadius: 16,
@@ -1003,6 +1051,32 @@ const styles = StyleSheet.create({
     borderRadius: 23,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  themeIcon: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#B8D7FF',
+  },
+  themeToggle: {
+    width: 52,
+    height: 30,
+    borderRadius: 15,
+    padding: 3,
+    justifyContent: 'center',
+  },
+  themeToggleThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeToggleThumbLight: {
+    alignSelf: 'flex-end',
+  },
+  themeToggleThumbDark: {
+    alignSelf: 'flex-start',
   },
   cardInfo: {
     flex: 1,
@@ -1047,6 +1121,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginTop: 6,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#A9D2FB',
+    shadowColor: '#0B6FEA',
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 4,
   },
   webNavbar: {
     borderRadius: 18,
@@ -1067,9 +1148,17 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   webNavItemActive: {
-    backgroundColor: colorAlpha(appColors.info, '18'),
+    backgroundColor: '#DCEEFF',
+    borderColor: '#75B8F8',
+    shadowColor: '#0B6FEA',
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
   iconCircle: {
     width: 44,
