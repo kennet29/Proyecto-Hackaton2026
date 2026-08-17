@@ -87,6 +87,7 @@ export type RootStackParamList = {
   AdminSolicitudDetalle: { solicitudId: number; demo?: boolean };
   AdminClinicas: undefined;
   AdminInstituciones: undefined;
+  AdminPagos: undefined;
   Educacion: undefined;
   EducacionNivel: { nivelId: NivelEducativoId };
   EducacionTema: { nivelId: NivelEducativoId; temaId: string };

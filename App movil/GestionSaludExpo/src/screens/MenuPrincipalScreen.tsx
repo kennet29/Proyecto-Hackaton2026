@@ -472,6 +472,13 @@ export function MenuPrincipalScreen({ navigation }: Props) {
       },
       ...(isAdmin
         ? [{
+            key: 'administrar-pagos',
+            label: 'Pagos Premium',
+            description: 'Configura cuentas bancarias y tipos de cambio.',
+            icon: 'card-outline' as const,
+            accent: '#F5B942',
+            navigateTo: 'AdminPagos' as const,
+          }, {
             key: 'administrar-clinicas',
             label: 'Clínicas y Servicios',
             description: 'Administra instituciones de salud, su catálogo y los servicios disponibles.',

@@ -55,6 +55,8 @@ import { SeguimientofisicoModule } from "./seguimientofisico/seguimientofisico.m
 import { ExamenclinicoModule } from "./examenclinico/examenclinico.module";
 import { SeguimientoposteventoModule } from "./seguimientopostevento/seguimientopostevento.module";
 import { SuscripcionPremiumModule } from "./suscripcionpremium/suscripcionpremium.module";
+import { ConfiguracionPagoModule } from "./configuracionpago/configuracionpago.module";
+import { PagoPremiumModule } from "./pagopremium/pagopremium.module";
 
 /**
  * Agrupa controladores y proveedores del dominio gestion salud.
@@ -117,6 +119,8 @@ import { SuscripcionPremiumModule } from "./suscripcionpremium/suscripcionpremiu
     ExamenclinicoModule,
     SeguimientoposteventoModule,
     SuscripcionPremiumModule,
+    ConfiguracionPagoModule,
+    PagoPremiumModule,
   ],
   exports: [
     PacienteModule,
@@ -175,6 +179,8 @@ import { SuscripcionPremiumModule } from "./suscripcionpremium/suscripcionpremiu
     ExamenclinicoModule,
     SeguimientoposteventoModule,
     SuscripcionPremiumModule,
+    ConfiguracionPagoModule,
+    PagoPremiumModule,
   ],
 })
 export class GestionSaludModule {}
