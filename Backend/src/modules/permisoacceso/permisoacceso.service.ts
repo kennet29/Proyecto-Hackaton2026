@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { getRequiredJwtSecret } from "../../auth/utils/security-config.util";
 import { InjectRepository } from "@nestjs/typeorm";
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from "crypto";
 import { DataSource, Repository } from "typeorm";
@@ -838,7 +839,7 @@ export class PermisoaccesoService {
   private getShareLinkSecret(): string {
     return (
       this.configService.get<string>("SHARE_LINK_SECRET") ??
-      this.configService.get<string>("JWT_SECRET", "dev-secret")
+      getRequiredJwtSecret(this.configService)
     );
   }
 

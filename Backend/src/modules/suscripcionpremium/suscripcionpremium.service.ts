@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { randomBytes } from "crypto";
-import { Repository } from "typeorm";
+import { EntityManager, Repository } from "typeorm";
 import { Usuario } from "../../users/entities/user.entity";
 import { AsignarSuscripcionPremiumDto } from "./dto/asignar-suscripcion-premium.dto";
 import { SuscripcionPremium } from "./suscripcionpremium.entity";
@@ -15,20 +15,22 @@ export class SuscripcionPremiumService {
     private readonly usersRepository: Repository<Usuario>,
   ) {}
 
-  async asignar(payload: AsignarSuscripcionPremiumDto, asignadoPor: string) {
-    const user = await this.usersRepository.findOne({ where: { id: payload.usuarioId } });
+  async asignar(payload: AsignarSuscripcionPremiumDto, asignadoPor: string, manager: EntityManager = this.repository.manager) {
+    const usersRepository = manager.getRepository(Usuario);
+    const subscriptionsRepository = manager.getRepository(SuscripcionPremium);
+    const user = await usersRepository.findOne({ where: { id: payload.usuarioId } });
     if (!user) throw new NotFoundException(`usuario ${payload.usuarioId} no encontrado`);
 
     const fechaInicio = new Date();
     const fechaVencimiento = new Date(fechaInicio);
     fechaVencimiento.setMonth(fechaVencimiento.getMonth() + (payload.plan === "mensual" ? 1 : 3));
 
-    await this.repository.update(
+    await subscriptionsRepository.update(
       { usuarioId: payload.usuarioId, activo: true },
       { activo: false },
     );
 
-    const subscription = this.repository.create({
+    const subscription = subscriptionsRepository.create({
       usuarioId: payload.usuarioId,
       token: `PREM-${randomBytes(18).toString("hex").toUpperCase()}`,
       plan: payload.plan,
@@ -38,7 +40,7 @@ export class SuscripcionPremiumService {
       asignadoPor,
       creadoEn: fechaInicio,
     });
-    return this.repository.save(subscription);
+    return subscriptionsRepository.save(subscription);
   }
 
   async listar() {

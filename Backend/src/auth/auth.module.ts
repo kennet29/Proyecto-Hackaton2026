@@ -22,6 +22,7 @@ import { NanoModule } from "../nano/nano.module";
 import { PatientResourceAccessService } from "./patient-resource-access.service";
 import { PatientResourceAccessInterceptor } from "./interceptors/patient-resource-access.interceptor";
 import { ResourcePolicyGuard } from "./guards/resource-policy.guard";
+import { getRequiredJwtSecret } from "./utils/security-config.util";
 
 /**
  * Agrupa controladores y proveedores del dominio auth.
@@ -48,7 +49,7 @@ import { ResourcePolicyGuard } from "./guards/resource-policy.guard";
         signOptions.expiresIn = expiresIn as SignOptions["expiresIn"];
 
         return {
-          secret: config.get<string>("JWT_SECRET", "dev-secret"),
+          secret: getRequiredJwtSecret(config),
           signOptions,
         };
       },

@@ -20,7 +20,16 @@ import { IdempotencyInterceptor } from "./common/idempotency/idempotency.interce
  */
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validate: (env) => {
+        const secret = env.JWT_SECRET?.trim();
+        if (!secret || secret === "dev-secret" || secret.length < 32) {
+          throw new Error("JWT_SECRET debe estar definido y tener al menos 32 caracteres");
+        }
+        return env;
+      },
+    }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
