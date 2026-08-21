@@ -28,6 +28,8 @@ type OptionItem = {
   navigateTo?: keyof RootStackParamList;
   actionTab?: MenuTabKey;
   action?: 'toggle-background';
+  nano?: boolean;
+  nanoAppearance?: NanoAppearance;
 };
 
 type TabMeta = {
@@ -36,6 +38,7 @@ type TabMeta = {
   title: string;
   subtitle: string;
   icon: keyof typeof Ionicons.glyphMap;
+  nanoAppearance?: NanoAppearance;
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MenuPrincipal'>;
@@ -47,6 +50,13 @@ const tabMeta: TabMeta[] = [
     title: 'Menu Principal',
     subtitle: 'Entra por bloques para moverte mas rapido entre salud, bienestar y gestion.',
     icon: 'home-outline',
+    nanoAppearance: {
+      id: 'menu',
+      label: 'Nano Menu',
+      description: 'Nano del menú principal',
+      source: require('../svg/Nano Menu.svg'),
+      format: 'svg',
+    },
   },
   {
     key: 'medico',
@@ -61,6 +71,13 @@ const tabMeta: TabMeta[] = [
     title: 'Bienestar Diario',
     subtitle: 'Sigue habitos, ejercicio, peso y bienestar emocional desde una misma vista.',
     icon: 'barbell-outline',
+    nanoAppearance: {
+      id: 'bienestar',
+      label: 'Nano Bienestar',
+      description: 'Nano de bienestar',
+      source: require('../svg/Nano Bienestar.svg'),
+      format: 'svg',
+    },
   },
   {
     key: 'gestion',
@@ -68,6 +85,13 @@ const tabMeta: TabMeta[] = [
     title: 'Gestion y Soporte',
     subtitle: 'Administra expediente, perfiles, educacion y acceso a soporte general.',
     icon: 'folder-open-outline',
+    nanoAppearance: {
+      id: 'gestion',
+      label: 'Nano Gestion',
+      description: 'Nano de gestión',
+      source: require('../svg/Nano Gestion.svg'),
+      format: 'svg',
+    },
   },
 ];
 
@@ -231,6 +255,22 @@ const medicalOptions: OptionItem[] = [
 
 const wellnessOptions: OptionItem[] = [
   {
+    key: 'nano-bienestar',
+    label: 'Nano Bienestar',
+    description: 'Tu asistente para analizar comidas y recibir recomendaciones saludables.',
+    icon: 'sparkles-outline',
+    accent: '#38E28E',
+    navigateTo: 'NanoConsejero',
+    nano: true,
+    nanoAppearance: {
+      id: 'bienestar-menu',
+      label: 'Nano Bienestar',
+      description: 'Nano de bienestar',
+      source: require('../svg/Nano Bienestar.svg'),
+      format: 'svg',
+    },
+  },
+  {
     key: 'seguimiento-fisico',
     label: 'Seguimiento Fisico',
     description: 'Peso, ejercicio, pasos y progreso diario',
@@ -282,12 +322,20 @@ const managementOptions: OptionItem[] = [
     navigateTo: 'MedicoRegistro',
   },
   {
-    key: 'configurar-nano',
-    label: 'Configurar Nano',
+    key: 'nano-gestion',
+    label: 'Nano Gestion',
     description: 'Elige la apariencia del asistente desde una galería de diseños',
     icon: 'color-palette-outline',
     accent: '#C084FC',
     navigateTo: 'NanoConfiguracion',
+    nano: true,
+    nanoAppearance: {
+      id: 'gestion-menu',
+      label: 'Nano Gestion',
+      description: 'Nano de gestión',
+      source: require('../svg/Nano Gestion.svg'),
+      format: 'svg',
+    },
   },
   {
     key: 'premium',
@@ -397,12 +445,6 @@ const WEB_SCROLLBAR_CSS = `
     background: linear-gradient(180deg, #38E28E 0%, #29B6FF 100%);
   }
 `;
-
-function WellnessAssistantIcon({ appearance }: { appearance: NanoAppearance }) {
-  return (
-    <NanoAppearancePreview appearance={appearance} size={58} />
-  );
-}
 
 export function MenuPrincipalScreen({ navigation }: Props) {
   const { token, logout, user } = useAuth();
@@ -583,12 +625,17 @@ export function MenuPrincipalScreen({ navigation }: Props) {
           <Ionicons name={activeMeta.icon} size={16} color="#0B6FEA" />
           <AppText style={styles.heroBadgeText}>{activeMeta.label}</AppText>
         </View>
-        <TouchableOpacity
-          style={[styles.logoutButton, isWebWide && styles.webLogoutButton]}
-          onPress={confirmLogout}
-        >
-          <Ionicons name="log-out-outline" size={18} color="#FFFFFF" />
-        </TouchableOpacity>
+        <View style={styles.heroActions}>
+          {activeMeta.nanoAppearance ? (
+            <NanoAppearancePreview appearance={activeMeta.nanoAppearance} size={58} />
+          ) : null}
+          <TouchableOpacity
+            style={[styles.logoutButton, isWebWide && styles.webLogoutButton]}
+            onPress={confirmLogout}
+          >
+            <Ionicons name="log-out-outline" size={18} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
       </View>
       <AppText style={[styles.pageTitle, styles.heroTitle, isWebWide && styles.webPageTitle]}>{activeMeta.title}</AppText>
       <AppText style={[styles.userLabel, styles.heroUserLabel, isWebWide && styles.webUserLabel]}>
@@ -627,11 +674,11 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                   accessibilityLabel={tab.label}
                 >
                   <View style={[styles.iconCircle, styles.webIconCircle, isActive && styles.iconCircleActive]}>
-                    <Ionicons
-                      name={tab.icon}
-                      size={22}
-                      color={isActive ? appColors.info : theme.icon}
-                    />
+                    {tab.nanoAppearance ? (
+                      <NanoAppearancePreview appearance={tab.nanoAppearance} size={38} />
+                    ) : (
+                      <Ionicons name={tab.icon} size={27} color={isActive ? appColors.info : theme.icon} />
+                    )}
                   </View>
                   <AppText style={[styles.navLabel, { color: theme.textMuted }, styles.webNavLabel, isActive && styles.navLabelActive]}>{tab.label}</AppText>
                 </TouchableOpacity>
@@ -667,10 +714,14 @@ export function MenuPrincipalScreen({ navigation }: Props) {
               onPress={() => handleOptionPress(item)}
               accessibilityRole="button"
               accessibilityLabel={item.label}
-              accessibilityHint="Alterna entre modo claro y modo oscuro"
+              accessibilityHint={item.action === 'toggle-background' ? 'Alterna entre modo claro y modo oscuro' : `Abre ${item.label}`}
             >
               <View style={[styles.cardIcon, { backgroundColor: `${item.accent}22` }, item.action === 'toggle-background' && styles.themeIcon]}>
-                <Ionicons name={item.icon} size={20} color={item.accent} />
+                {item.nano ? (
+                  <NanoAppearancePreview appearance={item.nanoAppearance ?? activeNanoAppearance} size={54} />
+                ) : (
+                  <Ionicons name={item.icon} size={26} color={item.accent} />
+                )}
               </View>
               <View style={styles.cardInfo}>
                 <AppText style={[styles.cardLabel, { color: theme.text }]}>{item.label}</AppText>
@@ -692,16 +743,6 @@ export function MenuPrincipalScreen({ navigation }: Props) {
           ]}
         />
 
-        {activeTab === 'bienestar' ? (
-          <TouchableOpacity
-            style={styles.assistantFab}
-            activeOpacity={0.9}
-            onPress={() => navigation.navigate('NanoConsejero')}
-          >
-            <WellnessAssistantIcon appearance={activeNanoAppearance} />
-          </TouchableOpacity>
-        ) : null}
-
         {!isWebWide ? (
         <View style={[styles.navbar, { backgroundColor: theme.surfaceStrong }]}>
           {tabMeta.map((tab) => {
@@ -715,11 +756,11 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                 accessibilityLabel={tab.label}
               >
                 <View style={[styles.iconCircle, isWebWide && styles.webIconCircle, isActive && styles.iconCircleActive]}>
-                  <Ionicons
-                    name={tab.icon}
-                    size={22}
-                    color={isActive ? appColors.info : theme.icon}
-                  />
+                  {tab.nanoAppearance ? (
+                    <NanoAppearancePreview appearance={tab.nanoAppearance} size={46} />
+                  ) : (
+                    <Ionicons name={tab.icon} size={29} color={isActive ? appColors.info : theme.icon} />
+                  )}
                 </View>
                 <AppText style={[styles.navLabel, { color: theme.textMuted }, isWebWide && styles.webNavLabel, isActive && styles.navLabelActive]}>{tab.label}</AppText>
               </TouchableOpacity>
@@ -817,6 +858,11 @@ const styles = StyleSheet.create({
   },
   webHeroTopRow: {
     marginBottom: 4,
+  },
+  heroActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   heroBadge: {
     alignSelf: 'flex-start',
@@ -1046,9 +1092,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1091,26 +1137,6 @@ const styles = StyleSheet.create({
     color: appColors.textSoft,
     fontSize: 13,
     lineHeight: 18,
-  },
-  assistantFab: {
-    position: 'absolute',
-    right: 24,
-    bottom: 116,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: appColors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: appColors.borderStrong,
-    shadowColor: appColors.overlay,
-    shadowOpacity: 0.24,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
-    zIndex: 20,
-    overflow: 'hidden',
   },
   navbar: {
     flexDirection: 'row',
@@ -1161,9 +1187,9 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: appColors.text,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1173,9 +1199,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
   },
   webIconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
   iconCircleActive: {
     backgroundColor: colorAlpha(appColors.info, '30'),

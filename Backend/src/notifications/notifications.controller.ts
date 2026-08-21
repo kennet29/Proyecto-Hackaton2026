@@ -1,14 +1,30 @@
-import { Body, Controller, Post } from "@nestjs/common";
+import { Body, Controller, Post, Req } from "@nestjs/common";
+import { Request } from "express";
 import { NotificationsService } from "./notifications.service";
 import { ScheduleNotificationDto } from "./dto/schedule-notification.dto";
 import { ParseScheduleDto } from "./dto/parse-schedule.dto";
+import { RegisterPushDeviceDto } from "./dto/register-push-device.dto";
+import { PushNotificationsService } from "./push-notifications.service";
+import { AuthenticatedUser } from "../auth/auth.service";
 
 /**
  * Expone los endpoints HTTP del dominio notifications.
  */
 @Controller("notifications")
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly notificationsService: NotificationsService,
+    private readonly pushNotificationsService: PushNotificationsService,
+  ) {}
+
+  @Post("device")
+  registerDevice(@Body() payload: RegisterPushDeviceDto, @Req() req: Request) {
+    return this.pushNotificationsService.registerDevice(
+      (req.user as AuthenticatedUser).userId,
+      payload.expoPushToken,
+      payload.platform,
+    );
+  }
 
   /**
    * Schedule from natural language.

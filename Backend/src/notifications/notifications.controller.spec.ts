@@ -6,9 +6,13 @@ describe("NotificationsController", () => {
       scheduleFromNaturalLanguage: jest.fn(),
       previewSchedule: jest.fn(),
     };
+    const pushNotificationsService = { registerDevice: jest.fn() };
     return {
       notificationsService,
-      controller: new NotificationsController(notificationsService as never),
+      controller: new NotificationsController(
+        notificationsService as never,
+        pushNotificationsService as never,
+      ),
     };
   };
 

@@ -56,7 +56,7 @@ const ensureAndroidChannel = async () => {
   });
 };
 
-const syncTokenWithBackend = async (expoPushToken: string, authToken?: string | null, userId?: number | null) => {
+const syncTokenWithBackend = async (expoPushToken: string, authToken?: string | null) => {
   if (!authToken) {
     return;
   }
@@ -69,9 +69,8 @@ const syncTokenWithBackend = async (expoPushToken: string, authToken?: string | 
     const body = {
       expoPushToken,
       platform: Platform.OS,
-      userId,
     };
-    await fetch(`${API_URL}/notifications/device`, {
+    const response = await fetch(`${API_URL}/notifications/device`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -79,6 +78,9 @@ const syncTokenWithBackend = async (expoPushToken: string, authToken?: string | 
       },
       body: JSON.stringify(body),
     });
+    if (!response.ok) {
+      throw new Error(`No se pudo sincronizar el dispositivo (HTTP ${response.status}).`);
+    }
     await AsyncStorage.setItem(STORAGE_SYNC_KEY, expoPushToken);
   } catch (error) {
     console.log('[notifications] no se pudo sincronizar el token', error);
@@ -150,7 +152,7 @@ export const usePushNotifications = (authToken?: string | null, userId?: number 
         setRegistrationError(null);
         setExpoPushToken(token);
         await AsyncStorage.setItem(STORAGE_KEY, token);
-        await syncTokenWithBackend(token, authToken, userId);
+        await syncTokenWithBackend(token, authToken);
       } catch (error) {
         console.warn('[notifications] error registrando push token', error);
         setRegistrationError((error as Error).message);

@@ -45,3 +45,4 @@ Carga estas variables en Render:
   - `https://tu-servicio.onrender.com/api/v1/health`
   - `https://tu-servicio.onrender.com/api/docs`
 - Si tambien despliegas el frontend, agrega su dominio exacto en `CORS_ORIGINS`.
+- Antes del deploy que habilita push remoto, ejecuta `scripts/create-push-devices-table.sql` en Azure SQL. Luego configura `PUSH_NOTIFICATIONS_ENABLED=true`.

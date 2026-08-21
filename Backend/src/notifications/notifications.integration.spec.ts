@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { NotificationsController } from "./notifications.controller";
 import { NotificationsService } from "./notifications.service";
 import { NotificacionService } from "../modules/notificacion/notificacion.service";
+import { PushNotificationsService } from "./push-notifications.service";
 
 describe("Notifications integration", () => {
   const buildModule = async () => {
@@ -14,17 +15,20 @@ describe("Notifications integration", () => {
         key === "NOTIFICATIONS_DEFAULT_TZ" ? "UTC" : undefined,
       ),
     };
+    const pushNotificationsService = { registerDevice: jest.fn() };
     const moduleRef = await Test.createTestingModule({
       controllers: [NotificationsController],
       providers: [
         NotificationsService,
         { provide: NotificacionService, useValue: notificacionService },
         { provide: ConfigService, useValue: configService },
+        { provide: PushNotificationsService, useValue: pushNotificationsService },
       ],
     }).compile();
 
     return {
       notificacionService,
+      pushNotificationsService,
       controller: moduleRef.get(NotificationsController),
     };
   };
@@ -42,6 +46,23 @@ describe("Notifications integration", () => {
       timezone: "UTC",
       fechaprogramada: expect.any(String),
     });
+  });
+
+  it("registers a device for the authenticated user", async () => {
+    const { controller, pushNotificationsService } = await buildModule();
+    pushNotificationsService.registerDevice.mockResolvedValue({ id: 1, registered: true });
+
+    await expect(
+      controller.registerDevice(
+        { expoPushToken: "ExponentPushToken[test]", platform: "android" },
+        { user: { userId: 9 } } as never,
+      ),
+    ).resolves.toEqual({ id: 1, registered: true });
+    expect(pushNotificationsService.registerDevice).toHaveBeenCalledWith(
+      9,
+      "ExponentPushToken[test]",
+      "android",
+    );
   });
 
   it("creates a notification with parsed schedule data", async () => {

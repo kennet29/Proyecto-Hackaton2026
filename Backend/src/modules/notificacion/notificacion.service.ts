@@ -33,9 +33,10 @@ export class NotificacionService {
    * @returns Registro creado.
    */
   create(payload: CreateNotificacionDto): Promise<Notificacion> {
-    const entity = this.notificacionRepository.create(
-      payload as Partial<Notificacion>,
-    );
+    const entity = this.notificacionRepository.create({
+      ...(payload as Partial<Notificacion>),
+      enviada: payload.enviada ?? false,
+    });
     return this.notificacionRepository.save(entity);
   }
 
