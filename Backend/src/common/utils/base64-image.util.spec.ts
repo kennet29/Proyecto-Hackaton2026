@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/common/utils/base64-image.util.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { BadRequestException } from "@nestjs/common";
 import { decodeBase64Image, validateImageMimeType } from "./base64-image.util";
 

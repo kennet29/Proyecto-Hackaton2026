@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/navigation/types.ts
+ * @description TypeScript module implementation.
+ */
+
 import { NivelEducativoId } from '../data/educacion';
 
 export type RootStackParamList = {

@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/screens/MenuLoadingScreen.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, SafeAreaView, StyleSheet, View } from 'react-native';
 import { AppText } from '../components/AppText';

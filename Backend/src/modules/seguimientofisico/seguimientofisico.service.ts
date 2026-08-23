@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/modules/seguimientofisico/seguimientofisico.service.ts
+ * @description TypeScript module implementation.
+ */
+
 import {
   BadRequestException,
   Injectable,

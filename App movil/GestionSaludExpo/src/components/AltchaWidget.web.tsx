@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/components/AltchaWidget.web.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { AppText } from './AppText';

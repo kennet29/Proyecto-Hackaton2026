@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/auth/patient-resource-access.service.ts
+ * @description TypeScript module implementation.
+ */
+
 import { ForbiddenException, Injectable } from "@nestjs/common";
 import { DataSource, EntityMetadata } from "typeorm";
 import { AuthenticatedUser } from "./auth.service";

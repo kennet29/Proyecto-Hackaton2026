@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/nano/entities/usuario-nano-appearance.entity.ts
+ * @description TypeScript module implementation.
+ */
+
 import {
   Column,
   CreateDateColumn,

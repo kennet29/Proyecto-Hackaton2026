@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/data/educacion.ts
+ * @description TypeScript module implementation.
+ */
+
 export type NivelEducativoId = 'ninos' | 'adolescentes' | 'adultos';
 
 export type TemaEducativo = {

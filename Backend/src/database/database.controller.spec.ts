@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/database/database.controller.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { DatabaseController } from "./database.controller";
 
 describe("DatabaseController", () => {

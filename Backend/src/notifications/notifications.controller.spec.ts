@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/notifications/notifications.controller.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { NotificationsController } from "./notifications.controller";
 
 describe("NotificationsController", () => {

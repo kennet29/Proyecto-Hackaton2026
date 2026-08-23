@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/utils/webDateTimePicker.ts
+ * @description TypeScript module implementation.
+ */
+
 import { Platform } from 'react-native';
 
 type DateTimeInputType = 'date' | 'time';

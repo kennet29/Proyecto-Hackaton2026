@@ -1,6 +1,12 @@
+/**
+ * @file App movil/GestionSaludExpo/src/utils/jwt.ts
+ * @description TypeScript module implementation.
+ */
+
 export type JwtPayload = {
   sub?: number | string;
   exp?: number;
+  pacienteId?: number | string | null;
 };
 
 const decodeBase64Url = (value: string): string => {
@@ -42,5 +48,15 @@ export const getTokenUserId = (accessToken?: string | null): number | null => {
 
   const subject = readJwtPayload(accessToken)?.sub;
   const parsed = Number(subject);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+};
+
+export const getTokenPacienteId = (accessToken?: string | null): number | null => {
+  if (!accessToken) {
+    return null;
+  }
+
+  const pacienteId = readJwtPayload(accessToken)?.pacienteId;
+  const parsed = Number(pacienteId);
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
 };

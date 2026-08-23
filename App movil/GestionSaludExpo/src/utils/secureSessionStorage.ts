@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/utils/secureSessionStorage.ts
+ * @description TypeScript module implementation.
+ */
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';

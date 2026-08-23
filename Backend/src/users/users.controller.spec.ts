@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/users/users.controller.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { UsersController } from "./users.controller";
 
 describe("UsersController", () => {

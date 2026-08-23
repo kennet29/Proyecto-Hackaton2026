@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/modules/usuariopaciente/usuariopaciente.service.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { ForbiddenException } from "@nestjs/common";
 import { UsuarioPacienteService } from "./usuariopaciente.service";
 

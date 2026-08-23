@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/modules/paciente/paciente.controller.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { PacienteController } from "./paciente.controller";
 
 describe("PacienteController", () => {

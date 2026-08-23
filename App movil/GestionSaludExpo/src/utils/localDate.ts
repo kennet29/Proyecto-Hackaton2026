@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/utils/localDate.ts
+ * @description TypeScript module implementation.
+ */
+
 const DATE_PREFIX_PATTERN = /^(\d{4})-(\d{2})-(\d{2})/;
 
 export const toLocalDateOnlyString = (date = new Date()): string => {

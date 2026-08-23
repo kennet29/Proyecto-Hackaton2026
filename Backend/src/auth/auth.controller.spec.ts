@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/auth/auth.controller.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { AuthController } from "./auth.controller";
 
 describe("AuthController", () => {

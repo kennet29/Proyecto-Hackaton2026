@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/auth/guards/resource-policy.guard.ts
+ * @description TypeScript module implementation.
+ */
+
 import {
   CanActivate,
   ExecutionContext,

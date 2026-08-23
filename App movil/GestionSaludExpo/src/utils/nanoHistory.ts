@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/utils/nanoHistory.ts
+ * @description TypeScript module implementation.
+ */
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const NANO_HISTORY_KEY = 'nano-history-v1';

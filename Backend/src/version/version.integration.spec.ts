@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/version/version.integration.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { Test } from "@nestjs/testing";
 import { VersionController } from "./version.controller";
 import { VersionModule } from "./version.module";

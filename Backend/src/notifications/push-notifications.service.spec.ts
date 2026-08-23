@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/notifications/push-notifications.service.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { PushNotificationsService } from "./push-notifications.service";
 
 describe("PushNotificationsService", () => {

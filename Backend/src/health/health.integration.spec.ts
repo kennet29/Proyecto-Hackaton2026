@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/health/health.integration.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { Test } from "@nestjs/testing";
 import { DataSource } from "typeorm";
 import { VersionModule } from "../version/version.module";

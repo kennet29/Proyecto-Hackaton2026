@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/screens/AdminPagosScreen.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';

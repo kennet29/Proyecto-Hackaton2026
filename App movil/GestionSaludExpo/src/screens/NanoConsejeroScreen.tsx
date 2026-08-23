@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/screens/NanoConsejeroScreen.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,

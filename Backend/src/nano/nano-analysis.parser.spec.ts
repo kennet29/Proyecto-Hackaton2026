@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/nano/nano-analysis.parser.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { BadGatewayException } from "@nestjs/common";
 import { NanoAnalysisParser } from "./nano-analysis.parser";
 

@@ -1,13 +1,16 @@
+/**
+ * @file App movil/GestionSaludExpo/src/components/NanoAppearancePreview.tsx
+ * @description Implementa los elementos TypeScript de este módulo.
+ */
 import React from 'react';
-import {
-  Image,
-  ImageSourcePropType,
-  Platform,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Image, ImageSourcePropType, StyleSheet, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SvgUri } from 'react-native-svg';
+import type { SvgProps } from 'react-native-svg';
+import NanoValentin from '../svg/Nano 14 de febrero.svg';
+import NanoGladiador from '../svg/Nano Gladiador.svg';
+import NanoHalloween from '../svg/Nano Hallowen.svg';
+import NanoNavideno from '../svg/Nano Navideño.svg';
+import NanoPatriota from '../svg/Nano Patriota.svg';
 import {
   cacheUnlockedNanoAppearanceIds,
   fetchNanoAppearanceState,
@@ -20,8 +23,25 @@ export type NanoAppearance = {
   id: string;
   label: string;
   description: string;
-  source: ImageSourcePropType;
+  source?: ImageSourcePropType;
   format: 'png' | 'svg';
+  svgComponent?: React.ComponentType<SvgProps> | { default: React.ComponentType<SvgProps> };
+};
+
+const resolveSvgComponent = (moduleValue: NanoAppearance['svgComponent']) => {
+  let candidate: unknown = moduleValue;
+  // Algunos bundlers envuelven el default más de una vez al compilar para web.
+  while (candidate && typeof candidate === 'object' && 'default' in candidate) {
+    candidate = (candidate as { default: unknown }).default;
+  }
+  // React.memo y React.forwardRef también son tipos de elemento válidos, aunque
+  // JavaScript los representa como objetos en vez de funciones.
+  const isReactComponentObject = Boolean(
+    candidate && typeof candidate === 'object' && '$$typeof' in candidate,
+  );
+  return typeof candidate === 'function' || isReactComponentObject
+    ? candidate as React.ComponentType<SvgProps>
+    : null;
 };
 
 const nanoAppearanceKey = (userId: number) => `nano-appearance-v2-${userId}`;
@@ -38,36 +58,36 @@ export const NANO_APPEARANCES: NanoAppearance[] = [
     id: 'valentin',
     label: '14 de febrero',
     description: 'Edición de San Valentín',
-    source: require('../svg/Nano 14 de febrero.svg'),
     format: 'svg',
+    svgComponent: NanoValentin,
   },
   {
     id: 'gladiador',
     label: 'Gladiador',
     description: 'Edición guerrera',
-    source: require('../svg/Nano Gladiador.svg'),
     format: 'svg',
+    svgComponent: NanoGladiador,
   },
   {
     id: 'halloween',
     label: 'Halloween',
     description: 'Edición de temporada',
-    source: require('../svg/Nano Hallowen.svg'),
     format: 'svg',
+    svgComponent: NanoHalloween,
   },
   {
     id: 'navideno',
     label: 'Navideño',
     description: 'Edición navideña',
-    source: require('../svg/Nano Navideño.svg'),
     format: 'svg',
+    svgComponent: NanoNavideno,
   },
   {
     id: 'patriota',
     label: 'Patriota',
     description: 'Edición nacional',
-    source: require('../svg/Nano Patriota.svg'),
     format: 'svg',
+    svgComponent: NanoPatriota,
   },
 ];
 
@@ -143,7 +163,7 @@ export function NanoAppearancePreview({
   appearance: NanoAppearance;
   size: number;
 }) {
-  if (appearance.format === 'png') {
+  if (appearance.format === 'png' && appearance.source) {
     return (
       <Image
         source={appearance.source}
@@ -154,23 +174,10 @@ export function NanoAppearancePreview({
     );
   }
 
-  if (Platform.OS === 'web') {
-    return (
-      <View style={[styles.svgBackground, { width: size, height: size, borderRadius: size / 2 }]}>
-        <Image
-          source={appearance.source}
-          style={{ width: size, height: size }}
-          resizeMode="contain"
-          accessibilityLabel={appearance.label}
-        />
-      </View>
-    );
-  }
-
-  const sourceUri = Image.resolveAssetSource(appearance.source)?.uri;
+  const SvgComponent = resolveSvgComponent(appearance.svgComponent);
   return (
     <View style={[styles.svgBackground, { width: size, height: size, borderRadius: size / 2 }]}>
-      {sourceUri ? <SvgUri uri={sourceUri} width={size} height={size} /> : null}
+      {SvgComponent ? <SvgComponent width={size} height={size} /> : null}
     </View>
   );
 }

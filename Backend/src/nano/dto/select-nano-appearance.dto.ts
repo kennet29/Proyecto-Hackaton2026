@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/nano/dto/select-nano-appearance.dto.ts
+ * @description TypeScript module implementation.
+ */
+
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 

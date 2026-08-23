@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/components/AppText.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React, { forwardRef } from 'react';
 import {
   StyleSheet,

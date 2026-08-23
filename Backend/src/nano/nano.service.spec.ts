@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/nano/nano.service.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { BadRequestException } from "@nestjs/common";
 import { AnalyzeMealDto } from "./dto/analyze-meal.dto";
 import { MealAnalysisGateway } from "./meal-analysis.gateway";

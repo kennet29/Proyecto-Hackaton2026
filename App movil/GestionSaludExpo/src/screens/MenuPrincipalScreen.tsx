@@ -1,3 +1,7 @@
+/**
+ * @file App movil/GestionSaludExpo/src/screens/MenuPrincipalScreen.tsx
+ * @description Implementa los elementos TypeScript de este módulo.
+ */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Modal, Platform, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { AppText } from '../components/AppText';
@@ -10,6 +14,11 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { appColors, colorAlpha } from '../theme/colors';
 import { useBackgroundMode } from '../context/BackgroundModeContext';
+import { DashboardBienestar } from '../components/DashboardBienestar';
+import NanoMenu from '../svg/Nano Menu.svg';
+import NanoMedico from '../svg/Nano verde 75px.svg';
+import NanoBienestar from '../svg/Nano Bienestar.svg';
+import NanoGestion from '../svg/Nano Gestion.svg';
 import {
   getNanoAppearance,
   loadNanoAppearanceId,
@@ -47,15 +56,15 @@ const tabMeta: TabMeta[] = [
   {
     key: 'inicio',
     label: 'Inicio',
-    title: 'Menu Principal',
-    subtitle: 'Entra por bloques para moverte mas rapido entre salud, bienestar y gestion.',
-    icon: 'home-outline',
+    title: 'Dashboard de salud',
+    subtitle: 'Consulta en una sola vista tu estado fisico, salud mental, actividad, alimentacion y peso.',
+    icon: 'grid-outline',
     nanoAppearance: {
       id: 'menu',
       label: 'Nano Menu',
       description: 'Nano del menú principal',
-      source: require('../svg/Nano Menu.svg'),
       format: 'svg',
+      svgComponent: NanoMenu,
     },
   },
   {
@@ -64,6 +73,13 @@ const tabMeta: TabMeta[] = [
     title: 'Seccion Medica',
     subtitle: 'Concentra consultas, citas, tratamientos y registros clinicos en un solo flujo.',
     icon: 'medkit-outline',
+    nanoAppearance: {
+      id: 'medico-menu',
+      label: 'Nano Medico',
+      description: 'Nano de la sección médica',
+      format: 'svg',
+      svgComponent: NanoMedico,
+    },
   },
   {
     key: 'bienestar',
@@ -75,8 +91,8 @@ const tabMeta: TabMeta[] = [
       id: 'bienestar',
       label: 'Nano Bienestar',
       description: 'Nano de bienestar',
-      source: require('../svg/Nano Bienestar.svg'),
       format: 'svg',
+      svgComponent: NanoBienestar,
     },
   },
   {
@@ -89,8 +105,8 @@ const tabMeta: TabMeta[] = [
       id: 'gestion',
       label: 'Nano Gestion',
       description: 'Nano de gestión',
-      source: require('../svg/Nano Gestion.svg'),
       format: 'svg',
+      svgComponent: NanoGestion,
     },
   },
 ];
@@ -266,8 +282,8 @@ const wellnessOptions: OptionItem[] = [
       id: 'bienestar-menu',
       label: 'Nano Bienestar',
       description: 'Nano de bienestar',
-      source: require('../svg/Nano Bienestar.svg'),
       format: 'svg',
+      svgComponent: NanoBienestar,
     },
   },
   {
@@ -333,8 +349,8 @@ const managementOptions: OptionItem[] = [
       id: 'gestion-menu',
       label: 'Nano Gestion',
       description: 'Nano de gestión',
-      source: require('../svg/Nano Gestion.svg'),
       format: 'svg',
+      svgComponent: NanoGestion,
     },
   },
   {
@@ -688,6 +704,9 @@ export function MenuPrincipalScreen({ navigation }: Props) {
         ) : null}
         {!isWebWide ? heroContent : null}
 
+        {activeTab === 'inicio' ? (
+          <DashboardBienestar navigation={navigation} />
+        ) : (
         <FlatList
           data={activeOptions}
           key={`${activeTab}-${gridColumns}-list`}
@@ -705,6 +724,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                 isWebWide && styles.webCard,
                 { borderColor: item.accent, backgroundColor: isWebWide ? theme.webSurface : theme.surface },
                 isLightMode && item.action !== 'toggle-background' && styles.lightModeCard,
+                isLightMode && item.action !== 'toggle-background' && { borderLeftColor: item.accent },
                 item.action === 'toggle-background' && styles.themeCard,
                 item.action === 'toggle-background' && {
                   backgroundColor: isLightMode ? '#EAF3FF' : '#0D2B55',
@@ -742,6 +762,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
             isWebWide && styles.webListContent,
           ]}
         />
+        )}
 
         {!isWebWide ? (
         <View style={[styles.navbar, { backgroundColor: theme.surfaceStrong }]}>

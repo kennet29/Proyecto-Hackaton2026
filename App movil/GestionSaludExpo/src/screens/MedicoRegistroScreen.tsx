@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/screens/MedicoRegistroScreen.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,

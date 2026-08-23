@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/screens/EducacionNivelScreen.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React, { useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, FlatList, SafeAreaView } from 'react-native';
 import { AppText } from '../components/AppText';

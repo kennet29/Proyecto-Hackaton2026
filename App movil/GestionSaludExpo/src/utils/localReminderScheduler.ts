@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/utils/localReminderScheduler.ts
+ * @description TypeScript module implementation.
+ */
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';

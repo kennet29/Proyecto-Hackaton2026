@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/components/AltchaWidget.tsx
+ * @description TypeScript module implementation.
+ */
+
 import type { ComponentType } from 'react';
 import { Platform } from 'react-native';
 

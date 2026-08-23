@@ -23,6 +23,11 @@ export class AuthController {
     return this.authService.login(payload);
   }
 
+  @Get("me")
+  me(@Req() req: Request) {
+    return this.authService.getSessionProfile(req.user as AuthenticatedUser);
+  }
+
   @Public()
   @Get("altcha-challenge")
   altchaChallenge() {

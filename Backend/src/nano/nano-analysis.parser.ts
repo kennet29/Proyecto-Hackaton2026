@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/nano/nano-analysis.parser.ts
+ * @description TypeScript module implementation.
+ */
+
 import { BadGatewayException, Injectable } from "@nestjs/common";
 import { z } from "zod";
 

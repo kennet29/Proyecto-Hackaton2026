@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/utils/offlineWriteQueue.ts
+ * @description TypeScript module implementation.
+ */
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiFetch, buildJsonHeaders, type ApiMethod, parseJsonResponse } from './apiClient';
 import { getTokenUserId } from './jwt';

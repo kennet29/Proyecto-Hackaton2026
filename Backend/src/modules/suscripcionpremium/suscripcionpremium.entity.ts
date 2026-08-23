@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/modules/suscripcionpremium/suscripcionpremium.entity.ts
+ * @description TypeScript module implementation.
+ */
+
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "suscripcionpremium" })

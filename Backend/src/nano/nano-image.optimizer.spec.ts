@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/nano/nano-image.optimizer.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { BadRequestException } from "@nestjs/common";
 import sharp from "sharp";
 import {

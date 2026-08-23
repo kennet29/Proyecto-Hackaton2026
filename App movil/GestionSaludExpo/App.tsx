@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/App.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React, { useEffect } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import { DefaultTheme, LinkingOptions, NavigationContainer } from '@react-navigation/native';

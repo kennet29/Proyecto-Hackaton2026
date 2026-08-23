@@ -171,6 +171,30 @@ export class AuthService {
     };
   }
 
+  async getSessionProfile(actor: AuthenticatedUser) {
+    const user = await this.usersService.findOne(actor.userId);
+    const linkedRelations = await this.usuarioPacienteRepository.find({
+      where: { usuarioId: user.id },
+      order: { esPrincipal: "DESC", creadoEn: "ASC" },
+    });
+    const pacienteIds = Array.from(
+      new Set(linkedRelations.map((relation) => relation.pacienteId)),
+    );
+    const pacienteId =
+      user.pacienteId ??
+      linkedRelations.find((relation) => relation.esPrincipal)?.pacienteId ??
+      pacienteIds[0] ??
+      null;
+
+    return {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      pacienteId,
+      pacienteIds,
+    };
+  }
+
   /**
    * Logout.
    * @param user Usuario autenticado asociado a la solicitud.

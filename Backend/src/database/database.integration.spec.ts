@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/database/database.integration.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { BadRequestException } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { getDataSourceToken } from "@nestjs/typeorm";

@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/nano/nano-appearance.service.ts
+ * @description TypeScript module implementation.
+ */
+
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";

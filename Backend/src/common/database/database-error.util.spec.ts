@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/common/database/database-error.util.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { QueryFailedError } from "typeorm";
 import { isDatabaseUnavailable } from "./database-error.util";
 

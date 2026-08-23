@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/hooks/useOfflineWriteSync.ts
+ * @description TypeScript module implementation.
+ */
+
 import * as Network from 'expo-network';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';

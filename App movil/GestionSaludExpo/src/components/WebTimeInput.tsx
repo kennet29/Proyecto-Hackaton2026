@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/components/WebTimeInput.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';

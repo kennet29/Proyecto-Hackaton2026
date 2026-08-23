@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/modules/suscripcionpremium/suscripcionpremium.service.ts
+ * @description TypeScript module implementation.
+ */
+
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { randomBytes } from "crypto";

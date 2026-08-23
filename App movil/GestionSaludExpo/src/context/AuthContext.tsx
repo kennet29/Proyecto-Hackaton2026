@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/context/AuthContext.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { getTokenExpirationTime } from '../utils/jwt';
 import {

@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/context/BackgroundModeContext.tsx
+ * @description TypeScript module implementation.
+ */
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 

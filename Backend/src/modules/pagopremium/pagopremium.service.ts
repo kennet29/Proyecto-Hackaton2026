@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/modules/pagopremium/pagopremium.service.ts
+ * @description TypeScript module implementation.
+ */
+
 import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, MoreThan, Repository } from "typeorm";

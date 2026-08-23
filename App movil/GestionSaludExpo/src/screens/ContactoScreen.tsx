@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/screens/ContactoScreen.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React from 'react';
 import { View, StyleSheet, Linking, TouchableOpacity } from 'react-native';
 import { AppText } from '../components/AppText';

@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/modules/suscripcionpremium/suscripcionpremium.module.ts
+ * @description TypeScript module implementation.
+ */
+
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Usuario } from "../../users/entities/user.entity";

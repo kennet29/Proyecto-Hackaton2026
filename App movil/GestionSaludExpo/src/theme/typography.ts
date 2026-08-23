@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/theme/typography.ts
+ * @description TypeScript module implementation.
+ */
+
 import { TextStyle } from 'react-native';
 
 export const appFontFamilies = {

@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/auth/guards/resource-policy.guard.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { ForbiddenException } from "@nestjs/common";
 import { ResourcePolicyGuard } from "./resource-policy.guard";
 

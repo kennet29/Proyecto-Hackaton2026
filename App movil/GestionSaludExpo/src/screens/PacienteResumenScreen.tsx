@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/screens/PacienteResumenScreen.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   NativeStackScreenProps } from '@react-navigation/native-stack';

@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/notifications/push-notifications.service.ts
+ * @description TypeScript module implementation.
+ */
+
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";

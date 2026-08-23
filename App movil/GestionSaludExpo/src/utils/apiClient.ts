@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/utils/apiClient.ts
+ * @description TypeScript module implementation.
+ */
+
 import { API_URL } from '../config/api';
 
 export type ApiMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';

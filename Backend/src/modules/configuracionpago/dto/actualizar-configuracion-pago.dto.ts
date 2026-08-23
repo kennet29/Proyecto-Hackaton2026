@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/modules/configuracionpago/dto/actualizar-configuracion-pago.dto.ts
+ * @description TypeScript module implementation.
+ */
+
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 

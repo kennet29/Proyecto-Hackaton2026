@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/components/AppErrorBoundary.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';

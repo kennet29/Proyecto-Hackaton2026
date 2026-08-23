@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/nano/nano-prompt.builder.ts
+ * @description TypeScript module implementation.
+ */
+
 import { Injectable } from "@nestjs/common";
 
 @Injectable()

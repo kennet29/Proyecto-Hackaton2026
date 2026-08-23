@@ -1,3 +1,8 @@
+/**
+ * @file Landing page/landingpage/src/app/app.component.ts
+ * @description TypeScript module implementation.
+ */
+
 import { AfterViewInit, Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import * as L from 'leaflet';

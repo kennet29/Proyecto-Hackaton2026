@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/auth/utils/security-config.util.ts
+ * @description TypeScript module implementation.
+ */
+
 import { ConfigService } from "@nestjs/config";
 
 const MINIMUM_SECRET_LENGTH = 32;

@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/components/LocationMapPicker.native.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';

@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/modules/pagopremium/pagopremium.entity.ts
+ * @description TypeScript module implementation.
+ */
+
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "pagopremium" })

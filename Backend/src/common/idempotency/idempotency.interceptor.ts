@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/common/idempotency/idempotency.interceptor.ts
+ * @description TypeScript module implementation.
+ */
+
 import {
   CallHandler,
   ConflictException,

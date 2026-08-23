@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/notifications/notifications.integration.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { Test } from "@nestjs/testing";
 import { ConfigService } from "@nestjs/config";
 import { NotificationsController } from "./notifications.controller";

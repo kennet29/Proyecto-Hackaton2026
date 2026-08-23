@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/auth/interceptors/patient-resource-access.interceptor.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { of, lastValueFrom } from "rxjs";
 import { PatientResourceAccessInterceptor } from "./patient-resource-access.interceptor";
 

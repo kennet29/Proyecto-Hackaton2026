@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/utils/clinicalSummaryCache.ts
+ * @description TypeScript module implementation.
+ */
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const keyForPatient = (ownerUserId: number, pacienteId: number) =>

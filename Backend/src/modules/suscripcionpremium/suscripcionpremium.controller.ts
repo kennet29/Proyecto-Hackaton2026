@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/modules/suscripcionpremium/suscripcionpremium.controller.ts
+ * @description TypeScript module implementation.
+ */
+
 import { Body, Controller, Get, Param, ParseIntPipe, Post, Req } from "@nestjs/common";
 import { Request } from "express";
 import { Roles } from "../../auth/decorators/roles.decorator";

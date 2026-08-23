@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/modules/configuracionpago/configuracionpago.controller.ts
+ * @description TypeScript module implementation.
+ */
+
 import { Body, Controller, Get, Param, Patch, Req } from "@nestjs/common";
 import { Request } from "express";
 import { Roles } from "../../auth/decorators/roles.decorator";

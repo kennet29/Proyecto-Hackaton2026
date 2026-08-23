@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/auth/interceptors/patient-resource-access.interceptor.ts
+ * @description TypeScript module implementation.
+ */
+
 import {
   CallHandler,
   ExecutionContext,

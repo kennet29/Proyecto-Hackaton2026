@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/modules/permisoacceso/permisoacceso.controller.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { PermisoaccesoController } from "./permisoacceso.controller";
 
 describe("PermisoaccesoController", () => {

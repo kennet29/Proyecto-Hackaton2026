@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/modules/permisoacceso/dto/claim-permisoacceso-code.dto.ts
+ * @description TypeScript module implementation.
+ */
+
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 

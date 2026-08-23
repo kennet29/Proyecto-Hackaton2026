@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/version/version.controller.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { VersionController } from "./version.controller";
 
 describe("VersionController", () => {

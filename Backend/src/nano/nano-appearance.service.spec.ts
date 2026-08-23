@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/nano/nano-appearance.service.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { BadRequestException } from "@nestjs/common";
 import { NanoAppearanceService } from "./nano-appearance.service";
 

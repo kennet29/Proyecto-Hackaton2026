@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/utils/linkedPatients.ts
+ * @description TypeScript module implementation.
+ */
+
 import { API_URL } from '../config/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getTokenUserId } from './jwt';
@@ -5,6 +10,7 @@ import { getTokenUserId } from './jwt';
 export type LinkedPatient = {
   pacienteId: number;
   displayName: string;
+  esPrincipal?: boolean;
   parentesco?: string | null;
   sexo?: string | null;
   contacto?: string | null;
@@ -154,6 +160,7 @@ export async function fetchLinkedPatients(
         return {
           pacienteId,
           displayName: relation?.esPrincipal ? `${displayName} (Principal)` : displayName,
+          esPrincipal: Boolean(relation?.esPrincipal),
           parentesco: normalizeText(relation?.parentesco),
           sexo,
           contacto,

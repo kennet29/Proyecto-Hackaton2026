@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/nano/openai-meal-analysis.gateway.ts
+ * @description TypeScript module implementation.
+ */
+
 import {
   BadGatewayException,
   Injectable,

@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/index.ts
+ * @description TypeScript module implementation.
+ */
+
 import { registerRootComponent } from 'expo';
 
 import App from './App';

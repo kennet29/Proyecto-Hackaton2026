@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/hooks/usePushNotifications.ts
+ * @description TypeScript module implementation.
+ */
+
 import { useEffect, useRef, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';

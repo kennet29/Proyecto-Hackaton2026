@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/auth/patient-resource-access.service.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { ForbiddenException } from "@nestjs/common";
 import { PatientResourceAccessService } from "./patient-resource-access.service";
 

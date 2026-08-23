@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/auth/utils/role.util.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { hasAnyRole, normalizeRole } from "./role.util";
 
 describe("role utilities", () => {

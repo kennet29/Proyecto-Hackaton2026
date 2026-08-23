@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/app.e2e-spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { BadRequestException, INestApplication, VersioningType } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";

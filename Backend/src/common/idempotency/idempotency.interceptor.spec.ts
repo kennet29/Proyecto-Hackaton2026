@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/common/idempotency/idempotency.interceptor.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { CallHandler, ExecutionContext } from "@nestjs/common";
 import { firstValueFrom, of } from "rxjs";
 import { IdempotencyInterceptor } from "./idempotency.interceptor";

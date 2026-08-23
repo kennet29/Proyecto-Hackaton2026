@@ -1,3 +1,8 @@
+/**
+ * @file Landing page/landingpage/src/app/app.component.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 

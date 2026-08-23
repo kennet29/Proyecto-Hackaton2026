@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/theme/colors.ts
+ * @description TypeScript module implementation.
+ */
+
 export const appColors = {
   background: '#071120',
   backgroundMuted: '#0D1B2A',

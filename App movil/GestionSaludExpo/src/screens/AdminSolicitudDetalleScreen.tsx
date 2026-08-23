@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/screens/AdminSolicitudDetalleScreen.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,

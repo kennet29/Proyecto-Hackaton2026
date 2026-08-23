@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/auth/auth.service.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { Logger, UnauthorizedException } from "@nestjs/common";
 import * as bcrypt from "bcryptjs";
 import { AuthService, type AuthenticatedUser } from "./auth.service";

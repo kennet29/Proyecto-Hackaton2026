@@ -1,3 +1,8 @@
+/**
+ * @file Backend/src/nano/nano.controller.spec.ts
+ * @description TypeScript module implementation.
+ */
+
 import { NanoController } from "./nano.controller";
 
 describe("NanoController", () => {

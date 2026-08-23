@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/components/LocationMapPicker.web.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React, { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';

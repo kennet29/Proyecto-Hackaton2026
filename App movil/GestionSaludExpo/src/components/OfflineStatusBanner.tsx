@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/components/OfflineStatusBanner.tsx
+ * @description TypeScript module implementation.
+ */
+
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { AppText } from './AppText';

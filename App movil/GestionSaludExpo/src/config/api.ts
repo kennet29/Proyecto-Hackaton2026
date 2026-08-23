@@ -1,3 +1,8 @@
+/**
+ * @file App movil/GestionSaludExpo/src/config/api.ts
+ * @description TypeScript module implementation.
+ */
+
 import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
 
