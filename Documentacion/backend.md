@@ -182,6 +182,7 @@ Todas las rutas incluyen prefijo `/api/v1`. Las respuestas y validaciones siguen
 | Metodo y ruta | Descripcion |
 | --- | --- |
 | `POST /auth/login` | Token JWT (ver 8.2). |
+| `GET /auth/me` | Devuelve el perfil de la sesión autenticada, incluido `pacienteId` y `pacienteIds` resueltos desde el usuario y sus relaciones. Lo usa el dashboard para seleccionar el paciente principal. |
 | `POST /auth/forgot-password` | Genera token de reset y lo reenvia por correo (si SMTP disponible). |
 | `POST /auth/reset-password` | Consume token y asigna nueva clave. |
 | `POST /auth/logout` | Revoca el `jwtId` actual (requiere Bearer).
@@ -274,6 +275,7 @@ Cada servicio define `PRIMARY_KEYS` al inicio (`*.service.ts`). Para tablas con 
 - Considera agregar pruebas e2e para flujos sensibles (login, reset, permisos QR) usando `@nestjs/testing`.
 - Documenta los endpoints generados automaticamente en una coleccion (ej. Postman) para que el equipo movil tenga ejemplos concretos.
 - Si se agregan nuevas tablas clinicas, actualiza `allowedTables` en `database.schemas.ts` y la lista `TABLES` del script para mantener ambos modulos sincronizados.
+- Mantén la documentación de la app móvil alineada con los endpoints de sesión y dashboard; consulta `Documentacion/mobile.md`.
 
 ## 14. Observabilidad en el cliente
 Aunque el backend expone logs estructurados, es necesario capturar la perspectiva del app movil para poder correlacionar incidentes:

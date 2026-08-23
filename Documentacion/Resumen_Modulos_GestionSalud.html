@@ -1,78 +1,53 @@
-/**
- * @file Documentacion/Resumen_Modulos_GestionSalud.html
- * @description Implementa los elementos TypeScript de este módulo.
- */
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Resumen de m�dulos � Gesti�n Salud</title>
+  <title>Resumen de módulos — Gestión Salud</title>
   <style>
-    @page { size: A4; margin: 16mm; }
-    * { box-sizing: border-box; }
-    body { margin: 0; color: #17324d; font-family: "Segoe UI", Arial, sans-serif; font-size: 10.5pt; line-height: 1.42; }
-    h1, h2, h3, p { margin-top: 0; }
-    h1 { margin-bottom: 4px; color: #0b6fea; font-size: 25pt; letter-spacing: -.5px; }
-    h2 { margin: 19px 0 8px; padding-bottom: 5px; color: #102f50; font-size: 14pt; border-bottom: 2px solid #b9dcff; }
-    .subtitle { margin-bottom: 18px; color: #58718a; font-size: 11pt; }
-    .summary { padding: 13px 15px; border-left: 5px solid #0b6fea; border-radius: 7px; background: #edf6ff; }
-    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .card { break-inside: avoid; min-height: 102px; padding: 11px 12px; border: 1px solid #d5e3f1; border-radius: 9px; background: #fff; }
-    .card h3 { margin-bottom: 5px; color: #123e68; font-size: 11.5pt; }
-    ul { margin: 5px 0 0; padding-left: 17px; }
-    li { margin-bottom: 3px; }
-    table { width: 100%; border-collapse: collapse; }
-    th { color: #fff; background: #0b6fea; text-align: left; }
-    th, td { padding: 8px 9px; border: 1px solid #cfe0f0; vertical-align: top; }
-    tr:nth-child(even) td { background: #f6faff; }
-    .status { display: inline-block; padding: 2px 7px; border-radius: 20px; font-size: 8.5pt; font-weight: 700; }
-    .done { color: #087741; background: #ddf8e9; }
-    .partial { color: #8c5800; background: #fff1cf; }
-    .priority { color: #ab1738; background: #ffe4eb; }
-    .footer { margin-top: 20px; color: #71879c; font-size: 8.5pt; text-align: center; }
+    :root { color-scheme: light; font-family: Arial, sans-serif; color: #172b4d; background: #f4f8fc; }
+    body { max-width: 1050px; margin: 0 auto; padding: 36px 20px; }
+    header { border-radius: 20px; padding: 30px; color: white; background: #0b6fea; }
+    h1 { margin: 0; } .subtitle { opacity: .9; margin-bottom: 0; }
+    h2 { margin-top: 32px; } .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+    .card, table { background: white; border: 1px solid #dce8f4; border-radius: 14px; box-shadow: 0 4px 12px #163b6812; }
+    .card { padding: 18px; border-left: 6px solid #29b6ff; } .card h3 { margin-top: 0; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; overflow: hidden; } th, td { padding: 13px; text-align: left; border-bottom: 1px solid #e8eff6; } th { background: #eaf3ff; } tr:last-child td { border-bottom: 0; }
+    .done { color: #147a4e; font-weight: 700; } .partial { color: #9c6500; font-weight: 700; }
   </style>
 </head>
 <body>
-  <h1>Gesti�n Salud</h1>
-  <p class="subtitle">Resumen de m�dulos, funciones y pr�ximos pasos � 21 de agosto de 2026</p>
-
-  <div class="summary">
-    La plataforma centraliza el expediente cl�nico personal, seguimiento preventivo, colaboraci�n con m�dicos y administraci�n de servicios de salud. Cuenta con aplicaci�n Expo para m�vil/web, API NestJS y base de datos SQL Server.
-  </div>
-
-  <h2>M�dulos disponibles</h2>
-  <div class="grid">
-    <section class="card"><h3>Acceso y cuentas</h3><ul><li>Inicio y cierre de sesi�n con JWT.</li><li>Registro y recuperaci�n de contrase�a.</li><li>Roles: paciente, m�dico y administrador.</li><li>Autenticaci�n biom�trica compatible.</li></ul></section>
-    <section class="card"><h3>Pacientes y expediente</h3><ul><li>Perfiles y personas asociadas.</li><li>Resumen cl�nico, alertas e indicadores.</li><li>Alergias, antecedentes y documentos.</li><li>Ex�menes cl�nicos con evidencia adjunta.</li></ul></section>
-    <section class="card"><h3>Atenci�n m�dica</h3><ul><li>Consultas, citas y vacunas.</li><li>Medicamentos, recetas y horarios.</li><li>Condiciones y controles cr�nicos.</li><li>Operaciones, lesiones y seguimiento de caso.</li></ul></section>
-    <section class="card"><h3>Bienestar y prevenci�n</h3><ul><li>H�bitos, actividad f�sica y peso.</li><li>Registro de salud mental.</li><li>Seguimiento del per�odo y embarazo.</li><li>Educaci�n saludable y asistente Nano.</li></ul></section>
-    <section class="card"><h3>Colaboraci�n m�dica</h3><ul><li>Solicitud y aprobaci�n de m�dicos.</li><li>Compartir historial por c�digo o enlace.</li><li>Permisos temporales o permanentes.</li><li>Historial compartido con b�squeda y filtros.</li></ul></section>
-    <section class="card"><h3>Administraci�n y Premium</h3><ul><li>Cl�nicas, instituciones y cat�logos.</li><li>Servicios, especialidades y medicamentos.</li><li>Pagos con comprobante y revisi�n.</li><li>Suscripciones Premium y configuraci�n.</li></ul></section>
-  </div>
-
-  <h2>Estado de componentes clave</h2>
+  <header>
+    <h1>Gestión Salud</h1>
+    <p class="subtitle">Resumen de módulos, estado y próximos pasos — 23 de agosto de 2026</p>
+  </header>
+  <p>La plataforma integra aplicación Expo para móvil/web, API NestJS y SQL Server para el manejo de información clínica, bienestar y colaboración médica.</p>
+  <h2>Módulos disponibles</h2>
+  <section class="grid">
+    <article class="card"><h3>Acceso y cuentas</h3><p>Registro, autenticación JWT, recuperación de contraseña, biometría compatible y roles.</p></article>
+    <article class="card"><h3>Pacientes y expediente</h3><p>Perfiles, personas asociadas, resumen clínico, alergias, antecedentes, exámenes y documentos.</p></article>
+    <article class="card"><h3>Atención médica</h3><p>Consultas, citas, vacunas, medicación, condiciones crónicas, embarazo y registros clínicos.</p></article>
+    <article class="card"><h3>Bienestar y Nano</h3><p>Hábitos, seguimiento físico, salud mental, período, educación y asistente Nano.</p></article>
+    <article class="card"><h3>Colaboración médica</h3><p>Solicitud de médico, permisos temporales, QR y enlaces para historial compartido.</p></article>
+    <article class="card"><h3>Administración y Premium</h3><p>Clínicas, instituciones, catálogos, solicitudes, pagos y suscripciones.</p></article>
+  </section>
+  <h2>Estado de operación</h2>
   <table>
-    <thead><tr><th>Componente</th><th>Estado</th><th>Observaci�n</th></tr></thead>
+    <thead><tr><th>Componente</th><th>Estado</th><th>Observación</th></tr></thead>
     <tbody>
-      <tr><td>App m�vil y web</td><td><span class="status done">Implementado</span></td><td>Navegaci�n responsive, modo claro/oscuro y cola de sincronizaci�n sin conexi�n.</td></tr>
-      <tr><td>API y seguridad</td><td><span class="status done">Implementado</span></td><td>API versionada, JWT, roles, control de acceso y restablecimiento de contrase�a.</td></tr>
-      <tr><td>Notificaciones push</td><td><span class="status partial">Parcial</span></td><td>El c�digo existe, pero falta crear la tabla <code>dispositivopush</code> en producci�n.</td></tr>
-      <tr><td>Correo de recuperaci�n</td><td><span class="status partial">Configurable</span></td><td>Requiere variables SMTP para enviar los correos reales.</td></tr>
-      <tr><td>Pagos Premium</td><td><span class="status partial">Por validar</span></td><td>Existe carga y revisi�n de comprobantes; debe probarse el flujo completo de aprobaci�n.</td></tr>
+      <tr><td>Aplicación móvil y web</td><td class="done">Implementado</td><td>Navegación responsive, modo claro/oscuro, Nano SVG y dashboard por paciente.</td></tr>
+      <tr><td>API y seguridad</td><td class="done">Implementado</td><td>API versionada, JWT, roles, control de acceso y Swagger.</td></tr>
+      <tr><td>Notificaciones push</td><td class="partial">Parcial</td><td>Requiere crear y validar la tabla de dispositivos en producción.</td></tr>
+      <tr><td>Correo SMTP</td><td class="partial">Configurable</td><td>Se debe configurar para enviar recuperaciones reales.</td></tr>
+      <tr><td>CI</td><td class="done">Implementado</td><td>Ejecuta lint, build y pruebas de backend, además de typecheck móvil.</td></tr>
     </tbody>
   </table>
-
-  <h2>Prioridades pendientes</h2>
+  <h2>Prioridad antes de producción</h2>
   <ol>
-    <li><span class="status priority">Alta</span> Ejecutar <code>Backend/scripts/create-push-devices-table.sql</code> en Azure SQL para habilitar notificaciones push.</li>
-    <li><span class="status priority">Alta</span> Configurar <code>JWT_SECRET</code> en Render con una clave de al menos 32 caracteres.</li>
-    <li><span class="status priority">Media</span> Configurar SMTP si se necesita recuperaci�n de contrase�a por correo.</li>
-    <li><span class="status priority">Media</span> Validar en dispositivo f�sico las notificaciones, adjuntos y el acceso m�dico compartido.</li>
-    <li><span class="status priority">Media</span> Automatizar migraciones SQL y pruebas en el proceso de despliegue.</li>
-    <li><span class="status priority">Mejora</span> A�adir pantallas para m�dulos API a�n no expuestos de forma independiente: adherencia/objetivos cr�nicos, evaluaci�n de salud y puntaje de riesgo.</li>
+    <li>Versionar y aplicar las migraciones SQL en cada ambiente.</li>
+    <li>Validar notificaciones, adjuntos, permisos compartidos y Premium con datos reales.</li>
+    <li>Definir respaldo, cifrado, retención y auditoría de información clínica.</li>
+    <li>Ampliar pruebas e2e para login, permisos y dashboard.</li>
   </ol>
-
-  <p class="footer">Documento resumido. Para el inventario detallado consulte: Documentacion/INVENTARIO_MODULOS_Y_PENDIENTES.md</p>
 </body>
 </html>

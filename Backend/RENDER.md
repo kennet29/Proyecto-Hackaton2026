@@ -46,3 +46,13 @@ Carga estas variables en Render:
   - `https://tu-servicio.onrender.com/api/docs`
 - Si tambien despliegas el frontend, agrega su dominio exacto en `CORS_ORIGINS`.
 - Antes del deploy que habilita push remoto, ejecuta `scripts/create-push-devices-table.sql` en Azure SQL. Luego configura `PUSH_NOTIFICATIONS_ENABLED=true`.
+
+## Orden de despliegue recomendado
+
+1. Respaldar la base de datos y aplicar los scripts SQL pendientes en el ambiente objetivo.
+2. Configurar o rotar secretos y variables de entorno en Render.
+3. Desplegar el backend y comprobar `/api/v1/health`, `/api/docs` y `GET /api/v1/auth/me` con un token válido.
+4. Configurar `EXPO_PUBLIC_API_URL` de la aplicación Expo con la URL del backend desplegado.
+5. Validar inicio de sesión, selección de paciente en dashboard, permisos compartidos y notificaciones antes de publicar una compilación móvil.
+
+No apuntes la app de producción a un backend que no tenga sus migraciones aplicadas: el dashboard, las notificaciones y los permisos dependen de la estructura de base de datos vigente.
