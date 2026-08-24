@@ -15,6 +15,16 @@ type MentalHistory = { historialPorFecha?: Array<{ hidratacionLitros?: number | 
 type Props = { navigation: { navigate: (screen: string) => void } };
 const clamp = (value: number) => Math.max(0, Math.min(100, Math.round(value)));
 const valueLabel = (value?: number | null, suffix = '') => value == null ? 'Sin datos' : `${value}${suffix}`;
+const scoreColor = (score: number) => {
+  const start = score <= 50 ? [230, 74, 102] : [245, 185, 66];
+  const end = score <= 50 ? [245, 185, 66] : [56, 217, 150];
+  const progress = (score <= 50 ? score : score - 50) / 50;
+  const channel = (index: number) => Math.round(start[index] + (end[index] - start[index]) * progress)
+    .toString(16)
+    .padStart(2, '0');
+
+  return `#${channel(0)}${channel(1)}${channel(2)}`;
+};
 
 export function DashboardBienestar({ navigation }: Props) {
   const { token, user } = useAuth();
@@ -38,14 +48,27 @@ export function DashboardBienestar({ navigation }: Props) {
   const load = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const linked = await fetchLinkedPatients(headers);
+      const linked = await fetchLinkedPatients(headers, { forceRefresh: true });
       const me = token ? await fetch(`${API_URL}/auth/me`, { headers }) : null;
-      const profile = me?.ok ? await me.json() as { pacienteId?: number | null } : null;
-      const preferredId = Number(profile?.pacienteId ?? user?.pacienteId ?? getTokenPacienteId(token));
-      const hasPreferred = Number.isInteger(preferredId) && preferredId > 0;
-      const available = hasPreferred && !linked.some((item) => item.pacienteId === preferredId) ? [{ pacienteId: preferredId, displayName: 'Paciente principal', esPrincipal: true }, ...linked] : linked;
+      const profile = me?.ok ? await me.json() as { pacienteId?: number | null; pacienteIds?: number[] } : null;
+      const linkedPrincipal = linked.find((item) => item.esPrincipal);
+      const candidateIds = [
+        profile?.pacienteId,
+        user?.pacienteId,
+        getTokenPacienteId(token),
+        ...(profile?.pacienteIds ?? []),
+        ...(user?.pacienteIds ?? []),
+      ];
+      const preferredId = candidateIds
+        .map((value) => Number(value))
+        .find((value) => Number.isInteger(value) && value > 0);
+      const available = !linkedPrincipal && preferredId && !linked.some((item) => item.pacienteId === preferredId)
+        ? [{ pacienteId: preferredId, displayName: 'Paciente principal', esPrincipal: true }, ...linked]
+        : linked;
       setPatients(available);
-      const patientId = selectedId && available.some((item) => item.pacienteId === selectedId) ? selectedId : hasPreferred ? preferredId : available.find((item) => item.esPrincipal)?.pacienteId ?? available[0]?.pacienteId ?? null;
+      const patientId = selectedId && available.some((item) => item.pacienteId === selectedId)
+        ? selectedId
+        : linkedPrincipal?.pacienteId ?? preferredId ?? available[0]?.pacienteId ?? null;
       setSelectedId(patientId);
       if (!patientId) { setPhysical(null); setMental(null); setHistory(null); return; }
       const [physicalResponse, mentalResponse, historyResponse] = await Promise.all([
@@ -66,6 +89,27 @@ export function DashboardBienestar({ navigation }: Props) {
   const hydration = history?.historialPorFecha?.[0]?.hidratacionLitros ?? null;
   const nutritionScore = hydration === null ? null : clamp((hydration / 2) * 100);
   const overallScore = clamp((physicalScore + mentalScore + (nutritionScore ?? 50)) / 3);
+  const dashboardColor = scoreColor(overallScore);
+  const hasPhysicalData = physical?.ejercicio?.minutosTotales != null || physical?.ejercicio?.pasosPromedio != null;
+  const physicalAdvice = !hasPhysicalData
+    ? {
+        title: 'Registra tu actividad física',
+        message: 'Agrega tus pasos o minutos de ejercicio para recibir recomendaciones personalizadas.',
+      }
+    : physicalScore >= 80
+      ? {
+          title: '¡Excelente ritmo físico!',
+          message: 'Mantén tu constancia: tu actividad y pasos reflejan un muy buen avance.',
+        }
+      : physicalScore >= 50
+        ? {
+            title: 'Vas por buen camino',
+            message: 'Una caminata corta o algunos minutos más de ejercicio te ayudarán a mejorar tu estado físico.',
+          }
+        : {
+            title: 'Es momento de activarte',
+            message: 'Empieza con una caminata suave o una rutina corta para elevar tu bienestar físico.',
+          };
   const cards = [
     { title: 'Estado físico', score: physicalScore, icon: 'body-outline' as const, color: '#29B6FF', detail: `${valueLabel(physical?.peso?.actual, ' kg')} actual`, route: 'SeguimientoFisico' },
     { title: 'Salud mental', score: mentalScore, icon: 'heart-outline' as const, color: '#A78BFA', detail: `Ánimo ${valueLabel(weekly?.estadoAnimo, '/5')} · Sueño ${valueLabel(weekly?.horasSueno, ' h')}`, route: 'SaludMental' },
@@ -74,7 +118,7 @@ export function DashboardBienestar({ navigation }: Props) {
   ];
 
   return <ScrollView style={styles.scroll} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} tintColor="#0B6FEA" />}>
-    <View style={[styles.hero, isWide && styles.heroWide]}><View style={styles.heroCopy}><View style={styles.badge}><Ionicons name="grid-outline" size={14} color="#0B6FEA" /><AppText style={styles.badgeText}>Inicio</AppText></View><AppText style={styles.heroTitle}>Dashboard de salud</AppText><AppText style={styles.heroText}>Consulta en una sola vista tu estado físico, salud mental, actividad, alimentación y peso.</AppText><AppText style={styles.patientLabel}>Sesión activa: {selectedPatient?.displayName ?? 'Selecciona un paciente'}</AppText></View><View style={styles.scoreRing}><AppText style={styles.scoreValue}>{overallScore}</AppText><AppText style={styles.scoreUnit}>/100</AppText></View></View>
+    <View style={[styles.hero, isWide && styles.heroWide, { backgroundColor: dashboardColor }]}><View style={styles.heroCopy}><AppText style={styles.heroTitle}>{physicalAdvice.title}</AppText><AppText style={styles.heroText}>{physicalAdvice.message}</AppText><AppText style={styles.patientLabel}>Sesión activa: {selectedPatient?.displayName ?? 'Selecciona un paciente'}</AppText></View><View style={styles.scoreRing}><AppText style={styles.scoreValue}>{overallScore}</AppText><AppText style={styles.scoreUnit}>/100</AppText></View></View>
     {patients.length > 1 ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.patientRow}>{patients.map((patient) => <TouchableOpacity key={patient.pacienteId} onPress={() => setSelectedId(patient.pacienteId)} style={[styles.patientChip, { backgroundColor: theme.chip, borderColor: theme.chipBorder }, patient.pacienteId === selectedId && styles.patientChipActive]}><AppText style={[styles.patientText, { color: theme.text }, patient.pacienteId === selectedId && styles.patientTextActive]}>{patient.displayName}</AppText></TouchableOpacity>)}</ScrollView> : null}
     {loading ? <ActivityIndicator size="large" color="#0B6FEA" style={styles.loader} /> : null}{error ? <AppText style={styles.error}>{error}</AppText> : null}
     <View style={styles.sectionHeader}><AppText style={[styles.sectionTitle, { color: theme.title }]}>Indicadores de bienestar</AppText><AppText style={[styles.sectionMeta, { color: theme.muted }]}>4 áreas disponibles</AppText></View>
@@ -84,7 +128,7 @@ export function DashboardBienestar({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, width: '100%' }, content: { paddingBottom: 28, gap: 14 }, hero: { borderRadius: 20, backgroundColor: '#0B6FEA', borderWidth: 1, borderColor: '#2C8CFA', padding: 20, flexDirection: 'row', alignItems: 'center', gap: 14 }, heroWide: { paddingHorizontal: 22, paddingVertical: 16 }, heroCopy: { flex: 1 }, badge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, backgroundColor: '#FFFFFF', paddingHorizontal: 10, paddingVertical: 6 }, badgeText: { color: '#0B6FEA', fontSize: 11, fontWeight: '800' }, heroTitle: { color: '#FFFFFF', fontSize: 25, fontWeight: '900', marginTop: 13 }, heroText: { color: '#EAF3FF', fontSize: 13, lineHeight: 19, marginTop: 5, maxWidth: 650 }, patientLabel: { color: '#DCEEFF', fontSize: 11, lineHeight: 16, fontWeight: '700', marginTop: 7 }, scoreRing: { width: 76, height: 76, borderRadius: 38, borderWidth: 6, borderColor: '#7DD3FC', backgroundColor: '#0870D7', alignItems: 'center', justifyContent: 'center' }, scoreValue: { color: '#FFFFFF', fontSize: 23, fontWeight: '900', lineHeight: 25 }, scoreUnit: { color: '#DCEEFF', fontSize: 10 },
+  scroll: { flex: 1, width: '100%' }, content: { paddingBottom: 28, gap: 14 }, hero: { borderRadius: 20, borderWidth: 1, borderColor: '#FFFFFF66', padding: 20, flexDirection: 'row', alignItems: 'center', gap: 14 }, heroWide: { paddingHorizontal: 22, paddingVertical: 16 }, heroCopy: { flex: 1 }, badge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, backgroundColor: '#FFFFFF', paddingHorizontal: 10, paddingVertical: 6 }, badgeText: { fontSize: 11, fontWeight: '800' }, heroTitle: { color: '#FFFFFF', fontSize: 25, fontWeight: '900', marginTop: 13 }, heroText: { color: '#FFFFFFE6', fontSize: 13, lineHeight: 19, marginTop: 5, maxWidth: 650 }, patientLabel: { color: '#FFFFFFD9', fontSize: 11, lineHeight: 16, fontWeight: '700', marginTop: 7 }, scoreRing: { width: 76, height: 76, borderRadius: 38, borderWidth: 6, borderColor: '#FFFFFF99', backgroundColor: '#FFFFFF24', alignItems: 'center', justifyContent: 'center' }, scoreValue: { color: '#FFFFFF', fontSize: 23, fontWeight: '900', lineHeight: 25 }, scoreUnit: { color: '#FFFFFFD9', fontSize: 10 },
   patientRow: { gap: 8 }, patientChip: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 }, patientChipActive: { backgroundColor: '#0B6FEA', borderColor: '#0B6FEA' }, patientText: { fontSize: 12, fontWeight: '700' }, patientTextActive: { color: '#FFFFFF' }, loader: { marginVertical: 8 }, error: { color: '#E64A66', textAlign: 'center' }, sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }, sectionTitle: { fontSize: 17, fontWeight: '900' }, sectionMeta: { fontSize: 12, fontWeight: '700' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 }, card: { flexGrow: 1, flexShrink: 1, flexBasis: 300, minHeight: 106, borderRadius: 16, borderWidth: 1, paddingHorizontal: 18, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 14 }, cardWide: { minHeight: 106 }, cardIcon: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' }, cardInfo: { flex: 1, minWidth: 0, gap: 4 }, cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 }, cardTitle: { fontSize: 14, fontWeight: '900', flex: 1 }, cardScore: { fontSize: 12, fontWeight: '900' }, cardDetail: { fontSize: 11, lineHeight: 16 },
   tipCard: { flexDirection: 'row', gap: 11, borderWidth: 1, borderRadius: 16, padding: 15 }, tipCopy: { flex: 1 }, tipTitle: { fontSize: 13, fontWeight: '900' }, tipText: { fontSize: 12, lineHeight: 17, marginTop: 3 },

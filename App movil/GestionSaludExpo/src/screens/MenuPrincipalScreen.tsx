@@ -47,6 +47,7 @@ type TabMeta = {
   title: string;
   subtitle: string;
   icon: keyof typeof Ionicons.glyphMap;
+  cardColor: string;
   nanoAppearance?: NanoAppearance;
 };
 
@@ -59,6 +60,7 @@ const tabMeta: TabMeta[] = [
     title: 'Dashboard de salud',
     subtitle: 'Consulta en una sola vista tu estado fisico, salud mental, actividad, alimentacion y peso.',
     icon: 'grid-outline',
+    cardColor: '#0B6FE9',
     nanoAppearance: {
       id: 'menu',
       label: 'Nano Menu',
@@ -73,6 +75,7 @@ const tabMeta: TabMeta[] = [
     title: 'Seccion Medica',
     subtitle: 'Concentra consultas, citas, tratamientos y registros clinicos en un solo flujo.',
     icon: 'medkit-outline',
+    cardColor: '#0B6FE9',
     nanoAppearance: {
       id: 'medico-menu',
       label: 'Nano Medico',
@@ -87,6 +90,7 @@ const tabMeta: TabMeta[] = [
     title: 'Bienestar Diario',
     subtitle: 'Sigue habitos, ejercicio, peso y bienestar emocional desde una misma vista.',
     icon: 'barbell-outline',
+    cardColor: '#4DAF51',
     nanoAppearance: {
       id: 'bienestar',
       label: 'Nano Bienestar',
@@ -101,6 +105,7 @@ const tabMeta: TabMeta[] = [
     title: 'Gestion y Soporte',
     subtitle: 'Administra expediente, perfiles, educacion y acceso a soporte general.',
     icon: 'folder-open-outline',
+    cardColor: '#EA5074',
     nanoAppearance: {
       id: 'gestion',
       label: 'Nano Gestion',
@@ -722,25 +727,25 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                 styles.card,
                 gridColumns > 1 && styles.gridCard,
                 isWebWide && styles.webCard,
-                { borderColor: item.accent, backgroundColor: isWebWide ? theme.webSurface : theme.surface },
+                { borderColor: activeMeta.cardColor, backgroundColor: isWebWide ? theme.webSurface : theme.surface },
                 isLightMode && item.action !== 'toggle-background' && styles.lightModeCard,
-                isLightMode && item.action !== 'toggle-background' && { borderLeftColor: item.accent },
+                isLightMode && item.action !== 'toggle-background' && { borderLeftColor: activeMeta.cardColor },
                 item.action === 'toggle-background' && styles.themeCard,
                 item.action === 'toggle-background' && {
                   backgroundColor: isLightMode ? '#EAF3FF' : '#0D2B55',
-                  borderColor: '#0B6FEA',
                 },
+                { borderColor: activeMeta.cardColor },
               ]}
               onPress={() => handleOptionPress(item)}
               accessibilityRole="button"
               accessibilityLabel={item.label}
               accessibilityHint={item.action === 'toggle-background' ? 'Alterna entre modo claro y modo oscuro' : `Abre ${item.label}`}
             >
-              <View style={[styles.cardIcon, { backgroundColor: `${item.accent}22` }, item.action === 'toggle-background' && styles.themeIcon]}>
+              <View style={[styles.cardIcon, { backgroundColor: `${activeMeta.cardColor}22` }, item.action === 'toggle-background' && styles.themeIcon]}>
                 {item.nano ? (
                   <NanoAppearancePreview appearance={item.nanoAppearance ?? activeNanoAppearance} size={54} />
                 ) : (
-                  <Ionicons name={item.icon} size={26} color={item.accent} />
+                  <Ionicons name={item.icon} size={26} color={activeMeta.cardColor} />
                 )}
               </View>
               <View style={styles.cardInfo}>
