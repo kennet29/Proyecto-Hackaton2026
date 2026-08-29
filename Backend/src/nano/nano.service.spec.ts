@@ -119,7 +119,14 @@ describe("NanoService", () => {
 
   it("genera una receta solo a partir de ingredientes escritos", async () => {
     gateway.generateText.mockResolvedValue({
-      text: "Nombre de la receta: Avena con fruta\nIngredientes: avena y banano",
+      text: JSON.stringify({
+        title: "Avena con fruta",
+        servings: "1 porcion",
+        time: "10 minutos",
+        ingredients: ["Avena", "Banano", "Agua"],
+        steps: ["Cocina la avena.", "Agrega el banano."],
+        nanoTip: "Evita agregar azucar refinada.",
+      }),
       model: "test-model",
     });
 
@@ -134,7 +141,7 @@ describe("NanoService", () => {
       expect.stringContaining("Ingredientes disponibles: avena, banano"),
     );
     expect(result).toMatchObject({
-      recipe: expect.stringContaining("Avena con fruta"),
+      recipe: { title: "Avena con fruta" },
       goalLabel: "Ligera y saciante",
     });
   });

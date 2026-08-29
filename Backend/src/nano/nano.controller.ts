@@ -4,6 +4,7 @@ import type { AuthenticatedUser } from "../auth/auth.service";
 import { NanoService } from "./nano.service";
 import { AnalyzeMealDto } from "./dto/analyze-meal.dto";
 import { CreateRecipeDto } from "./dto/create-recipe.dto";
+import { CreateTrainingPlanDto } from "./dto/create-training-plan.dto";
 import { SelectNanoAppearanceDto } from "./dto/select-nano-appearance.dto";
 import { NanoAppearanceService } from "./nano-appearance.service";
 
@@ -46,5 +47,10 @@ export class NanoController {
   @Post("chef")
   createRecipe(@Body() payload: CreateRecipeDto) {
     return this.nanoService.createRecipe(payload);
+  }
+
+  @Post("training-plan")
+  createTrainingPlan(@Body() payload: CreateTrainingPlanDto) {
+    return this.nanoService.createTrainingPlan(payload);
   }
 }

@@ -33,8 +33,9 @@ export class NanoPromptBuilder {
   buildRecipe(
     goalKey: string,
     goalLabel: string,
-    ingredients: string,
+    ingredients?: string,
     preferences?: string,
+    allowNanoRecommendations = false,
   ): string {
     const goalContext = this.describeGoal(goalKey, goalLabel);
     const normalizedIngredients = this.normalizeOptionalNote(ingredients);
@@ -44,14 +45,42 @@ export class NanoPromptBuilder {
       "Eres Nano Chef, un asistente de recetas saludables.",
       "Crea una receta practica en espanol usando solamente texto; no tienes imagenes ni debes pedirlas.",
       "No des diagnosticos clinicos. Si el objetivo es diabetes o embarazo, incluye una nota breve de precaucion razonable.",
-      "Usa este formato claro con encabezados: Nombre de la receta, Porciones, Ingredientes, Preparacion numerada, Tiempo aproximado y Consejo de Nano.",
+      "Responde solamente con JSON valido, sin markdown ni texto adicional, usando exactamente este esquema: {\"title\":\"string\",\"servings\":\"string\",\"time\":\"string\",\"ingredients\":[\"string\"],\"steps\":[\"string\"],\"nanoTip\":\"string\"}.",
+      "Incluye entre 3 y 10 ingredientes y entre 3 y 7 pasos cortos de preparacion.",
+      allowNanoRecommendations
+        ? "El usuario no tiene ingredientes definidos. Elige ingredientes comunes, accesibles y adecuados al objetivo; incluyelos claramente en la receta."
+        : "Usa exclusivamente los ingredientes indicados y menciona sustitutos solo como alternativas.",
       "Propón alternativas sencillas si falta un ingrediente esencial, sin inventar que el usuario tiene ingredientes que no mencionó.",
       `Objetivo del usuario: ${goalLabel}.`,
+      allowNanoRecommendations
+        ? "Importante: como no hay ingredientes disponibles, debes recomendar una receta completa con ingredientes propuestos por ti y alineados al objetivo."
+        : "",
       `Contexto del objetivo: ${goalContext}.`,
       `Ingredientes disponibles: ${normalizedIngredients ?? "No especificados"}.`,
       normalizedPreferences
         ? `Preferencias o restricciones: ${normalizedPreferences}.`
         : "No hay preferencias o restricciones adicionales.",
+    ].join(" ");
+  }
+
+  buildTrainingPlan(
+    goalLabel: string,
+    level: string,
+    equipment?: string,
+    limitations?: string,
+  ): string {
+    const normalizedEquipment = this.normalizeOptionalNote(equipment);
+    const normalizedLimitations = this.normalizeOptionalNote(limitations);
+    return [
+      "Eres Nano Entrenador, un asistente de entrenamiento responsable.",
+      "Crea una rutina semanal realista en español. No uses imágenes.",
+      "No diagnostiques lesiones. Recomienda detenerse si hay dolor agudo y consultar a un profesional cuando aplique.",
+      "Responde solamente con JSON válido y sin markdown usando exactamente este esquema: {\"title\":\"string\",\"summary\":\"string\",\"weeklyDays\":[{\"day\":\"string\",\"focus\":\"string\",\"duration\":\"string\",\"exercises\":[{\"name\":\"string\",\"sets\":\"string\",\"reps\":\"string\",\"rest\":\"string\",\"notes\":\"string\"}]}],\"nanoTip\":\"string\"}.",
+      "Incluye exactamente 7 días. En los días de descanso usa un arreglo de ejercicios vacío y explica brevemente la recuperación en focus.",
+      `Objetivo: ${goalLabel}.`,
+      `Nivel: ${level}.`,
+      `Equipo disponible: ${normalizedEquipment ?? "sin equipo especial"}.`,
+      `Limitaciones o preferencias: ${normalizedLimitations ?? "ninguna indicada"}.`,
     ].join(" ");
   }
 

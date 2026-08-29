@@ -308,6 +308,22 @@ const wellnessOptions: OptionItem[] = [
     },
   },
   {
+    key: 'nano-entrenador',
+    label: 'Nano Entrenador',
+    description: 'Crea una rutina semanal de entrenamiento según tu objetivo y nivel.',
+    icon: 'barbell-outline',
+    accent: '#C084FC',
+    navigateTo: 'NanoEntrenador',
+    nano: true,
+    nanoAppearance: {
+      id: 'entrenador-menu',
+      label: 'Nano Entrenador',
+      description: 'Nano Entrenador',
+      format: 'svg',
+      svgComponent: NanoBienestar,
+    },
+  },
+  {
     key: 'seguimiento-fisico',
     label: 'Seguimiento Fisico',
     description: 'Peso, ejercicio, pasos y progreso diario',
