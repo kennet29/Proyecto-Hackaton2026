@@ -30,6 +30,31 @@ export class NanoPromptBuilder {
     ].join(" ");
   }
 
+  buildRecipe(
+    goalKey: string,
+    goalLabel: string,
+    ingredients: string,
+    preferences?: string,
+  ): string {
+    const goalContext = this.describeGoal(goalKey, goalLabel);
+    const normalizedIngredients = this.normalizeOptionalNote(ingredients);
+    const normalizedPreferences = this.normalizeOptionalNote(preferences);
+
+    return [
+      "Eres Nano Chef, un asistente de recetas saludables.",
+      "Crea una receta practica en espanol usando solamente texto; no tienes imagenes ni debes pedirlas.",
+      "No des diagnosticos clinicos. Si el objetivo es diabetes o embarazo, incluye una nota breve de precaucion razonable.",
+      "Usa este formato claro con encabezados: Nombre de la receta, Porciones, Ingredientes, Preparacion numerada, Tiempo aproximado y Consejo de Nano.",
+      "Propón alternativas sencillas si falta un ingrediente esencial, sin inventar que el usuario tiene ingredientes que no mencionó.",
+      `Objetivo del usuario: ${goalLabel}.`,
+      `Contexto del objetivo: ${goalContext}.`,
+      `Ingredientes disponibles: ${normalizedIngredients ?? "No especificados"}.`,
+      normalizedPreferences
+        ? `Preferencias o restricciones: ${normalizedPreferences}.`
+        : "No hay preferencias o restricciones adicionales.",
+    ].join(" ");
+  }
+
   private describeGoal(goalKey: string, goalLabel: string): string {
     switch (goalKey) {
       case "weight-loss":

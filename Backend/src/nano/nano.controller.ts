@@ -3,6 +3,7 @@ import { Request } from "express";
 import type { AuthenticatedUser } from "../auth/auth.service";
 import { NanoService } from "./nano.service";
 import { AnalyzeMealDto } from "./dto/analyze-meal.dto";
+import { CreateRecipeDto } from "./dto/create-recipe.dto";
 import { SelectNanoAppearanceDto } from "./dto/select-nano-appearance.dto";
 import { NanoAppearanceService } from "./nano-appearance.service";
 
@@ -39,5 +40,11 @@ export class NanoController {
   @Post("analyze-meal")
   analyzeMeal(@Body() payload: AnalyzeMealDto) {
     return this.nanoService.analyzeMeal(payload);
+  }
+
+  /** Genera recetas desde ingredientes escritos; este flujo no recibe imágenes. */
+  @Post("chef")
+  createRecipe(@Body() payload: CreateRecipeDto) {
+    return this.nanoService.createRecipe(payload);
   }
 }

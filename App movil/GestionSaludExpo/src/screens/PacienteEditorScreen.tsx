@@ -54,11 +54,12 @@ const parseDateForPicker = (value?: string) => {
 
 const formatDisplayDate = (value?: string) => {
   if (!value) return 'Seleccionar fecha de nacimiento';
-  return parseDateForPicker(value).toLocaleDateString('es-NI', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const date = parseDateForPicker(value);
+  return [
+    String(date.getDate()).padStart(2, '0'),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    date.getFullYear(),
+  ].join('/');
 };
 
 function FieldLabel({

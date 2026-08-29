@@ -80,7 +80,34 @@ export class OpenAiMealAnalysisGateway implements MealAnalysisGateway {
     };
   }
 
-  private extractText(response: OpenAIResponsePayload): string {
+  async generateText(prompt: string): Promise<MealAnalysisGatewayResponse> {
+    if (!this.apiKey) {
+      throw new ServiceUnavailableException(
+        "OPENAI_API_KEY no esta configurada en el backend.",
+      );
+    }
+
+    const response = await this.createResponse({
+      model: this.model,
+      input: [
+        {
+          role: "user",
+          content: [{ type: "input_text", text: prompt }],
+        },
+      ],
+      max_output_tokens: 700,
+    });
+
+    return {
+      text: this.extractText(response, false),
+      model: this.model,
+    };
+  }
+
+  private extractText(
+    response: OpenAIResponsePayload,
+    collapseWhitespace = true,
+  ): string {
     const chunks: string[] = [];
     for (const item of response.output ?? []) {
       for (const content of item.content ?? []) {
@@ -89,7 +116,8 @@ export class OpenAiMealAnalysisGateway implements MealAnalysisGateway {
         }
       }
     }
-    return chunks.join(" ").replace(/\s+/g, " ").trim();
+    const text = chunks.join("\n").trim();
+    return collapseWhitespace ? text.replace(/\s+/g, " ") : text;
   }
 
   private async createResponse(

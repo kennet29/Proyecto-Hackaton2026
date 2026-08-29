@@ -158,11 +158,11 @@ const parseTimeForPicker = (value?: string) => {
 const formatDisplayDate = (value?: string) => {
   if (!value) return 'Selecciona fecha';
   const parsed = parseDateForPicker(value);
-  return parsed.toLocaleDateString('es-NI', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  return [
+    String(parsed.getDate()).padStart(2, '0'),
+    String(parsed.getMonth() + 1).padStart(2, '0'),
+    parsed.getFullYear(),
+  ].join('/');
 };
 
 const formatDisplayDateTime = (value?: string | null) => {

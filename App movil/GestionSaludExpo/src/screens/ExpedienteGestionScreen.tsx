@@ -53,6 +53,29 @@ const formatErrorMessage = (error: unknown) => {
   return 'No se pudo completar la accion. Intenta nuevamente.';
 };
 
+const formatBirthDateInput = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+};
+
+const toApiBirthDate = (value: string): string | null => {
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return null;
+
+  const [, day, month, year] = match;
+  const parsed = new Date(Number(year), Number(month) - 1, Number(day));
+  if (
+    parsed.getFullYear() !== Number(year) ||
+    parsed.getMonth() !== Number(month) - 1 ||
+    parsed.getDate() !== Number(day)
+  ) {
+    return null;
+  }
+  return `${year}-${month}-${day}`;
+};
+
 const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => {
   if (!feedback) return null;
   const isSuccess = feedback.type === 'success';
@@ -186,6 +209,14 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
       return;
     }
 
+    const birthDate = personForm.fechanacimiento.trim()
+      ? toApiBirthDate(personForm.fechanacimiento.trim())
+      : undefined;
+    if (personForm.fechanacimiento.trim() && !birthDate) {
+      setPatientFeedback({ type: 'error', message: 'La fecha de nacimiento debe tener el formato dd/mm/aaaa.' });
+      return;
+    }
+
     setSubmittingPerson(true);
     try {
       const pacienteResponse = await fetch(`${API_URL}/paciente`, {
@@ -195,7 +226,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
           nombres: personForm.nombres.trim(),
           apellidos: personForm.apellidos.trim(),
           sexo: personForm.sexo || undefined,
-          fechanacimiento: personForm.fechanacimiento.trim() || undefined,
+          fechanacimiento: birthDate,
           telefono: personForm.telefono.trim() || undefined,
           email: personForm.email.trim() || undefined,
           direccion: undefined,
@@ -458,12 +489,12 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               </View>
               <AppTextInput
                 style={styles.input}
-                placeholder="Fecha de nacimiento (YYYY-MM-DD)"
+                placeholder="Fecha de nacimiento (dd/mm/aaaa)"
                 placeholderTextColor="#9FB3C8"
                 keyboardType="numbers-and-punctuation"
                 autoCapitalize="none"
                 value={personForm.fechanacimiento}
-                onChangeText={(text) => handlePersonInput('fechanacimiento', text)}
+                onChangeText={(text) => handlePersonInput('fechanacimiento', formatBirthDateInput(text))}
               />
               <AppTextInput
                 style={styles.input}

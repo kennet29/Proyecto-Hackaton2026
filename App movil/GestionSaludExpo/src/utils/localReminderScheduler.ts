@@ -6,6 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import { parseScheduledDateTime } from './localDate';
 
 const STORAGE_KEY = '@gs_local_reminder_schedules_v1';
 const CHANNEL_ID = 'recordatorios-locales';
@@ -134,8 +135,8 @@ export async function syncLocalReminder(
       return cancelled ? 'cancelled' : 'not-applicable';
     }
 
-    const scheduledAt = new Date(String(scheduledValue));
-    if (Number.isNaN(scheduledAt.getTime()) || scheduledAt.getTime() <= Date.now()) {
+    const scheduledAt = parseScheduledDateTime(String(scheduledValue));
+    if (!scheduledAt || scheduledAt.getTime() <= Date.now()) {
       return 'invalid-date';
     }
     if (!message) return 'not-applicable';

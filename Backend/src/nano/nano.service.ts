@@ -13,6 +13,7 @@ import {
 import { NanoAnalysisParser } from "./nano-analysis.parser";
 import { optimizeNanoImage } from "./nano-image.optimizer";
 import { NanoPromptBuilder } from "./nano-prompt.builder";
+import { CreateRecipeDto } from "./dto/create-recipe.dto";
 
 /**
  * Orquesta el caso de uso de analisis de comidas.
@@ -69,5 +70,24 @@ export class NanoService {
       goalLabel: payload.goalLabel,
       model: providerResponse.model,
     });
+  }
+
+  async createRecipe(payload: CreateRecipeDto) {
+    const prompt = this.promptBuilder.buildRecipe(
+      payload.goalKey,
+      payload.goalLabel,
+      payload.ingredients,
+      payload.preferences,
+    );
+    const providerResponse = await this.analysisGateway.generateText(prompt);
+    if (!providerResponse.text) {
+      throw new BadGatewayException("Nano Chef no devolvio una receta util.");
+    }
+
+    return {
+      recipe: providerResponse.text,
+      goalLabel: payload.goalLabel,
+      model: providerResponse.model,
+    };
   }
 }

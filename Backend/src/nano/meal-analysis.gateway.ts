@@ -23,4 +23,5 @@ export interface MealAnalysisGateway {
   analyze(
     request: MealAnalysisGatewayRequest,
   ): Promise<MealAnalysisGatewayResponse>;
+  generateText(prompt: string): Promise<MealAnalysisGatewayResponse>;
 }

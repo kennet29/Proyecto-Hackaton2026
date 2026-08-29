@@ -23,6 +23,11 @@ import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients
 import { appColors, colorAlpha } from '../theme/colors';
 import { WebTimeInput } from '../components/WebTimeInput';
 import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
+import {
+  composeLocalDateTime,
+  extractLocalDatePortion,
+  extractLocalTimePortion,
+} from '../utils/localDate';
 
 const webDateInputStyle = {
   flex: 1,
@@ -63,36 +68,6 @@ const normalizeText = (value: unknown) => {
   return text ? text : null;
 };
 
-const extractDatePortion = (value?: string | null) => {
-  if (!value) return '';
-  const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
-  if (match) return match[1];
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return '';
-  }
-
-  return [
-    parsed.getFullYear(),
-    String(parsed.getMonth() + 1).padStart(2, '0'),
-    String(parsed.getDate()).padStart(2, '0'),
-  ].join('-');
-};
-
-const extractTimePortion = (value?: string | null) => {
-  if (!value) return '';
-  const match = value.match(/T(\d{2}:\d{2})/);
-  if (match) return match[1];
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return '';
-  }
-
-  return `${String(parsed.getHours()).padStart(2, '0')}:${String(parsed.getMinutes()).padStart(2, '0')}`;
-};
-
 const parseDateForPicker = (value?: string) => {
   const [year, month, day] = value?.split('-').map((segment) => Number(segment)) ?? [];
   if ([year, month, day].every((item) => Number.isFinite(item))) {
@@ -111,13 +86,6 @@ const parseTimeForPicker = (value?: string) => {
   }
   base.setHours(8, 0, 0, 0);
   return base;
-};
-
-const composeDateTime = (date: string, time: string) => {
-  if (!date || !time) {
-    return '';
-  }
-  return `${date}T${time}`;
 };
 
 const formatDateLabel = (value?: string) => {
@@ -237,7 +205,7 @@ export function RecordatorioFormScreen() {
     [appointments, selectedAppointmentId],
   );
 
-  const scheduledReminder = composeDateTime(notificationDate, notificationTime);
+  const scheduledReminder = composeLocalDateTime(notificationDate, notificationTime);
 
   const fetchPatients = useCallback(async () => {
     if (!token) {
@@ -305,8 +273,8 @@ export function RecordatorioFormScreen() {
 
     setSelectedPatientId(String(appointment.pacienteId));
     setSelectedAppointmentId(appointment.citaId);
-    setNotificationDate(extractDatePortion(appointment.fechacita));
-    setNotificationTime(extractTimePortion(appointment.fechacita) || '08:00');
+    setNotificationDate(extractLocalDatePortion(appointment.fechacita));
+    setNotificationTime(extractLocalTimePortion(appointment.fechacita) || '08:00');
     setMessage(buildReminderMessage(appointment, resolvedPatientName));
   };
 

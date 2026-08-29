@@ -5,6 +5,7 @@
 
 import { BadRequestException } from "@nestjs/common";
 import { AnalyzeMealDto } from "./dto/analyze-meal.dto";
+import { CreateRecipeDto } from "./dto/create-recipe.dto";
 import { MealAnalysisGateway } from "./meal-analysis.gateway";
 import { NanoAnalysisParser } from "./nano-analysis.parser";
 import { optimizeNanoImage } from "./nano-image.optimizer";
@@ -52,6 +53,7 @@ const foodAnalysis = JSON.stringify({
 describe("NanoService", () => {
   const gateway: jest.Mocked<MealAnalysisGateway> = {
     analyze: jest.fn(),
+    generateText: jest.fn(),
   };
   const promptBuilder = new NanoPromptBuilder();
   const parser = new NanoAnalysisParser();
@@ -113,5 +115,27 @@ describe("NanoService", () => {
     await expect(service.analyzeMeal(payload)).rejects.toBeInstanceOf(
       BadRequestException,
     );
+  });
+
+  it("genera una receta solo a partir de ingredientes escritos", async () => {
+    gateway.generateText.mockResolvedValue({
+      text: "Nombre de la receta: Avena con fruta\nIngredientes: avena y banano",
+      model: "test-model",
+    });
+
+    const result = await service.createRecipe({
+      goalKey: "weight-loss",
+      goalLabel: "Ligera y saciante",
+      ingredients: "avena, banano",
+      preferences: "sin azucar",
+    } as CreateRecipeDto);
+
+    expect(gateway.generateText).toHaveBeenCalledWith(
+      expect.stringContaining("Ingredientes disponibles: avena, banano"),
+    );
+    expect(result).toMatchObject({
+      recipe: expect.stringContaining("Avena con fruta"),
+      goalLabel: "Ligera y saciante",
+    });
   });
 });

@@ -23,7 +23,13 @@ import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
 import { WebTimeInput } from '../components/WebTimeInput';
-import { toLocalDateOnlyString } from '../utils/localDate';
+import {
+  composeLocalDateTime,
+  extractLocalDatePortion,
+  extractLocalTimePortion,
+  parseScheduledDateTime,
+  toLocalDateOnlyString,
+} from '../utils/localDate';
 import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 import { syncLocalReminder } from '../utils/localReminderScheduler';
 
@@ -233,33 +239,6 @@ const formatDateTimeLabel = (value?: string | null) => {
   });
 };
 
-const extractDatePortion = (value?: string | null) => {
-  if (!value) return '';
-  const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
-  if (match) return match[1];
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return '';
-  return [
-    parsed.getFullYear(),
-    String(parsed.getMonth() + 1).padStart(2, '0'),
-    String(parsed.getDate()).padStart(2, '0'),
-  ].join('-');
-};
-
-const extractTimePortion = (value?: string | null) => {
-  if (!value) return '08:00';
-  const match = value.match(/T(\d{2}:\d{2})/);
-  if (match) return match[1];
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return '08:00';
-  return `${String(parsed.getHours()).padStart(2, '0')}:${String(parsed.getMinutes()).padStart(2, '0')}`;
-};
-
-const composeDateTime = (date: string, time: string) => {
-  if (!date || !time) return '';
-  return `${date}T${time}`;
-};
-
 const COMPLETED_STATUSES = new Set([
   'realizada',
   'realizado',
@@ -277,8 +256,8 @@ const getReminderDisplayStatus = (item: ReminderRecord): ReminderDisplayStatus =
     return { key: 'completed', label: 'Realizada', color: appColors.success };
   }
 
-  const scheduledAt = new Date(item.fecharecordatorio);
-  if (!Number.isNaN(scheduledAt.getTime()) && scheduledAt.getTime() < Date.now()) {
+  const scheduledAt = parseScheduledDateTime(item.fecharecordatorio);
+  if (scheduledAt && scheduledAt.getTime() < Date.now()) {
     return { key: 'overdue', label: 'Vencida', color: appColors.accent };
   }
 
@@ -410,6 +389,7 @@ export function RecordatorioListScreen() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [updatingReminderKey, setUpdatingReminderKey] = useState<string | null>(null);
+  const [deletingReminderKey, setDeletingReminderKey] = useState<string | null>(null);
   const [reschedulingReminder, setReschedulingReminder] = useState<ReminderRecord | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleTime, setRescheduleTime] = useState('08:00');
@@ -538,13 +518,13 @@ export function RecordatorioListScreen() {
 
     const patientName = patientNameById[item.pacienteId] ?? `Paciente #${item.pacienteId}`;
     setSelectedPatientId(String(item.pacienteId));
-    setNotificationDate(extractDatePortion(item.date));
-    setNotificationTime(extractTimePortion(item.date));
+    setNotificationDate(extractLocalDatePortion(item.date));
+    setNotificationTime(extractLocalTimePortion(item.date));
     setMessage(`Recordatorio: ${patientName} tiene pendiente ${item.typeLabel.toLowerCase()} - ${item.title}.`);
   };
 
   const handleSubmit = async () => {
-    const scheduledReminder = composeDateTime(notificationDate.trim(), notificationTime.trim());
+    const scheduledReminder = composeLocalDateTime(notificationDate.trim(), notificationTime.trim());
 
     if (!selectedPatientId || !selectedSource || !scheduledReminder || !message.trim()) {
       Alert.alert('Faltan datos', 'Selecciona persona, tipo, registro, fecha/hora y mensaje.');
@@ -641,6 +621,65 @@ export function RecordatorioListScreen() {
     }
   };
 
+  const handleDeleteReminder = (item: ReminderRecord) => {
+    const reminderKey = `${item.reminderType}-${item.reminderId}`;
+    if (deletingReminderKey || updatingReminderKey || rescheduling) return;
+
+    Alert.alert(
+      'Eliminar recordatorio',
+      'Se eliminará este recordatorio y se cancelará su aviso programado. Esta acción no se puede deshacer.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: () => void deleteReminder(item, reminderKey),
+        },
+      ],
+    );
+  };
+
+  const deleteReminder = async (item: ReminderRecord, reminderKey: string) => {
+    const isNotification = item.reminderType === 'notificacion';
+    setDeletingReminderKey(reminderKey);
+    try {
+      const result = await submitJsonWithOfflineFallback({
+        token,
+        path: `/${isNotification ? 'notificacion' : 'recordatoriocita'}/${item.reminderId}`,
+        method: 'DELETE',
+        description: 'eliminar recordatorio',
+      });
+
+      setReminders((current) =>
+        current.filter(
+          (reminder) =>
+            reminder.reminderId !== item.reminderId ||
+            reminder.reminderType !== item.reminderType,
+        ),
+      );
+      if (
+        reschedulingReminder?.reminderId === item.reminderId &&
+        reschedulingReminder.reminderType === item.reminderType
+      ) {
+        setReschedulingReminder(null);
+      }
+
+      if (result.status === 'queued') {
+        Alert.alert(
+          'Eliminación guardada',
+          'El aviso local fue cancelado. El recordatorio se eliminará del servidor cuando vuelva la conexión.',
+        );
+      }
+    } catch (deleteError) {
+      Alert.alert(
+        'Error',
+        deleteError instanceof Error ? deleteError.message : 'No se pudo eliminar el recordatorio',
+      );
+    } finally {
+      setDeletingReminderKey(null);
+    }
+  };
+
   const openReschedulePanel = (item: ReminderRecord) => {
     const currentKey = reschedulingReminder
       ? `${reschedulingReminder.reminderType}-${reschedulingReminder.reminderId}`
@@ -652,16 +691,16 @@ export function RecordatorioListScreen() {
     }
 
     setReschedulingReminder(item);
-    setRescheduleDate(extractDatePortion(item.fecharecordatorio));
-    setRescheduleTime(extractTimePortion(item.fecharecordatorio));
+    setRescheduleDate(extractLocalDatePortion(item.fecharecordatorio));
+    setRescheduleTime(extractLocalTimePortion(item.fecharecordatorio) || '08:00');
   };
 
   const handleReschedule = async () => {
     if (!reschedulingReminder || rescheduling) return;
 
-    const nextScheduledDate = composeDateTime(rescheduleDate.trim(), rescheduleTime.trim());
-    const parsedDate = new Date(nextScheduledDate);
-    if (!nextScheduledDate || Number.isNaN(parsedDate.getTime())) {
+    const nextScheduledDate = composeLocalDateTime(rescheduleDate.trim(), rescheduleTime.trim());
+    const parsedDate = parseScheduledDateTime(nextScheduledDate);
+    if (!nextScheduledDate || !parsedDate) {
       Alert.alert('Fecha inválida', 'Selecciona una fecha y hora válidas.');
       return;
     }
@@ -734,6 +773,7 @@ export function RecordatorioListScreen() {
     const displayStatus = getReminderDisplayStatus(item);
     const isCompleted = displayStatus.key === 'completed';
     const isUpdating = updatingReminderKey === reminderKey;
+    const isDeleting = deletingReminderKey === reminderKey;
     const isRescheduleOpen =
       reschedulingReminder?.reminderId === item.reminderId &&
       reschedulingReminder?.reminderType === item.reminderType;
@@ -878,7 +918,7 @@ export function RecordatorioListScreen() {
                 isUpdating ? styles.buttonDisabled : null,
               ]}
               onPress={() => void handleMarkAsCompleted(item)}
-              disabled={isCompleted || Boolean(updatingReminderKey) || rescheduling}
+              disabled={isCompleted || Boolean(updatingReminderKey) || Boolean(deletingReminderKey) || rescheduling}
               accessibilityRole="button"
               accessibilityLabel={
                 isCompleted ? 'Recordatorio realizado' : 'Marcar recordatorio como realizado'
@@ -909,7 +949,7 @@ export function RecordatorioListScreen() {
                 isRescheduleOpen ? styles.rescheduleButtonActive : null,
               ]}
               onPress={() => openReschedulePanel(item)}
-              disabled={rescheduling}
+              disabled={rescheduling || Boolean(deletingReminderKey)}
               accessibilityRole="button"
               accessibilityLabel="Reprogramar recordatorio"
             >
@@ -917,6 +957,21 @@ export function RecordatorioListScreen() {
               <AppText style={styles.rescheduleButtonText}>
                 {isRescheduleOpen ? 'Cerrar' : 'Reprogramar'}
               </AppText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.deleteButton, isDeleting ? styles.buttonDisabled : null]}
+              onPress={() => handleDeleteReminder(item)}
+              disabled={Boolean(updatingReminderKey) || Boolean(deletingReminderKey) || rescheduling}
+              accessibilityRole="button"
+              accessibilityLabel="Eliminar recordatorio"
+            >
+              {isDeleting ? (
+                <ActivityIndicator size="small" color={appColors.accent} />
+              ) : (
+                <Ionicons name="trash-outline" size={17} color={appColors.accent} />
+              )}
+              <AppText style={styles.deleteButtonText}>Eliminar</AppText>
             </TouchableOpacity>
           </View>
           <AppText style={styles.footerId}>
@@ -1514,6 +1569,24 @@ const styles = StyleSheet.create({
   },
   rescheduleButtonText: {
     color: appColors.info,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  deleteButton: {
+    minHeight: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    borderRadius: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    backgroundColor: colorAlpha(appColors.accent, '12'),
+    borderWidth: 1,
+    borderColor: colorAlpha(appColors.accent, '66'),
+  },
+  deleteButtonText: {
+    color: appColors.accent,
     fontSize: 12,
     fontWeight: '900',
   },

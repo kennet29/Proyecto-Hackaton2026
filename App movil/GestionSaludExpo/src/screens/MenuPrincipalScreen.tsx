@@ -292,6 +292,22 @@ const wellnessOptions: OptionItem[] = [
     },
   },
   {
+    key: 'nano-chef',
+    label: 'Nano Chef',
+    description: 'Crea recetas saludables con los ingredientes que tienes, sin usar fotos.',
+    icon: 'restaurant-outline',
+    accent: '#FDBA74',
+    navigateTo: 'NanoChef',
+    nano: true,
+    nanoAppearance: {
+      id: 'chef-menu',
+      label: 'Nano Chef',
+      description: 'Nano Chef',
+      format: 'svg',
+      svgComponent: NanoBienestar,
+    },
+  },
+  {
     key: 'seguimiento-fisico',
     label: 'Seguimiento Fisico',
     description: 'Peso, ejercicio, pasos y progreso diario',
