@@ -23,6 +23,7 @@ import {
   generateFingerprintTemplate,
   saveFingerprintTemplate,
 } from '../utils/fingerprint';
+import NanoDoctor from '../svg/Nano Doctor.svg';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Registro'>;
 type FeedbackState = { type: 'success' | 'error'; message: string } | null;
@@ -242,7 +243,7 @@ export function RegistroScreen({ navigation }: Props) {
         {isWebWide ? (
           <View style={styles.webIntroPanel}>
             <View style={styles.webIntroIcon}>
-              <AppText style={styles.webIntroIconText}>GS</AppText>
+              <NanoDoctor width={264} height={264} />
             </View>
             <AppText style={styles.webIntroTitle}>Crea tu expediente digital</AppText>
             <AppText style={styles.webIntroCopy}>
@@ -404,6 +405,7 @@ export function RegistroScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('MedicoRegistro')}
           accessibilityLabel="Acceder al registro médico"
         >
+          <NanoDoctor width={42} height={42} />
           <AppText style={styles.medicalRegisterIcon}>⚕</AppText>
           <View style={styles.medicalRegisterCopy}>
             <AppText style={styles.medicalRegisterTitle}>Registro médico</AppText>
@@ -451,13 +453,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   webIntroIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
+    width: 316,
+    height: 316,
+    borderRadius: 78,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#29B6FF',
-    marginBottom: 28,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#E6F4FE',
+    alignSelf: 'center',
+    marginBottom: 34,
   },
   webIntroIconText: {
     color: '#071120',
@@ -637,6 +642,7 @@ const styles = StyleSheet.create({
   medicalRegisterBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     borderWidth: 1,
     borderColor: '#29B6FF',
     borderRadius: 12,
@@ -645,6 +651,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EAF7FF',
   },
   medicalRegisterIcon: {
+    display: 'none',
     width: 34,
     color: '#29B6FF',
     fontSize: 25,

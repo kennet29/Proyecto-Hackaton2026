@@ -141,20 +141,67 @@ export class NanoService {
       payload.equipment,
       payload.limitations,
     );
-    const providerResponse = await this.analysisGateway.generateText(prompt);
+    // Una semana completa con ejercicios necesita más salida que una receta.
+    const providerResponse = await this.analysisGateway.generateText(prompt, 2_200);
     if (!providerResponse.text) {
       throw new BadGatewayException("Nano Entrenador no devolvio una rutina util.");
     }
 
     try {
-      const cleaned = providerResponse.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+      const parsed = this.parseJsonCandidate(providerResponse.text);
       return {
-        plan: trainingPlanSchema.parse(JSON.parse(cleaned)),
+        plan: trainingPlanSchema.parse(this.normalizeTrainingPlan(parsed)),
         goalLabel: payload.goalLabel,
         model: providerResponse.model,
       };
     } catch {
       throw new BadGatewayException("Nano Entrenador devolvio una rutina con formato invalido.");
     }
+  }
+
+  private parseJsonCandidate(raw: string): unknown {
+    const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start < 0 || end <= start) {
+      throw new Error("respuesta sin JSON");
+    }
+    return JSON.parse(cleaned.slice(start, end + 1));
+  }
+
+  private normalizeTrainingPlan(value: unknown): unknown {
+    if (!value || typeof value !== "object") return value;
+    const source = value as Record<string, unknown>;
+    const rawDays = source.weeklyDays ?? source.weekly_days ?? source.days ?? source.planSemanal;
+    const weeklyDays = Array.isArray(rawDays)
+      ? rawDays.map((item) => {
+          const day = item && typeof item === "object" ? item as Record<string, unknown> : {};
+          const rawExercises = day.exercises ?? day.workout ?? day.ejercicios ?? [];
+          return {
+            day: day.day ?? day.dia ?? day.name ?? "Día",
+            focus: day.focus ?? day.enfoque ?? day.description ?? "Entrenamiento",
+            duration: day.duration ?? day.durationMinutes ?? day.duracion ?? "30 minutos",
+            exercises: Array.isArray(rawExercises)
+              ? rawExercises.map((exercise) => {
+                  const item = exercise && typeof exercise === "object" ? exercise as Record<string, unknown> : {};
+                  return {
+                    name: item.name ?? item.nombre ?? "Ejercicio",
+                    sets: item.sets ?? item.series ?? "3 series",
+                    reps: item.reps ?? item.repetitions ?? item.repeticiones ?? "10 repeticiones",
+                    rest: item.rest ?? item.restSeconds ?? item.descanso ?? "60 segundos",
+                    notes: item.notes ?? item.notes ?? item.notas ?? "",
+                  };
+                })
+              : [],
+          };
+        })
+      : rawDays;
+
+    return {
+      title: source.title ?? source.name ?? source.nombre ?? "Rutina semanal",
+      summary: source.summary ?? source.description ?? source.resumen ?? "Rutina personalizada de entrenamiento.",
+      weeklyDays,
+      nanoTip: source.nanoTip ?? source.tip ?? source.consejo ?? "Escucha a tu cuerpo y avanza gradualmente.",
+    };
   }
 }

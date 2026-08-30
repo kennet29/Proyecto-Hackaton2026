@@ -192,11 +192,40 @@ describe("NanoService", () => {
 
     expect(gateway.generateText).toHaveBeenCalledWith(
       expect.stringContaining("Objetivo: Ponerse en forma"),
+      2_200,
     );
     expect(result).toMatchObject({
       plan: { title: "Semana activa", weeklyDays: expect.any(Array) },
       goalLabel: "Ponerse en forma",
     });
     expect(result.plan.weeklyDays).toHaveLength(7);
+  });
+
+  it("acepta variantes frecuentes de los campos de una rutina generada", async () => {
+    const days = Array.from({ length: 7 }, (_, index) => ({
+      dia: `Dia ${index + 1}`,
+      enfoque: "Movilidad",
+      duracion: "20 minutos",
+      ejercicios: index < 5 ? [{ nombre: "Puente", series: "2", repeticiones: "12", descanso: "45 s" }] : [],
+    }));
+    gateway.generateText.mockResolvedValue({
+      text: `Aquí está tu rutina: ${JSON.stringify({
+        nombre: "Rutina de movilidad",
+        resumen: "Plan semanal para mejorar movilidad de manera progresiva.",
+        days,
+        consejo: "Mantén una respiración controlada durante cada ejercicio.",
+      })}`,
+      model: "test-model",
+    });
+
+    const result = await service.createTrainingPlan({
+      goalKey: "mobility",
+      goalLabel: "Movilidad y salud",
+      level: "beginner",
+    } as CreateTrainingPlanDto);
+
+    expect(result.plan).toMatchObject({ title: "Rutina de movilidad" });
+    expect(result.plan.weeklyDays).toHaveLength(7);
+    expect(result.plan.weeklyDays[0].exercises[0]).toMatchObject({ name: "Puente", reps: "12" });
   });
 });

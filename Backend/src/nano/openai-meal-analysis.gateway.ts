@@ -80,7 +80,10 @@ export class OpenAiMealAnalysisGateway implements MealAnalysisGateway {
     };
   }
 
-  async generateText(prompt: string): Promise<MealAnalysisGatewayResponse> {
+  async generateText(
+    prompt: string,
+    maxOutputTokens = 700,
+  ): Promise<MealAnalysisGatewayResponse> {
     if (!this.apiKey) {
       throw new ServiceUnavailableException(
         "OPENAI_API_KEY no esta configurada en el backend.",
@@ -95,7 +98,7 @@ export class OpenAiMealAnalysisGateway implements MealAnalysisGateway {
           content: [{ type: "input_text", text: prompt }],
         },
       ],
-      max_output_tokens: 700,
+      max_output_tokens: maxOutputTokens,
     });
 
     return {
