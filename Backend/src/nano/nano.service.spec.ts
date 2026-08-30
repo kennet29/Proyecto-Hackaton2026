@@ -6,6 +6,7 @@
 import { BadRequestException } from "@nestjs/common";
 import { AnalyzeMealDto } from "./dto/analyze-meal.dto";
 import { CreateRecipeDto } from "./dto/create-recipe.dto";
+import { CreateTrainingPlanDto } from "./dto/create-training-plan.dto";
 import { MealAnalysisGateway } from "./meal-analysis.gateway";
 import { NanoAnalysisParser } from "./nano-analysis.parser";
 import { optimizeNanoImage } from "./nano-image.optimizer";
@@ -144,5 +145,58 @@ describe("NanoService", () => {
       recipe: { title: "Avena con fruta" },
       goalLabel: "Ligera y saciante",
     });
+  });
+
+  it("genera una rutina semanal estructurada con siete dias", async () => {
+    const weeklyDays = [
+      "Lunes",
+      "Martes",
+      "Miercoles",
+      "Jueves",
+      "Viernes",
+      "Sabado",
+      "Domingo",
+    ].map((day, index) => ({
+      day,
+      focus: index < 5 ? "Entrenamiento de cuerpo completo" : "Recuperacion activa",
+      duration: index < 5 ? "30 minutos" : "20 minutos",
+      exercises:
+        index < 5
+          ? [
+              {
+                name: "Sentadilla",
+                sets: "3 series",
+                reps: "10 repeticiones",
+                rest: "60 segundos",
+                notes: "Mantén la espalda recta.",
+              },
+            ]
+          : [],
+    }));
+    gateway.generateText.mockResolvedValue({
+      text: JSON.stringify({
+        title: "Semana activa",
+        summary: "Rutina semanal de bajo impacto para mejorar fuerza y condicion fisica.",
+        weeklyDays,
+        nanoTip: "Detente si sientes dolor agudo y aumenta la intensidad gradualmente.",
+      }),
+      model: "test-model",
+    });
+
+    const result = await service.createTrainingPlan({
+      goalKey: "fitness",
+      goalLabel: "Ponerse en forma",
+      level: "beginner",
+      equipment: "sin equipo",
+    } as CreateTrainingPlanDto);
+
+    expect(gateway.generateText).toHaveBeenCalledWith(
+      expect.stringContaining("Objetivo: Ponerse en forma"),
+    );
+    expect(result).toMatchObject({
+      plan: { title: "Semana activa", weeklyDays: expect.any(Array) },
+      goalLabel: "Ponerse en forma",
+    });
+    expect(result.plan.weeklyDays).toHaveLength(7);
   });
 });
