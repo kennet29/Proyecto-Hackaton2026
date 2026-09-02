@@ -7,11 +7,13 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background: #f4efe4;
+  background: #f5faff;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 400;
 }
 
 .leaflet-container {
-  font-family: "Trebuchet MS", "Gill Sans", sans-serif;
+  font-family: "Space Grotesk", sans-serif;
 }
 
 .leaflet-popup-content-wrapper,

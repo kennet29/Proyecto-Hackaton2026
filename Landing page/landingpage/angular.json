@@ -36,7 +36,12 @@
             "tsConfig": "tsconfig.app.json",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              {
+                "glob": "Recurso 1.png",
+                "input": "src/svg/1x",
+                "output": "assets/nano"
+              }
             ],
             "styles": [
               "src/styles.css"

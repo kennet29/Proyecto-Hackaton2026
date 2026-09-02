@@ -86,15 +86,23 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   readonly features = [
     {
       title: 'Citas y recordatorios',
-      description: 'Programa consultas, vacunas y controles con alertas claras para no perder seguimiento.'
+      description: 'Programa consultas, vacunas, controles y medicamentos con recordatorios para mantener tu seguimiento al día.'
     },
     {
-      title: 'Expediente clinico digital',
-      description: 'Organiza alergias, medicacion, examenes y antecedentes en un solo flujo.'
+      title: 'Expediente médico digital',
+      description: 'Organiza tu información de salud, antecedentes, alergias, medicamentos y exámenes en un solo lugar.'
     },
     {
-      title: 'Directorio geolocalizado',
-      description: 'Ubica centros de salud, servicios y puntos de atencion con un mapa interactivo.'
+      title: 'Seguimiento de hábitos',
+      description: 'Registra tu hidratación, alimentación, actividad física, descanso y otros hábitos para avanzar hacia una vida más saludable.'
+    },
+    {
+      title: 'Orientación nutricional con IA',
+      description: 'Analiza tus alimentos y recibe recomendaciones personalizadas para mejorar tu alimentación según tus objetivos.'
+    },
+    {
+      title: 'Directorio de servicios de salud',
+      description: 'Encuentra clínicas, hospitales, farmacias y otros servicios de salud a través de un mapa interactivo.'
     }
   ];
 
@@ -103,19 +111,19 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   readonly pricing = [
     {
       name: 'Piloto',
-      price: '$0',
+      price: '-',
       detail: 'Ideal para validar el flujo principal con equipos pequenos.',
       bullets: ['Acceso web', 'Mapa de servicios', 'Demo funcional']
     },
     {
       name: 'Profesional',
-      price: '$19',
+      price: '-',
       detail: 'Pensado para atencion individual y seguimiento frecuente.',
       bullets: ['Agenda y recordatorios', 'Expediente digital', 'Reportes de seguimiento']
     },
     {
       name: 'Institucional',
-      price: 'Cotizar',
+      price: '-',
       detail: 'Para clinicas, programas comunitarios y equipos multidisciplinarios.',
       bullets: ['Usuarios y roles', 'Panel administrativo', 'Implementacion guiada']
     }
@@ -344,13 +352,13 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   private getPointColor(status: string): string {
     switch (status) {
       case 'Activo':
-        return '#ff4d73';
+        return '#4DAF51';
       case 'Revision':
-        return '#f49708';
+        return '#EA5074';
       case 'Proximamente':
-        return '#38f28e';
+        return '#4DAFE4';
       default:
-        return '#2986bf';
+        return '#4DAFE4';
     }
   }
 

@@ -13,7 +13,15 @@
 
   <header class="hero" id="inicio">
     <nav class="topbar">
-      <a class="brand" href="#inicio">{{ title }}</a>
+      <a class="brand" href="#inicio" aria-label="NICAPRIME, volver al inicio">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <path d="M16 27.2 5.4 17.3A7 7 0 0 1 15 7.1l1 1 1-1a7 7 0 0 1 9.6 10.2L16 27.2Z"></path>
+            <path d="M8.5 16h4l1.8-4.2 3.1 8.2 2-4h4.1"></path>
+          </svg>
+        </span>
+        <span>{{ title }}</span>
+      </a>
       <button
         class="menu-toggle"
         type="button"
@@ -54,6 +62,15 @@
     <div class="hero-stage">
       <div class="hero-layout">
         <div class="hero-copy">
+          <div class="hero-logo-space" aria-label="NICAPRIME">
+            <span class="hero-logo-mark" aria-hidden="true">
+              <svg viewBox="0 0 32 32">
+                <path d="M16 27.2 5.4 17.3A7 7 0 0 1 15 7.1l1 1 1-1a7 7 0 0 1 9.6 10.2L16 27.2Z"></path>
+                <path d="M8.5 16h4l1.8-4.2 3.1 8.2 2-4h4.1"></path>
+              </svg>
+            </span>
+            <strong>NICAPRIME</strong>
+          </div>
           <p class="eyebrow">Salud digital en Nicaragua</p>
           <p class="hero-badge">Expediente, recordatorios, seguimiento y mapa de servicios en una sola plataforma</p>
           <h1>Gestiona tu salud con una experiencia simple, movil y humana.</h1>
@@ -123,47 +140,91 @@
   <section class="content-section about-section" id="sobre-nosotros">
     <div class="section-heading">
       <p class="eyebrow">Sobre nosotros</p>
-      <h2>Construimos una plataforma de salud enfocada en seguimiento real, no solo registro.</h2>
+      <h2>Transformamos la tecnología en una aliada para cuidar tu salud.</h2>
     </div>
     <div class="story-layout">
-      <div class="story-copy">
-        <div class="two-column">
-          <p>
-            NICAPRIME nace para reducir la fragmentacion entre expediente, citas,
-            educacion y acceso a servicios de salud.
-          </p>
-          <p>
-            El objetivo es que pacientes y equipos puedan tomar decisiones con mejor contexto,
-            menos friccion y mayor continuidad de cuidado.
-          </p>
-        </div>
+      <div class="story-copy about-copy">
+        <p class="about-lead">
+          En Nica Prime creemos que la prevención comienza mucho antes de una enfermedad:
+          en nuestros hábitos, nuestras decisiones y el conocimiento de nuestra salud.
+        </p>
+        <p>
+          Por eso integramos seguimiento preventivo, educación, expediente médico,
+          recordatorios y orientación nutricional en un solo lugar.
+        </p>
+        <p>
+          Junto con Nano acompañamos a las personas y sus familias a conocer, prevenir,
+          actuar y cuidar su salud de forma sencilla y responsable.
+        </p>
       </div>
 
       <aside class="story-panel">
-        <p class="story-panel-label">Propuesta de valor</p>
-        <h3>Una base unica para citas, alertas, expediente y orientacion territorial.</h3>
+        <p class="story-panel-label">Nuestro propósito</p>
+        <h3>Nica Prime — Eleva tu salud, vive tu Prime.</h3>
         <div class="story-panel-grid">
-          <span *ngFor="let signal of heroSignals">{{ signal }}</span>
+          <span>Conocer</span>
+          <span>Prevenir</span>
+          <span>Actuar</span>
+          <span>Cuidar</span>
         </div>
       </aside>
+    </div>
+  </section>
+
+  <section class="content-section nano-section" id="nano">
+    <div class="nano-card">
+      <div class="nano-visual">
+        <div class="nano-image-frame">
+          <img src="assets/nano/Recurso 1.png" alt="Nano, la mascota de Nica Prime">
+        </div>
+      </div>
+
+      <div class="nano-copy">
+        <p class="eyebrow">Nuestra mascota</p>
+        <h2>Conoce a Nano</h2>
+        <p class="nano-lead">Nano es el compañero que te inspira a cuidar de ti.</p>
+        <p>
+          Cercano, curioso y optimista, convierte la prevención en pequeños momentos que
+          te recuerdan que tu salud importa.
+        </p>
+        <p>
+          No juzga ni impone: acompaña, enseña y celebra cada paso, porque cuidarte hoy
+          es regalarte un mejor mañana.
+        </p>
+        <div class="nano-traits" aria-label="Personalidad de Nano">
+          <span>Cercano</span>
+          <span>Curioso</span>
+          <span>Optimista</span>
+        </div>
+      </div>
     </div>
   </section>
 
   <section class="content-section" id="servicios">
     <div class="section-heading">
       <p class="eyebrow">Servicios</p>
-      <h2>Dos frentes conectados para que la experiencia de salud no se rompa.</h2>
+      <h2>Una experiencia conectada para cuidar la salud de principio a fin.</h2>
     </div>
-    <div class="card-grid two-up">
+    <div class="card-grid services-grid">
       <article class="info-card accent-green">
         <p class="card-kicker">01 / Pacientes</p>
-        <h3>App movil para seguimiento diario</h3>
-        <p>Registro de datos clinicos, control de medicacion, alertas y acceso rapido al historial.</p>
+        <h3>Tu salud, siempre contigo.</h3>
+        <p>Una app móvil para organizar tu salud, dar seguimiento a tus hábitos y recibir recordatorios de citas, medicamentos y cuidados preventivos.</p>
       </article>
       <article class="info-card accent-blue">
-        <p class="card-kicker">02 / Equipos</p>
-        <h3>Panel para gestion y acompanamiento</h3>
-        <p>Herramientas para consultar informacion, priorizar casos y mantener continuidad de atencion.</p>
+        <p class="card-kicker">02 / Familias</p>
+        <h3>Cuidar de los tuyos también es prevención.</h3>
+        <p>Herramientas para organizar y dar seguimiento a la información de salud de tus seres queridos, facilitando un cuidado más responsable y oportuno.</p>
+      </article>
+      <article class="info-card accent-rose">
+        <p class="card-kicker">03 / Educación y prevención</p>
+        <h3>Conocer tu salud es el primer paso para cuidarla.</h3>
+        <p>Contenido y orientación para fortalecer hábitos saludables, prevenir riesgos y tomar decisiones más conscientes.</p>
+      </article>
+      <article class="info-card accent-green">
+        <p class="card-kicker">04 / Servicios de salud</p>
+        <h3>Encuentra lo que necesitas cuando lo necesitas.</h3>
+        <p>Acceso a información y ubicación de clínicas y otros servicios de salud para facilitar la conexión con el ecosistema sanitario.</p>
       </article>
     </div>
   </section>
@@ -171,11 +232,16 @@
   <section class="content-section" id="caracteristicas">
     <div class="section-heading">
       <p class="eyebrow">Funciones clave</p>
-      <h2>Lo esencial para prevenir, registrar y actuar a tiempo.</h2>
+      <h2>Lo esencial para prevenir, organizar y cuidar tu salud.</h2>
     </div>
-    <div class="card-grid three-up">
-      <article class="info-card accent-green" *ngFor="let feature of features; let index = index" [class.accent-blue]="index === 1" [class.accent-rose]="index === 2">
-        <p class="card-kicker">Funcion {{ index + 1 }}</p>
+    <div class="card-grid features-grid">
+      <article
+        class="info-card feature-card"
+        *ngFor="let feature of features; let index = index"
+        [class.accent-green]="index % 3 === 0"
+        [class.accent-blue]="index % 3 === 1"
+        [class.accent-rose]="index % 3 === 2">
+        <p class="card-kicker">0{{ index + 1 }} / Función clave</p>
         <h3>{{ feature.title }}</h3>
         <p>{{ feature.description }}</p>
       </article>
