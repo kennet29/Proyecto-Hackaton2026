@@ -318,6 +318,8 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
             <Picker
               selectedValue={form.pacienteId}
               onValueChange={(value) => handleChange('pacienteId', String(value))}
+              style={styles.picker}
+              dropdownIconColor="#F4F8FF"
             >
               {patients.map((patient) => (
                 <Picker.Item
@@ -328,6 +330,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
                       : patient.displayName
                   }
                   value={String(patient.pacienteId)}
+                  color="#F4F8FF"
                 />
               ))}
             </Picker>
@@ -388,6 +391,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           value={form.fecha}
           onChangeText={(value) => handleChange('fecha', value)}
           placeholder="Fecha (YYYY-MM-DD)"
+          placeholderTextColor="#9FB3C8"
           autoCapitalize="none"
         />
 
@@ -399,6 +403,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
               value={form.peso}
               onChangeText={(value) => handleChange('peso', value)}
               placeholder="Peso (kg)"
+              placeholderTextColor="#9FB3C8"
               keyboardType="decimal-pad"
             />
           </View>
@@ -409,6 +414,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
               value={form.minutosEjercicio}
               onChangeText={(value) => handleChange('minutosEjercicio', value)}
               placeholder="Ejercicio min"
+              placeholderTextColor="#9FB3C8"
               keyboardType="numeric"
             />
           </View>
@@ -420,6 +426,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           value={form.tipoEjercicio}
           onChangeText={(value) => handleChange('tipoEjercicio', value)}
           placeholder="Tipo de ejercicio"
+          placeholderTextColor="#9FB3C8"
         />
 
         <AppText style={styles.fieldLabel}>Intensidad</AppText>
@@ -427,12 +434,15 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           <Picker
             selectedValue={form.intensidad}
             onValueChange={(value) => handleChange('intensidad', String(value))}
+            style={styles.picker}
+            dropdownIconColor="#F4F8FF"
           >
             {intensidadOptions.map((item) => (
               <Picker.Item
                 key={`intensidad-${item.value || 'none'}`}
                 label={item.label}
                 value={item.value}
+                color="#F4F8FF"
               />
             ))}
           </Picker>
@@ -446,6 +456,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
               value={form.pasos}
               onChangeText={(value) => handleChange('pasos', value)}
               placeholder="Pasos"
+              placeholderTextColor="#9FB3C8"
               keyboardType="numeric"
             />
           </View>
@@ -456,6 +467,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
               value={form.caloriasQuemadas}
               onChangeText={(value) => handleChange('caloriasQuemadas', value)}
               placeholder="Calorias"
+              placeholderTextColor="#9FB3C8"
               keyboardType="numeric"
             />
           </View>
@@ -467,6 +479,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           value={form.distanciaKm}
           onChangeText={(value) => handleChange('distanciaKm', value)}
           placeholder="Distancia (km)"
+          placeholderTextColor="#9FB3C8"
           keyboardType="decimal-pad"
         />
 
@@ -476,6 +489,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           value={form.notas}
           onChangeText={(value) => handleChange('notas', value)}
           placeholder="Notas"
+          placeholderTextColor="#9FB3C8"
           multiline
           textAlignVertical="top"
         />
@@ -540,15 +554,24 @@ const styles = StyleSheet.create({
   pickerWrapper: {
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#F4F8FF',
+    borderWidth: 1,
+    borderColor: '#315579',
+    backgroundColor: '#0C1C31',
+  },
+  picker: {
+    height: 50,
+    color: '#F4F8FF',
+    backgroundColor: '#0C1C31',
   },
   input: {
-    backgroundColor: '#F4F8FF',
+    backgroundColor: '#0C1C31',
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#315579',
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#071120',
+    color: '#F4F8FF',
   },
   textArea: {
     minHeight: 92,

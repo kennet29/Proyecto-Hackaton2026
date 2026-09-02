@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
 import { Picker } from '@react-native-picker/picker';
+import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
@@ -27,6 +28,7 @@ import {
   composeLocalDateTime,
   extractLocalDatePortion,
   extractLocalTimePortion,
+  parseCalendarDate,
   parseScheduledDateTime,
   toLocalDateOnlyString,
 } from '../utils/localDate';
@@ -395,6 +397,44 @@ export function RecordatorioListScreen() {
   const [rescheduleTime, setRescheduleTime] = useState('08:00');
   const [rescheduling, setRescheduling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const getPickerValue = (dateValue: string, timeValue: string) => {
+    const value = parseCalendarDate(dateValue) ?? new Date();
+    const [hours = '08', minutes = '00'] = timeValue.split(':');
+    value.setHours(Number(hours) || 0, Number(minutes) || 0, 0, 0);
+    return value;
+  };
+
+  const openDatePicker = (
+    dateValue: string,
+    timeValue: string,
+    onDateChange: (value: string) => void,
+  ) => {
+    DateTimePickerAndroid.open({
+      value: getPickerValue(dateValue, timeValue),
+      mode: 'date',
+      onChange: (event, selected) => {
+        if (event.type === 'set' && selected) onDateChange(toLocalDateOnlyString(selected));
+      },
+    });
+  };
+
+  const openTimePicker = (
+    dateValue: string,
+    timeValue: string,
+    onTimeChange: (value: string) => void,
+  ) => {
+    DateTimePickerAndroid.open({
+      value: getPickerValue(dateValue, timeValue),
+      mode: 'time',
+      is24Hour: true,
+      onChange: (event, selected) => {
+        if (event.type === 'set' && selected) {
+          onTimeChange(`${String(selected.getHours()).padStart(2, '0')}:${String(selected.getMinutes()).padStart(2, '0')}`);
+        }
+      },
+    });
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -862,6 +902,25 @@ export function RecordatorioListScreen() {
                     includeQuickTimes={false}
                   />
                 </>
+              ) : Platform.OS === 'android' ? (
+                <>
+                  <TouchableOpacity
+                    style={styles.dateTimePickerButton}
+                    onPress={() => openDatePicker(rescheduleDate, rescheduleTime, setRescheduleDate)}
+                    accessibilityLabel="Elegir nueva fecha del aviso"
+                  >
+                    <Ionicons name="calendar-outline" size={18} color={appColors.info} />
+                    <AppText style={styles.dateTimePickerText}>{rescheduleDate || 'Elegir fecha'}</AppText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.dateTimePickerButton}
+                    onPress={() => openTimePicker(rescheduleDate, rescheduleTime, setRescheduleTime)}
+                    accessibilityLabel="Elegir nueva hora del aviso"
+                  >
+                    <Ionicons name="time-outline" size={18} color={appColors.info} />
+                    <AppText style={styles.dateTimePickerText}>{rescheduleTime || 'Elegir hora'}</AppText>
+                  </TouchableOpacity>
+                </>
               ) : (
                 <>
                   <AppTextInput
@@ -1088,6 +1147,25 @@ export function RecordatorioListScreen() {
                 ariaLabel="Hora del aviso"
               />
             </>
+          ) : Platform.OS === 'android' ? (
+            <>
+              <TouchableOpacity
+                style={styles.dateTimePickerButton}
+                onPress={() => openDatePicker(notificationDate, notificationTime, setNotificationDate)}
+                accessibilityLabel="Elegir fecha del aviso"
+              >
+                <Ionicons name="calendar-outline" size={18} color={appColors.info} />
+                <AppText style={styles.dateTimePickerText}>{notificationDate || 'Elegir fecha'}</AppText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.dateTimePickerButton}
+                onPress={() => openTimePicker(notificationDate, notificationTime, setNotificationTime)}
+                accessibilityLabel="Elegir hora del aviso"
+              >
+                <Ionicons name="time-outline" size={18} color={appColors.info} />
+                <AppText style={styles.dateTimePickerText}>{notificationTime || 'Elegir hora'}</AppText>
+              </TouchableOpacity>
+            </>
           ) : (
             <>
               <AppTextInput
@@ -1283,6 +1361,23 @@ const styles = StyleSheet.create({
   dateTimeRow: {
     flexDirection: 'row',
     gap: 10,
+  },
+  dateTimePickerButton: {
+    flex: 1,
+    minHeight: 50,
+    borderRadius: 14,
+    paddingHorizontal: 13,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: appColors.backgroundMuted,
+    borderWidth: 1,
+    borderColor: appColors.border,
+  },
+  dateTimePickerText: {
+    color: appColors.text,
+    fontSize: 14,
+    fontWeight: '700',
   },
   input: {
     flex: 1,

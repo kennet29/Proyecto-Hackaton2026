@@ -187,6 +187,14 @@ export function ConsultaListScreen({ navigation }: Props) {
     fetchData(filterPacienteId || undefined);
   };
 
+  const handlePatientFilterChange = (value: string) => {
+    setFilterPacienteId(value);
+    setSelectedDate('');
+    setShowDayConsultas(false);
+    setShowHistory(false);
+    void fetchData(value || undefined);
+  };
+
   useEffect(() => {
     fetchPatients();
   }, [fetchPatients]);
@@ -325,21 +333,23 @@ export function ConsultaListScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.filterCard}>
-          <AppText style={styles.sectionTitle}>Filtrar por paciente</AppText>
+          <AppText style={styles.sectionTitle}>Paciente</AppText>
+          <AppText style={styles.filterHint}>El historial se actualiza al elegir una persona.</AppText>
           <View style={styles.filterRow}>
             <View style={styles.pickerWrapper}>
               <Picker
                 selectedValue={filterPacienteId}
-                onValueChange={(value) => setFilterPacienteId(String(value))}
+                onValueChange={(value) => handlePatientFilterChange(String(value))}
                 style={styles.picker}
                 dropdownIconColor="#F4F8FF"
               >
-                <Picker.Item label="Todos los pacientes" value="" />
+                <Picker.Item label="Todos los pacientes" value="" color="#F4F8FF" />
                 {patientOptions.map((patient) => (
                   <Picker.Item
                     key={patient.pacienteId}
                     label={patient.displayName}
                     value={String(patient.pacienteId)}
+                    color="#F4F8FF"
                   />
                 ))}
               </Picker>
@@ -546,6 +556,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 13,
     fontWeight: '600',
+  },
+  filterHint: {
+    color: '#9FB3C8',
+    marginTop: 5,
+    fontSize: 13,
   },
   errorText: {
     color: '#FF4D73',

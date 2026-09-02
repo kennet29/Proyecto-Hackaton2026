@@ -510,33 +510,9 @@ button {
 }
 
 .hero-logo-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 2.35rem;
   height: 2.35rem;
-  border-radius: 0.75rem;
-  background: rgba(77, 175, 228, 0.12);
-}
-
-.hero-logo-mark svg {
-  width: 1.6rem;
-  height: 1.6rem;
-  overflow: visible;
-}
-
-.hero-logo-mark path:first-child {
-  fill: rgba(234, 80, 116, 0.16);
-  stroke: var(--brand-rose);
-  stroke-width: 1.8;
-}
-
-.hero-logo-mark path:last-child {
-  fill: none;
-  stroke: var(--brand-green);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  object-fit: contain;
 }
 
 .eyebrow {
@@ -581,6 +557,12 @@ button {
   font-size: 0.98rem;
   line-height: 1.7;
   color: #53707a;
+}
+
+.hero-motto {
+  margin: 0.55rem 0 0;
+  color: #1a6f8c;
+  font-weight: 800;
 }
 
 .hero-actions {

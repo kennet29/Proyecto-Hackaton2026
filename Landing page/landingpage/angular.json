@@ -37,11 +37,16 @@
             "assets": [
               "src/favicon.ico",
               "src/assets",
-              {
-                "glob": "Recurso 1.png",
-                "input": "src/svg/1x",
-                "output": "assets/nano"
-              }
+                {
+                  "glob": "Recurso 1.png",
+                  "input": "src/svg/1x",
+                  "output": "assets/nano"
+                },
+                {
+                  "glob": "Logo Principal.svg",
+                  "input": "src/nano/svg",
+                  "output": "assets/brand"
+                }
             ],
             "styles": [
               "src/styles.css"

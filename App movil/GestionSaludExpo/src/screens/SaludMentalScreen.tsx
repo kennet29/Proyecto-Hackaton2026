@@ -7,11 +7,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
@@ -110,6 +110,76 @@ const getScoreColor = (value?: string | number | null, inverse = false) => {
   return '#38E28E';
 };
 
+type FormValues = {
+  pacienteId: string;
+  fecha: string;
+  estadoAnimo: string;
+  estres: string;
+  ansiedad: string;
+  horasSueno: string;
+  ejercicioMinutos: string;
+  hidratacionLitros: string;
+  descansoHoras: string;
+  tiempoSocialMinutos: string;
+  pausasDigitales: string;
+  notaPersonal: string;
+};
+
+const numericFieldRules: Array<{
+  key: keyof FormValues;
+  label: string;
+  min: number;
+  max: number;
+  integer?: boolean;
+}> = [
+  { key: 'horasSueno', label: 'Horas de sueño', min: 0, max: 24 },
+  { key: 'descansoHoras', label: 'Horas de descanso', min: 0, max: 24 },
+  { key: 'ejercicioMinutos', label: 'Ejercicio en minutos', min: 0, max: 1440, integer: true },
+  { key: 'tiempoSocialMinutos', label: 'Tiempo social en minutos', min: 0, max: 1440, integer: true },
+  { key: 'hidratacionLitros', label: 'Hidratación en litros', min: 0, max: 20 },
+  { key: 'pausasDigitales', label: 'Pausas digitales', min: 0, max: 100, integer: true },
+];
+
+const validateForm = (form: FormValues) => {
+  if (!form.pacienteId) return 'Selecciona un paciente.';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(form.fecha) || !parseCalendarDate(form.fecha)) {
+    return 'Fecha: usa el formato AAAA-MM-DD e indica una fecha válida.';
+  }
+
+  for (const field of numericFieldRules) {
+    const value = form[field.key].trim();
+    if (!value) continue;
+    const normalized = value.replace(',', '.');
+    const number = Number(normalized);
+    if (!Number.isFinite(number)) return `${field.label}: escribe un número válido.`;
+    if (field.integer && !Number.isInteger(number)) return `${field.label}: debe ser un número entero.`;
+    if (number < field.min || number > field.max) {
+      return `${field.label}: debe estar entre ${field.min} y ${field.max}.`;
+    }
+  }
+  if (form.notaPersonal.trim().length > 2500) return 'Nota personal: permite un máximo de 2,500 caracteres.';
+  return null;
+};
+
+const formatValidationDetails = (body: any) => {
+  const details = Array.isArray(body?.detalles)
+    ? body.detalles
+    : Array.isArray(body?.details?.detalles)
+      ? body.details.detalles
+      : [];
+  if (!details.length) return body?.message ?? 'No se pudo guardar el registro.';
+  const labels: Record<string, string> = {
+    pacienteId: 'Paciente', fecha: 'Fecha', estadoAnimo: 'Ánimo', estres: 'Estrés', ansiedad: 'Ansiedad',
+    horasSueno: 'Horas de sueño', descansoHoras: 'Horas de descanso', ejercicioMinutos: 'Ejercicio en minutos',
+    tiempoSocialMinutos: 'Tiempo social en minutos', hidratacionLitros: 'Hidratación en litros',
+    pausasDigitales: 'Pausas digitales', notaPersonal: 'Nota personal',
+  };
+  return details.map((detail: { path?: string; message?: string }) => {
+    const field = detail.path?.split('.')[0] ?? '';
+    return `${(labels[field] ?? field) || 'Dato'}: ${detail.message ?? 'valor inválido'}`;
+  }).join('\n');
+};
+
 const formatAlertTitle = (value: string) => {
   const labels: Record<string, string> = {
     estres_alto: 'Estrés alto',
@@ -121,7 +191,9 @@ const formatAlertTitle = (value: string) => {
 
 export function SaludMentalScreen() {
   const { token, user } = useAuth();
-  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
+  const { width } = useWindowDimensions();
+  const isCompact = width < 480;
+  const pickerItemColor = '#F4F8FF';
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [historial, setHistorial] = useState<SaludMentalHistorial | null>(null);
@@ -185,11 +257,13 @@ export function SaludMentalScreen() {
     try {
       const items = await fetchLinkedPatients(authHeaders);
       setPatients(items);
-      const defaultPatient = items[0]?.pacienteId ? String(items[0].pacienteId) : '';
-      setSelectedPatientId((prev) => prev || defaultPatient);
+      // El paciente debe elegirse de forma explícita; evita registrar datos en otra persona por error.
+      setSelectedPatientId((prev) => items.some((item) => String(item.pacienteId) === prev) ? prev : '');
       setForm((prev) => ({
         ...prev,
-        pacienteId: prev.pacienteId || defaultPatient,
+        pacienteId: items.some((item) => String(item.pacienteId) === prev.pacienteId)
+          ? prev.pacienteId
+          : '',
       }));
     } catch (error) {
       setPatientError(
@@ -266,8 +340,9 @@ export function SaludMentalScreen() {
   }, [loadData, selectedPatientId]);
 
   const handleSubmit = async () => {
-    if (!form.pacienteId || !form.fecha) {
-      Alert.alert('Campos requeridos', 'Paciente y fecha son obligatorios');
+    const validationMessage = validateForm(form);
+    if (validationMessage) {
+      Alert.alert('Revisa el registro', validationMessage);
       return;
     }
 
@@ -283,16 +358,16 @@ export function SaludMentalScreen() {
           estadoAnimo: Number(form.estadoAnimo),
           estres: Number(form.estres),
           ansiedad: Number(form.ansiedad),
-          horasSueno: form.horasSueno ? Number(form.horasSueno) : undefined,
-          ejercicioMinutos: form.ejercicioMinutos ? Number(form.ejercicioMinutos) : undefined,
+          horasSueno: form.horasSueno ? Number(form.horasSueno.replace(',', '.')) : undefined,
+          ejercicioMinutos: form.ejercicioMinutos ? Number(form.ejercicioMinutos.replace(',', '.')) : undefined,
           hidratacionLitros: form.hidratacionLitros
-            ? Number(form.hidratacionLitros)
+            ? Number(form.hidratacionLitros.replace(',', '.'))
             : undefined,
-          descansoHoras: form.descansoHoras ? Number(form.descansoHoras) : undefined,
+          descansoHoras: form.descansoHoras ? Number(form.descansoHoras.replace(',', '.')) : undefined,
           tiempoSocialMinutos: form.tiempoSocialMinutos
-            ? Number(form.tiempoSocialMinutos)
+            ? Number(form.tiempoSocialMinutos.replace(',', '.'))
             : undefined,
-          pausasDigitales: form.pausasDigitales ? Number(form.pausasDigitales) : undefined,
+          pausasDigitales: form.pausasDigitales ? Number(form.pausasDigitales.replace(',', '.')) : undefined,
           notaPersonal: form.notaPersonal || undefined,
           creadoPor: user?.username ?? undefined,
         }),
@@ -300,7 +375,7 @@ export function SaludMentalScreen() {
 
       const body = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(body?.message ?? 'No se pudo guardar el registro');
+        throw new Error(formatValidationDetails(body));
       }
 
       Alert.alert('Registro creado', 'La entrada de salud mental se guardó correctamente');
@@ -384,7 +459,10 @@ export function SaludMentalScreen() {
             <Picker
               selectedValue={form.pacienteId}
               onValueChange={(value) => handleChange('pacienteId', String(value))}
+              style={styles.picker}
+              dropdownIconColor="#F4F8FF"
             >
+              <Picker.Item label="Selecciona un paciente" value="" color="#C9D7E8" />
               {patients.map((patient) => (
                 <Picker.Item
                   key={patient.pacienteId}
@@ -446,8 +524,8 @@ export function SaludMentalScreen() {
           <AppText style={styles.scaleHint}>
             Usa la escala del 1 al 5 para registrar cómo se sintió la persona hoy.
           </AppText>
-          <View style={styles.row}>
-            <View style={styles.fieldGroupHalf}>
+          <View style={[styles.row, isCompact && styles.compactRow]}>
+            <View style={[styles.fieldGroupHalf, isCompact && styles.compactField]}>
               <View style={styles.fieldLabelRow}>
                 <AppText style={styles.fieldLabel}>Ánimo</AppText>
                 <View style={[styles.scorePill, { backgroundColor: getScoreColor(form.estadoAnimo) }]}>
@@ -458,6 +536,8 @@ export function SaludMentalScreen() {
                 <Picker
                   selectedValue={form.estadoAnimo}
                   onValueChange={(value) => handleChange('estadoAnimo', String(value))}
+                  style={styles.picker}
+                  dropdownIconColor="#F4F8FF"
                 >
                   {scoreOptions.map((item) => (
                     <Picker.Item key={`animo-${item.value}`} label={item.label} value={item.value} color={pickerItemColor} />
@@ -465,7 +545,7 @@ export function SaludMentalScreen() {
                 </Picker>
               </View>
             </View>
-            <View style={styles.fieldGroupHalf}>
+            <View style={[styles.fieldGroupHalf, isCompact && styles.compactField]}>
               <View style={styles.fieldLabelRow}>
                 <AppText style={styles.fieldLabel}>Estrés</AppText>
                 <View style={[styles.scorePill, { backgroundColor: getScoreColor(form.estres, true) }]}>
@@ -476,6 +556,8 @@ export function SaludMentalScreen() {
                 <Picker
                   selectedValue={form.estres}
                   onValueChange={(value) => handleChange('estres', String(value))}
+                  style={styles.picker}
+                  dropdownIconColor="#F4F8FF"
                 >
                   {scoreOptions.map((item) => (
                     <Picker.Item key={`estres-${item.value}`} label={item.label} value={item.value} color={pickerItemColor} />
@@ -495,6 +577,8 @@ export function SaludMentalScreen() {
               <Picker
                 selectedValue={form.ansiedad}
                 onValueChange={(value) => handleChange('ansiedad', String(value))}
+                style={styles.picker}
+                dropdownIconColor="#F4F8FF"
               >
                 {scoreOptions.map((item) => (
                   <Picker.Item
@@ -511,8 +595,8 @@ export function SaludMentalScreen() {
 
         <View style={styles.formSection}>
           <AppText style={styles.formSectionTitle}>Sueño y descanso</AppText>
-          <View style={styles.row}>
-            <View style={styles.fieldGroupHalf}>
+          <View style={[styles.row, isCompact && styles.compactRow]}>
+            <View style={[styles.fieldGroupHalf, isCompact && styles.compactField]}>
               <AppText style={styles.fieldLabel}>Horas de sueño</AppText>
               <AppTextInput
                 style={[styles.input, styles.halfInput]}
@@ -523,7 +607,7 @@ export function SaludMentalScreen() {
                 keyboardType="decimal-pad"
               />
             </View>
-            <View style={styles.fieldGroupHalf}>
+            <View style={[styles.fieldGroupHalf, isCompact && styles.compactField]}>
               <AppText style={styles.fieldLabel}>Horas de descanso</AppText>
               <AppTextInput
                 style={[styles.input, styles.halfInput]}
@@ -539,8 +623,8 @@ export function SaludMentalScreen() {
 
         <View style={styles.formSection}>
           <AppText style={styles.formSectionTitle}>Hábitos del día</AppText>
-          <View style={styles.row}>
-            <View style={styles.fieldGroupHalf}>
+          <View style={[styles.row, isCompact && styles.compactRow]}>
+            <View style={[styles.fieldGroupHalf, isCompact && styles.compactField]}>
               <AppText style={styles.fieldLabel}>Ejercicio en minutos</AppText>
               <AppTextInput
                 style={[styles.input, styles.halfInput]}
@@ -551,7 +635,7 @@ export function SaludMentalScreen() {
                 keyboardType="numeric"
               />
             </View>
-            <View style={styles.fieldGroupHalf}>
+            <View style={[styles.fieldGroupHalf, isCompact && styles.compactField]}>
               <AppText style={styles.fieldLabel}>Tiempo social en minutos</AppText>
               <AppTextInput
                 style={[styles.input, styles.halfInput]}
@@ -563,8 +647,8 @@ export function SaludMentalScreen() {
               />
             </View>
           </View>
-          <View style={styles.row}>
-            <View style={styles.fieldGroupHalf}>
+          <View style={[styles.row, isCompact && styles.compactRow]}>
+            <View style={[styles.fieldGroupHalf, isCompact && styles.compactField]}>
               <AppText style={styles.fieldLabel}>Hidratación en litros</AppText>
               <AppTextInput
                 style={[styles.input, styles.halfInput]}
@@ -575,7 +659,7 @@ export function SaludMentalScreen() {
                 keyboardType="decimal-pad"
               />
             </View>
-            <View style={styles.fieldGroupHalf}>
+            <View style={[styles.fieldGroupHalf, isCompact && styles.compactField]}>
               <AppText style={styles.fieldLabel}>Pausas digitales</AppText>
               <AppTextInput
                 style={[styles.input, styles.halfInput]}
@@ -1007,10 +1091,15 @@ const styles = StyleSheet.create({
     minHeight: 48,
     borderRadius: 13,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: '#10213A',
     borderWidth: 1,
-    borderColor: '#1B3355',
+    borderColor: '#315579',
     justifyContent: 'center',
+  },
+  picker: {
+    height: 50,
+    color: '#F4F8FF',
+    backgroundColor: '#10213A',
   },
   input: {
     backgroundColor: '#071120',
@@ -1030,6 +1119,12 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 12,
     alignItems: 'flex-start',
+  },
+  compactRow: {
+    gap: 16,
+  },
+  compactField: {
+    flexBasis: '100%',
   },
   halfInput: {
     flex: 1,
