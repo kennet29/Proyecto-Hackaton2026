@@ -85,6 +85,8 @@ export type RootStackParamList = {
   NanoConsejero: undefined;
   NanoChef: undefined;
   NanoEntrenador: undefined;
+  NanoBiblioteca: undefined;
+  PresupuestoMedico: undefined;
   NanoHistorial: undefined;
   NanoConfiguracion: undefined;
   ExamenClinico: undefined;

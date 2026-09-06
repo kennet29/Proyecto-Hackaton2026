@@ -71,6 +71,8 @@ import { SaludMentalScreen } from './src/screens/SaludMentalScreen';
 import { NanoConsejeroScreen } from './src/screens/NanoConsejeroScreen';
 import { NanoChefScreen } from './src/screens/NanoChefScreen';
 import { NanoEntrenadorScreen } from './src/screens/NanoEntrenadorScreen';
+import { NanoBibliotecaScreen } from './src/screens/NanoBibliotecaScreen';
+import { PresupuestoMedicoScreen } from './src/screens/PresupuestoMedicoScreen';
 import { NanoHistorialScreen } from './src/screens/NanoHistorialScreen';
 import { NanoConfiguracionScreen } from './src/screens/NanoConfiguracionScreen';
 import { ExamenClinicoScreen } from './src/screens/ExamenClinicoScreen';
@@ -180,6 +182,8 @@ const linking: LinkingOptions<RootStackParamList> = {
       NanoConsejero: 'nano',
       NanoChef: 'nano/chef',
       NanoEntrenador: 'nano/entrenador',
+      NanoBiblioteca: 'nano/biblioteca',
+      PresupuestoMedico: 'presupuesto-medico',
       NanoHistorial: 'nano/historial',
       NanoConfiguracion: 'nano/configuracion',
       ExamenClinico: 'examenes-clinicos',
@@ -354,6 +358,16 @@ const PrivateNavigator = () => {
       <Stack.Screen
         name="NanoEntrenador"
         component={NanoEntrenadorScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="NanoBiblioteca"
+        component={NanoBibliotecaScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PresupuestoMedico"
+        component={PresupuestoMedicoScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen
