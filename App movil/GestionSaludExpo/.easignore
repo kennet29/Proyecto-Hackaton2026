@@ -1,0 +1,26 @@
+# Dependencias y archivos generados que EAS no necesita para compilar.
+node_modules/
+.expo/
+.expo-*/
+dist/
+dist-*/
+web-build/
+
+# Artefactos y configuraciones locales.
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+.metro-health-check*
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store
+*.pem
+.env*.local
+*.tsbuildinfo
+/ios
+/android
