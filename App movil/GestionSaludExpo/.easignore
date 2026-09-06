@@ -2,8 +2,14 @@
 node_modules/
 .expo/
 .expo-*/
+/.expo-budget-check
+/.expo-svg-check
+/.expo-web-svg-check
+/.expo-web-svg-check-2
+/.expo-web-svg-final-check
 dist/
 dist-*/
+/dist-android-check
 web-build/
 
 # Artefactos y configuraciones locales.
