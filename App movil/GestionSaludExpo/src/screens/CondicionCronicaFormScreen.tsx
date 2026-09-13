@@ -31,6 +31,7 @@ import { appColors, colorAlpha } from '../theme/colors';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate } from '../utils/localDate';
 import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
+import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 
 type TipoCondicion = {
   tipocondicionId: number;
@@ -662,10 +663,7 @@ export function CondicionCronicaFormScreen({
     }
     try {
       const tipocondicionId = await resolveTipoCondicionId();
-      const response = await fetch(`${API_URL}/condicioncronica`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
+      const payload = {
           pacienteId: Number(form.pacienteId),
           tipocondicionId,
           fechadiagnostico: form.fechadiagnostico || undefined,
@@ -675,12 +673,19 @@ export function CondicionCronicaFormScreen({
           proximoseguimiento: form.proximoseguimiento || undefined,
           notas: form.notas.trim() || undefined,
           creadopor: user?.username ?? undefined,
-        }),
-      });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(body?.message ?? 'No se pudo guardar la condicion cronica');
+        };
+      const result = await submitJsonWithOfflineFallback<Record<string, unknown>>({ token, path: '/condicioncronica', method: 'POST', body: payload, description: 'registrar condición crónica' });
+      if (result.status === 'queued') {
+        if (attachments.length) {
+          Alert.alert('Condición guardada sin conexión', 'La condición se sincronizará automáticamente. Agrega los archivos adjuntos cuando recuperes internet.');
+        } else {
+          Alert.alert('Condición guardada sin conexión', 'La condición se sincronizará automáticamente al recuperar internet.');
+        }
+        resetForm();
+        if (isCreateMode && navigation.canGoBack()) navigation.goBack();
+        return;
       }
+      const body = result.data ?? {};
       const conditionId = Number(
         body?.condicioncronicaId ?? body?.condicioncronicaid ?? body?.id ?? 0,
       );

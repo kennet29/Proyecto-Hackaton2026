@@ -12,6 +12,7 @@ import { NanoAnalysisParser } from "./nano-analysis.parser";
 import { optimizeNanoImage } from "./nano-image.optimizer";
 import { NanoPromptBuilder } from "./nano-prompt.builder";
 import { NanoService } from "./nano.service";
+import { NanoTrainingSafetyService } from "./nano-training-safety.service";
 
 jest.mock("./nano-image.optimizer", () => ({
   optimizeNanoImage: jest.fn(),
@@ -58,7 +59,8 @@ describe("NanoService", () => {
   };
   const promptBuilder = new NanoPromptBuilder();
   const parser = new NanoAnalysisParser();
-  const service = new NanoService(gateway, promptBuilder, parser);
+  const trainingSafety = { getRecordedFlags: jest.fn() };
+  const service = new NanoService(gateway, promptBuilder, parser, trainingSafety as unknown as NanoTrainingSafetyService);
   const payload = {
     goalKey: "muscle-gain",
     goalLabel: "Ganar masa muscular",
@@ -69,6 +71,7 @@ describe("NanoService", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    trainingSafety.getRecordedFlags.mockResolvedValue([]);
     jest.mocked(optimizeNanoImage).mockResolvedValue({
       buffer: Buffer.from("optimized"),
       mimeType: "image/webp",
@@ -227,5 +230,18 @@ describe("NanoService", () => {
     expect(result.plan).toMatchObject({ title: "Rutina de movilidad" });
     expect(result.plan.weeklyDays).toHaveLength(7);
     expect(result.plan.weeklyDays[0].exercises[0]).toMatchObject({ name: "Puente", reps: "12" });
+  });
+
+  it("bloquea la rutina cuando el expediente registra una condicion cardiovascular", async () => {
+    trainingSafety.getRecordedFlags.mockResolvedValue(["cardiovascular-condition"]);
+
+    await expect(service.createTrainingPlan({
+      goalKey: "fitness",
+      goalLabel: "Ponerse en forma",
+      level: "beginner",
+      safetyFlags: [],
+    } as CreateTrainingPlanDto, 12)).rejects.toThrow(BadRequestException);
+
+    expect(gateway.generateText).not.toHaveBeenCalled();
   });
 });

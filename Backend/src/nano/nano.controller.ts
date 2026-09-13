@@ -50,7 +50,8 @@ export class NanoController {
   }
 
   @Post("training-plan")
-  createTrainingPlan(@Body() payload: CreateTrainingPlanDto) {
-    return this.nanoService.createTrainingPlan(payload);
+  createTrainingPlan(@Body() payload: CreateTrainingPlanDto, @Req() req: Request) {
+    const user = req.user as AuthenticatedUser;
+    return this.nanoService.createTrainingPlan(payload, user?.pacienteId ?? undefined);
   }
 }

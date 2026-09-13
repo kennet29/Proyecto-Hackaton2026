@@ -22,6 +22,7 @@ import { API_URL } from '../config/api';
 import { appColors, colorAlpha } from '../theme/colors';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
+import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 
 type PeriodoRecord = {
   periodoId: number;
@@ -278,10 +279,7 @@ export function PeriodoScreen() {
     setSubmitting(true);
 
     try {
-      const response = await fetch(`${API_URL}/periodo`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
+      const payload = {
           pacienteId: Number(form.pacienteId),
           fechaInicio: form.fechaInicio,
           fechaFin: form.fechaFin || undefined,
@@ -295,15 +293,11 @@ export function PeriodoScreen() {
             .filter(Boolean),
           observaciones: form.observaciones || undefined,
           creadoPor: user?.username ?? undefined,
-        }),
-      });
+        };
+      const result = await submitJsonWithOfflineFallback({ token, path: '/periodo', method: 'POST', body: payload, description: 'registrar período' });
+      if (result.status === 'queued') Alert.alert('Guardado sin conexión', 'El período se sincronizará automáticamente al recuperar internet.');
 
-      const body = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(body?.message ?? 'No se pudo registrar el periodo');
-      }
-
-      Alert.alert('Registro creado', 'El periodo se guardó correctamente');
+      if (result.status === 'online') Alert.alert('Registro creado', 'El periodo se guardó correctamente');
       setForm((prev) => ({
         ...prev,
         fechaInicio: today(),

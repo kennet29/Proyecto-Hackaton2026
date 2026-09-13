@@ -20,6 +20,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
+import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SeguimientoFisicoForm'>;
 
@@ -250,10 +251,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
     setSubmitting(true);
 
     try {
-      const response = await fetch(`${API_URL}/seguimientofisico`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
+      const payload = {
           pacienteId: Number(form.pacienteId),
           fecha: form.fecha,
           peso: form.peso ? Number(form.peso) : undefined,
@@ -265,13 +263,14 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           distanciaKm: form.distanciaKm ? Number(form.distanciaKm) : undefined,
           notas: form.notas.trim() || undefined,
           creadoPor: user?.username ?? undefined,
-        }),
-      });
-
-      const body = (await response.json().catch(() => null)) as CreateSeguimientoResponse | null;
-      if (!response.ok) {
-        throw new Error(body?.message ?? 'No se pudo guardar el seguimiento');
+        };
+      const result = await submitJsonWithOfflineFallback<CreateSeguimientoResponse>({ token, path: '/seguimientofisico', method: 'POST', body: payload, description: 'registrar seguimiento físico' });
+      if (result.status === 'queued') {
+        Alert.alert('Guardado sin conexión', 'El seguimiento físico se sincronizará automáticamente al recuperar internet.');
+        navigation.goBack();
+        return;
       }
+      const body = result.data;
 
       const unlockedAchievements = Array.isArray(body?.logrosDesbloqueados)
         ? body.logrosDesbloqueados

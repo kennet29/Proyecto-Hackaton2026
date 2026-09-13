@@ -2,13 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppText, AppTextInput } from '../components/AppText';
@@ -16,6 +16,7 @@ import { API_URL } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
+import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PresupuestoMedico'>;
 type Category = 'Consultas' | 'Medicamentos' | 'Exámenes' | 'Transporte' | 'Otros';
@@ -99,14 +100,19 @@ export function PresupuestoMedicoScreen({ navigation }: Props) {
     if (!token) return;
     setSaving(true);
     try {
-      const response = await fetch(`${API_URL}/presupuestos-medicos/${key}`, {
+      const result = await submitJsonWithOfflineFallback<MonthlyBudget>({
+        token,
+        path: `/presupuestos-medicos/${key}`,
         method: 'PUT',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: value }),
+        body: { limit: value },
+        description: 'actualizar presupuesto médico',
       });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(apiError(body, 'No se pudo guardar el presupuesto.'));
-      setCurrent(body as MonthlyBudget);
+      if (result.status === 'queued') {
+        setCurrent((previous) => ({ ...previous, limit: value }));
+        Alert.alert('Guardado sin conexión', 'El presupuesto se sincronizará automáticamente al recuperar internet.');
+        return;
+      }
+      if (result.data) setCurrent(result.data);
       Alert.alert('Presupuesto guardado', `Tu límite para ${monthLabel(selectedMonth)} es ${money(value)}.`);
     } catch (error) {
       Alert.alert('No se pudo guardar', error instanceof Error ? error.message : 'Inténtalo nuevamente.');
@@ -129,17 +135,18 @@ export function PresupuestoMedicoScreen({ navigation }: Props) {
     setSaving(true);
     try {
       const editing = editingId !== null;
-      const response = await fetch(
-        editing ? `${API_URL}/presupuestos-medicos/gastos/${editingId}` : `${API_URL}/presupuestos-medicos/${key}/gastos`,
-        {
-          method: editing ? 'PATCH' : 'POST',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ description: description.trim(), category, amount: value }),
-        },
-      );
-      const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(apiError(body, 'No se pudo guardar el gasto.'));
-      setCurrent(body as MonthlyBudget);
+      const result = await submitJsonWithOfflineFallback<MonthlyBudget>({
+        token,
+        path: editing ? `/presupuestos-medicos/gastos/${editingId}` : `/presupuestos-medicos/${key}/gastos`,
+        method: editing ? 'PATCH' : 'POST',
+        body: { description: description.trim(), category, amount: value },
+        description: editing ? 'actualizar gasto médico' : 'agregar gasto médico',
+      });
+      if (result.status === 'queued') {
+        Alert.alert('Guardado sin conexión', 'El gasto se sincronizará automáticamente al recuperar internet.');
+      } else if (result.data) {
+        setCurrent(result.data);
+      }
       cancelEdit();
     } catch (error) {
       Alert.alert('No se pudo guardar', error instanceof Error ? error.message : 'Inténtalo nuevamente.');
@@ -187,7 +194,7 @@ export function PresupuestoMedicoScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView contentContainerStyle={[styles.container, isWide && styles.containerWide]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <View style={styles.headerIcon}><Ionicons name="wallet-outline" size={25} color={appColors.background} /></View>

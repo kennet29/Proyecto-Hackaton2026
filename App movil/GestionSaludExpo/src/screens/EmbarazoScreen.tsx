@@ -22,6 +22,7 @@ import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { appColors, colorAlpha } from '../theme/colors';
+import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 
 type FeedbackState = { type: 'success' | 'error'; message: string } | null;
 type DateField = 'fechainicio' | 'fechaprobableparto' | 'fechaPrimerUltrasonido';
@@ -364,16 +365,8 @@ export function EmbarazoScreen() {
       };
 
       setSubmitting(true);
-      const response = await fetch(`${API_URL}/embarazo`, {
-        method: 'POST',
-        headers: jsonHeaders,
-        body: JSON.stringify(payload),
-      });
-      const body = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error((body as { message?: string } | null)?.message ?? 'No se pudo registrar el embarazo.');
-      }
-      setFeedback({ type: 'success', message: 'Registro obstétrico guardado correctamente.' });
+      const result = await submitJsonWithOfflineFallback({ token, path: '/embarazo', method: 'POST', body: payload, description: 'registrar embarazo' });
+      setFeedback({ type: 'success', message: result.status === 'queued' ? 'Registro guardado sin conexión. Se sincronizará automáticamente.' : 'Registro obstétrico guardado correctamente.' });
       setForm(buildInitialForm());
       setShowForm(false);
       await fetchRecords();

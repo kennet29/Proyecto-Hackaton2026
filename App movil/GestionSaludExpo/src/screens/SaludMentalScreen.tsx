@@ -21,6 +21,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
+import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 
 type SaludMentalRecord = {
   saludmentalId: number;
@@ -349,10 +350,7 @@ export function SaludMentalScreen() {
     setSubmitting(true);
 
     try {
-      const response = await fetch(`${API_URL}/salud-mental`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
+      const payload = {
           pacienteId: Number(form.pacienteId),
           fecha: form.fecha,
           estadoAnimo: Number(form.estadoAnimo),
@@ -370,15 +368,11 @@ export function SaludMentalScreen() {
           pausasDigitales: form.pausasDigitales ? Number(form.pausasDigitales.replace(',', '.')) : undefined,
           notaPersonal: form.notaPersonal || undefined,
           creadoPor: user?.username ?? undefined,
-        }),
-      });
+        };
+      const result = await submitJsonWithOfflineFallback({ token, path: '/salud-mental', method: 'POST', body: payload, description: 'registrar salud mental' });
+      if (result.status === 'queued') Alert.alert('Guardado sin conexión', 'El registro se sincronizará automáticamente al recuperar internet.');
 
-      const body = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(formatValidationDetails(body));
-      }
-
-      Alert.alert('Registro creado', 'La entrada de salud mental se guardó correctamente');
+      if (result.status === 'online') Alert.alert('Registro creado', 'La entrada de salud mental se guardó correctamente');
       setForm((prev) => ({
         ...prev,
         fecha: today(),

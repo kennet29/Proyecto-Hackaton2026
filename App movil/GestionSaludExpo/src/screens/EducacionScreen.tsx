@@ -20,6 +20,18 @@ export function EducacionScreen({ navigation }: Props) {
         contenido educativo diseñado para niños, adolescentes y adultos
       </AppText>
 
+      <TouchableOpacity
+        style={styles.libraryCard}
+        onPress={() => navigation.navigate('NanoBiblioteca')}
+        accessibilityRole="button"
+        accessibilityLabel="Abrir guías de salud y prevención"
+      >
+        <AppText style={styles.libraryTitle}>Guías de salud y prevención</AppText>
+        <AppText style={styles.libraryDescription}>
+          Consulta la biblioteca de documentos educativos en PDF.
+        </AppText>
+      </TouchableOpacity>
+
       <FlatList
         data={nivelesEducativos}
         keyExtractor={(item) => item.id}
@@ -60,6 +72,24 @@ const styles = StyleSheet.create({
   subtitle: {
     color: '#C9D7E8',
     marginBottom: 16,
+  },
+  libraryCard: {
+    backgroundColor: '#123A52',
+    borderColor: '#29B6FF',
+    borderWidth: 1,
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 16,
+  },
+  libraryTitle: {
+    color: '#F4F8FF',
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  libraryDescription: {
+    color: '#C9D7E8',
+    lineHeight: 20,
   },
   listContent: {
     paddingBottom: 30,

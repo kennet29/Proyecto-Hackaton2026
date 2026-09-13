@@ -324,22 +324,6 @@ const wellnessOptions: OptionItem[] = [
     },
   },
   {
-    key: 'nano-biblioteca',
-    label: 'Nano Biblioteca',
-    description: 'Consulta guías de salud y prevención disponibles en formato PDF.',
-    icon: 'library-outline',
-    accent: appColors.info,
-    navigateTo: 'NanoBiblioteca',
-    nano: true,
-    nanoAppearance: {
-      id: 'biblioteca-menu',
-      label: 'Nano Biblioteca',
-      description: 'Nano Biblioteca',
-      format: 'svg',
-      svgComponent: NanoBienestar,
-    },
-  },
-  {
     key: 'presupuesto-medico',
     label: 'Presupuesto Médico',
     description: 'Planifica y controla tus gastos médicos de cada mes.',

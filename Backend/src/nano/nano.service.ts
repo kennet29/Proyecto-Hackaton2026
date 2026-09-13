@@ -16,6 +16,7 @@ import { optimizeNanoImage } from "./nano-image.optimizer";
 import { NanoPromptBuilder } from "./nano-prompt.builder";
 import { CreateRecipeDto } from "./dto/create-recipe.dto";
 import { CreateTrainingPlanDto } from "./dto/create-training-plan.dto";
+import { NanoTrainingSafetyService } from "./nano-training-safety.service";
 
 const recipeSchema = z.object({
   title: z.string().trim().min(3).max(120),
@@ -57,6 +58,7 @@ export class NanoService {
     private readonly analysisGateway: MealAnalysisGateway,
     private readonly promptBuilder: NanoPromptBuilder,
     private readonly analysisParser: NanoAnalysisParser,
+    private readonly trainingSafety: NanoTrainingSafetyService,
   ) {}
 
   async analyzeMeal(payload: AnalyzeMealDto) {
@@ -134,12 +136,23 @@ export class NanoService {
     };
   }
 
-  async createTrainingPlan(payload: CreateTrainingPlanDto) {
+  async createTrainingPlan(payload: CreateTrainingPlanDto, pacienteId?: number) {
+    const recordedFlags = await this.trainingSafety.getRecordedFlags(pacienteId);
+    const safetyFlags = [...new Set([...(payload.safetyFlags ?? []), ...recordedFlags])];
+    const needsMedicalClearance = safetyFlags.some(
+      (flag) => flag === "high-risk-pregnancy" || flag === "cardiovascular-condition",
+    );
+    if (needsMedicalClearance) {
+      throw new BadRequestException(
+        "Por seguridad, consulta a tu médico antes de generar una rutina con Nano Entrenador.",
+      );
+    }
     const prompt = this.promptBuilder.buildTrainingPlan(
       payload.goalLabel,
       payload.level,
       payload.equipment,
       payload.limitations,
+      safetyFlags,
     );
     // Una semana completa con ejercicios necesita más salida que una receta.
     const providerResponse = await this.analysisGateway.generateText(prompt, 2_200);

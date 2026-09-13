@@ -68,6 +68,7 @@ export class NanoPromptBuilder {
     level: string,
     equipment?: string,
     limitations?: string,
+    safetyFlags: string[] = [],
   ): string {
     const normalizedEquipment = this.normalizeOptionalNote(equipment);
     const normalizedLimitations = this.normalizeOptionalNote(limitations);
@@ -81,6 +82,9 @@ export class NanoPromptBuilder {
       `Nivel: ${level}.`,
       `Equipo disponible: ${normalizedEquipment ?? "sin equipo especial"}.`,
       `Limitaciones o preferencias: ${normalizedLimitations ?? "ninguna indicada"}.`,
+      safetyFlags.some((flag) => flag === "injury" || flag === "pain")
+        ? "Seguridad obligatoria: crea únicamente ejercicios de bajo impacto. No incluyas saltos, carrera, burpees, pliometría ni movimientos que aumenten el dolor."
+        : "",
     ].join(" ");
   }
 
