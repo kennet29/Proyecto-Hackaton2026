@@ -21,10 +21,12 @@ import { SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk/700Bold';
 import { RootStackParamList } from './src/navigation/types';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { BackgroundModeProvider, useBackgroundMode } from './src/context/BackgroundModeContext';
+import { FontSizeProvider, useFontSize } from './src/context/FontSizeContext';
 import { IniciarSesionScreen } from './src/screens/IniciarSesionScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { CambiarContrasenaScreen } from './src/screens/CambiarContrasenaScreen';
 import { MenuPrincipalScreen } from './src/screens/MenuPrincipalScreen';
+import { ConfiguracionScreen } from './src/screens/ConfiguracionScreen';
 import { SobreNosotrosScreen } from './src/screens/SobreNosotrosScreen';
 import { ContactoScreen } from './src/screens/ContactoScreen';
 import { PremiumScreen } from './src/screens/PremiumScreen';
@@ -140,11 +142,11 @@ const WEB_FORM_CSS = `
   }
 `;
 
-const sharedScreenOptions = {
+const sharedScreenOptions = (fontScale: number) => ({
   headerStyle: { backgroundColor: appColors.background },
   headerTintColor: appColors.text,
-  headerTitleStyle: { fontFamily: appFontFamilies.headingBold },
-};
+  headerTitleStyle: { fontFamily: appFontFamilies.headingBold, fontSize: 18 * fontScale },
+});
 
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ['/', 'gestionsalud://'],
@@ -155,6 +157,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       Registro: 'registro',
       CambiarContrasena: 'cambiar-contrasena',
       MenuPrincipal: 'panel',
+      Configuracion: 'configuracion',
       PacienteResumen: 'paciente/resumen',
       ExpedienteGestion: 'expediente',
       PacienteForm: 'pacientes',
@@ -218,6 +221,7 @@ const linking: LinkingOptions<RootStackParamList> = {
 
 const PrivateNavigator = () => {
   const { initialPrivateRoute, token, user } = useAuth();
+  const { fontScale } = useFontSize();
   usePushNotifications(token, user?.id ?? null);
   const offlineSync = useOfflineWriteSync(token, user?.id ?? null);
 
@@ -226,12 +230,17 @@ const PrivateNavigator = () => {
       <OfflineStatusBanner state={offlineSync} />
       <Stack.Navigator
         initialRouteName={initialPrivateRoute ?? 'MenuPrincipal'}
-        screenOptions={sharedScreenOptions}
+        screenOptions={sharedScreenOptions(fontScale)}
       >
       <Stack.Screen
         name="MenuPrincipal"
         component={MenuPrincipalScreen}
         options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Configuracion"
+        component={ConfiguracionScreen}
+        options={{ title: 'Configuración' }}
       />
       <Stack.Screen
         name="PacienteResumen"
@@ -499,8 +508,11 @@ const PrivateNavigator = () => {
   );
 };
 
-const PublicNavigator = () => (
-  <Stack.Navigator initialRouteName="Login" screenOptions={sharedScreenOptions}>
+const PublicNavigator = () => {
+  const { fontScale } = useFontSize();
+
+  return (
+  <Stack.Navigator initialRouteName="Login" screenOptions={sharedScreenOptions(fontScale)}>
     <Stack.Screen
       name="IniciarSesion"
       component={IniciarSesionScreen}
@@ -544,7 +556,8 @@ const PublicNavigator = () => (
       options={{ title: 'Cambiar Contrasena' }}
     />
   </Stack.Navigator>
-);
+  );
+};
 
 const RootNavigator = () => {
   const { isHydrated, token } = useAuth();
@@ -620,12 +633,14 @@ export default function App() {
 
   return (
     <BackgroundModeProvider>
-      <AuthProvider>
-        <AppErrorBoundary>
-          <StatusBar style="light" />
-          <RootNavigator />
-        </AppErrorBoundary>
-      </AuthProvider>
+      <FontSizeProvider>
+        <AuthProvider>
+          <AppErrorBoundary>
+            <StatusBar style="light" />
+            <RootNavigator />
+          </AppErrorBoundary>
+        </AuthProvider>
+      </FontSizeProvider>
     </BackgroundModeProvider>
   );
 }

@@ -14,6 +14,7 @@ export type RootStackParamList = {
   Premium: undefined;
   MenuLoading: undefined;
   MenuPrincipal: undefined;
+  Configuracion: undefined;
   PacienteResumen: { pacienteId?: number } | undefined;
   ExpedienteGestion: undefined;
   PacienteForm: undefined;

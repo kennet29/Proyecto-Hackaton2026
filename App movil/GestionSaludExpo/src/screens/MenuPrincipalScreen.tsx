@@ -383,6 +383,14 @@ const managementOptions: OptionItem[] = [
     navigateTo: 'MedicoRegistro',
   },
   {
+    key: 'configuracion',
+    label: 'Configuración',
+    description: 'Ajusta el tamaño de la fuente para una lectura más cómoda.',
+    icon: 'settings-outline',
+    accent: '#0B6FEA',
+    navigateTo: 'Configuracion',
+  },
+  {
     key: 'nano-gestion',
     label: 'Nano Gestion',
     description: 'Elige la apariencia del asistente desde una galería de diseños',
