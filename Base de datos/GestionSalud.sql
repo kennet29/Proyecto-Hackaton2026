@@ -1,9 +1,8 @@
-﻿create database gestionsalud;
+if not exists (select 1 from sys.databases where name = 'gestionsalud') begin create database gestionsalud; end
 go
 use gestionsalud;
 go
-
-
+if object_id('dbo.paciente', 'U') is null
 create table paciente (
     pacienteid int identity primary key,
     nombres nvarchar(100) not null,
@@ -26,7 +25,8 @@ create table paciente (
     campoprueba04 nvarchar(200) null,
     campoprueba05 nvarchar(200) null
 );
-
+go
+if object_id('dbo.usuario', 'U') is null
 create table usuario (
     usuarioid int identity primary key,
     pacienteid int null,
@@ -48,7 +48,8 @@ create table usuario (
     campoprueba05 nvarchar(200) null,
     foreign key (pacienteid) references paciente(pacienteid)
 );
-
+go
+if object_id('dbo.usuariopaciente', 'U') is null
 create table usuariopaciente (
     usuariopacienteid int identity primary key,
     usuarioid int not null,
@@ -64,7 +65,8 @@ create table usuariopaciente (
     foreign key (pacienteid) references paciente(pacienteid),
     constraint ux_usuario_paciente unique (usuarioid, pacienteid)
 );
-
+go
+if object_id('dbo.passwordresettoken', 'U') is null
 create table passwordresettoken (
     tokenid int identity primary key,
     usuarioid int not null,
@@ -83,7 +85,8 @@ create table passwordresettoken (
     campoprueba05 nvarchar(200) null,
     foreign key (usuarioid) references usuario(usuarioid)
 );
-
+go
+if object_id('dbo.tokenrevocado', 'U') is null
 create table tokenrevocado (
     tokenrevocadoid int identity primary key,
     jti nvarchar(128) not null unique,
@@ -96,7 +99,8 @@ create table tokenrevocado (
     modificadoen datetime2 null,
     foreign key (usuarioid) references usuario(usuarioid)
 );
-
+go
+if object_id('dbo.permisoacceso', 'U') is null
 create table permisoacceso (
     permisoid int identity primary key,
     pacienteid int not null,
@@ -114,15 +118,14 @@ create table permisoacceso (
     foreign key (pacienteid) references paciente(pacienteid),
     foreign key (medicoid) references usuario(usuarioid)
 );
-
+go
 SET QUOTED_IDENTIFIER ON;
-GO
+go
 create unique index ux_permisoacceso_activo on permisoacceso(pacienteid, medicoid, estado) where estado = 'activo';
-
-
 -- ========================
 -- seguridad y permisos
 -- ========================
+if object_id('dbo.rol', 'U') is null
 create table rol (
     rolid int identity primary key,
     nombre nvarchar(80) not null unique,
@@ -138,10 +141,12 @@ create table rol (
     campoprueba04 nvarchar(200) null,
     campoprueba05 nvarchar(200) null
 );
-
+go
+if object_id('dbo.permiso', 'U') is null
 create table permiso (
     permisoid int identity primary key,
-    codigo nvarchar(80) not null unique,
+    codigo
+nvarchar(80) not null unique,
     descripcion nvarchar(200) null,
     creadopor nvarchar(60) null,
     creadoen datetime2 not null default sysdatetime(),
@@ -153,7 +158,8 @@ create table permiso (
     campoprueba04 nvarchar(200) null,
     campoprueba05 nvarchar(200) null
 );
-
+go
+if object_id('dbo.rolpermiso', 'U') is null
 create table rolpermiso (
     rolid int not null,
     permisoid int not null,
@@ -168,7 +174,8 @@ create table rolpermiso (
     foreign key (rolid) references rol(rolid),
     foreign key (permisoid) references permiso(permisoid)
 );
-
+go
+if object_id('dbo.usuariorol', 'U') is null
 create table usuariorol (
     usuariorolid int identity primary key,
     usuarioid int not null,
@@ -187,10 +194,12 @@ create table usuariorol (
     foreign key (rolid) references rol(rolid),
     constraint ux_usuariorol unique (usuarioid, rolid)
 );
-
+go
 -- ========================
--- catalogos clinicos
+-- catalogo
+s clinicos
 -- ========================
+if object_id('dbo.especialidad', 'U') is null
 create table especialidad (
     especialidadid int identity primary key,
     nombre nvarchar(120) not null unique,
@@ -206,7 +215,8 @@ create table especialidad (
     campoprueba04 nvarchar(200) null,
     campoprueba05 nvarchar(200) null
 );
-
+go
+if object_id('dbo.tipovacuna', 'U') is null
 create table tipovacuna (
     tipovacunaid int identity primary key,
     nombre nvarchar(150) not null unique,
@@ -222,7 +232,8 @@ create table tipovacuna (
     campoprueba04 nvarchar(200) null,
     campoprueba05 nvarchar(200) null
 );
-
+go
+if object_id('dbo.tipolesion', 'U') is null
 create table tipolesion (
     tipolesionid int identity primary key,
     nombre nvarchar(150) not null unique,
@@ -237,7 +248,8 @@ create table tipolesion (
     campoprueba04 nvarchar(200) null,
     campoprueba05 nvarchar(200) null
 );
-
+go
+if object_id('dbo.tipooperacion', 'U') is null
 create table tipooperacion (
     tipooperacionid int identity primary key,
     nombre nvarchar(150) not null unique,
@@ -252,7 +264,8 @@ create table tipooperacion (
     campoprueba04 nvarchar(200) null,
     campoprueba05 nvarchar(200) null
 );
-
+go
+if object_id('dbo.tipodocumentoclinico', 'U') is null
 create table tipodocumentoclinico (
     tipodocumentoid int identity primary key,
     nombre nvarchar(120) not null unique,
@@ -267,12 +280,14 @@ create table tipodocumentoclinico (
     campoprueba04 nvarchar(200) null,
     campoprueba05 nvarchar(200) null
 );
-
+go
+if object_id('dbo.tipocondicioncronica', 'U') is null
 create table tipocondicioncronica (
     tipocondicionid int identity primary key,
     nombre nvarchar(120) not null unique,
     descripcion nvarchar(200) null,
-    categoria nvarchar(80) null,
+    catego
+ria nvarchar(80) null,
     activo bit not null default 1,
     creadopor nvarchar(60) null,
     creadoen datetime2 not null default sysdatetime(),
@@ -284,11 +299,13 @@ create table tipocondicioncronica (
     campoprueba04 nvarchar(200) null,
     campoprueba05 nvarchar(200) null
 );
-
+go
+if object_id('dbo.tipohabito', 'U') is null
 create table tipohabito (
     tipohabitoid int identity primary key,
     nombre nvarchar(120) not null unique,
-    categoria nvarchar(80) null,
+    catego
+ria nvarchar(80) null,
     descripcion nvarchar(200) null,
     activo bit not null default 1,
     creadopor nvarchar(60) null,
@@ -301,10 +318,10 @@ create table tipohabito (
     campoprueba04 nvarchar(200) null,
     campoprueba05 nvarchar(200) null
 );
-
+go
 -- ========================
 -- modulos clinicos
-
+if object_id('dbo.consultamedica', 'U') is null
 create table consultamedica (
     consultaid int identity primary key,
     pacienteid int not null,
@@ -327,7 +344,8 @@ create table consultamedica (
     foreign key (pacienteid) references paciente(pacienteid),
     constraint ck_consulta_estado check (estado in ('borrador','firmada','anulada'))
 );
-
+go
+if object_id('dbo.lesion', 'U') is null
 create table lesion (
     lesionid int identity primary key,
     pacienteid int not null,
@@ -351,7 +369,8 @@ create table lesion (
     foreign key (pacienteid) references paciente(pacienteid),
     foreign key (tipolesionid) references tipolesion(tipolesionid)
 );
-
+go
+if object_id('dbo.estilovida', 'U') is null
 create table estilovida (
     estilovidaid int identity primary key,
     pacienteid int not null,
@@ -374,7 +393,8 @@ create table estilovida (
     campoprueba05 nvarchar(200) null,
     foreign key (pacienteid) references paciente(pacienteid)
 );
-
+go
+if object_id('dbo.vacuna', 'U') is null
 create table vacuna (
     vacunaid int identity primary key,
     pacienteid int not null,
@@ -396,7 +416,8 @@ create table vacuna (
     foreign key (pacienteid) references paciente(pacienteid),
     foreign key (tipovacunaid) references tipovacuna(tipovacunaid)
 );
-
+go
+if object_id('dbo.citamedica', 'U') is null
 create table citamedica (
     citaid int identity primary key,
     pacienteid int not null,
@@ -420,14 +441,16 @@ create table citamedica (
     foreign key (especialidadid) references especialidad(especialidadid),
     constraint ck_cita_estado check (estado in ('programada','completada','cancelada','no asistio'))
 );
-
+go
+if object_id('dbo.registrodental', 'U') is null
 create table registrodental (
     registrodentalid int identity primary key,
     pacienteid int not null,
     fechaatencion datetime2 not null,
     procedimiento nvarchar(200) not null,
     diagnostico nvarchar(200) null,
-    odontologo nvarchar(120) null,
+    odontologo
+nvarchar(120) null,
     piezastratadas nvarchar(100) null,
     notas nvarchar(max) null,
     creadopor nvarchar(60) null,
@@ -441,7 +464,8 @@ create table registrodental (
     campoprueba05 nvarchar(200) null,
     foreign key (pacienteid) references paciente(pacienteid)
 );
-
+go
+if object_id('dbo.operacion', 'U') is null
 create table operacion (
     operacionid int identity primary key,
     pacienteid int not null,
@@ -466,7 +490,8 @@ create table operacion (
     foreign key (tipooperacionid) references tipooperacion(tipooperacionid),
     constraint ck_operacion_estado check (estado in ('programada','en curso','completada','cancelada'))
 );
-
+go
+if object_id('dbo.desparasitacion', 'U') is null
 create table desparasitacion (
     desparasitacionid int identity primary key,
     pacienteid int not null,
@@ -486,7 +511,8 @@ create table desparasitacion (
     campoprueba05 nvarchar(200) null,
     foreign key (pacienteid) references paciente(pacienteid)
 );
-
+go
+if object_id('dbo.registromensual', 'U') is null
 create table registromensual (
     registromensualid int identity primary key,
     pacienteid int not null,
@@ -508,14 +534,16 @@ create table registromensual (
     campoprueba05 nvarchar(200) null,
     foreign key (pacienteid) references paciente(pacienteid)
 );
-
+go
+if object_id('dbo.embarazo', 'U') is null
 create table embarazo (
     embarazoid int identity primary key,
     pacienteid int not null,
     fechainicio date not null,
     fechaprobableparto date null,
     numerocontrol int null,
-    riesgo nvarchar(100) null,
+    riesgo
+nvarchar(100) null,
     estado nvarchar(40) not null default 'activo',
     notas nvarchar(max) null,
     creadopor nvarchar(60) null,
@@ -530,7 +558,8 @@ create table embarazo (
     foreign key (pacienteid) references paciente(pacienteid),
     constraint ck_embarazo_estado check (estado in ('activo','cerrado','abortado'))
 );
-
+go
+if object_id('dbo.controlprenatal', 'U') is null
 create table controlprenatal (
     controlid int identity primary key,
     embarazoid int not null,
@@ -551,7 +580,8 @@ create table controlprenatal (
     campoprueba05 nvarchar(200) null,
     foreign key (embarazoid) references embarazo(embarazoid)
 );
-
+go
+if object_id('dbo.documentoclinico', 'U') is null
 create table documentoclinico (
     documentoid int identity primary key,
     pacienteid int not null,
@@ -575,7 +605,8 @@ create table documentoclinico (
     foreign key (tipodocumentoid) references tipodocumentoclinico(tipodocumentoid),
     constraint ck_documento_origen check (entidadorigen in ('consultamedica','lesion','operacion','citamedica','vacuna','general'))
 );
-
+go
+if object_id('dbo.notificacion', 'U') is null
 create table notificacion (
     notificacionid int identity primary key,
     pacienteid int not null,
@@ -597,7 +628,8 @@ create table notificacion (
     campoprueba05 nvarchar(200) null,
     foreign key (pacienteid) references paciente(pacienteid)
 );
-
+go
+if object_id('dbo.alergia', 'U') is null
 create table alergia (
     alergiaid int identity primary key,
     pacienteid int not null,
@@ -621,7 +653,8 @@ create table alergia (
     foreign key (pacienteid) references paciente(pacienteid),
     constraint ck_alergia_estado check (estado in ('activa','inactiva'))
 );
-
+go
+if object_id('dbo.antecedentefamiliar', 'U') is null
 create table antecedentefamiliar (
     antecedenteid int identity primary key,
     pacienteid int not null,
@@ -644,12 +677,14 @@ create table antecedentefamiliar (
     campoprueba05 nvarchar(200) null,
     foreign key (pacienteid) references paciente(pacienteid)
 );
-
+go
+if object_id('dbo.habitoespecifico', 'U') is null
 create table habitoespecifico (
     habitoid int identity primary key,
     pacienteid int not null,
     tipohabitoid int not null,
-    categoria nvarchar(80) null,
+    catego
+ria nvarchar(80) null,
     nivel nvarchar(80) null,
     frecuencia nvarchar(100) null,
     cantidad decimal(10,2) null,
@@ -670,7 +705,8 @@ create table habitoespecifico (
     foreign key (pacienteid) references paciente(pacienteid),
     foreign key (tipohabitoid) references tipohabito(tipohabitoid)
 );
-
+go
+if object_id('dbo.seguimientofisico', 'U') is null
 create table seguimientofisico (
     seguimientofisicoid int identity primary key,
     pacienteid int not null,
@@ -696,16 +732,21 @@ create table seguimientofisico (
     constraint uq_seguimientofisico_paciente_fecha unique (pacienteid, fecha),
     constraint ck_seguimientofisico_intensidad check (intensidad is null or intensidad in ('leve','moderada','intensa'))
 );
-
-create table puntajeriesgo (
-    puntajeriesgoid int identity primary key,
+go
+if object_id('dbo.puntajeriesgo
+', 'U') is null
+create table puntajeriesgo
+(
+    puntajeriesgo
+id int identity primary key,
     pacienteid int not null,
     consultaid int null,
     tipo nvarchar(120) not null, -- imc, escala de dolor, etc.
     valordecimal decimal(10,2) null,
     valortexto nvarchar(100) null,
     unidad nvarchar(40) null,
-    rangoreferencia nvarchar(80) null,
+    rango
+referencia nvarchar(80) null,
     clasificacion nvarchar(80) null,
     fechamedicion datetime2 not null default sysdatetime(),
     observaciones nvarchar(max) null,
@@ -721,7 +762,8 @@ create table puntajeriesgo (
     foreign key (pacienteid) references paciente(pacienteid),
     foreign key (consultaid) references consultamedica(consultaid)
 );
-
+go
+if object_id('dbo.condicioncronica', 'U') is null
 create table condicioncronica (
     condicioncronicaid int identity primary key,
     pacienteid int not null,
@@ -746,7 +788,8 @@ create table condicioncronica (
     foreign key (tipocondicionid) references tipocondicioncronica(tipocondicionid),
     constraint ck_condicioncronica_estado check (estado in ('activa','remision','resuelta'))
 );
-
+go
+if object_id('dbo.objetivocronico', 'U') is null
 create table objetivocronico (
     objetivocronicoid int identity primary key,
     condicioncronicaid int not null,
@@ -770,7 +813,8 @@ create table objetivocronico (
     foreign key (condicioncronicaid) references condicioncronica(condicioncronicaid),
     constraint ck_objetivocronico_estado check (estado in ('pendiente','en progreso','logrado','cancelado'))
 );
-
+go
+if object_id('dbo.controlcronico', 'U') is null
 create table controlcronico (
     controlcronicoid int identity primary key,
     condicioncronicaid int not null,
@@ -793,8 +837,9 @@ create table controlcronico (
     campoprueba05 nvarchar(200) null,
     foreign key (condicioncronicaid) references condicioncronica(condicioncronicaid)
 );
-
+go
 -- medicacion prescrita para gestionar horarios
+if object_id('dbo.medicacion', 'U') is null
 create table medicacion (
     medicacionid int identity primary key,
     pacienteid int not null,
@@ -820,7 +865,8 @@ create table medicacion (
     foreign key (consultaid) references consultamedica(consultaid),
     constraint ck_medicacion_fechas check (fechafin is null or fechafin >= fechainicio)
 );
-
+go
+if object_id('dbo.horariomedicamento', 'U') is null
 create table horariomedicamento (
     horariomedicamentoid int identity primary key,
     medicacionid int not null,
@@ -844,7 +890,8 @@ create table horariomedicamento (
     foreign key (medicacionid) references medicacion(medicacionid),
     constraint ck_horariomedicamento_estado check (estadorecordatorio in ('pendiente','programado','enviado','snoozed','cancelado'))
 );
-
+go
+if object_id('dbo.adherenciacronica', 'U') is null
 create table adherenciacronica (
     adherenciacronicaid int identity primary key,
     condicioncronicaid int not null,
@@ -869,9 +916,9 @@ create table adherenciacronica (
     constraint ck_adherenciacronica_tipo check (tipo in ('medicacion','estilo de vida','autocontrol')),
     constraint ck_adherenciacronica_estado check (estado is null or estado in ('completo','parcial','omitido'))
 );
-
-
+go
 -- recordatorios especificos de citas medicas
+if object_id('dbo.recordatoriocita', 'U') is null
 create table recordatoriocita (
     recordatoriocitaid int identity primary key,
     citaid int not null,
@@ -896,9 +943,7 @@ create table recordatoriocita (
     foreign key (pacienteid) references paciente(pacienteid),
     constraint ck_recordatoriocita_estado check (estado in ('pendiente','programado','enviado','cancelado'))
 );
-
 go
-
 create or alter view vw_resumen_paciente as
 select
     p.pacienteid,
@@ -953,9 +998,7 @@ left join (
     where estado = 'activa'
     group by pacienteid
 ) cc on cc.pacienteid = p.pacienteid;
-
 go
-
 -- ============
 -- usuarios root iniciales
 -- ============
@@ -970,7 +1013,6 @@ begin
         'seed'
     );
 end;
-
 if not exists (select 1 from usuario where nombreusuario = 'connie')
 begin
     insert into usuario (nombreusuario, hashpassword, rolprincipal, activo, creadopor)
@@ -982,13 +1024,14 @@ begin
         'seed'
     );
 end;
-
+if object_id('dbo.evaluacionsaludhabito', 'U') is null
 create table evaluacionsaludhabito (
     evaluacionid int identity primary key,
     pacienteid int not null,
     fecha datetime2 not null default sysdatetime(),
     puntaje decimal(5,2) not null,
-    categoria nvarchar(80) null,
+    catego
+ria nvarchar(80) null,
     resumen nvarchar(200) null,
     detalle nvarchar(max) null,
     creadopor nvarchar(60) null,
@@ -1002,7 +1045,8 @@ create table evaluacionsaludhabito (
     campoprueba05 nvarchar(200) null,
     foreign key (pacienteid) references paciente(pacienteid)
 );
-
+go
+if object_id('dbo.detalleevaluacionsalud', 'U') is null
 create table detalleevaluacionsalud (
     detalleid int identity primary key,
     evaluacionid int not null,
@@ -1022,12 +1066,15 @@ create table detalleevaluacionsalud (
     foreign key (evaluacionid) references evaluacionsaludhabito(evaluacionid),
     foreign key (habitoid) references habitoespecifico(habitoid)
 );
+go
+if object_id('dbo.indicehabito', 'U') is null
 create table indicehabito (
     indiceid int identity primary key,
     pacienteid int not null,
     fecha datetime2 not null default sysdatetime(),
     puntaje decimal(5,2) not null,
-    categoria nvarchar(80) null,
+    catego
+ria nvarchar(80) null,
     descripcion nvarchar(200) null,
     detalle nvarchar(max) null,
     creadopor nvarchar(60) null,
@@ -1041,7 +1088,8 @@ create table indicehabito (
     campoprueba05 nvarchar(200) null,
     foreign key (pacienteid) references paciente(pacienteid)
 );
-
+go
+if object_id('dbo.detalleindicehabito', 'U') is null
 create table detalleindicehabito (
     detalleid int identity primary key,
     indiceid int not null,
@@ -1061,3 +1109,4 @@ create table detalleindicehabito (
     foreign key (indiceid) references indicehabito(indiceid),
     foreign key (habitoid) references habitoespecifico(habitoid)
 );
+go

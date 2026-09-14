@@ -36,6 +36,7 @@ zodJsonSchemaProcessors.allProcessors.date = openApiDateProcessor;
  */
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.getHttpAdapter().getInstance().set("trust proxy", 1);
   const requestBodyLimit = process.env.REQUEST_BODY_LIMIT ?? "5mb";
   const requestLogFormat =
     ":method :url :status :res[content-length] - :response-time ms";
@@ -57,13 +58,11 @@ async function bootstrap() {
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
-  app.enableCors(
-    corsOrigins.length
-      ? {
-          origin: corsOrigins,
-        }
-      : undefined,
-  );
+  const isWildcardCors = corsOrigins.includes("*") || corsOrigins.length === 0;
+  app.enableCors({
+    origin: isWildcardCors ? true : corsOrigins,
+    credentials: true,
+  });
   const GlobalZodValidationPipe = createZodValidationPipe({
     createValidationException: (error: unknown) => {
       const zodError = error as ZodError;

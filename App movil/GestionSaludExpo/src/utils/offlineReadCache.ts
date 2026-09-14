@@ -56,7 +56,8 @@ export async function getJsonWithOfflineFallback<T>(
   const key = cacheKeyFor(path, headers);
 
   try {
-    const response = await fetch(`${API_URL}${path}`, { headers });
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    const response = await fetch(`${API_URL}${normalizedPath}`, { headers });
     const body = await response.json().catch(() => null);
 
     if (!response.ok) {

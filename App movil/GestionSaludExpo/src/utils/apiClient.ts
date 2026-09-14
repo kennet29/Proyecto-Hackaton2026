@@ -20,7 +20,8 @@ export const buildJsonHeaders = (token?: string | null): Record<string, string> 
 };
 
 export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
-  return fetch(`${API_URL}${path}`, init);
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return fetch(`${API_URL}${normalizedPath}`, init);
 }
 
 export async function parseJsonResponse<T>(response: Response): Promise<T | null> {

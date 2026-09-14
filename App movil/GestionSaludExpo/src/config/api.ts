@@ -12,7 +12,13 @@ const DEFAULT_API_BASE = 'https://proyecto-hackaton2026.onrender.com';
 const normalizeBaseUrl = (value: string): string => value.replace(/\/+$/, '');
 const ensureApiUrl = (value: string): string => {
   const normalized = normalizeBaseUrl(value);
-  return normalized.endsWith(API_SUFFIX) ? normalized : `${normalized}${API_SUFFIX}`;
+  if (normalized.endsWith(API_SUFFIX)) {
+    return normalized;
+  }
+  if (normalized.endsWith('/api')) {
+    return `${normalized}/v1`;
+  }
+  return `${normalized}${API_SUFFIX}`;
 };
 
 const envBase = process.env.EXPO_PUBLIC_API_URL
@@ -84,7 +90,15 @@ const buildFallbackUrl = (): string => {
   return `http://${host}:3000${API_SUFFIX}`;
 };
 
+const getWebBaseUrl = (): string | null => {
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.origin) {
+    return ensureApiUrl(window.location.origin);
+  }
+  return null;
+};
+
 export const API_URL =
+  getWebBaseUrl() ??
   envBase ??
   (__DEV__ ? buildFallbackUrl() : configuredBase ?? ensureApiUrl(DEFAULT_API_BASE));
 

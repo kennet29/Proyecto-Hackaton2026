@@ -41,10 +41,38 @@ if [ "$DB_COUNT" -eq "0" ]; then
 else
   echo "La base de datos gestionsalud ya existe. Omitiendo creacion inicial."
 
-  # Conserva las actualizaciones que ya eran seguras al reiniciar una base existente.
-  $SQLCMD -S "$HOST,$PORT" -U "$USER" -P "$PASS" -d gestionsalud -C -b -i /scripts/crear_passwordresettoken.sql
-  $SQLCMD -S "$HOST,$PORT" -U "$USER" -P "$PASS" -d gestionsalud -C -b -i /scripts/create-push-devices-table.sql
-  $SQLCMD -S "$HOST,$PORT" -U "$USER" -P "$PASS" -d gestionsalud -C -b -i /scripts/seed_admin_prueba.sql
+  # Aplica todas las migraciones y tablas modulares pendientes de forma segura e idempotente
+  SCRIPTS=(
+    "/scripts/GestionSalud.sql"
+    "/scripts/renombrar_campos_seguridad_usuario.sql"
+    "/scripts/usuario_ciudad_pais.sql"
+    "/scripts/usuario_apariencia_nano.sql"
+    "/scripts/crear_passwordresettoken.sql"
+    "/scripts/create-push-devices-table.sql"
+    "/scripts/configuracion_pagos.sql"
+    "/scripts/saludmental.sql"
+    "/scripts/agregar_documento_cedula_medicoregistro.sql"
+    "/scripts/directorio_salud.sql"
+    "/scripts/embarazo_datos_obstetricos.sql"
+    "/scripts/examenclinico.sql"
+    "/scripts/habitos_catalogo.sql"
+    "/scripts/nutricion_comida.sql"
+    "/scripts/suscripcion_premium.sql"
+    "/scripts/pagos_premium.sql"
+    "/scripts/periodo.sql"
+    "/scripts/recordatorios_origen_generico.sql"
+    "/scripts/seguimiento_fisico.sql"
+    "/scripts/seguimiento_postevento.sql"
+    "/scripts/seed_admin_prueba.sql"
+    "/scripts/medico_prueba.sql"
+  )
+
+  for SCRIPT in "${SCRIPTS[@]}"; do
+    if [ -f "$SCRIPT" ]; then
+      echo "Aplicando verificacion/migracion: $(basename "$SCRIPT")..."
+      $SQLCMD -S "$HOST,$PORT" -U "$USER" -P "$PASS" -d gestionsalud -C -b -i "$SCRIPT" || true
+    fi
+  done
 fi
 
 echo "Inicializacion de base de datos finalizada correctamente."

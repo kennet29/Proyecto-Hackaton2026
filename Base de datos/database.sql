@@ -19,7 +19,9 @@
 :r /scripts/periodo.sql
 :r /scripts/recordatorios_origen_generico.sql
 :r /scripts/saludmental.sql
+:r /scripts/agregar_documento_cedula_medicoregistro.sql
 :r /scripts/seguimiento_fisico.sql
 :r /scripts/seguimiento_postevento.sql
 :r /scripts/usuario_apariencia_nano.sql
 :r /scripts/seed_admin_prueba.sql
+:r /scripts/medico_prueba.sql

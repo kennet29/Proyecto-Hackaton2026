@@ -1,0 +1,6 @@
+# Forzar LF para scripts shell y SQL
+*.sh text eol=lf
+*.sql text eol=lf
+Dockerfile text eol=lf
+nginx.conf text eol=lf
+.env* text eol=lf
