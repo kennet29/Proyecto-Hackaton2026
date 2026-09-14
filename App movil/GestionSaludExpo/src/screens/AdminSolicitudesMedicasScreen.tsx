@@ -22,6 +22,7 @@ import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
 import { apiFetch, buildJsonHeaders, parseJsonResponse } from '../utils/apiClient';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AdminSolicitudes'>;
 export type Estado =
@@ -192,6 +193,9 @@ export const updateDemoSolicitud = (
 };
 
 export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 980;
   const { token, user } = useAuth();
@@ -306,20 +310,20 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
       <View style={styles.shell}>
         <View style={styles.adminTabs}>
           <View style={[styles.adminTab, styles.adminTabActive]}>
-            <Ionicons name="medkit-outline" size={17} color={appColors.background} />
+            <Ionicons name="medkit-outline" size={17} color={colors.onAccent} />
             <AppText style={[styles.adminTabText, styles.adminTabTextActive]}>Solicitudes médicas</AppText>
           </View>
           <TouchableOpacity
             style={styles.adminTab}
             onPress={() => navigation.navigate('AdminClinicas')}
           >
-            <Ionicons name="business-outline" size={17} color={appColors.textMuted} />
+            <Ionicons name="business-outline" size={17} color={colors.textMuted} />
             <AppText style={styles.adminTabText}>Clínicas</AppText>
           </TouchableOpacity>
         </View>
         <View style={[styles.hero, isDesktop && styles.heroDesktop]}>
           <View style={styles.heroIcon}>
-            <Ionicons name="shield-checkmark-outline" size={28} color={appColors.info} />
+            <Ionicons name="shield-checkmark-outline" size={28} color={colors.info} />
           </View>
           <View style={styles.heroCopy}>
             <AppText style={styles.eyebrow}>PANEL ADMINISTRATIVO</AppText>
@@ -329,7 +333,7 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
             </AppText>
           </View>
           <TouchableOpacity style={styles.refreshButton} onPress={() => void loadSolicitudes()}>
-            <Ionicons name="refresh-outline" size={18} color={appColors.info} />
+            <Ionicons name="refresh-outline" size={18} color={colors.info} />
             <AppText style={styles.refreshText}>Actualizar</AppText>
           </TouchableOpacity>
         </View>
@@ -347,20 +351,20 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
         ) : null}
 
         <View style={styles.statsRow}>
-          <StatCard label="Total" value={counts.todos} color={appColors.info} />
+          <StatCard label="Total" value={counts.todos} color={colors.info} />
           <StatCard label="Pendientes" value={counts.pendiente} color="#F5B942" />
-          <StatCard label="Aprobadas" value={counts.aprobado} color={appColors.success} />
-          <StatCard label="Rechazadas" value={counts.rechazado} color={appColors.accent} />
+          <StatCard label="Aprobadas" value={counts.aprobado} color={colors.success} />
+          <StatCard label="Rechazadas" value={counts.rechazado} color={colors.accent} />
         </View>
 
         <View style={styles.toolbar}>
           <View style={styles.searchBox}>
-            <Ionicons name="search-outline" size={18} color={appColors.textMuted} />
+            <Ionicons name="search-outline" size={18} color={colors.textMuted} />
             <AppTextInput
               value={query}
               onChangeText={setQuery}
               placeholder="Buscar por usuario, hospital o licencia"
-              placeholderTextColor={appColors.textMuted}
+              placeholderTextColor={colors.textMuted}
               style={styles.searchInput}
             />
           </View>
@@ -400,12 +404,12 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
 
         {loading ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color={appColors.info} size="large" />
+            <ActivityIndicator color={colors.info} size="large" />
             <AppText style={styles.loadingText}>Cargando solicitudes...</AppText>
           </View>
         ) : error ? (
           <View style={styles.errorBox}>
-            <Ionicons name="alert-circle-outline" size={24} color={appColors.accent} />
+            <Ionicons name="alert-circle-outline" size={24} color={colors.accent} />
             <AppText style={styles.errorText}>{error}</AppText>
             <TouchableOpacity onPress={() => void loadSolicitudes()}>
               <AppText style={styles.retryText}>Intentar nuevamente</AppText>
@@ -413,7 +417,7 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
           </View>
         ) : filtered.length === 0 ? (
           <View style={styles.emptyBox}>
-            <Ionicons name="file-tray-outline" size={34} color={appColors.textMuted} />
+            <Ionicons name="file-tray-outline" size={34} color={colors.textMuted} />
             <AppText style={styles.emptyTitle}>No hay solicitudes</AppText>
             <AppText style={styles.emptyText}>No encontramos resultados con estos filtros.</AppText>
           </View>
@@ -460,7 +464,7 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
                       })
                     }
                   >
-                    <Ionicons name="eye-outline" size={17} color={appColors.info} />
+                    <Ionicons name="eye-outline" size={17} color={colors.info} />
                     <AppText style={styles.detailButtonText}>Ver</AppText>
                   </TouchableOpacity>
                 </View>
@@ -502,7 +506,7 @@ export function AdminSolicitudesMedicasScreen({ navigation }: Props) {
                   <AppText style={styles.tertiaryText}>{formatDate(item.fechasolicitud)}</AppText>
                   <View style={styles.viewLink}>
                     <AppText style={styles.viewLinkText}>Ver expediente</AppText>
-                    <Ionicons name="chevron-forward" size={15} color={appColors.info} />
+                    <Ionicons name="chevron-forward" size={15} color={colors.info} />
                   </View>
                 </View>
               </TouchableOpacity>
@@ -522,7 +526,10 @@ function AccessState(props: {
   onPress: () => void;
   danger?: boolean;
 }) {
-  const accent = props.danger ? appColors.accent : appColors.info;
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
+  const accent = props.danger ? colors.accent : colors.info;
   return (
     <View style={styles.accessRoot}>
       <View style={styles.accessCard}>
@@ -543,6 +550,9 @@ function AccessState(props: {
 }
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.statCard}>
       <View style={[styles.statDot, { backgroundColor: color }]} />
@@ -555,11 +565,14 @@ function StatCard({ label, value, color }: { label: string; value: number; color
 }
 
 function StatusBadge({ estado }: { estado: Estado }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const color =
     estado === 'aprobado'
-      ? appColors.success
+      ? colors.success
       : estado === 'rechazado'
-        ? appColors.accent
+        ? colors.accent
         : estado === 'documentos_solicitados'
           ? '#8758C7'
           : '#F5B942';
@@ -578,14 +591,17 @@ function StatusBadge({ estado }: { estado: Estado }) {
 }
 
 function DocumentProgress({ solicitud }: { solicitud: SolicitudMedica }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { uploadedDocuments, totalDocuments, percentage } =
     getDocumentProgress(solicitud);
   const color =
     percentage === 100
-      ? appColors.success
+      ? colors.success
       : percentage === 0
-        ? appColors.accent
-        : appColors.info;
+        ? colors.accent
+        : colors.info;
 
   return (
     <View
@@ -624,6 +640,9 @@ function DetailModal({
   solicitud: SolicitudMedica | null;
   onClose: () => void;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { width } = useWindowDimensions();
   const compact = width < 720;
   if (!solicitud) return null;
@@ -633,11 +652,11 @@ function DetailModal({
         <View style={styles.modalFrame}>
           <View style={styles.modalToolbar}>
             <View style={styles.formatBadge}>
-              <Ionicons name="document-text-outline" size={16} color={appColors.info} />
+              <Ionicons name="document-text-outline" size={16} color={colors.info} />
               <AppText style={styles.formatBadgeText}>Vista de solicitud · A4</AppText>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Ionicons name="close" size={22} color={appColors.text} />
+              <Ionicons name="close" size={22} color={colors.text} />
             </TouchableOpacity>
           </View>
           <ScrollView
@@ -777,6 +796,9 @@ function A4Section({
   title: string;
   children: React.ReactNode;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.a4Section}>
       <View style={styles.a4SectionHeader}>
@@ -799,6 +821,9 @@ function ApplicationField({
   value?: string | null;
   compact: boolean;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.applicationField, compact && styles.applicationFieldCompact]}>
       <AppText style={styles.applicationLabel}>{label.toUpperCase()}</AppText>
@@ -808,6 +833,9 @@ function ApplicationField({
 }
 
 function CheckItem({ label, checked }: { label: string; checked: boolean }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.checkItem}>
       <View style={[styles.checkBox, checked && styles.checkBoxChecked]}>
@@ -822,6 +850,9 @@ function CheckItem({ label, checked }: { label: string; checked: boolean }) {
 }
 
 function SignatureLine({ label, value }: { label: string; value?: string }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.signature}>
       <View style={styles.signatureLine}>
@@ -833,6 +864,9 @@ function SignatureLine({ label, value }: { label: string; value?: string }) {
 }
 
 function PaperStatus({ estado }: { estado: Estado }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const color =
     estado === 'aprobado'
       ? '#168A55'
@@ -854,23 +888,23 @@ function PaperStatus({ estado }: { estado: Estado }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: { flexGrow: 1, backgroundColor: 'transparent', padding: 16, paddingBottom: 48 },
   shell: { width: '100%', maxWidth: 1280, alignSelf: 'center' },
-  adminTabs: { alignSelf: 'flex-start', flexDirection: 'row', gap: 7, padding: 5, marginBottom: 14, borderWidth: 1, borderColor: appColors.border, borderRadius: 14, backgroundColor: appColors.surface },
+  adminTabs: { alignSelf: 'flex-start', flexDirection: 'row', gap: 7, padding: 5, marginBottom: 14, borderWidth: 1, borderColor: colors.border, borderRadius: 14, backgroundColor: colors.surface },
   adminTab: { minHeight: 38, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 13, borderRadius: 10 },
-  adminTabActive: { backgroundColor: appColors.info },
-  adminTabText: { color: appColors.textMuted, fontSize: 11, fontWeight: '800' },
-  adminTabTextActive: { color: appColors.background },
-  hero: { backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 20, padding: 18, marginBottom: 14 },
+  adminTabActive: { backgroundColor: colors.info },
+  adminTabText: { color: colors.textMuted, fontSize: 11, fontWeight: '800' },
+  adminTabTextActive: { color: colors.onAccent },
+  hero: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 20, padding: 18, marginBottom: 14 },
   heroDesktop: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24 },
-  heroIcon: { width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(appColors.info, '16'), marginRight: 15 },
+  heroIcon: { width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(colors.info, '16'), marginRight: 15 },
   heroCopy: { flex: 1 },
-  eyebrow: { color: appColors.info, fontSize: 10, fontWeight: '900', letterSpacing: 1.3, marginBottom: 5 },
-  title: { color: appColors.text, fontSize: 25, lineHeight: 32, fontWeight: '900' },
-  subtitle: { color: appColors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 },
-  refreshButton: { flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 42, borderWidth: 1, borderColor: appColors.border, borderRadius: 11, paddingHorizontal: 13, marginTop: 12 },
-  refreshText: { color: appColors.info, fontSize: 12, fontWeight: '800' },
+  eyebrow: { color: colors.info, fontSize: 10, fontWeight: '900', letterSpacing: 1.3, marginBottom: 5 },
+  title: { color: colors.text, fontSize: 25, lineHeight: 32, fontWeight: '900' },
+  subtitle: { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 },
+  refreshButton: { flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 42, borderWidth: 1, borderColor: colors.border, borderRadius: 11, paddingHorizontal: 13, marginTop: 12 },
+  refreshText: { color: colors.info, fontSize: 12, fontWeight: '800' },
   demoBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -884,72 +918,72 @@ const styles = StyleSheet.create({
   },
   demoBannerCopy: { flex: 1, marginLeft: 9 },
   demoBannerTitle: { color: '#F5B942', fontSize: 11, fontWeight: '900' },
-  demoBannerText: { color: appColors.textMuted, fontSize: 9, marginTop: 2 },
+  demoBannerText: { color: colors.textMuted, fontSize: 9, marginTop: 2 },
   statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 },
-  statCard: { minWidth: 140, flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 15, padding: 14 },
+  statCard: { minWidth: 140, flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 15, padding: 14 },
   statDot: { width: 9, height: 36, borderRadius: 5, marginRight: 12 },
-  statValue: { color: appColors.text, fontSize: 21, fontWeight: '900' },
-  statLabel: { color: appColors.textMuted, fontSize: 10, marginTop: 1 },
-  toolbar: { backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 16, padding: 12, marginBottom: 14 },
-  searchBox: { minHeight: 44, flexDirection: 'row', alignItems: 'center', backgroundColor: appColors.backgroundMuted, borderWidth: 1, borderColor: appColors.border, borderRadius: 11, paddingHorizontal: 12, marginBottom: 10 },
-  searchInput: { flex: 1, color: appColors.text, fontSize: 13, paddingHorizontal: 9, outlineStyle: 'none' } as any,
+  statValue: { color: colors.text, fontSize: 21, fontWeight: '900' },
+  statLabel: { color: colors.textMuted, fontSize: 10, marginTop: 1 },
+  toolbar: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 12, marginBottom: 14 },
+  searchBox: { minHeight: 44, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.backgroundMuted, borderWidth: 1, borderColor: colors.border, borderRadius: 11, paddingHorizontal: 12, marginBottom: 10 },
+  searchInput: { flex: 1, color: colors.text, fontSize: 13, paddingHorizontal: 9, outlineStyle: 'none' } as any,
   filterRow: { flexDirection: 'row', gap: 7 },
-  filterChip: { minHeight: 34, justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: appColors.border, paddingHorizontal: 12 },
-  filterChipActive: { backgroundColor: appColors.info, borderColor: appColors.info },
-  filterText: { color: appColors.textMuted, fontSize: 11, fontWeight: '700' },
-  filterTextActive: { color: appColors.background },
-  loadingBox: { minHeight: 240, alignItems: 'center', justifyContent: 'center', backgroundColor: appColors.surface, borderRadius: 18 },
-  loadingText: { color: appColors.textMuted, marginTop: 12 },
-  errorBox: { minHeight: 220, alignItems: 'center', justifyContent: 'center', backgroundColor: appColors.surface, borderWidth: 1, borderColor: colorAlpha(appColors.accent, '55'), borderRadius: 18, padding: 24 },
-  errorText: { color: appColors.textSoft, textAlign: 'center', marginTop: 10 },
-  retryText: { color: appColors.info, fontWeight: '800', marginTop: 14 },
-  emptyBox: { minHeight: 230, alignItems: 'center', justifyContent: 'center', backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 18 },
-  emptyTitle: { color: appColors.text, fontSize: 17, fontWeight: '800', marginTop: 10 },
-  emptyText: { color: appColors.textMuted, fontSize: 11, marginTop: 4 },
-  table: { backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 18, overflow: 'hidden' },
-  tableRow: { minHeight: 86, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: appColors.borderStrong, paddingHorizontal: 16 },
-  tableHeader: { minHeight: 46, backgroundColor: appColors.backgroundMuted },
-  headerCell: { color: appColors.textMuted, fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
+  filterChip: { minHeight: 34, justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12 },
+  filterChipActive: { backgroundColor: colors.info, borderColor: colors.info },
+  filterText: { color: colors.textMuted, fontSize: 11, fontWeight: '700' },
+  filterTextActive: { color: colors.onAccent },
+  loadingBox: { minHeight: 240, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderRadius: 18 },
+  loadingText: { color: colors.textMuted, marginTop: 12 },
+  errorBox: { minHeight: 220, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colorAlpha(colors.accent, '55'), borderRadius: 18, padding: 24 },
+  errorText: { color: colors.textSoft, textAlign: 'center', marginTop: 10 },
+  retryText: { color: colors.info, fontWeight: '800', marginTop: 14 },
+  emptyBox: { minHeight: 230, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 18 },
+  emptyTitle: { color: colors.text, fontSize: 17, fontWeight: '800', marginTop: 10 },
+  emptyText: { color: colors.textMuted, fontSize: 11, marginTop: 4 },
+  table: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 18, overflow: 'hidden' },
+  tableRow: { minHeight: 86, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.borderStrong, paddingHorizontal: 16 },
+  tableHeader: { minHeight: 46, backgroundColor: colors.backgroundMuted },
+  headerCell: { color: colors.textMuted, fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
   applicantCell: { flex: 1.35, paddingRight: 12 },
   professionCell: { flex: 1.5, paddingRight: 12 },
   documentsCell: { width: 150, paddingHorizontal: 12 },
   centerCell: { width: 126, alignItems: 'center', textAlign: 'center' },
   actionCell: { width: 90, alignItems: 'flex-end' },
-  primaryText: { color: appColors.text, fontSize: 13, fontWeight: '800' },
-  secondaryText: { color: appColors.textSoft, fontSize: 11, marginTop: 3 },
-  tertiaryText: { color: appColors.textMuted, fontSize: 9, marginTop: 3 },
-  detailButton: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: appColors.info, borderRadius: 10, paddingHorizontal: 11 },
-  detailButtonText: { color: appColors.info, fontSize: 11, fontWeight: '800' },
-  mobileCard: { backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 16, padding: 14, marginBottom: 10 },
+  primaryText: { color: colors.text, fontSize: 13, fontWeight: '800' },
+  secondaryText: { color: colors.textSoft, fontSize: 11, marginTop: 3 },
+  tertiaryText: { color: colors.textMuted, fontSize: 9, marginTop: 3 },
+  detailButton: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: colors.info, borderRadius: 10, paddingHorizontal: 11 },
+  detailButtonText: { color: colors.info, fontSize: 11, fontWeight: '800' },
+  mobileCard: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 14, marginBottom: 10 },
   mobileCardTop: { flexDirection: 'row', alignItems: 'center' },
-  avatar: { width: 40, height: 40, borderRadius: 13, backgroundColor: colorAlpha(appColors.info, '20'), alignItems: 'center', justifyContent: 'center', marginRight: 10 },
-  avatarText: { color: appColors.info, fontSize: 16, fontWeight: '900' },
+  avatar: { width: 40, height: 40, borderRadius: 13, backgroundColor: colorAlpha(colors.info, '20'), alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  avatarText: { color: colors.info, fontSize: 16, fontWeight: '900' },
   mobileCardCopy: { flex: 1, minWidth: 0 },
-  mobileDivider: { height: 1, backgroundColor: appColors.borderStrong, marginVertical: 12 },
-  mobileTitle: { color: appColors.text, fontSize: 13, fontWeight: '800', marginBottom: 2 },
+  mobileDivider: { height: 1, backgroundColor: colors.borderStrong, marginVertical: 12 },
+  mobileTitle: { color: colors.text, fontSize: 13, fontWeight: '800', marginBottom: 2 },
   mobileDocuments: { marginTop: 12 },
   mobileFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
   viewLink: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  viewLinkText: { color: appColors.info, fontSize: 10, fontWeight: '800' },
+  viewLinkText: { color: colors.info, fontSize: 10, fontWeight: '800' },
   statusBadge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', borderRadius: 20, paddingHorizontal: 9, paddingVertical: 6 },
   statusDot: { width: 6, height: 6, borderRadius: 3, marginRight: 5 },
   statusText: { fontSize: 9, fontWeight: '900' },
   documentProgress: { width: '100%' },
   documentProgressHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  documentProgressCount: { color: appColors.textMuted, fontSize: 9, fontWeight: '700' },
+  documentProgressCount: { color: colors.textMuted, fontSize: 9, fontWeight: '700' },
   documentProgressPercentage: { fontSize: 11, fontWeight: '900' },
-  documentProgressTrack: { height: 7, overflow: 'hidden', borderRadius: 4, backgroundColor: appColors.backgroundMuted },
+  documentProgressTrack: { height: 7, overflow: 'hidden', borderRadius: 4, backgroundColor: colors.backgroundMuted },
   documentProgressFill: { height: '100%', borderRadius: 4 },
   accessRoot: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', padding: 20 },
-  accessCard: { width: '100%', maxWidth: 430, alignItems: 'center', backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 22, padding: 28 },
+  accessCard: { width: '100%', maxWidth: 430, alignItems: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 22, padding: 28 },
   accessIcon: { width: 68, height: 68, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 17 },
-  accessTitle: { color: appColors.text, fontSize: 22, fontWeight: '900', textAlign: 'center' },
-  accessMessage: { color: appColors.textMuted, fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 7 },
+  accessTitle: { color: colors.text, fontSize: 22, fontWeight: '900', textAlign: 'center' },
+  accessMessage: { color: colors.textMuted, fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 7 },
   accessButton: { minHeight: 46, minWidth: 180, alignItems: 'center', justifyContent: 'center', borderRadius: 12, marginTop: 20 },
-  accessButtonText: { color: appColors.background, fontWeight: '900' },
+  accessButtonText: { color: colors.onAccent, fontWeight: '900' },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: colorAlpha(appColors.overlay, 'D4'),
+    backgroundColor: colorAlpha(colors.overlay, 'D4'),
     alignItems: 'center',
     justifyContent: 'center',
     padding: 10,
@@ -970,21 +1004,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 9,
   },
-  formatBadgeText: { color: appColors.textSoft, fontSize: 11, fontWeight: '700' },
-  closeButton: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: appColors.backgroundMuted },
+  formatBadgeText: { color: colors.textSoft, fontSize: 11, fontWeight: '700' },
+  closeButton: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.backgroundMuted },
   paperScroll: { alignItems: 'center', paddingBottom: 20 },
   a4Paper: {
     width: '100%',
     maxWidth: 794,
     minHeight: 1080,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     paddingHorizontal: 46,
     paddingTop: 40,
     paddingBottom: 28,
@@ -1006,7 +1040,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingBottom: 18,
     borderBottomWidth: 3,
-    borderBottomColor: '#12345A',
+    borderBottomColor: colors.info,
   },
   paperHeaderCompact: { gap: 12 },
   paperBrand: { flexDirection: 'row', alignItems: 'center', flex: 1 },
@@ -1019,24 +1053,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  paperBrandName: { color: '#12345A', fontSize: 18, fontWeight: '900', letterSpacing: 0.8 },
-  paperBrandSub: { color: '#59697A', fontSize: 8, marginTop: 3 },
+  paperBrandName: { color: colors.info, fontSize: 18, fontWeight: '900', letterSpacing: 0.8 },
+  paperBrandSub: { color: colors.textMuted, fontSize: 8, marginTop: 3 },
   folioBox: {
     minWidth: 128,
     borderWidth: 1,
-    borderColor: '#AAB4BF',
+    borderColor: colors.textMuted,
     paddingHorizontal: 12,
     paddingVertical: 9,
     alignItems: 'flex-end',
   },
-  folioLabel: { color: '#6B7785', fontSize: 7, fontWeight: '800', letterSpacing: 0.7 },
-  folioValue: { color: '#12345A', fontSize: 16, fontWeight: '900', marginTop: 2 },
-  folioDate: { color: '#59697A', fontSize: 8, marginTop: 3 },
+  folioLabel: { color: colors.textMuted, fontSize: 7, fontWeight: '800', letterSpacing: 0.7 },
+  folioValue: { color: colors.info, fontSize: 16, fontWeight: '900', marginTop: 2 },
+  folioDate: { color: colors.textMuted, fontSize: 8, marginTop: 3 },
   paperTitleBlock: { alignItems: 'center', paddingVertical: 22 },
-  paperTitle: { color: '#172A3D', fontSize: 18, fontWeight: '900', textAlign: 'center', letterSpacing: 0.6 },
-  paperSubtitle: { color: '#687583', fontSize: 9, textAlign: 'center', marginTop: 5 },
+  paperTitle: { color: colors.text, fontSize: 18, fontWeight: '900', textAlign: 'center', letterSpacing: 0.6 },
+  paperSubtitle: { color: colors.textMuted, fontSize: 9, textAlign: 'center', marginTop: 5 },
   paperIntro: {
-    color: '#354454',
+    color: colors.textSoft,
     fontSize: 9,
     lineHeight: 15,
     textAlign: 'justify',
@@ -1044,16 +1078,16 @@ const styles = StyleSheet.create({
   },
   a4Section: {
     borderWidth: 1,
-    borderColor: '#AAB4BF',
+    borderColor: colors.textMuted,
     marginBottom: 14,
   },
   a4SectionHeader: {
     minHeight: 31,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8EEF4',
+    backgroundColor: colors.surfaceStrong,
     borderBottomWidth: 1,
-    borderBottomColor: '#AAB4BF',
+    borderBottomColor: colors.textMuted,
   },
   a4SectionNumber: {
     width: 31,
@@ -1063,7 +1097,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#12345A',
   },
   a4SectionNumberText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
-  a4SectionTitle: { color: '#12345A', fontSize: 9, fontWeight: '900', letterSpacing: 0.7, marginLeft: 10 },
+  a4SectionTitle: { color: colors.info, fontSize: 9, fontWeight: '900', letterSpacing: 0.7, marginLeft: 10 },
   a4SectionBody: { padding: 10 },
   applicationGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
   applicationField: {
@@ -1073,14 +1107,14 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   applicationFieldCompact: { width: '100%' },
-  applicationLabel: { color: '#687583', fontSize: 7, fontWeight: '800', letterSpacing: 0.4, marginBottom: 5 },
+  applicationLabel: { color: colors.textMuted, fontSize: 7, fontWeight: '800', letterSpacing: 0.4, marginBottom: 5 },
   applicationValue: {
     minHeight: 21,
-    color: '#172A3D',
+    color: colors.text,
     fontSize: 10,
     fontWeight: '700',
     borderBottomWidth: 1,
-    borderBottomColor: '#7C8996',
+    borderBottomColor: colors.textMuted,
     paddingBottom: 4,
   },
   checkGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
@@ -1092,7 +1126,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#D0D6DC',
+    borderColor: colors.border,
     paddingHorizontal: 9,
     paddingVertical: 7,
   },
@@ -1100,25 +1134,25 @@ const styles = StyleSheet.create({
     width: 17,
     height: 17,
     borderWidth: 1,
-    borderColor: '#7C8996',
+    borderColor: colors.textMuted,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 7,
   },
   checkBoxChecked: { backgroundColor: '#168A55', borderColor: '#168A55' },
-  checkLabel: { color: '#354454', fontSize: 8, flex: 1 },
-  checkState: { color: '#87919B', fontSize: 6, fontWeight: '900', marginLeft: 5 },
+  checkLabel: { color: colors.textSoft, fontSize: 8, flex: 1 },
+  checkState: { color: colors.textMuted, fontSize: 6, fontWeight: '900', marginLeft: 5 },
   checkStatePresent: { color: '#168A55' },
   supportDocument: {
     flexDirection: 'row',
     marginTop: 9,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#D0D6DC',
+    borderTopColor: colors.border,
   },
-  supportDocumentLabel: { color: '#687583', fontSize: 8, marginRight: 6 },
-  supportDocumentValue: { color: '#172A3D', fontSize: 8, fontWeight: '700', flex: 1 },
-  declarationText: { color: '#354454', fontSize: 8, lineHeight: 14, textAlign: 'justify' },
+  supportDocumentLabel: { color: colors.textMuted, fontSize: 8, marginRight: 6 },
+  supportDocumentValue: { color: colors.text, fontSize: 8, fontWeight: '700', flex: 1 },
+  declarationText: { color: colors.textSoft, fontSize: 8, lineHeight: 14, textAlign: 'justify' },
   signatureRow: { flexDirection: 'row', gap: 30, marginTop: 28 },
   signatureRowCompact: { flexDirection: 'column', gap: 22 },
   signature: { flex: 1, alignItems: 'center' },
@@ -1127,13 +1161,13 @@ const styles = StyleSheet.create({
     minHeight: 20,
     justifyContent: 'flex-end',
     borderBottomWidth: 1,
-    borderBottomColor: '#172A3D',
+    borderBottomColor: colors.text,
   },
-  signatureValue: { color: '#172A3D', fontSize: 8, textAlign: 'center', paddingBottom: 3 },
-  signatureLabel: { color: '#687583', fontSize: 7, marginTop: 4 },
+  signatureValue: { color: colors.text, fontSize: 8, textAlign: 'center', paddingBottom: 3 },
+  signatureLabel: { color: colors.textMuted, fontSize: 7, marginTop: 4 },
   internalBlock: {
     borderWidth: 2,
-    borderColor: '#12345A',
+    borderColor: colors.info,
     padding: 11,
     marginTop: 2,
   },
@@ -1143,25 +1177,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 9,
     borderBottomWidth: 1,
-    borderBottomColor: '#AAB4BF',
+    borderBottomColor: colors.textMuted,
   },
-  internalTitle: { color: '#12345A', fontSize: 8, fontWeight: '900', letterSpacing: 0.6 },
+  internalTitle: { color: colors.info, fontSize: 8, fontWeight: '900', letterSpacing: 0.6 },
   paperStatus: { borderWidth: 1.5, borderRadius: 2, paddingHorizontal: 8, paddingVertical: 4, transform: [{ rotate: '-2deg' }] },
   paperStatusText: { fontSize: 8, fontWeight: '900', letterSpacing: 0.8 },
   internalGrid: { flexDirection: 'row', gap: 12, marginVertical: 10 },
   reviewCell: { flex: 1 },
-  reviewLabel: { color: '#687583', fontSize: 7, fontWeight: '800', marginBottom: 4 },
-  reviewValue: { color: '#172A3D', fontSize: 8, minHeight: 18 },
-  observationBox: { minHeight: 44, borderWidth: 1, borderColor: '#AAB4BF', padding: 7 },
-  observationPaperText: { color: '#354454', fontSize: 8, lineHeight: 13 },
+  reviewLabel: { color: colors.textMuted, fontSize: 7, fontWeight: '800', marginBottom: 4 },
+  reviewValue: { color: colors.text, fontSize: 8, minHeight: 18 },
+  observationBox: { minHeight: 44, borderWidth: 1, borderColor: colors.textMuted, padding: 7 },
+  observationPaperText: { color: colors.textSoft, fontSize: 8, lineHeight: 13 },
   paperFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingTop: 13,
     marginTop: 'auto',
     borderTopWidth: 1,
-    borderTopColor: '#AAB4BF',
+    borderTopColor: colors.textMuted,
   },
-  paperFooterText: { color: '#7C8996', fontSize: 7 },
-  paperPage: { color: '#7C8996', fontSize: 7 },
+  paperFooterText: { color: colors.textMuted, fontSize: 7 },
+  paperPage: { color: colors.textMuted, fontSize: 7 },
 });

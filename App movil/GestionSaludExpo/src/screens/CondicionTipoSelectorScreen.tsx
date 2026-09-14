@@ -19,6 +19,7 @@ import { API_URL } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import type { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CondicionTipoSelector'>;
 
@@ -35,6 +36,9 @@ const normalizeText = (value: string) =>
     .toLowerCase();
 
 export function CondicionTipoSelectorScreen({ navigation, route }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token } = useAuth();
   const [query, setQuery] = useState(route.params?.currentName ?? '');
   const [options, setOptions] = useState<TipoCondicion[]>([]);
@@ -126,7 +130,7 @@ export function CondicionTipoSelectorScreen({ navigation, route }: Props) {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.heroCard}>
           <View style={styles.heroIcon}>
-            <Ionicons name="search-outline" size={28} color={appColors.text} />
+            <Ionicons name="search-outline" size={28} color={colors.text} />
           </View>
           <AppText style={styles.kicker}>CATALOGO CLINICO</AppText>
           <AppText style={styles.title}>Escoger condicion</AppText>
@@ -138,18 +142,18 @@ export function CondicionTipoSelectorScreen({ navigation, route }: Props) {
         <View style={styles.searchCard}>
           <AppText style={styles.label}>Buscar o escribir condicion</AppText>
           <View style={styles.searchInputWrapper}>
-            <Ionicons name="search-outline" size={20} color={appColors.textMuted} />
+            <Ionicons name="search-outline" size={20} color={colors.textMuted} />
             <AppTextInput
               style={styles.searchInput}
               placeholder="Ej. Diabetes, hipertension, asma..."
-              placeholderTextColor={appColors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={query}
               autoCapitalize="words"
               onChangeText={setQuery}
             />
             {query ? (
               <TouchableOpacity onPress={() => setQuery('')}>
-                <Ionicons name="close-circle" size={20} color={appColors.textMuted} />
+                <Ionicons name="close-circle" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             ) : null}
           </View>
@@ -157,7 +161,7 @@ export function CondicionTipoSelectorScreen({ navigation, route }: Props) {
           {query.trim() && !exactMatch ? (
             <TouchableOpacity style={styles.customButton} onPress={useTypedCondition}>
               <View style={styles.customIcon}>
-                <Ionicons name="add-outline" size={20} color={appColors.background} />
+                <Ionicons name="add-outline" size={20} color={colors.onAccent} />
               </View>
               <View style={styles.customCopy}>
                 <AppText style={styles.customTitle}>Usar "{query.trim()}"</AppText>
@@ -175,7 +179,7 @@ export function CondicionTipoSelectorScreen({ navigation, route }: Props) {
 
           {loading ? (
             <View style={styles.stateBox}>
-              <ActivityIndicator color={appColors.info} />
+              <ActivityIndicator color={colors.info} />
               <AppText style={styles.stateText}>Cargando condiciones...</AppText>
             </View>
           ) : error ? (
@@ -204,11 +208,11 @@ export function CondicionTipoSelectorScreen({ navigation, route }: Props) {
                     <Ionicons
                       name={active ? 'checkmark-circle' : 'medical-outline'}
                       size={20}
-                      color={active ? appColors.success : appColors.info}
+                      color={active ? colors.success : colors.info}
                     />
                   </View>
                   <AppText style={styles.optionText}>{item.nombre}</AppText>
-                  <Ionicons name="chevron-forward" size={18} color={appColors.textMuted} />
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                 </TouchableOpacity>
               );
             })
@@ -219,7 +223,7 @@ export function CondicionTipoSelectorScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -230,47 +234,47 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   heroCard: {
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: colors.surfaceStrong,
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     gap: 8,
   },
   heroIcon: {
     width: 58,
     height: 58,
     borderRadius: 20,
-    backgroundColor: colorAlpha(appColors.info, '22'),
+    backgroundColor: colorAlpha(colors.info, '22'),
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
   },
   kicker: {
-    color: appColors.info,
+    color: colors.info,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.2,
   },
   title: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 30,
     fontWeight: '900',
   },
   subtitle: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     lineHeight: 20,
   },
   searchCard: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     gap: 12,
   },
   label: {
-    color: appColors.text,
+    color: colors.text,
     fontWeight: '800',
     fontSize: 14,
   },
@@ -279,15 +283,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 16,
     paddingHorizontal: 14,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
   },
   searchInput: {
     flex: 1,
     minHeight: 54,
-    color: appColors.text,
+    color: colors.text,
     fontSize: 16,
   },
   customButton: {
@@ -296,15 +300,15 @@ const styles = StyleSheet.create({
     gap: 12,
     borderRadius: 16,
     padding: 14,
-    backgroundColor: colorAlpha(appColors.success, '18'),
+    backgroundColor: colorAlpha(colors.success, '18'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '55'),
+    borderColor: colorAlpha(colors.success, '55'),
   },
   customIcon: {
     width: 34,
     height: 34,
     borderRadius: 12,
-    backgroundColor: appColors.success,
+    backgroundColor: colors.success,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -313,19 +317,19 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   customTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontWeight: '800',
   },
   customText: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     lineHeight: 18,
   },
   listCard: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     gap: 12,
   },
   listHeader: {
@@ -334,12 +338,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sectionTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 18,
     fontWeight: '900',
   },
   counterText: {
-    color: appColors.info,
+    color: colors.info,
     fontWeight: '900',
   },
   optionRow: {
@@ -348,13 +352,13 @@ const styles = StyleSheet.create({
     gap: 12,
     borderRadius: 16,
     padding: 14,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.borderStrong,
+    borderColor: colors.borderStrong,
   },
   optionRowActive: {
-    borderColor: appColors.success,
-    backgroundColor: colorAlpha(appColors.success, '12'),
+    borderColor: colors.success,
+    backgroundColor: colorAlpha(colors.success, '12'),
   },
   optionIcon: {
     width: 34,
@@ -366,7 +370,7 @@ const styles = StyleSheet.create({
   },
   optionText: {
     flex: 1,
-    color: appColors.text,
+    color: colors.text,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -375,26 +379,26 @@ const styles = StyleSheet.create({
     gap: 8,
     borderRadius: 16,
     padding: 18,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.borderStrong,
+    borderColor: colors.borderStrong,
   },
   stateTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontWeight: '900',
   },
   stateText: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
   },
   retryButton: {
     borderRadius: 999,
     paddingHorizontal: 16,
     paddingVertical: 9,
-    backgroundColor: appColors.info,
+    backgroundColor: colors.info,
   },
   retryButtonText: {
-    color: appColors.text,
+    color: colors.onAccent,
     fontWeight: '800',
   },
 });

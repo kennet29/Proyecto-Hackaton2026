@@ -32,6 +32,7 @@ import { API_URL } from "../config/api";
 import { submitJsonWithOfflineFallback } from "../utils/offlineWriteQueue";
 import { openWebDateTimePicker } from "../utils/webDateTimePicker";
 import { getJsonWithOfflineFallback } from "../utils/offlineReadCache";
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 
 
@@ -243,8 +244,11 @@ const parseTimeForPicker = (value?: string) => {
 
 
 export function CitaFormScreen() {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
 
-  const pickerItemColor = Platform.OS === "android" ? "#071120" : "#F4F8FF";
+
+  const pickerItemColor = Platform.OS === "android" ? colors.background : colors.text;
 
   const [form, setForm] = useState({
 
@@ -575,7 +579,7 @@ export function CitaFormScreen() {
 
         marked: true,
 
-        dotColor: "#FF4D73",
+        dotColor: colors.accent,
 
       };
 
@@ -589,11 +593,11 @@ export function CitaFormScreen() {
 
         selected: true,
 
-        selectedColor: "#29B6FF",
+        selectedColor: colors.info,
 
-        selectedTextColor: "#F4F8FF",
+        selectedTextColor: colors.onAccent,
 
-        dotColor: marks[selectedDate]?.dotColor ?? "#29B6FF",
+        dotColor: marks[selectedDate]?.dotColor ?? colors.info,
 
         marked: marks[selectedDate]?.marked ?? undefined,
 
@@ -603,7 +607,7 @@ export function CitaFormScreen() {
 
     return marks;
 
-  }, [appointments, selectedDate]);
+  }, [appointments, selectedDate, colors]);
 
 
 
@@ -858,7 +862,7 @@ export function CitaFormScreen() {
 
           <View style={styles.loadingBox}>
 
-            <ActivityIndicator color="#29B6FF" />
+            <ActivityIndicator color={colors.info} />
 
             <AppText style={styles.loadingText}>Cargando agenda...</AppText>
 
@@ -866,7 +870,7 @@ export function CitaFormScreen() {
 
         ) : (
 
-          <Calendar
+          <Calendar key={colors.mode}
 
             markedDates={markedDates}
 
@@ -879,14 +883,19 @@ export function CitaFormScreen() {
             firstDay={1}
 
             theme={{
+              calendarBackground: colors.surface,
+              dayTextColor: colors.text,
+              monthTextColor: colors.text,
+              textSectionTitleColor: colors.textMuted,
+              textDisabledColor: colors.textMuted,
 
-              todayTextColor: "#29B6FF",
+              todayTextColor: colors.info,
 
-              arrowColor: "#29B6FF",
+              arrowColor: colors.info,
 
-              selectedDayBackgroundColor: "#29B6FF",
+              selectedDayBackgroundColor: colors.info,
 
-              selectedDayTextColor: "#F4F8FF",
+              selectedDayTextColor: colors.onAccent,
 
               textDayFontFamily: 'SpaceGrotesk_400Regular',
 
@@ -916,7 +925,7 @@ export function CitaFormScreen() {
 
           <View style={styles.loadingBox}>
 
-            <ActivityIndicator color="#29B6FF" />
+            <ActivityIndicator color={colors.info} />
 
             <AppText style={styles.loadingText}>Cargando personas...</AppText>
 
@@ -1042,7 +1051,7 @@ export function CitaFormScreen() {
 
             <View style={styles.loadingBox}>
 
-              <ActivityIndicator color="#29B6FF" />
+              <ActivityIndicator color={colors.info} />
 
               <AppText style={styles.loadingText}>Cargando personas...</AppText>
 
@@ -1120,7 +1129,7 @@ export function CitaFormScreen() {
 
             <View style={styles.iosPickerWrapper}>
 
-              <DateTimePicker
+              <DateTimePicker themeVariant={colors.mode}
 
                 mode="date"
 
@@ -1164,7 +1173,7 @@ export function CitaFormScreen() {
 
             <View style={styles.iosPickerWrapper}>
 
-              <DateTimePicker
+              <DateTimePicker themeVariant={colors.mode}
 
                 mode="time"
 
@@ -1240,7 +1249,7 @@ export function CitaFormScreen() {
 
             {isSubmitting ? (
 
-              <ActivityIndicator color="#F4F8FF" />
+              <ActivityIndicator color={colors.text} />
 
             ) : (
 
@@ -1265,13 +1274,13 @@ export function CitaFormScreen() {
 
 
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
 
   container: {
 
     padding: 20,
 
-    backgroundColor: "#071120",
+    backgroundColor: colors.background,
 
     gap: 16,
 
@@ -1283,7 +1292,7 @@ const styles = StyleSheet.create({
 
     fontWeight: "700",
 
-    color: "#F4F8FF",
+    color: colors.text,
 
   },
 
@@ -1291,7 +1300,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 20,
 
-    backgroundColor: "#071120",
+    backgroundColor: colors.background,
 
     padding: 12,
 
@@ -1323,13 +1332,13 @@ const styles = StyleSheet.create({
 
     marginTop: 8,
 
-    color: "#C9D7E8",
+    color: colors.textSoft,
 
   },
 
   errorText: {
 
-    color: "#FF4D73",
+    color: colors.accent,
 
     marginTop: 8,
 
@@ -1341,7 +1350,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 20,
 
-    backgroundColor: "#071120",
+    backgroundColor: colors.background,
 
     padding: 16,
 
@@ -1355,7 +1364,7 @@ const styles = StyleSheet.create({
 
     fontWeight: "700",
 
-    color: "#F4F8FF",
+    color: colors.text,
 
     textTransform: "capitalize",
 
@@ -1363,7 +1372,7 @@ const styles = StyleSheet.create({
 
   emptyText: {
 
-    color: "#C9D7E8",
+    color: colors.textSoft,
 
   },
 
@@ -1371,7 +1380,7 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#27496D",
+    borderColor: colors.border,
 
     borderRadius: 14,
 
@@ -1397,13 +1406,13 @@ const styles = StyleSheet.create({
 
     fontWeight: "700",
 
-    color: "#29B6FF",
+    color: colors.info,
 
   },
 
   statusBadge: {
 
-    backgroundColor: "#C9D7E8",
+    backgroundColor: colors.textSoft,
 
     paddingHorizontal: 10,
 
@@ -1415,7 +1424,7 @@ const styles = StyleSheet.create({
 
   statusBadgeText: {
 
-    color: "#29B6FF",
+    color: colors.info,
 
     fontWeight: "700",
 
@@ -1429,19 +1438,19 @@ const styles = StyleSheet.create({
 
     fontWeight: "700",
 
-    color: "#071120",
+    color: colors.onAccent,
 
   },
 
   appointmentDetail: {
 
-    color: "#9FB3C8",
+    color: colors.textMuted,
 
   },
 
   toggleBtn: {
 
-    backgroundColor: "#29B6FF",
+    backgroundColor: colors.info,
 
     borderRadius: 14,
 
@@ -1453,7 +1462,7 @@ const styles = StyleSheet.create({
 
   toggleBtnText: {
 
-    color: "#F4F8FF",
+    color: colors.onAccent,
 
     fontWeight: "700",
 
@@ -1467,7 +1476,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: "#29B6FF",
+    backgroundColor: colors.info,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000000",
@@ -1477,7 +1486,7 @@ const styles = StyleSheet.create({
     elevation: 7,
   },
   fabText: {
-    color: "#F4F8FF",
+    color: colors.onAccent,
     fontSize: 30,
     lineHeight: 32,
     fontWeight: "700",
@@ -1487,7 +1496,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 20,
 
-    backgroundColor: "#071120",
+    backgroundColor: colors.background,
 
     padding: 16,
 
@@ -1507,7 +1516,7 @@ const styles = StyleSheet.create({
 
   patientChip: {
 
-    backgroundColor: "#29B6FF18",
+    backgroundColor: `${colors.info}18`,
 
     borderRadius: 12,
 
@@ -1519,7 +1528,7 @@ const styles = StyleSheet.create({
 
   patientChipTitle: {
 
-    color: "#F4F8FF",
+    color: colors.text,
 
     fontWeight: "700",
 
@@ -1527,7 +1536,7 @@ const styles = StyleSheet.create({
 
   patientChipSubtitle: {
 
-    color: "#C9D7E8",
+    color: colors.textSoft,
 
     fontSize: 12,
 
@@ -1537,9 +1546,9 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#27496D",
+    borderColor: colors.border,
 
-    backgroundColor: "#071120",
+    backgroundColor: colors.background,
 
     borderRadius: 12,
 
@@ -1553,7 +1562,7 @@ const styles = StyleSheet.create({
 
     alignSelf: "flex-start",
 
-    backgroundColor: "#FF4D73",
+    backgroundColor: colors.accent,
 
     borderRadius: 999,
 
@@ -1565,7 +1574,7 @@ const styles = StyleSheet.create({
 
   refreshBtnText: {
 
-    color: "#F4F8FF",
+    color: colors.onAccent,
 
     fontWeight: "700",
 
@@ -1573,7 +1582,7 @@ const styles = StyleSheet.create({
 
   formCard: {
 
-    backgroundColor: "#071120",
+    backgroundColor: colors.background,
 
     borderRadius: 20,
 
@@ -1589,7 +1598,7 @@ const styles = StyleSheet.create({
 
     fontWeight: "700",
 
-    color: "#F4F8FF",
+    color: colors.text,
 
   },
 
@@ -1597,7 +1606,7 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#27496D",
+    borderColor: colors.border,
 
     borderRadius: 12,
 
@@ -1611,7 +1620,7 @@ const styles = StyleSheet.create({
 
     fontWeight: "600",
 
-    color: "#F4F8FF",
+    color: colors.text,
 
   },
 
@@ -1629,7 +1638,7 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#27496D",
+    borderColor: colors.border,
 
     borderRadius: 12,
 
@@ -1637,13 +1646,13 @@ const styles = StyleSheet.create({
 
     paddingHorizontal: 14,
 
-    backgroundColor: "#071120",
+    backgroundColor: colors.background,
 
   },
 
   dateButtonText: {
 
-    color: "#F4F8FF",
+    color: colors.text,
 
     fontSize: 15,
 
@@ -1655,11 +1664,11 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#27496D",
+    borderColor: colors.border,
 
     borderRadius: 16,
 
-    backgroundColor: "#071120",
+    backgroundColor: colors.background,
 
     overflow: "hidden",
 
@@ -1669,19 +1678,19 @@ const styles = StyleSheet.create({
 
     borderTopWidth: 1,
 
-    borderTopColor: "#27496D",
+    borderTopColor: colors.border,
 
     paddingVertical: 10,
 
     alignItems: "center",
 
-    backgroundColor: "#071120",
+    backgroundColor: colors.background,
 
   },
 
   iosPickerDoneText: {
 
-    color: "#29B6FF30",
+    color: `${colors.info}30`,
 
     fontWeight: "700",
 
@@ -1691,7 +1700,7 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
 
-    borderColor: "#27496D",
+    borderColor: colors.border,
 
     borderRadius: 12,
 
@@ -1703,7 +1712,7 @@ const styles = StyleSheet.create({
 
   primaryBtn: {
 
-    backgroundColor: "#38E28E",
+    backgroundColor: colors.success,
 
     paddingVertical: 16,
 
@@ -1723,7 +1732,7 @@ const styles = StyleSheet.create({
 
   btnText: {
 
-    color: "#F4F8FF",
+    color: colors.text,
 
     fontWeight: "600",
 

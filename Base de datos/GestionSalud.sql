@@ -115,6 +115,8 @@ create table permisoacceso (
     foreign key (medicoid) references usuario(usuarioid)
 );
 
+SET QUOTED_IDENTIFIER ON;
+GO
 create unique index ux_permisoacceso_activo on permisoacceso(pacienteid, medicoid, estado) where estado = 'activo';
 
 
@@ -1020,43 +1022,42 @@ create table detalleevaluacionsalud (
     foreign key (evaluacionid) references evaluacionsaludhabito(evaluacionid),
     foreign key (habitoid) references habitoespecifico(habitoid)
 );
-c r e a t e   t a b l e   i n d i c e h a b i t o   ( 
-         i n d i c e i d   i n t   i d e n t i t y   p r i m a r y   k e y , 
-         p a c i e n t e i d   i n t   n o t   n u l l , 
-         f e c h a   d a t e t i m e 2   n o t   n u l l   d e f a u l t   s y s d a t e t i m e ( ) , 
-         p u n t a j e   d e c i m a l ( 5 , 2 )   n o t   n u l l , 
-         c a t e g o r i a   n v a r c h a r ( 8 0 )   n u l l , 
-         d e s c r i p c i o n   n v a r c h a r ( 2 0 0 )   n u l l , 
-         d e t a l l e   n v a r c h a r ( m a x )   n u l l , 
-         c r e a d o p o r   n v a r c h a r ( 6 0 )   n u l l , 
-         c r e a d o e n   d a t e t i m e 2   n o t   n u l l   d e f a u l t   s y s d a t e t i m e ( ) , 
-         m o d i f i c a d o p o r   n v a r c h a r ( 6 0 )   n u l l , 
-         m o d i f i c a d o e n   d a t e t i m e 2   n u l l , 
-         c a m p o p r u e b a 0 1   n v a r c h a r ( 2 0 0 )   n u l l , 
-         c a m p o p r u e b a 0 2   n v a r c h a r ( 2 0 0 )   n u l l , 
-         c a m p o p r u e b a 0 3   n v a r c h a r ( 2 0 0 )   n u l l , 
-         c a m p o p r u e b a 0 4   n v a r c h a r ( 2 0 0 )   n u l l , 
-         c a m p o p r u e b a 0 5   n v a r c h a r ( 2 0 0 )   n u l l , 
-         f o r e i g n   k e y   ( p a c i e n t e i d )   r e f e r e n c e s   p a c i e n t e ( p a c i e n t e i d ) 
- ) ; 
- 
- c r e a t e   t a b l e   d e t a l l e i n d i c e h a b i t o   ( 
-         d e t a l l e i d   i n t   i d e n t i t y   p r i m a r y   k e y , 
-         i n d i c e i d   i n t   n o t   n u l l , 
-         h a b i t o i d   i n t   n u l l , 
-         t i p o   n v a r c h a r ( 8 0 )   n u l l , 
-         f a c t o r   d e c i m a l ( 5 , 2 )   n u l l , 
-         c o m e n t a r i o   n v a r c h a r ( 2 0 0 )   n u l l , 
-         c r e a d o p o r   n v a r c h a r ( 6 0 )   n u l l , 
-         c r e a d o e n   d a t e t i m e 2   n o t   n u l l   d e f a u l t   s y s d a t e t i m e ( ) , 
-         m o d i f i c a d o p o r   n v a r c h a r ( 6 0 )   n u l l , 
-         m o d i f i c a d o e n   d a t e t i m e 2   n u l l , 
-         c a m p o p r u e b a 0 1   n v a r c h a r ( 2 0 0 )   n u l l , 
-         c a m p o p r u e b a 0 2   n v a r c h a r ( 2 0 0 )   n u l l , 
-         c a m p o p r u e b a 0 3   n v a r c h a r ( 2 0 0 )   n u l l , 
-         c a m p o p r u e b a 0 4   n v a r c h a r ( 2 0 0 )   n u l l , 
-         c a m p o p r u e b a 0 5   n v a r c h a r ( 2 0 0 )   n u l l , 
-         f o r e i g n   k e y   ( i n d i c e i d )   r e f e r e n c e s   i n d i c e h a b i t o ( i n d i c e i d ) , 
-         f o r e i g n   k e y   ( h a b i t o i d )   r e f e r e n c e s   h a b i t o e s p e c i f i c o ( h a b i t o i d ) 
- ) ;  
- 
+create table indicehabito (
+    indiceid int identity primary key,
+    pacienteid int not null,
+    fecha datetime2 not null default sysdatetime(),
+    puntaje decimal(5,2) not null,
+    categoria nvarchar(80) null,
+    descripcion nvarchar(200) null,
+    detalle nvarchar(max) null,
+    creadopor nvarchar(60) null,
+    creadoen datetime2 not null default sysdatetime(),
+    modificadopor nvarchar(60) null,
+    modificadoen datetime2 null,
+    campoprueba01 nvarchar(200) null,
+    campoprueba02 nvarchar(200) null,
+    campoprueba03 nvarchar(200) null,
+    campoprueba04 nvarchar(200) null,
+    campoprueba05 nvarchar(200) null,
+    foreign key (pacienteid) references paciente(pacienteid)
+);
+
+create table detalleindicehabito (
+    detalleid int identity primary key,
+    indiceid int not null,
+    habitoid int null,
+    tipo nvarchar(80) null,
+    factor decimal(5,2) null,
+    comentario nvarchar(200) null,
+    creadopor nvarchar(60) null,
+    creadoen datetime2 not null default sysdatetime(),
+    modificadopor nvarchar(60) null,
+    modificadoen datetime2 null,
+    campoprueba01 nvarchar(200) null,
+    campoprueba02 nvarchar(200) null,
+    campoprueba03 nvarchar(200) null,
+    campoprueba04 nvarchar(200) null,
+    campoprueba05 nvarchar(200) null,
+    foreign key (indiceid) references indicehabito(indiceid),
+    foreign key (habitoid) references habitoespecifico(habitoid)
+);

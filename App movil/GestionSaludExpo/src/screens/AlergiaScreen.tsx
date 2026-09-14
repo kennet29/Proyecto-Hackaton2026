@@ -27,6 +27,7 @@ import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type AlergiaRecord = {
   alergiaId: number;
@@ -125,9 +126,12 @@ const getSeverityColors = (severity?: string | null) => {
 };
 
 export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isCreateMode = mode === 'create';
-  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
+  const pickerItemColor = Platform.OS === 'android' ? colors.background : colors.text;
   const { token, user } = useAuth();
   const defaultPacienteId = useMemo(
     () => (user?.pacienteId ? String(user.pacienteId) : ''),
@@ -374,7 +378,7 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
       <AppText style={styles.label}>Paciente</AppText>
       {loadingPatients ? (
         <View style={styles.loadingCard}>
-          <ActivityIndicator color="#29B6FF" />
+          <ActivityIndicator color={colors.info} />
           <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
         </View>
       ) : patientOptions.length === 0 ? (
@@ -389,7 +393,7 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
           <Picker
             selectedValue={form.pacienteId}
             onValueChange={(value) => handleChange('pacienteId', String(value))}
-            dropdownIconColor="#F4F8FF"
+            dropdownIconColor={colors.text}
             style={styles.picker}
           >
             <Picker.Item label="Selecciona un paciente" value="" color={pickerItemColor} />
@@ -408,35 +412,35 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
       <AppTextInput
         style={styles.input}
         placeholder="Tipo de alergia"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor={colors.textMuted}
         value={form.tipo}
         onChangeText={(value) => handleChange('tipo', value)}
       />
       <AppTextInput
         style={styles.input}
         placeholder="Desencadenante"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor={colors.textMuted}
         value={form.desencadenante}
         onChangeText={(value) => handleChange('desencadenante', value)}
       />
       <AppTextInput
         style={styles.input}
         placeholder="Severidad"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor={colors.textMuted}
         value={form.severidad}
         onChangeText={(value) => handleChange('severidad', value)}
       />
       <AppTextInput
         style={styles.input}
         placeholder="Reaccion tipica"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor={colors.textMuted}
         value={form.reaccion}
         onChangeText={(value) => handleChange('reaccion', value)}
       />
       <AppTextInput
         style={styles.input}
         placeholder="Tratamiento recomendado"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor={colors.textMuted}
         value={form.tratamiento}
         onChangeText={(value) => handleChange('tratamiento', value)}
       />
@@ -448,7 +452,7 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
 
       {Platform.OS === 'ios' && showIOSDatePicker ? (
         <View style={styles.iosPickerCard}>
-          <DateTimePicker
+          <DateTimePicker themeVariant={colors.mode}
             mode="date"
             display="spinner"
             value={parseDateForPicker(form.fechadiagnostico)}
@@ -468,14 +472,14 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
       <AppTextInput
         style={styles.input}
         placeholder="Estado"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor={colors.textMuted}
         value={form.estado}
         onChangeText={(value) => handleChange('estado', value)}
       />
       <AppTextInput
         style={[styles.input, styles.multiline]}
         placeholder="Observaciones"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor={colors.textMuted}
         value={form.observaciones}
         multiline
         onChangeText={(value) => handleChange('observaciones', value)}
@@ -499,7 +503,7 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
           disabled={isSubmitting}
         >
           {isSubmitting ? (
-            <ActivityIndicator color="#F4F8FF" />
+            <ActivityIndicator color={colors.text} />
           ) : (
             <AppText style={styles.primaryButtonText}>Guardar</AppText>
           )}
@@ -541,7 +545,7 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
               selectedValue={selectedPatientId}
               onValueChange={(value) => setSelectedPatientId(String(value))}
               enabled={!loadingPatients}
-              dropdownIconColor="#F4F8FF"
+              dropdownIconColor={colors.text}
               style={styles.picker}
             >
               <Picker.Item
@@ -573,7 +577,7 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
 
         {loadingRecords ? (
           <View style={styles.loadingCard}>
-            <ActivityIndicator color="#29B6FF" />
+            <ActivityIndicator color={colors.info} />
             <AppText style={styles.loadingText}>Cargando resumen...</AppText>
           </View>
         ) : visibleSummaries.length === 0 ? (
@@ -641,7 +645,7 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
 
         {loadingRecords ? (
           <View style={styles.loadingCard}>
-            <ActivityIndicator color="#29B6FF" />
+            <ActivityIndicator color={colors.info} />
             <AppText style={styles.loadingText}>Cargando historial...</AppText>
           </View>
         ) : filteredRecords.length === 0 ? (
@@ -722,26 +726,26 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   container: {
     padding: 24,
     paddingBottom: 120,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   heroCard: {
     borderRadius: 28,
     padding: 22,
     marginBottom: 18,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
   },
   eyebrow: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
@@ -751,41 +755,41 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   subtitle: {
     marginTop: 10,
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 15,
     lineHeight: 22,
   },
   filterCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 22,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginBottom: 18,
   },
   label: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
     marginBottom: 8,
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   picker: {
-    color: '#F4F8FF',
+    color: colors.text,
   },
   filterHint: {
     marginTop: 10,
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
   },
   sectionHeader: {
@@ -794,54 +798,54 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   sectionSubtitle: {
     marginTop: 4,
-    color: '#9FB3C8',
+    color: colors.textMuted,
   },
   loadingCard: {
     borderRadius: 20,
     padding: 22,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     alignItems: 'center',
     marginBottom: 16,
   },
   loadingText: {
     marginTop: 10,
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   emptyCard: {
     borderRadius: 22,
     padding: 20,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginBottom: 16,
   },
   emptyTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
     fontSize: 16,
     marginBottom: 6,
   },
   emptyText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     lineHeight: 20,
   },
   summaryCard: {
     borderRadius: 22,
     padding: 18,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginBottom: 12,
   },
   summaryCardActive: {
-    borderColor: '#29B6FF',
-    backgroundColor: '#29B6FF18',
+    borderColor: colors.info,
+    backgroundColor: `${colors.info}18`,
   },
   summaryHeader: {
     flexDirection: 'row',
@@ -853,43 +857,43 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   summaryName: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 17,
     fontWeight: '900',
   },
   summaryMeta: {
     marginTop: 4,
-    color: '#9FB3C8',
+    color: colors.textMuted,
   },
   summaryCountBadge: {
     minWidth: 74,
     borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#29B6FF',
+    borderColor: colors.info,
     alignItems: 'center',
   },
   summaryCountValue: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 20,
     fontWeight: '900',
   },
   summaryCountLabel: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 10,
     fontWeight: '800',
     textTransform: 'uppercase',
   },
   summaryPrimary: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '700',
   },
   summarySecondary: {
     marginTop: 6,
-    color: '#9FB3C8',
+    color: colors.textMuted,
     lineHeight: 20,
   },
   chipRow: {
@@ -902,20 +906,20 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 7,
     paddingHorizontal: 10,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     marginRight: 8,
     marginBottom: 8,
   },
   chipText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '700',
   },
   summaryAction: {
     marginTop: 8,
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
     fontSize: 13,
   },
@@ -923,9 +927,9 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     padding: 18,
     marginBottom: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
   },
   recordTopRow: {
     flexDirection: 'row',
@@ -937,10 +941,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 7,
     paddingHorizontal: 12,
-    backgroundColor: '#29B6FF18',
+    backgroundColor: `${colors.info}18`,
   },
   datePillText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
     fontSize: 12,
   },
@@ -959,49 +963,49 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   recordTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '900',
     marginBottom: 6,
   },
   recordPatient: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
     marginBottom: 10,
   },
   recordText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 5,
     lineHeight: 20,
   },
   formCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginTop: 10,
   },
   formTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   formSubtitle: {
     marginTop: 6,
     marginBottom: 14,
-    color: '#9FB3C8',
+    color: colors.textMuted,
     lineHeight: 20,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
     fontSize: 15,
-    backgroundColor: '#071120',
-    color: '#F4F8FF',
+    backgroundColor: colors.background,
+    color: colors.text,
   },
   multiline: {
     minHeight: 96,
@@ -1009,25 +1013,25 @@ const styles = StyleSheet.create({
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     paddingVertical: 15,
     paddingHorizontal: 14,
     marginBottom: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   dateButtonText: {
-    color: '#F4F8FF',
+    color: colors.text,
     textAlign: 'center',
     fontSize: 15,
     fontWeight: '700',
   },
   iosPickerCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     marginBottom: 12,
   },
   secondaryButton: {
@@ -1036,7 +1040,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   secondaryButtonText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
   },
   formActions: {
@@ -1049,17 +1053,17 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#9FB3C8',
-    backgroundColor: '#071120',
+    borderColor: colors.textMuted,
+    backgroundColor: colors.background,
     marginRight: 6,
   },
   cancelButtonText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontWeight: '800',
   },
   primaryButton: {
     flex: 1,
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     borderRadius: 14,
     paddingVertical: 15,
     alignItems: 'center',
@@ -1069,7 +1073,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   primaryButtonText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontWeight: '900',
     fontSize: 16,
   },
@@ -1080,7 +1084,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
@@ -1090,7 +1094,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   fabText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontSize: 30,
     lineHeight: 30,
     fontWeight: '800',

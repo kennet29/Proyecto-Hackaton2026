@@ -34,20 +34,21 @@ import {
 } from '../utils/localDate';
 import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 import { syncLocalReminder } from '../utils/localReminderScheduler';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 const webDateInputStyle = {
   flex: 1,
   minWidth: 0,
   height: 48,
   borderRadius: 14,
-  border: `1px solid ${appColors.border}`,
-  backgroundColor: appColors.backgroundMuted,
-  color: appColors.text,
+  border: '1px solid var(--app-border)',
+  backgroundColor: 'var(--app-input-bg)',
+  color: 'var(--app-text)',
   padding: '0 13px',
   fontSize: 14,
   fontWeight: 700,
   outline: 'none',
-  colorScheme: 'dark',
+  colorScheme: 'var(--app-color-scheme)',
 };
 
 type ReminderRecord = {
@@ -368,6 +369,9 @@ const mapNotifications = (payload: any[]): ReminderRecord[] => {
 };
 
 export function RecordatorioListScreen() {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token, user } = useAuth();
   const { width } = useWindowDimensions();
   const isWide = width >= 980;
@@ -836,8 +840,8 @@ export function RecordatorioListScreen() {
       >
         <View style={styles.cardHeader}>
           <View style={styles.personRow}>
-            <View style={[styles.personIcon, { backgroundColor: colorAlpha(source?.accent ?? appColors.info, '18') }]}>
-              <Ionicons name={source?.icon ?? 'notifications-outline'} size={16} color={source?.accent ?? appColors.info} />
+            <View style={[styles.personIcon, { backgroundColor: colorAlpha(source?.accent ?? colors.info, '18') }]}>
+              <Ionicons name={source?.icon ?? 'notifications-outline'} size={16} color={source?.accent ?? colors.info} />
             </View>
             <View style={styles.personTextWrap}>
               <AppText style={styles.personName}>{patientName}</AppText>
@@ -880,7 +884,7 @@ export function RecordatorioListScreen() {
                 onPress={() => setReschedulingReminder(null)}
                 accessibilityLabel="Cerrar reprogramación"
               >
-                <Ionicons name="close" size={19} color={appColors.textMuted} />
+                <Ionicons name="close" size={19} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
 
@@ -909,7 +913,7 @@ export function RecordatorioListScreen() {
                     onPress={() => openDatePicker(rescheduleDate, rescheduleTime, setRescheduleDate)}
                     accessibilityLabel="Elegir nueva fecha del aviso"
                   >
-                    <Ionicons name="calendar-outline" size={18} color={appColors.info} />
+                    <Ionicons name="calendar-outline" size={18} color={colors.info} />
                     <AppText style={styles.dateTimePickerText}>{rescheduleDate || 'Elegir fecha'}</AppText>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -917,7 +921,7 @@ export function RecordatorioListScreen() {
                     onPress={() => openTimePicker(rescheduleDate, rescheduleTime, setRescheduleTime)}
                     accessibilityLabel="Elegir nueva hora del aviso"
                   >
-                    <Ionicons name="time-outline" size={18} color={appColors.info} />
+                    <Ionicons name="time-outline" size={18} color={colors.info} />
                     <AppText style={styles.dateTimePickerText}>{rescheduleTime || 'Elegir hora'}</AppText>
                   </TouchableOpacity>
                 </>
@@ -926,14 +930,14 @@ export function RecordatorioListScreen() {
                   <AppTextInput
                     style={styles.input}
                     placeholder="YYYY-MM-DD"
-                    placeholderTextColor={appColors.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     value={rescheduleDate}
                     onChangeText={setRescheduleDate}
                   />
                   <AppTextInput
                     style={styles.input}
                     placeholder="HH:MM"
-                    placeholderTextColor={appColors.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     value={rescheduleTime}
                     onChangeText={setRescheduleTime}
                   />
@@ -958,9 +962,9 @@ export function RecordatorioListScreen() {
                 disabled={rescheduling}
               >
                 {rescheduling ? (
-                  <ActivityIndicator size="small" color={appColors.background} />
+                  <ActivityIndicator size="small" color={colors.onAccent} />
                 ) : (
-                  <Ionicons name="calendar-outline" size={17} color={appColors.background} />
+                  <Ionicons name="calendar-outline" size={17} color={colors.onAccent} />
                 )}
                 <AppText style={styles.rescheduleSaveText}>Guardar nueva fecha</AppText>
               </TouchableOpacity>
@@ -984,12 +988,12 @@ export function RecordatorioListScreen() {
               }
             >
               {isUpdating ? (
-                <ActivityIndicator size="small" color={appColors.text} />
+                <ActivityIndicator size="small" color={colors.text} />
               ) : (
                 <Ionicons
                   name={isCompleted ? 'checkmark-circle' : 'checkmark-circle-outline'}
                   size={17}
-                  color={isCompleted ? appColors.success : appColors.text}
+                  color={isCompleted ? colors.success : colors.text}
                 />
               )}
               <AppText
@@ -1012,7 +1016,7 @@ export function RecordatorioListScreen() {
               accessibilityRole="button"
               accessibilityLabel="Reprogramar recordatorio"
             >
-              <Ionicons name="calendar-outline" size={17} color={appColors.info} />
+              <Ionicons name="calendar-outline" size={17} color={colors.info} />
               <AppText style={styles.rescheduleButtonText}>
                 {isRescheduleOpen ? 'Cerrar' : 'Reprogramar'}
               </AppText>
@@ -1026,9 +1030,9 @@ export function RecordatorioListScreen() {
               accessibilityLabel="Eliminar recordatorio"
             >
               {isDeleting ? (
-                <ActivityIndicator size="small" color={appColors.accent} />
+                <ActivityIndicator size="small" color={colors.accent} />
               ) : (
-                <Ionicons name="trash-outline" size={17} color={appColors.accent} />
+                <Ionicons name="trash-outline" size={17} color={colors.accent} />
               )}
               <AppText style={styles.deleteButtonText}>Eliminar</AppText>
             </TouchableOpacity>
@@ -1045,7 +1049,7 @@ export function RecordatorioListScreen() {
     <ScrollView
       style={styles.scroller}
       contentContainerStyle={[styles.container, isWide && styles.containerWide]}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor={appColors.text} />}
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor={colors.text} />}
     >
       <View style={[styles.formPanel, isWide && styles.formPanelWide]}>
         <View style={styles.panelHeader}>
@@ -1054,7 +1058,7 @@ export function RecordatorioListScreen() {
             <AppText style={styles.panelSubtitle}>Elige cualquier registro clinico y programa el aviso.</AppText>
           </View>
           <TouchableOpacity style={styles.iconButton} onPress={() => void fetchData()}>
-            <Ionicons name="refresh-outline" size={18} color={appColors.info} />
+            <Ionicons name="refresh-outline" size={18} color={colors.info} />
           </TouchableOpacity>
         </View>
 
@@ -1066,7 +1070,7 @@ export function RecordatorioListScreen() {
               setSelectedPatientId(String(value));
               setSelectedSourceKey('');
             }}
-            dropdownIconColor={appColors.text}
+            dropdownIconColor={colors.text}
             style={styles.picker}
           >
             <Picker.Item label="Todas las personas" value="" />
@@ -1086,7 +1090,7 @@ export function RecordatorioListScreen() {
                 style={[styles.typeChip, isActive && { borderColor: definition.accent, backgroundColor: colorAlpha(definition.accent, '14') }]}
                 onPress={() => handleSourceTypeChange(definition.key)}
               >
-                <Ionicons name={definition.icon} size={16} color={isActive ? definition.accent : appColors.textSoft} />
+                <Ionicons name={definition.icon} size={16} color={isActive ? definition.accent : colors.textSoft} />
                 <AppText style={[styles.typeChipText, isActive && { color: definition.accent }]}>{definition.label}</AppText>
               </TouchableOpacity>
             );
@@ -1098,7 +1102,7 @@ export function RecordatorioListScreen() {
           <Picker
             selectedValue={selectedSourceKey}
             onValueChange={(value) => handleSourceSelect(String(value))}
-            dropdownIconColor={appColors.text}
+            dropdownIconColor={colors.text}
             style={styles.picker}
           >
             <Picker.Item
@@ -1154,7 +1158,7 @@ export function RecordatorioListScreen() {
                 onPress={() => openDatePicker(notificationDate, notificationTime, setNotificationDate)}
                 accessibilityLabel="Elegir fecha del aviso"
               >
-                <Ionicons name="calendar-outline" size={18} color={appColors.info} />
+                <Ionicons name="calendar-outline" size={18} color={colors.info} />
                 <AppText style={styles.dateTimePickerText}>{notificationDate || 'Elegir fecha'}</AppText>
               </TouchableOpacity>
               <TouchableOpacity
@@ -1162,7 +1166,7 @@ export function RecordatorioListScreen() {
                 onPress={() => openTimePicker(notificationDate, notificationTime, setNotificationTime)}
                 accessibilityLabel="Elegir hora del aviso"
               >
-                <Ionicons name="time-outline" size={18} color={appColors.info} />
+                <Ionicons name="time-outline" size={18} color={colors.info} />
                 <AppText style={styles.dateTimePickerText}>{notificationTime || 'Elegir hora'}</AppText>
               </TouchableOpacity>
             </>
@@ -1171,14 +1175,14 @@ export function RecordatorioListScreen() {
               <AppTextInput
                 style={styles.input}
                 placeholder="YYYY-MM-DD"
-                placeholderTextColor={appColors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 value={notificationDate}
                 onChangeText={setNotificationDate}
               />
               <AppTextInput
                 style={styles.input}
                 placeholder="HH:mm"
-                placeholderTextColor={appColors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 value={notificationTime}
                 onChangeText={setNotificationTime}
               />
@@ -1190,7 +1194,7 @@ export function RecordatorioListScreen() {
         <AppTextInput
           style={[styles.input, styles.messageInput]}
           placeholder="Mensaje del recordatorio"
-          placeholderTextColor={appColors.textMuted}
+          placeholderTextColor={colors.textMuted}
           multiline
           value={message}
           onChangeText={setMessage}
@@ -1202,10 +1206,10 @@ export function RecordatorioListScreen() {
           disabled={submitting}
         >
           {submitting ? (
-            <ActivityIndicator color={appColors.text} />
+            <ActivityIndicator color={colors.text} />
           ) : (
             <>
-              <Ionicons name="add-circle-outline" size={19} color={appColors.text} />
+              <Ionicons name="add-circle-outline" size={19} color={colors.text} />
               <AppText style={styles.primaryButtonText}>Guardar recordatorio</AppText>
             </>
           )}
@@ -1222,12 +1226,12 @@ export function RecordatorioListScreen() {
 
         {loading ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color={appColors.info} />
+            <ActivityIndicator color={colors.info} />
             <AppText style={styles.loadingText}>Cargando recordatorios...</AppText>
           </View>
         ) : sortedReminders.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Ionicons name="notifications-off-outline" size={24} color={appColors.textMuted} />
+            <Ionicons name="notifications-off-outline" size={24} color={colors.textMuted} />
             <AppText style={styles.emptyTitle}>No hay recordatorios</AppText>
             <AppText style={styles.emptyText}>Crea un aviso desde el formulario para que aparezca aqui.</AppText>
           </View>
@@ -1241,7 +1245,7 @@ export function RecordatorioListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   scroller: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -1260,22 +1264,22 @@ const styles = StyleSheet.create({
     paddingTop: 26,
   },
   formPanel: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 18,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   formPanelWide: {
     flex: 0.9,
     maxWidth: 560,
   },
   listPanel: {
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: colors.surfaceStrong,
     borderRadius: 20,
     padding: 18,
     borderWidth: 1,
-    borderColor: appColors.borderStrong,
+    borderColor: colors.borderStrong,
   },
   listPanelWide: {
     flex: 1.1,
@@ -1288,12 +1292,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   panelTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 22,
     fontWeight: '900',
   },
   panelSubtitle: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 4,
@@ -1304,12 +1308,12 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colorAlpha(appColors.info, '12'),
+    backgroundColor: colorAlpha(colors.info, '12'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '45'),
+    borderColor: colorAlpha(colors.info, '45'),
   },
   label: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 13,
     fontWeight: '800',
     marginBottom: 8,
@@ -1317,13 +1321,13 @@ const styles = StyleSheet.create({
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
   },
   picker: {
-    color: appColors.text,
+    color: colors.text,
   },
   typeGrid: {
     flexDirection: 'row',
@@ -1338,12 +1342,12 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     paddingHorizontal: 11,
     paddingVertical: 9,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   typeChipText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -1354,9 +1358,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   dateTimeRow: {
     flexDirection: 'row',
@@ -1370,12 +1374,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   dateTimePickerText: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -1383,10 +1387,10 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 14,
     padding: 13,
-    color: appColors.text,
-    backgroundColor: appColors.backgroundMuted,
+    color: colors.text,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     fontSize: 14,
   },
   messageInput: {
@@ -1397,14 +1401,14 @@ const styles = StyleSheet.create({
     marginTop: 16,
     minHeight: 52,
     borderRadius: 15,
-    backgroundColor: appColors.info,
+    backgroundColor: colors.info,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 9,
   },
   primaryButtonText: {
-    color: appColors.text,
+    color: colors.onAccent,
     fontSize: 15,
     fontWeight: '900',
   },
@@ -1416,25 +1420,25 @@ const styles = StyleSheet.create({
     paddingVertical: 28,
   },
   loadingText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     marginTop: 8,
   },
   emptyCard: {
     borderRadius: 18,
     padding: 22,
     alignItems: 'center',
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   emptyTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
     marginTop: 10,
   },
   emptyText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 19,
@@ -1446,15 +1450,15 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 18,
     padding: 15,
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   cardOverdue: {
-    borderColor: colorAlpha(appColors.accent, '80'),
+    borderColor: colorAlpha(colors.accent, '80'),
   },
   cardCompleted: {
-    borderColor: colorAlpha(appColors.success, '55'),
+    borderColor: colorAlpha(colors.success, '55'),
     opacity: 0.88,
   },
   cardHeader: {
@@ -1479,12 +1483,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   personName: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 15,
     fontWeight: '800',
   },
   personSubtext: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 4,
@@ -1493,10 +1497,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 7,
-    backgroundColor: colorAlpha(appColors.success, '18'),
+    backgroundColor: colorAlpha(colors.success, '18'),
   },
   stateBadgeText: {
-    color: appColors.success,
+    color: colors.success,
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'capitalize',
@@ -1505,13 +1509,13 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   metaTitle: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
   },
   metaValue: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
     fontWeight: '700',
     marginTop: 6,
@@ -1520,12 +1524,12 @@ const styles = StyleSheet.create({
     marginTop: 14,
     borderRadius: 14,
     padding: 13,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   messageText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     lineHeight: 20,
     marginTop: 8,
@@ -1534,9 +1538,9 @@ const styles = StyleSheet.create({
     marginTop: 14,
     borderRadius: 16,
     padding: 14,
-    backgroundColor: colorAlpha(appColors.info, '0D'),
+    backgroundColor: colorAlpha(colors.info, '0D'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '55'),
+    borderColor: colorAlpha(colors.info, '55'),
     zIndex: 20,
   },
   rescheduleHeader: {
@@ -1547,12 +1551,12 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   rescheduleTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 16,
     fontWeight: '900',
   },
   rescheduleHint: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 4,
@@ -1563,7 +1567,7 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colorAlpha(appColors.text, '0D'),
+    backgroundColor: colorAlpha(colors.text, '0D'),
   },
   rescheduleDateTimeRow: {
     flexDirection: 'row',
@@ -1583,11 +1587,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: appColors.border,
-    backgroundColor: appColors.backgroundMuted,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundMuted,
   },
   rescheduleCancelText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -1599,10 +1603,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 7,
-    backgroundColor: appColors.info,
+    backgroundColor: colors.info,
   },
   rescheduleSaveText: {
-    color: appColors.background,
+    color: colors.onAccent,
     fontSize: 12,
     fontWeight: '900',
   },
@@ -1629,21 +1633,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 13,
     paddingVertical: 9,
-    backgroundColor: appColors.info,
+    backgroundColor: colors.info,
     borderWidth: 1,
-    borderColor: appColors.info,
+    borderColor: colors.info,
   },
   completeButtonCompleted: {
-    backgroundColor: colorAlpha(appColors.success, '12'),
-    borderColor: colorAlpha(appColors.success, '55'),
+    backgroundColor: colorAlpha(colors.success, '12'),
+    borderColor: colorAlpha(colors.success, '55'),
   },
   completeButtonText: {
-    color: appColors.text,
+    color: colors.onAccent,
     fontSize: 12,
     fontWeight: '900',
   },
   completeButtonTextCompleted: {
-    color: appColors.success,
+    color: colors.success,
   },
   rescheduleButton: {
     minHeight: 40,
@@ -1654,16 +1658,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 13,
     paddingVertical: 9,
-    backgroundColor: colorAlpha(appColors.info, '0D'),
+    backgroundColor: colorAlpha(colors.info, '0D'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '66'),
+    borderColor: colorAlpha(colors.info, '66'),
   },
   rescheduleButtonActive: {
-    backgroundColor: colorAlpha(appColors.info, '22'),
-    borderColor: appColors.info,
+    backgroundColor: colorAlpha(colors.info, '22'),
+    borderColor: colors.info,
   },
   rescheduleButtonText: {
-    color: appColors.info,
+    color: colors.info,
     fontSize: 12,
     fontWeight: '900',
   },
@@ -1676,22 +1680,22 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 13,
     paddingVertical: 9,
-    backgroundColor: colorAlpha(appColors.accent, '12'),
+    backgroundColor: colorAlpha(colors.accent, '12'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.accent, '66'),
+    borderColor: colorAlpha(colors.accent, '66'),
   },
   deleteButtonText: {
-    color: appColors.accent,
+    color: colors.accent,
     fontSize: 12,
     fontWeight: '900',
   },
   footerId: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '700',
   },
   errorText: {
-    color: appColors.accent,
+    color: colors.accent,
     marginTop: 16,
     textAlign: 'center',
   },

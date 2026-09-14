@@ -17,6 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PresupuestoMedico'>;
 type Category = 'Consultas' | 'Medicamentos' | 'Exámenes' | 'Transporte' | 'Otros';
@@ -43,6 +44,9 @@ const apiError = (body: unknown, fallback: string) => {
 };
 
 export function PresupuestoMedicoScreen({ navigation }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token } = useAuth();
   const { width } = useWindowDimensions();
   const isWide = width >= 900;
@@ -197,33 +201,33 @@ export function PresupuestoMedicoScreen({ navigation }: Props) {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView contentContainerStyle={[styles.container, isWide && styles.containerWide]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <View style={styles.headerIcon}><Ionicons name="wallet-outline" size={25} color={appColors.background} /></View>
+          <View style={styles.headerIcon}><Ionicons name="wallet-outline" size={25} color={colors.onAccent} /></View>
           <View style={styles.headerCopy}>
             <AppText style={styles.eyebrow}>Planificación mensual</AppText>
             <AppText style={styles.title}>Presupuesto Médico</AppText>
             <AppText style={styles.subtitle}>Organiza con anticipación tus gastos de salud.</AppText>
           </View>
           <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()} accessibilityLabel="Cerrar presupuesto médico">
-            <Ionicons name="close" size={20} color={appColors.textSoft} />
+            <Ionicons name="close" size={20} color={colors.textSoft} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.monthPicker}>
           <TouchableOpacity style={styles.monthButton} onPress={() => moveMonth(-1)} accessibilityLabel="Mes anterior">
-            <Ionicons name="chevron-back" size={21} color={appColors.info} />
+            <Ionicons name="chevron-back" size={21} color={colors.info} />
           </TouchableOpacity>
           <View style={styles.monthCopy}>
             <AppText style={styles.monthLabel}>{monthLabel(selectedMonth)}</AppText>
             <AppText style={styles.monthHint}>Presupuesto independiente por mes</AppText>
           </View>
           <TouchableOpacity style={styles.monthButton} onPress={() => moveMonth(1)} accessibilityLabel="Mes siguiente">
-            <Ionicons name="chevron-forward" size={21} color={appColors.info} />
+            <Ionicons name="chevron-forward" size={21} color={colors.info} />
           </TouchableOpacity>
         </View>
 
         {loading ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator size="small" color={appColors.info} />
+            <ActivityIndicator size="small" color={colors.info} />
             <AppText style={styles.loadingText}>Cargando presupuesto...</AppText>
           </View>
         ) : null}
@@ -231,7 +235,7 @@ export function PresupuestoMedicoScreen({ navigation }: Props) {
         <View style={[styles.topGrid, isWide && styles.topGridWide]}>
           <View style={styles.panel}>
             <View style={styles.panelTitleRow}>
-              <Ionicons name="flag-outline" size={20} color={appColors.success} />
+              <Ionicons name="flag-outline" size={20} color={colors.success} />
               <AppText style={styles.panelTitle}>Define tu límite mensual</AppText>
             </View>
             <AppText style={styles.label}>Presupuesto disponible (C$)</AppText>
@@ -241,11 +245,11 @@ export function PresupuestoMedicoScreen({ navigation }: Props) {
                 value={limitInput}
                 onChangeText={setLimitInput}
                 placeholder="Ej.: 5000"
-                placeholderTextColor={appColors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 keyboardType="decimal-pad"
               />
               <TouchableOpacity style={[styles.saveButton, saving && styles.buttonDisabled]} onPress={() => void saveLimit()} disabled={saving || loading}>
-                <Ionicons name="checkmark" size={19} color={appColors.background} />
+                <Ionicons name="checkmark" size={19} color={colors.onAccent} />
                 <AppText style={styles.saveButtonText}>Guardar</AppText>
               </TouchableOpacity>
             </View>
@@ -258,7 +262,7 @@ export function PresupuestoMedicoScreen({ navigation }: Props) {
             </View>
             <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${progress * 100}%` }, overBudget && styles.progressOver]} /></View>
             <View style={[styles.balanceBox, overBudget && styles.balanceBoxOver]}>
-              <Ionicons name={overBudget ? 'alert-circle-outline' : 'checkmark-circle-outline'} size={22} color={overBudget ? appColors.accent : appColors.success} />
+              <Ionicons name={overBudget ? 'alert-circle-outline' : 'checkmark-circle-outline'} size={22} color={overBudget ? colors.accent : colors.success} />
               <View style={styles.balanceCopy}>
                 <AppText style={styles.balanceLabel}>{overBudget ? 'Exceso planificado' : 'Disponible'}</AppText>
                 <AppText style={[styles.balanceValue, overBudget && styles.balanceValueOver]}>{money(Math.abs(remaining))}</AppText>
@@ -269,7 +273,7 @@ export function PresupuestoMedicoScreen({ navigation }: Props) {
 
         <View style={styles.panel}>
           <View style={styles.panelTitleRow}>
-            <Ionicons name={editingId === null ? 'add-circle-outline' : 'create-outline'} size={21} color={appColors.info} />
+            <Ionicons name={editingId === null ? 'add-circle-outline' : 'create-outline'} size={21} color={colors.info} />
             <AppText style={styles.panelTitle}>{editingId === null ? 'Agregar gasto planificado' : 'Editar gasto planificado'}</AppText>
           </View>
           <AppText style={styles.label}>Categoría</AppText>
@@ -287,21 +291,21 @@ export function PresupuestoMedicoScreen({ navigation }: Props) {
           <View style={[styles.expenseFields, isWide && styles.expenseFieldsWide]}>
             <View style={styles.descriptionField}>
               <AppText style={styles.label}>Descripción</AppText>
-              <AppTextInput style={styles.input} value={description} onChangeText={setDescription} placeholder="Ej.: consulta de control" placeholderTextColor={appColors.textMuted} />
+              <AppTextInput style={styles.input} value={description} onChangeText={setDescription} placeholder="Ej.: consulta de control" placeholderTextColor={colors.textMuted} />
             </View>
             <View style={styles.valueField}>
               <AppText style={styles.label}>Monto (C$)</AppText>
-              <AppTextInput style={styles.input} value={amountInput} onChangeText={setAmountInput} placeholder="Ej.: 850" placeholderTextColor={appColors.textMuted} keyboardType="decimal-pad" />
+              <AppTextInput style={styles.input} value={amountInput} onChangeText={setAmountInput} placeholder="Ej.: 850" placeholderTextColor={colors.textMuted} keyboardType="decimal-pad" />
             </View>
             <View style={styles.formActions}>
               {editingId !== null ? (
                 <TouchableOpacity style={styles.cancelButton} onPress={cancelEdit} disabled={saving}>
-                  <Ionicons name="close" size={19} color={appColors.textMuted} />
+                  <Ionicons name="close" size={19} color={colors.textMuted} />
                   <AppText style={styles.cancelButtonText}>Cancelar</AppText>
                 </TouchableOpacity>
               ) : null}
               <TouchableOpacity style={[styles.addButton, saving && styles.buttonDisabled]} onPress={() => void submitItem()} disabled={saving || loading}>
-                <Ionicons name={editingId === null ? 'add' : 'checkmark'} size={20} color={appColors.background} />
+                <Ionicons name={editingId === null ? 'add' : 'checkmark'} size={20} color={colors.onAccent} />
                 <AppText style={styles.addButtonText}>{editingId === null ? 'Agregar' : 'Actualizar'}</AppText>
               </TouchableOpacity>
             </View>
@@ -327,10 +331,10 @@ export function PresupuestoMedicoScreen({ navigation }: Props) {
                   <AppText style={styles.expenseAmount}>{money(item.amount)}</AppText>
                   <View style={styles.itemActions}>
                     <TouchableOpacity style={styles.editButton} onPress={() => editItem(item)} disabled={saving} accessibilityLabel={`Editar ${item.description}`}>
-                      <Ionicons name="create-outline" size={19} color={appColors.info} />
+                      <Ionicons name="create-outline" size={19} color={colors.info} />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.deleteButton} onPress={() => removeItem(item)} disabled={saving} accessibilityLabel={`Eliminar ${item.description}`}>
-                      <Ionicons name="trash-outline" size={19} color={appColors.accent} />
+                      <Ionicons name="trash-outline" size={19} color={colors.accent} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -339,7 +343,7 @@ export function PresupuestoMedicoScreen({ navigation }: Props) {
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <Ionicons name="receipt-outline" size={36} color={appColors.textMuted} />
+            <Ionicons name="receipt-outline" size={36} color={colors.textMuted} />
             <AppText style={styles.emptyTitle}>Aún no hay gastos planificados</AppText>
             <AppText style={styles.emptyText}>Agrega consultas, medicamentos u otros gastos para calcular tu presupuesto mensual.</AppText>
           </View>
@@ -349,77 +353,77 @@ export function PresupuestoMedicoScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: appColors.background },
+const createStyles = (colors: AppColors) => StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: colors.background },
   container: { width: '100%', padding: 20, paddingBottom: 44, gap: 18 },
   containerWide: { maxWidth: 1180, alignSelf: 'center', paddingHorizontal: 32, paddingTop: 32 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  headerIcon: { width: 52, height: 52, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: appColors.success },
+  headerIcon: { width: 52, height: 52, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.success },
   headerCopy: { flex: 1 },
-  eyebrow: { color: appColors.success, fontSize: 12, fontWeight: '900', textTransform: 'uppercase' },
-  title: { color: appColors.text, fontSize: 28, fontWeight: '900' },
-  subtitle: { color: appColors.textMuted, fontSize: 13 },
-  closeButton: { padding: 10, borderRadius: 12, backgroundColor: appColors.surface },
-  monthPicker: { minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 17, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
-  monthButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: colorAlpha(appColors.info, '12') },
+  eyebrow: { color: colors.success, fontSize: 12, fontWeight: '900', textTransform: 'uppercase' },
+  title: { color: colors.text, fontSize: 28, fontWeight: '900' },
+  subtitle: { color: colors.textMuted, fontSize: 13 },
+  closeButton: { padding: 10, borderRadius: 12, backgroundColor: colors.surface },
+  monthPicker: { minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 17, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  monthButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: colorAlpha(colors.info, '12') },
   monthCopy: { flex: 1, alignItems: 'center' },
-  monthLabel: { color: appColors.text, fontSize: 17, fontWeight: '900', textTransform: 'capitalize' },
-  monthHint: { marginTop: 2, color: appColors.textMuted, fontSize: 11 },
-  loadingBox: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 14, backgroundColor: colorAlpha(appColors.info, '0D') },
-  loadingText: { color: appColors.textMuted, fontSize: 12, fontWeight: '700' },
+  monthLabel: { color: colors.text, fontSize: 17, fontWeight: '900', textTransform: 'capitalize' },
+  monthHint: { marginTop: 2, color: colors.textMuted, fontSize: 11 },
+  loadingBox: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: 14, backgroundColor: colorAlpha(colors.info, '0D') },
+  loadingText: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
   topGrid: { gap: 14 },
   topGridWide: { flexDirection: 'row', alignItems: 'stretch' },
-  panel: { flex: 1, gap: 12, padding: 16, borderRadius: 17, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
+  panel: { flex: 1, gap: 12, padding: 16, borderRadius: 17, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   panelTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  panelTitle: { color: appColors.text, fontSize: 16, fontWeight: '900' },
-  label: { color: appColors.textMuted, fontSize: 12, fontWeight: '800' },
+  panelTitle: { color: colors.text, fontSize: 16, fontWeight: '900' },
+  label: { color: colors.textMuted, fontSize: 12, fontWeight: '800' },
   amountRow: { flexDirection: 'row', gap: 9 },
-  amountInput: { flex: 1, minHeight: 48, paddingHorizontal: 13, borderRadius: 13, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted, color: appColors.text, fontSize: 15 },
-  saveButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 14, borderRadius: 13, backgroundColor: appColors.success },
-  saveButtonText: { color: appColors.background, fontSize: 13, fontWeight: '900' },
+  amountInput: { flex: 1, minHeight: 48, paddingHorizontal: 13, borderRadius: 13, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted, color: colors.text, fontSize: 15 },
+  saveButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 14, borderRadius: 13, backgroundColor: colors.success },
+  saveButtonText: { color: colors.onAccent, fontSize: 13, fontWeight: '900' },
   buttonDisabled: { opacity: 0.55 },
-  summaryPanel: { flex: 1, gap: 13, padding: 16, borderRadius: 17, borderWidth: 1, borderColor: colorAlpha(appColors.success, '55'), backgroundColor: colorAlpha(appColors.success, '0F') },
+  summaryPanel: { flex: 1, gap: 13, padding: 16, borderRadius: 17, borderWidth: 1, borderColor: colorAlpha(colors.success, '55'), backgroundColor: colorAlpha(colors.success, '0F') },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   summaryRight: { alignItems: 'flex-end' },
-  summaryLabel: { color: appColors.textMuted, fontSize: 11, textTransform: 'uppercase' },
-  summaryValue: { marginTop: 3, color: appColors.text, fontSize: 18, fontWeight: '900' },
-  progressTrack: { height: 8, overflow: 'hidden', borderRadius: 4, backgroundColor: appColors.border },
-  progressFill: { height: '100%', borderRadius: 4, backgroundColor: appColors.success },
-  progressOver: { backgroundColor: appColors.accent },
-  balanceBox: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 11, borderRadius: 13, backgroundColor: colorAlpha(appColors.success, '12') },
-  balanceBoxOver: { backgroundColor: colorAlpha(appColors.accent, '12') },
+  summaryLabel: { color: colors.textMuted, fontSize: 11, textTransform: 'uppercase' },
+  summaryValue: { marginTop: 3, color: colors.text, fontSize: 18, fontWeight: '900' },
+  progressTrack: { height: 8, overflow: 'hidden', borderRadius: 4, backgroundColor: colors.border },
+  progressFill: { height: '100%', borderRadius: 4, backgroundColor: colors.success },
+  progressOver: { backgroundColor: colors.accent },
+  balanceBox: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 11, borderRadius: 13, backgroundColor: colorAlpha(colors.success, '12') },
+  balanceBoxOver: { backgroundColor: colorAlpha(colors.accent, '12') },
   balanceCopy: { flex: 1 },
-  balanceLabel: { color: appColors.textMuted, fontSize: 11 },
-  balanceValue: { color: appColors.success, fontSize: 17, fontWeight: '900' },
-  balanceValueOver: { color: appColors.accent },
+  balanceLabel: { color: colors.textMuted, fontSize: 11 },
+  balanceValue: { color: colors.success, fontSize: 17, fontWeight: '900' },
+  balanceValueOver: { color: colors.accent },
   categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  categoryChip: { minHeight: 39, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 11, borderRadius: 99, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted },
-  categoryText: { color: appColors.textMuted, fontSize: 12, fontWeight: '800' },
+  categoryChip: { minHeight: 39, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 11, borderRadius: 99, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted },
+  categoryText: { color: colors.textMuted, fontSize: 12, fontWeight: '800' },
   expenseFields: { gap: 11 },
   expenseFieldsWide: { flexDirection: 'row', alignItems: 'flex-end' },
   descriptionField: { flex: 2, gap: 6 },
   valueField: { flex: 1, gap: 6 },
-  input: { minHeight: 48, paddingHorizontal: 13, borderRadius: 13, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted, color: appColors.text, fontSize: 14 },
-  addButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 17, borderRadius: 13, backgroundColor: appColors.info },
-  addButtonText: { color: appColors.background, fontSize: 13, fontWeight: '900' },
+  input: { minHeight: 48, paddingHorizontal: 13, borderRadius: 13, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted, color: colors.text, fontSize: 14 },
+  addButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 17, borderRadius: 13, backgroundColor: colors.info },
+  addButtonText: { color: colors.onAccent, fontSize: 13, fontWeight: '900' },
   formActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cancelButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 13, borderRadius: 13, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted },
-  cancelButtonText: { color: appColors.textMuted, fontSize: 12, fontWeight: '900' },
+  cancelButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 13, borderRadius: 13, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted },
+  cancelButtonText: { color: colors.textMuted, fontSize: 12, fontWeight: '900' },
   listHeader: { flexDirection: 'row', alignItems: 'center', gap: 9 },
-  listTitle: { color: appColors.text, fontSize: 18, fontWeight: '900' },
-  countPill: { minWidth: 28, height: 28, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: colorAlpha(appColors.info, '22') },
-  countText: { color: appColors.info, fontSize: 12, fontWeight: '900' },
+  listTitle: { color: colors.text, fontSize: 18, fontWeight: '900' },
+  countPill: { minWidth: 28, height: 28, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: colorAlpha(colors.info, '22') },
+  countText: { color: colors.info, fontSize: 12, fontWeight: '900' },
   expenseList: { gap: 10 },
-  expenseCard: { minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 11, padding: 12, borderRadius: 15, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
+  expenseCard: { minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 11, padding: 12, borderRadius: 15, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   expenseIcon: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderRadius: 13 },
   expenseCopy: { flex: 1 },
-  expenseDescription: { color: appColors.text, fontSize: 14, fontWeight: '900' },
-  expenseCategory: { marginTop: 3, color: appColors.textMuted, fontSize: 12 },
-  expenseAmount: { color: appColors.success, fontSize: 14, fontWeight: '900' },
+  expenseDescription: { color: colors.text, fontSize: 14, fontWeight: '900' },
+  expenseCategory: { marginTop: 3, color: colors.textMuted, fontSize: 12 },
+  expenseAmount: { color: colors.success, fontSize: 14, fontWeight: '900' },
   itemActions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  editButton: { padding: 9, borderRadius: 11, backgroundColor: colorAlpha(appColors.info, '12') },
-  deleteButton: { padding: 9, borderRadius: 11, backgroundColor: colorAlpha(appColors.accent, '12') },
-  emptyState: { minHeight: 220, alignItems: 'center', justifyContent: 'center', gap: 9, padding: 24, borderRadius: 18, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
-  emptyTitle: { color: appColors.text, fontSize: 17, fontWeight: '900', textAlign: 'center' },
-  emptyText: { maxWidth: 360, color: appColors.textMuted, fontSize: 13, lineHeight: 19, textAlign: 'center' },
+  editButton: { padding: 9, borderRadius: 11, backgroundColor: colorAlpha(colors.info, '12') },
+  deleteButton: { padding: 9, borderRadius: 11, backgroundColor: colorAlpha(colors.accent, '12') },
+  emptyState: { minHeight: 220, alignItems: 'center', justifyContent: 'center', gap: 9, padding: 24, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  emptyTitle: { color: colors.text, fontSize: 17, fontWeight: '900', textAlign: 'center' },
+  emptyText: { maxWidth: 360, color: colors.textMuted, fontSize: 13, lineHeight: 19, textAlign: 'center' },
 });

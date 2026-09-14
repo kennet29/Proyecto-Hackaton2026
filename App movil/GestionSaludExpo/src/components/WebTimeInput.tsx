@@ -8,6 +8,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { appColors, colorAlpha } from '../theme/colors';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type WebTimeInputProps = {
   value: string;
@@ -50,6 +51,9 @@ export const WebTimeInput = ({
   ariaLabel = 'Seleccionar hora',
   includeQuickTimes = true,
 }: WebTimeInputProps) => {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const [isOpen, setIsOpen] = useState(false);
   const parsed = useMemo(() => parseTime(value), [value]);
   const displayHour = parsed.hour % 12 || 12;
@@ -85,10 +89,10 @@ export const WebTimeInput = ({
         style={({ pressed }) => [styles.trigger, isOpen && styles.triggerOpen, pressed && styles.pressed]}
       >
         <View style={styles.triggerValue}>
-          <Ionicons name="time-outline" size={19} color={appColors.info} />
+          <Ionicons name="time-outline" size={19} color={colors.info} />
           <AppText style={styles.triggerText}>{formatLabel(value)}</AppText>
         </View>
-        <Ionicons name={isOpen ? 'chevron-up' : 'chevron-down'} size={19} color={appColors.textMuted} />
+        <Ionicons name={isOpen ? 'chevron-up' : 'chevron-down'} size={19} color={colors.textMuted} />
       </Pressable>
 
       {isOpen ? (
@@ -104,7 +108,7 @@ export const WebTimeInput = ({
               onPress={() => setIsOpen(false)}
               style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}
             >
-              <Ionicons name="close" size={20} color={appColors.textMuted} />
+              <Ionicons name="close" size={20} color={colors.textMuted} />
             </Pressable>
           </View>
 
@@ -184,7 +188,7 @@ export const WebTimeInput = ({
               onPress={() => setIsOpen(false)}
               style={({ pressed }) => [styles.doneButton, pressed && styles.pressed]}
             >
-              <Ionicons name="checkmark" size={18} color={appColors.background} />
+              <Ionicons name="checkmark" size={18} color={colors.onAccent} />
               <AppText style={styles.doneText}>Listo</AppText>
             </Pressable>
           </View>
@@ -225,7 +229,7 @@ export const WebTimeInput = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
     minWidth: 210,
@@ -240,16 +244,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: appColors.border,
-    backgroundColor: appColors.backgroundMuted,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundMuted,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
   },
   triggerOpen: {
-    borderColor: appColors.info,
-    backgroundColor: colorAlpha(appColors.info, '0D'),
+    borderColor: colors.info,
+    backgroundColor: colorAlpha(colors.info, '0D'),
   },
   triggerValue: {
     flexDirection: 'row',
@@ -257,7 +261,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   triggerText: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 16,
     fontWeight: '800',
   },
@@ -270,8 +274,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '66'),
-    backgroundColor: '#10243A',
+    borderColor: colorAlpha(colors.info, '66'),
+    backgroundColor: colors.surface,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 14 },
     shadowOpacity: 0.38,
@@ -285,17 +289,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: appColors.border,
+    borderBottomColor: colors.border,
   },
   panelEyebrow: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.9,
   },
   panelTime: {
     marginTop: 2,
-    color: appColors.info,
+    color: colors.info,
     fontSize: 24,
     fontWeight: '900',
   },
@@ -305,10 +309,10 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colorAlpha(appColors.text, '0D'),
+    backgroundColor: colorAlpha(colors.text, '0D'),
   },
   sectionLabel: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -325,26 +329,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: appColors.border,
-    backgroundColor: colorAlpha(appColors.background, '55'),
+    borderColor: colors.border,
+    backgroundColor: colorAlpha(colors.background, '55'),
   },
   optionSelected: {
-    borderColor: appColors.info,
-    backgroundColor: appColors.info,
+    borderColor: colors.info,
+    backgroundColor: colors.info,
   },
   optionText: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 13,
     fontWeight: '800',
   },
   optionTextSelected: {
-    color: appColors.background,
+    color: colors.onAccent,
   },
   panelFooter: {
     marginTop: 4,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: appColors.border,
+    borderTopColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -354,7 +358,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 3,
     borderRadius: 12,
-    backgroundColor: colorAlpha(appColors.background, '77'),
+    backgroundColor: colorAlpha(colors.background, '77'),
   },
   periodButton: {
     minHeight: 36,
@@ -365,28 +369,28 @@ const styles = StyleSheet.create({
     borderRadius: 9,
   },
   periodButtonSelected: {
-    backgroundColor: colorAlpha(appColors.info, '2E'),
+    backgroundColor: colorAlpha(colors.info, '2E'),
   },
   periodText: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 13,
     fontWeight: '800',
   },
   periodTextSelected: {
-    color: appColors.info,
+    color: colors.info,
   },
   doneButton: {
     minHeight: 40,
     paddingHorizontal: 16,
     borderRadius: 11,
-    backgroundColor: appColors.info,
+    backgroundColor: colors.info,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
   },
   doneText: {
-    color: appColors.background,
+    color: colors.onAccent,
     fontSize: 14,
     fontWeight: '900',
   },
@@ -401,20 +405,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: appColors.border,
-    backgroundColor: colorAlpha(appColors.info, '0D'),
+    borderColor: colors.border,
+    backgroundColor: colorAlpha(colors.info, '0D'),
   },
   quickButtonSelected: {
-    borderColor: appColors.info,
-    backgroundColor: colorAlpha(appColors.info, '24'),
+    borderColor: colors.info,
+    backgroundColor: colorAlpha(colors.info, '24'),
   },
   quickText: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '700',
   },
   quickTextSelected: {
-    color: appColors.info,
+    color: colors.info,
   },
   pressed: {
     opacity: 0.72,

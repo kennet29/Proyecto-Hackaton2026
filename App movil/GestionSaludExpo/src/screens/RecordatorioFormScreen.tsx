@@ -28,20 +28,21 @@ import {
   extractLocalDatePortion,
   extractLocalTimePortion,
 } from '../utils/localDate';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 const webDateInputStyle = {
   flex: 1,
   minWidth: 0,
   height: 48,
   borderRadius: 14,
-  border: `1px solid ${appColors.border}`,
-  backgroundColor: appColors.backgroundMuted,
-  color: appColors.text,
+  border: '1px solid var(--app-border)',
+  backgroundColor: 'var(--app-input-bg)',
+  color: 'var(--app-text)',
   padding: '0 13px',
   fontSize: 14,
   fontWeight: 700,
   outline: 'none',
-  colorScheme: 'dark',
+  colorScheme: 'var(--app-color-scheme)',
 };
 
 type AppointmentRecord = {
@@ -158,6 +159,9 @@ const buildReminderMessage = (appointment: AppointmentRecord, patientName?: stri
 };
 
 export function RecordatorioFormScreen() {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token, user } = useAuth();
   const authHeaders = useMemo(() => {
     const headers: Record<string, string> = {};
@@ -398,7 +402,7 @@ export function RecordatorioFormScreen() {
             selectedValue={selectedPatientId}
             onValueChange={(value) => setSelectedPatientId(String(value))}
             enabled={!loadingPatients}
-            dropdownIconColor={appColors.text}
+            dropdownIconColor={colors.text}
             style={styles.picker}
           >
             <Picker.Item
@@ -418,7 +422,7 @@ export function RecordatorioFormScreen() {
         {selectedPatient ? (
           <View style={styles.personCard}>
             <View style={styles.personBadge}>
-              <Ionicons name="person-outline" size={18} color={appColors.info} />
+              <Ionicons name="person-outline" size={18} color={colors.info} />
             </View>
             <View style={styles.personCopy}>
               <AppText style={styles.personName}>{selectedPatient.displayName}</AppText>
@@ -440,19 +444,19 @@ export function RecordatorioFormScreen() {
             <AppText style={styles.helperText}>Estas son las citas a las que puedes asignar el aviso.</AppText>
           </View>
           <TouchableOpacity style={styles.refreshPill} onPress={() => void fetchAppointments()}>
-            <Ionicons name="refresh-outline" size={16} color={appColors.info} />
+            <Ionicons name="refresh-outline" size={16} color={colors.info} />
             <AppText style={styles.refreshPillText}>Actualizar</AppText>
           </TouchableOpacity>
         </View>
 
         {loadingAppointments ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color={appColors.info} />
+            <ActivityIndicator color={colors.info} />
             <AppText style={styles.loadingText}>Cargando registros...</AppText>
           </View>
         ) : availableAppointments.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Ionicons name="calendar-outline" size={22} color={appColors.textMuted} />
+            <Ionicons name="calendar-outline" size={22} color={colors.textMuted} />
             <AppText style={styles.emptyTitle}>No hay citas disponibles</AppText>
             <AppText style={styles.emptyText}>
               {selectedPatientId
@@ -553,7 +557,7 @@ export function RecordatorioFormScreen() {
 
         {Platform.OS === 'ios' && showIOSDatePicker ? (
           <View style={styles.iosPickerCard}>
-            <DateTimePicker
+            <DateTimePicker themeVariant={colors.mode}
               mode="date"
               display="spinner"
               value={parseDateForPicker(notificationDate)}
@@ -576,7 +580,7 @@ export function RecordatorioFormScreen() {
 
         {Platform.OS === 'ios' && showIOSTimePicker ? (
           <View style={styles.iosPickerCard}>
-            <DateTimePicker
+            <DateTimePicker themeVariant={colors.mode}
               mode="time"
               display="spinner"
               value={parseTimeForPicker(notificationTime)}
@@ -597,7 +601,7 @@ export function RecordatorioFormScreen() {
         <AppTextInput
           style={[styles.input, styles.multilineInput]}
           placeholder="Escribe el mensaje que verá la persona"
-          placeholderTextColor={appColors.textMuted}
+          placeholderTextColor={colors.textMuted}
           multiline
           value={message}
           onChangeText={setMessage}
@@ -609,10 +613,10 @@ export function RecordatorioFormScreen() {
           disabled={submitting}
         >
           {submitting ? (
-            <ActivityIndicator color={appColors.text} />
+            <ActivityIndicator color={colors.text} />
           ) : (
             <>
-              <Ionicons name="notifications-outline" size={18} color={appColors.text} />
+              <Ionicons name="notifications-outline" size={18} color={colors.text} />
               <AppText style={styles.primaryButtonText}>Guardar recordatorio</AppText>
             </>
           )}
@@ -622,7 +626,7 @@ export function RecordatorioFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     padding: 20,
     paddingBottom: 36,
@@ -630,36 +634,36 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   heroCard: {
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: colors.surfaceStrong,
     borderRadius: 24,
     padding: 22,
     borderWidth: 1,
-    borderColor: appColors.borderStrong,
+    borderColor: colors.borderStrong,
   },
   kicker: {
-    color: appColors.info,
+    color: colors.info,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.2,
     marginBottom: 8,
   },
   title: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 27,
     fontWeight: '800',
   },
   subtitle: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     lineHeight: 21,
     marginTop: 8,
   },
   sectionCard: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     padding: 18,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -671,12 +675,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 19,
     fontWeight: '800',
   },
   helperText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     lineHeight: 19,
     marginTop: 6,
@@ -684,21 +688,21 @@ const styles = StyleSheet.create({
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
   },
   picker: {
-    color: appColors.text,
+    color: colors.text,
   },
   personCard: {
     marginTop: 14,
     borderRadius: 16,
     padding: 14,
-    backgroundColor: colorAlpha(appColors.info, '12'),
+    backgroundColor: colorAlpha(colors.info, '12'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '50'),
+    borderColor: colorAlpha(colors.info, '50'),
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -709,18 +713,18 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colorAlpha(appColors.info, '20'),
+    backgroundColor: colorAlpha(colors.info, '20'),
   },
   personCopy: {
     flex: 1,
   },
   personName: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 15,
     fontWeight: '800',
   },
   personMeta: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 12,
     marginTop: 3,
   },
@@ -731,12 +735,12 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: colorAlpha(appColors.info, '12'),
+    backgroundColor: colorAlpha(colors.info, '12'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '45'),
+    borderColor: colorAlpha(colors.info, '45'),
   },
   refreshPillText: {
-    color: appColors.info,
+    color: colors.info,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -745,25 +749,25 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
   },
   loadingText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     marginTop: 8,
   },
   emptyCard: {
     borderRadius: 18,
     padding: 18,
     alignItems: 'center',
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   emptyTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 16,
     fontWeight: '800',
     marginTop: 10,
   },
   emptyText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     lineHeight: 19,
     textAlign: 'center',
@@ -775,13 +779,13 @@ const styles = StyleSheet.create({
   appointmentCard: {
     borderRadius: 18,
     padding: 14,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   appointmentCardActive: {
-    borderColor: appColors.info,
-    backgroundColor: colorAlpha(appColors.info, '12'),
+    borderColor: colors.info,
+    backgroundColor: colorAlpha(colors.info, '12'),
   },
   appointmentTopRow: {
     flexDirection: 'row',
@@ -790,7 +794,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   appointmentTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 15,
     fontWeight: '800',
     flex: 1,
@@ -799,33 +803,33 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: colorAlpha(appColors.textMuted, '18'),
+    backgroundColor: colorAlpha(colors.textMuted, '18'),
   },
   statePillActive: {
-    backgroundColor: colorAlpha(appColors.info, '22'),
+    backgroundColor: colorAlpha(colors.info, '22'),
   },
   statePillText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 11,
     fontWeight: '800',
   },
   statePillTextActive: {
-    color: appColors.info,
+    color: colors.info,
   },
   appointmentDate: {
-    color: appColors.info,
+    color: colors.info,
     fontSize: 13,
     fontWeight: '700',
     marginTop: 10,
   },
   appointmentDetail: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 6,
   },
   label: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
     fontWeight: '700',
     marginBottom: 8,
@@ -840,20 +844,20 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 12,
     alignItems: 'center',
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   channelChipActive: {
-    backgroundColor: colorAlpha(appColors.success, '15'),
-    borderColor: colorAlpha(appColors.success, '60'),
+    backgroundColor: colorAlpha(colors.success, '15'),
+    borderColor: colorAlpha(colors.success, '60'),
   },
   channelChipText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontWeight: '700',
   },
   channelChipTextActive: {
-    color: appColors.success,
+    color: colors.success,
   },
   dateTimeRow: {
     flexDirection: 'row',
@@ -865,20 +869,20 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 12,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   dateButtonText: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
     textAlign: 'center',
   },
   iosPickerCard: {
     borderRadius: 16,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     overflow: 'hidden',
     marginBottom: 12,
   },
@@ -886,19 +890,19 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: appColors.border,
+    borderTopColor: colors.border,
   },
   doneButtonText: {
-    color: appColors.info,
+    color: colors.info,
     fontWeight: '800',
   },
   input: {
     borderRadius: 16,
     padding: 14,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
-    color: appColors.text,
+    borderColor: colors.border,
+    color: colors.text,
     fontSize: 15,
   },
   multilineInput: {
@@ -909,14 +913,14 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 16,
     minHeight: 54,
-    backgroundColor: appColors.info,
+    backgroundColor: colors.info,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 10,
   },
   primaryButtonText: {
-    color: appColors.text,
+    color: colors.onAccent,
     fontSize: 16,
     fontWeight: '800',
   },
@@ -924,7 +928,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   errorText: {
-    color: appColors.accent,
+    color: colors.accent,
     marginTop: 12,
   },
 });

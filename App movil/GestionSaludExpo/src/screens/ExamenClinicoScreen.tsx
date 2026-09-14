@@ -25,6 +25,7 @@ import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type ConsultationOption = {
   consultaId: number;
@@ -192,8 +193,11 @@ const buildPdfHtml = (photos: ExamPhoto[], examName: string) => {
 };
 
 export function ExamenClinicoScreen() {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token, user } = useAuth();
-  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
+  const pickerItemColor = Platform.OS === 'android' ? colors.background : colors.text;
   const defaultPacienteId = useMemo(
     () => (user?.pacienteId ? String(user.pacienteId) : ''),
     [user?.pacienteId],
@@ -454,7 +458,7 @@ export function ExamenClinicoScreen() {
 
     return (
       <View style={styles.iosPickerCard}>
-        <DateTimePicker
+        <DateTimePicker themeVariant={colors.mode}
           value={parseDateForPicker(getDateFieldValue(activeIOSDatePicker))}
           mode="date"
           display="spinner"
@@ -638,7 +642,7 @@ export function ExamenClinicoScreen() {
       <ScrollView
         contentContainerStyle={styles.container}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => void refreshData()} tintColor="#38E28E" />
+          <RefreshControl refreshing={refreshing} onRefresh={() => void refreshData()} tintColor={colors.success} />
         }
       >
         <View style={styles.heroCard}>
@@ -680,7 +684,7 @@ export function ExamenClinicoScreen() {
                   handleChange('consultaId', '');
                 }}
                 enabled={!loadingPatients}
-                dropdownIconColor="#F4F8FF"
+                dropdownIconColor={colors.text}
               >
                 <Picker.Item
                   label={loadingPatients ? 'Cargando pacientes...' : 'Selecciona un paciente'}
@@ -708,7 +712,7 @@ export function ExamenClinicoScreen() {
                 selectedValue={form.consultaId}
                 onValueChange={(value) => handleChange('consultaId', String(value))}
                 enabled={hasValidPatient && !loadingConsultations}
-                dropdownIconColor="#F4F8FF"
+                dropdownIconColor={colors.text}
               >
                 <Picker.Item
                   label={
@@ -739,7 +743,7 @@ export function ExamenClinicoScreen() {
             <AppTextInput
               style={styles.input}
               placeholder="Ej. Hemograma completo, Rayos X de torax"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.nombreExamen}
               onChangeText={(value) => handleChange('nombreExamen', value)}
             />
@@ -751,7 +755,7 @@ export function ExamenClinicoScreen() {
               <AppTextInput
                 style={styles.input}
                 placeholder="Ej. Laboratorio, imagen, cardiologia"
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 value={form.tipoExamen}
                 onChangeText={(value) => handleChange('tipoExamen', value)}
               />
@@ -761,7 +765,7 @@ export function ExamenClinicoScreen() {
               <AppTextInput
                 style={styles.input}
                 placeholder="Nombre del laboratorio o clinica"
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 value={form.laboratorio}
                 onChangeText={(value) => handleChange('laboratorio', value)}
               />
@@ -790,7 +794,7 @@ export function ExamenClinicoScreen() {
             <AppTextInput
               style={[styles.input, styles.multiline]}
               placeholder="Escribe los hallazgos principales o el resultado mas importante"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.resultadoTexto}
               multiline
               onChangeText={(value) => handleChange('resultadoTexto', value)}
@@ -801,7 +805,7 @@ export function ExamenClinicoScreen() {
             <AppTextInput
               style={[styles.input, styles.multiline]}
               placeholder="Notas adicionales, contexto medico o indicaciones"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.observaciones}
               multiline
               onChangeText={(value) => handleChange('observaciones', value)}
@@ -899,7 +903,7 @@ export function ExamenClinicoScreen() {
 
         {loadingExams ? (
           <View style={styles.loadingCard}>
-            <ActivityIndicator color="#38E28E" />
+            <ActivityIndicator color={colors.success} />
             <AppText style={styles.loadingText}>Cargando historial...</AppText>
           </View>
         ) : recentExams.length === 0 ? (
@@ -954,26 +958,26 @@ export function ExamenClinicoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   container: {
     padding: 24,
     paddingBottom: 48,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   heroCard: {
     borderRadius: 28,
     padding: 22,
     marginBottom: 18,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
   },
   eyebrow: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
@@ -983,53 +987,53 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   subtitle: {
     marginTop: 10,
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 15,
     lineHeight: 22,
   },
   heroHint: {
     marginTop: 12,
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
   },
   errorCard: {
     borderRadius: 22,
     padding: 18,
     marginBottom: 18,
-    backgroundColor: '#FF4D7318',
+    backgroundColor: `${colors.accent}18`,
     borderWidth: 1,
-    borderColor: '#FF4D73',
+    borderColor: colors.accent,
   },
   errorTitle: {
-    color: '#FF4D73',
+    color: colors.accent,
     fontWeight: '800',
     fontSize: 16,
     marginBottom: 6,
   },
   errorText: {
-    color: '#FF4D73',
+    color: colors.accent,
     lineHeight: 20,
   },
   formCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginBottom: 18,
   },
   formTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
     marginBottom: 8,
   },
   formIntro: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 20,
     marginBottom: 14,
   },
@@ -1039,35 +1043,35 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
     marginBottom: 8,
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     marginBottom: 10,
   },
   picker: {
-    color: '#F4F8FF',
+    color: colors.text,
   },
   fieldHint: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
     marginBottom: 12,
     lineHeight: 18,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
     fontSize: 15,
-    backgroundColor: '#071120',
-    color: '#F4F8FF',
+    backgroundColor: colors.background,
+    color: colors.text,
   },
   row: {
     flexDirection: 'row',
@@ -1081,25 +1085,25 @@ const styles = StyleSheet.create({
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     paddingVertical: 15,
     paddingHorizontal: 14,
     marginBottom: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   dateButtonText: {
-    color: '#F4F8FF',
+    color: colors.text,
     textAlign: 'center',
     fontSize: 15,
     fontWeight: '700',
   },
   iosPickerCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     marginBottom: 12,
   },
   iosDoneButton: {
@@ -1108,7 +1112,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   iosDoneButtonText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
   },
   multiline: {
@@ -1118,9 +1122,9 @@ const styles = StyleSheet.create({
   uploadCard: {
     borderRadius: 20,
     padding: 16,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginTop: 4,
   },
   sectionHeader: {
@@ -1129,14 +1133,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
     marginBottom: 4,
   },
   sectionSubtitle: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
   },
   helperText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 14,
     lineHeight: 20,
   },
@@ -1151,11 +1155,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#29B6FF18',
-    backgroundColor: '#29B6FF18',
+    borderColor: `${colors.info}18`,
+    backgroundColor: `${colors.info}18`,
   },
   actionButtonText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
   },
   photoGrid: {
@@ -1166,11 +1170,11 @@ const styles = StyleSheet.create({
   },
   photoCard: {
     width: '47%',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 16,
     padding: 10,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
   },
   photoPreview: {
     width: '100%',
@@ -1180,39 +1184,39 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   photoLabel: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '700',
     marginBottom: 8,
   },
   removePhotoButton: {
     borderRadius: 10,
     paddingVertical: 8,
-    backgroundColor: '#FF4D7318',
+    backgroundColor: `${colors.accent}18`,
     borderWidth: 1,
-    borderColor: '#FF4D73',
+    borderColor: colors.accent,
   },
   removePhotoButtonText: {
-    color: '#FF4D73',
+    color: colors.accent,
     textAlign: 'center',
     fontWeight: '800',
     fontSize: 12,
   },
   pdfCard: {
-    backgroundColor: '#38E28E18',
+    backgroundColor: `${colors.success}18`,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#38E28E',
+    borderColor: colors.success,
     marginBottom: 14,
   },
   pdfTitle: {
-    color: '#38E28E',
+    color: colors.success,
     fontWeight: '800',
     fontSize: 16,
     marginBottom: 6,
   },
   pdfMeta: {
-    color: '#38E28E',
+    color: colors.success,
   },
   formActions: {
     flexDirection: 'row',
@@ -1225,11 +1229,11 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#9FB3C8',
-    backgroundColor: '#071120',
+    borderColor: colors.textMuted,
+    backgroundColor: colors.background,
   },
   cancelButtonText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontWeight: '800',
   },
   secondaryButton: {
@@ -1238,21 +1242,21 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#29B6FF18',
-    backgroundColor: '#29B6FF18',
+    borderColor: `${colors.info}18`,
+    backgroundColor: `${colors.info}18`,
   },
   secondaryButtonText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
   },
   primaryButton: {
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
   },
   primaryButtonText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontWeight: '900',
     fontSize: 16,
   },
@@ -1262,41 +1266,41 @@ const styles = StyleSheet.create({
   loadingCard: {
     borderRadius: 20,
     padding: 22,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     alignItems: 'center',
     marginBottom: 16,
   },
   loadingText: {
     marginTop: 10,
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   emptyCard: {
     borderRadius: 22,
     padding: 20,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginBottom: 16,
   },
   emptyTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
     fontSize: 16,
     marginBottom: 6,
   },
   emptyText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     lineHeight: 20,
   },
   recordCard: {
     borderRadius: 22,
     padding: 18,
     marginBottom: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
   },
   recordTopRow: {
     flexDirection: 'row',
@@ -1308,10 +1312,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 7,
     paddingHorizontal: 12,
-    backgroundColor: '#29B6FF18',
+    backgroundColor: `${colors.info}18`,
   },
   datePillText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
     fontSize: 12,
   },
@@ -1322,36 +1326,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   statusPillSuccess: {
-    backgroundColor: '#38E28E18',
-    borderColor: '#38E28E',
+    backgroundColor: `${colors.success}18`,
+    borderColor: colors.success,
   },
   statusPillPending: {
-    backgroundColor: '#071120',
-    borderColor: '#29B6FF',
+    backgroundColor: colors.background,
+    borderColor: colors.info,
   },
   statusPillText: {
     fontWeight: '800',
     fontSize: 12,
   },
   statusTextSuccess: {
-    color: '#38E28E',
+    color: colors.success,
   },
   statusTextPending: {
-    color: '#29B6FF',
+    color: colors.info,
   },
   recordTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '900',
     marginBottom: 6,
   },
   recordPatient: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
     marginBottom: 10,
   },
   recordText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 5,
     lineHeight: 20,
   },

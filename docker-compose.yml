@@ -58,6 +58,9 @@ services:
       DB_PORT: 1433
       DB_USER: sa
       DB_PASSWORD: "${MSSQL_SA_PASSWORD:-GestionSalud_2026!}"
+      SEED_DEMO_USERS: "${SEED_DEMO_USERS:-true}"
+      INITIAL_ADMIN_USERNAME: "${INITIAL_ADMIN_USERNAME:-}"
+      INITIAL_ADMIN_PASSWORD_HASH_B64: "${INITIAL_ADMIN_PASSWORD_HASH_B64:-}"
     volumes:
       - ./Base de datos:/scripts:ro
     entrypoint: ["/bin/bash", "/scripts/init-db.sh"]

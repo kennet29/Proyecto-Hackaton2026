@@ -22,6 +22,7 @@ import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CompartirHistorial'>;
 
@@ -38,6 +39,9 @@ const formatDateTime = (value: string) =>
   });
 
 export function CompartirHistorialScreen({ route }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { width } = useWindowDimensions();
   const desktop = width >= 920;
   const { token } = useAuth();
@@ -157,7 +161,7 @@ export function CompartirHistorialScreen({ route }: Props) {
     >
       <View style={[styles.hero, desktop && styles.heroDesktop]}>
         <View style={styles.heroIcon}>
-          <Ionicons name="key-outline" size={30} color={appColors.info} />
+          <Ionicons name="key-outline" size={30} color={colors.info} />
         </View>
         <View style={styles.heroCopy}>
           <AppText style={styles.eyebrow}>ACCESO MÉDICO TEMPORAL</AppText>
@@ -168,7 +172,7 @@ export function CompartirHistorialScreen({ route }: Props) {
           </AppText>
         </View>
         <View style={styles.timePill}>
-          <Ionicons name="time-outline" size={17} color={appColors.success} />
+          <Ionicons name="time-outline" size={17} color={colors.success} />
           <AppText style={styles.timePillText}>1 hora</AppText>
         </View>
       </View>
@@ -181,7 +185,7 @@ export function CompartirHistorialScreen({ route }: Props) {
 
       {loading ? (
         <View style={styles.loadingCard}>
-          <ActivityIndicator color={appColors.info} size="large" />
+          <ActivityIndicator color={colors.info} size="large" />
           <AppText style={styles.loadingText}>Preparando tus expedientes...</AppText>
         </View>
       ) : (
@@ -207,14 +211,14 @@ export function CompartirHistorialScreen({ route }: Props) {
                         <Ionicons
                           name="person-outline"
                           size={18}
-                          color={active ? appColors.background : appColors.info}
+                          color={active ? colors.background : colors.info}
                         />
                       </View>
                       <AppText style={[styles.choiceTitle, active && styles.choiceTitleActive]}>
                         {patient.displayName}
                       </AppText>
                       {active ? (
-                        <Ionicons name="checkmark-circle" size={20} color={appColors.success} />
+                        <Ionicons name="checkmark-circle" size={20} color={colors.success} />
                       ) : null}
                     </TouchableOpacity>
                   );
@@ -230,7 +234,7 @@ export function CompartirHistorialScreen({ route }: Props) {
                 value={notes}
                 onChangeText={setNotes}
                 placeholder="Ejemplo: revisión de resultados y actualización de tratamiento"
-                placeholderTextColor={appColors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 multiline
                 maxLength={200}
                 style={styles.notesInput}
@@ -243,7 +247,7 @@ export function CompartirHistorialScreen({ route }: Props) {
             {generated ? (
               <>
                 <View style={styles.successIcon}>
-                  <Ionicons name="checkmark" size={28} color={appColors.background} />
+                  <Ionicons name="checkmark" size={28} color={colors.onAccent} />
                 </View>
                 <AppText style={styles.codeLabel}>Comparte estos 6 números</AppText>
                 <View style={styles.codeBox}>
@@ -264,7 +268,7 @@ export function CompartirHistorialScreen({ route }: Props) {
                   </AppText>
                 </View>
                 <TouchableOpacity style={styles.shareButton} onPress={() => void shareCode()}>
-                  <Ionicons name="share-social-outline" size={18} color={appColors.background} />
+                  <Ionicons name="share-social-outline" size={18} color={colors.onAccent} />
                   <AppText style={styles.shareButtonText}>Compartir código</AppText>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -277,7 +281,7 @@ export function CompartirHistorialScreen({ route }: Props) {
             ) : (
               <>
                 <View style={styles.placeholderIcon}>
-                  <Ionicons name="lock-closed-outline" size={34} color={appColors.info} />
+                  <Ionicons name="lock-closed-outline" size={34} color={colors.info} />
                 </View>
                 <AppText style={styles.panelTitle}>Acceso protegido por una hora</AppText>
                 <AppText style={styles.panelText}>
@@ -293,10 +297,10 @@ export function CompartirHistorialScreen({ route }: Props) {
                   onPress={() => void generateCode()}
                 >
                   {submitting ? (
-                    <ActivityIndicator color={appColors.background} />
+                    <ActivityIndicator color={colors.onAccent} />
                   ) : (
                     <>
-                      <Ionicons name="key-outline" size={19} color={appColors.background} />
+                      <Ionicons name="key-outline" size={19} color={colors.onAccent} />
                       <AppText style={styles.generateButtonText}>Generar código único</AppText>
                     </>
                   )}
@@ -320,6 +324,9 @@ function StepCard({
   title: string;
   children: React.ReactNode;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.stepCard}>
       <View style={styles.stepHeader}>
@@ -340,77 +347,80 @@ function SecurityItem({
   icon: keyof typeof Ionicons.glyphMap;
   text: string;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.securityItem}>
-      <Ionicons name={icon} size={17} color={appColors.success} />
+      <Ionicons name={icon} size={17} color={colors.success} />
       <AppText style={styles.securityText}>{text}</AppText>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'transparent' },
   content: { width: '100%', maxWidth: 1240, alignSelf: 'center', padding: 16, paddingBottom: 50 },
-  hero: { padding: 22, borderRadius: 24, borderWidth: 1, borderColor: appColors.borderStrong, backgroundColor: appColors.surfaceStrong },
+  hero: { padding: 22, borderRadius: 24, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceStrong },
   heroDesktop: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 28 },
-  heroIcon: { width: 62, height: 62, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(appColors.info, '16'), marginRight: 17 },
+  heroIcon: { width: 62, height: 62, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(colors.info, '16'), marginRight: 17 },
   heroCopy: { flex: 1 },
-  eyebrow: { color: appColors.info, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 },
-  title: { color: appColors.text, fontSize: 28, lineHeight: 35, fontWeight: '900', marginTop: 5 },
-  subtitle: { color: appColors.textSoft, fontSize: 13, lineHeight: 20, marginTop: 6, maxWidth: 720 },
-  timePill: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 7, borderRadius: 99, paddingHorizontal: 13, paddingVertical: 9, marginTop: 14, backgroundColor: colorAlpha(appColors.success, '13') },
-  timePillText: { color: appColors.success, fontSize: 11, fontWeight: '900' },
+  eyebrow: { color: colors.info, fontSize: 10, fontWeight: '900', letterSpacing: 1.3 },
+  title: { color: colors.text, fontSize: 28, lineHeight: 35, fontWeight: '900', marginTop: 5 },
+  subtitle: { color: colors.textSoft, fontSize: 13, lineHeight: 20, marginTop: 6, maxWidth: 720 },
+  timePill: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 7, borderRadius: 99, paddingHorizontal: 13, paddingVertical: 9, marginTop: 14, backgroundColor: colorAlpha(colors.success, '13') },
+  timePillText: { color: colors.success, fontSize: 11, fontWeight: '900' },
   securityStrip: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginVertical: 14 },
-  securityItem: { flexGrow: 1, minWidth: 160, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, padding: 11, borderRadius: 13, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
-  securityText: { color: appColors.textSoft, fontSize: 10, fontWeight: '800' },
-  loadingCard: { minHeight: 260, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: appColors.surface },
-  loadingText: { color: appColors.textMuted, marginTop: 12 },
+  securityItem: { flexGrow: 1, minWidth: 160, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, padding: 11, borderRadius: 13, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  securityText: { color: colors.textSoft, fontSize: 10, fontWeight: '800' },
+  loadingCard: { minHeight: 260, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: colors.surface },
+  loadingText: { color: colors.textMuted, marginTop: 12 },
   layout: { gap: 15 },
   layoutDesktop: { flexDirection: 'row', alignItems: 'flex-start' },
   formColumn: { flex: 1, gap: 13 },
-  stepCard: { padding: 18, borderRadius: 19, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
+  stepCard: { padding: 18, borderRadius: 19, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   stepHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 9 },
-  stepNumber: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: appColors.info },
-  stepNumberText: { color: appColors.background, fontSize: 12, fontWeight: '900' },
-  stepTitle: { color: appColors.text, fontSize: 17, fontWeight: '900', marginLeft: 10 },
-  helper: { color: appColors.textMuted, fontSize: 11, lineHeight: 17, marginBottom: 12 },
+  stepNumber: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: colors.info },
+  stepNumberText: { color: colors.onAccent, fontSize: 12, fontWeight: '900' },
+  stepTitle: { color: colors.text, fontSize: 17, fontWeight: '900', marginLeft: 10 },
+  helper: { color: colors.textMuted, fontSize: 11, lineHeight: 17, marginBottom: 12 },
   choiceGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
-  choiceCard: { minWidth: 190, flex: 1, flexDirection: 'row', alignItems: 'center', gap: 9, padding: 12, borderRadius: 13, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted },
-  choiceCardActive: { borderColor: appColors.success, backgroundColor: colorAlpha(appColors.success, '0C') },
-  choiceIcon: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(appColors.info, '15') },
-  choiceIconActive: { backgroundColor: appColors.success },
-  choiceTitle: { flex: 1, color: appColors.textSoft, fontSize: 12, fontWeight: '800' },
-  choiceTitleActive: { color: appColors.text },
+  choiceCard: { minWidth: 190, flex: 1, flexDirection: 'row', alignItems: 'center', gap: 9, padding: 12, borderRadius: 13, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted },
+  choiceCardActive: { borderColor: colors.success, backgroundColor: colorAlpha(colors.success, '0C') },
+  choiceIcon: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(colors.info, '15') },
+  choiceIconActive: { backgroundColor: colors.success },
+  choiceTitle: { flex: 1, color: colors.textSoft, fontSize: 12, fontWeight: '800' },
+  choiceTitleActive: { color: colors.text },
   doctorList: { gap: 9 },
-  doctorCard: { flexDirection: 'row', alignItems: 'center', padding: 13, borderRadius: 14, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted },
-  doctorCardActive: { borderColor: appColors.success, backgroundColor: colorAlpha(appColors.success, '0C') },
-  doctorAvatar: { width: 43, height: 43, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 11, backgroundColor: colorAlpha(appColors.info, '15') },
+  doctorCard: { flexDirection: 'row', alignItems: 'center', padding: 13, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted },
+  doctorCardActive: { borderColor: colors.success, backgroundColor: colorAlpha(colors.success, '0C') },
+  doctorAvatar: { width: 43, height: 43, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 11, backgroundColor: colorAlpha(colors.info, '15') },
   doctorCopy: { flex: 1, minWidth: 0 },
-  doctorName: { color: appColors.text, fontSize: 13, fontWeight: '900' },
-  doctorMeta: { color: appColors.textSoft, fontSize: 10, marginTop: 3 },
-  license: { color: appColors.info, fontSize: 9, fontWeight: '800', marginTop: 4 },
-  notesInput: { minHeight: 90, padding: 13, borderRadius: 13, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted, color: appColors.text, fontSize: 12, textAlignVertical: 'top', outlineStyle: 'none' } as any,
-  emptyText: { color: appColors.textMuted, fontSize: 11, fontStyle: 'italic' },
-  codePanel: { width: '100%', padding: 22, alignItems: 'center', borderRadius: 21, borderWidth: 1, borderColor: appColors.borderStrong, backgroundColor: appColors.surfaceStrong },
+  doctorName: { color: colors.text, fontSize: 13, fontWeight: '900' },
+  doctorMeta: { color: colors.textSoft, fontSize: 10, marginTop: 3 },
+  license: { color: colors.info, fontSize: 9, fontWeight: '800', marginTop: 4 },
+  notesInput: { minHeight: 90, padding: 13, borderRadius: 13, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted, color: colors.text, fontSize: 12, textAlignVertical: 'top', outlineStyle: 'none' } as any,
+  emptyText: { color: colors.textMuted, fontSize: 11, fontStyle: 'italic' },
+  codePanel: { width: '100%', padding: 22, alignItems: 'center', borderRadius: 21, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceStrong },
   codePanelDesktop: { width: 380, position: 'sticky', top: 14 } as any,
-  panelEyebrow: { color: appColors.info, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 },
-  placeholderIcon: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderRadius: 23, marginTop: 22, backgroundColor: colorAlpha(appColors.info, '14') },
-  panelTitle: { color: appColors.text, fontSize: 20, fontWeight: '900', textAlign: 'center', marginTop: 16 },
-  panelText: { color: appColors.textMuted, fontSize: 11, lineHeight: 18, textAlign: 'center', marginTop: 7 },
-  generateButton: { width: '100%', minHeight: 49, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, marginTop: 20, backgroundColor: appColors.info },
-  generateButtonText: { color: appColors.background, fontSize: 12, fontWeight: '900' },
+  panelEyebrow: { color: colors.info, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 },
+  placeholderIcon: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderRadius: 23, marginTop: 22, backgroundColor: colorAlpha(colors.info, '14') },
+  panelTitle: { color: colors.text, fontSize: 20, fontWeight: '900', textAlign: 'center', marginTop: 16 },
+  panelText: { color: colors.textMuted, fontSize: 11, lineHeight: 18, textAlign: 'center', marginTop: 7 },
+  generateButton: { width: '100%', minHeight: 49, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 13, marginTop: 20, backgroundColor: colors.info },
+  generateButtonText: { color: colors.onAccent, fontSize: 12, fontWeight: '900' },
   buttonDisabled: { opacity: 0.45 },
-  successIcon: { width: 54, height: 54, alignItems: 'center', justifyContent: 'center', borderRadius: 18, marginTop: 18, backgroundColor: appColors.success },
-  codeLabel: { color: appColors.textSoft, fontSize: 11, fontWeight: '800', marginTop: 14 },
+  successIcon: { width: 54, height: 54, alignItems: 'center', justifyContent: 'center', borderRadius: 18, marginTop: 18, backgroundColor: colors.success },
+  codeLabel: { color: colors.textSoft, fontSize: 11, fontWeight: '800', marginTop: 14 },
   codeBox: { flexDirection: 'row', justifyContent: 'center', gap: 5, marginVertical: 13 },
-  digitBox: { width: 43, height: 58, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, borderColor: colorAlpha(appColors.info, '70'), backgroundColor: appColors.backgroundMuted },
-  digit: { color: appColors.text, fontSize: 29, fontWeight: '900' },
-  codeDescription: { color: appColors.textSoft, fontSize: 10, lineHeight: 16, textAlign: 'center' },
+  digitBox: { width: 43, height: 58, alignItems: 'center', justifyContent: 'center', borderRadius: 11, borderWidth: 1, borderColor: colorAlpha(colors.info, '70'), backgroundColor: colors.backgroundMuted },
+  digit: { color: colors.text, fontSize: 29, fontWeight: '900' },
+  codeDescription: { color: colors.textSoft, fontSize: 10, lineHeight: 16, textAlign: 'center' },
   expirationBox: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 8, padding: 11, borderRadius: 11, marginTop: 13, backgroundColor: colorAlpha('#F5B942', '10') },
   expirationText: { flex: 1, color: '#F5B942', fontSize: 9, lineHeight: 14, fontWeight: '700' },
-  shareButton: { width: '100%', minHeight: 47, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, marginTop: 15, backgroundColor: appColors.success },
-  shareButtonText: { color: appColors.background, fontSize: 12, fontWeight: '900' },
+  shareButton: { width: '100%', minHeight: 47, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, marginTop: 15, backgroundColor: colors.success },
+  shareButtonText: { color: colors.onAccent, fontSize: 12, fontWeight: '900' },
   secondaryButton: { minHeight: 39, justifyContent: 'center', marginTop: 7 },
-  secondaryButtonText: { color: appColors.info, fontSize: 10, fontWeight: '800' },
-  errorText: { color: appColors.accent, fontSize: 10, lineHeight: 15, textAlign: 'center', marginTop: 12 },
+  secondaryButtonText: { color: colors.info, fontSize: 10, fontWeight: '800' },
+  errorText: { color: colors.accent, fontSize: 10, lineHeight: 15, textAlign: 'center', marginTop: 12 },
 });

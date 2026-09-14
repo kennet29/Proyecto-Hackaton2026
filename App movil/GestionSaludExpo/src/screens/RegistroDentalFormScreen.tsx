@@ -28,6 +28,7 @@ import type { RootStackParamList } from '../navigation/types';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type RegistroDentalRecord = {
   registrodentalId: number;
@@ -207,6 +208,9 @@ const normalizeText = (value: unknown) => {
 };
 
 export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormScreenProps) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isCreateMode = mode === 'create';
   const { token, user } = useAuth();
@@ -489,7 +493,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
     const isDate = field === 'date' || field === 'notification-date';
     return (
       <View style={styles.iosPickerCard}>
-        <DateTimePicker
+        <DateTimePicker themeVariant={colors.mode}
           mode={isDate ? 'date' : 'time'}
           display="spinner"
           is24Hour={isDate ? undefined : false}
@@ -588,7 +592,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
               </TouchableOpacity>
             </View>
 
-            <Calendar
+            <Calendar key={colors.mode}
               current={selectedValue}
               firstDay={1}
               hideExtraDays
@@ -597,20 +601,20 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
               markedDates={{
                 [selectedValue]: {
                   selected: true,
-                  selectedColor: '#29B6FF',
-                  selectedTextColor: '#03101F',
+                  selectedColor: colors.info,
+                  selectedTextColor: colors.onAccent,
                 },
               }}
               theme={{
-                calendarBackground: '#071120',
-                textSectionTitleColor: '#9FB3C8',
-                selectedDayBackgroundColor: '#29B6FF',
-                selectedDayTextColor: '#03101F',
-                todayTextColor: '#38E28E',
-                dayTextColor: '#F4F8FF',
-                textDisabledColor: '#42566E',
-                monthTextColor: '#F4F8FF',
-                arrowColor: '#29B6FF',
+                calendarBackground: colors.background,
+                textSectionTitleColor: colors.textMuted,
+                selectedDayBackgroundColor: colors.info,
+                selectedDayTextColor: colors.onAccent,
+                todayTextColor: colors.success,
+                dayTextColor: colors.text,
+                textDisabledColor: colors.textMuted,
+                monthTextColor: colors.text,
+                arrowColor: colors.info,
                 textDayFontWeight: '600',
                 textMonthFontWeight: '900',
                 textDayHeaderFontWeight: '800',
@@ -719,7 +723,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
                     onValueChange={(value) =>
                       updateSelectedTime(String(value), selectedMinute, selectedPeriod)
                     }
-                    dropdownIconColor="#F4F8FF"
+                    dropdownIconColor={colors.text}
                     style={styles.timePicker}
                   >
                     {Array.from({ length: 12 }, (_, index) => {
@@ -746,7 +750,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
                     onValueChange={(value) =>
                       updateSelectedTime(selectedHour12, String(value), selectedPeriod)
                     }
-                    dropdownIconColor="#F4F8FF"
+                    dropdownIconColor={colors.text}
                     style={styles.timePicker}
                   >
                     {Array.from({ length: 60 }, (_, minute) => {
@@ -765,7 +769,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
                     onValueChange={(value) =>
                       updateSelectedTime(selectedHour12, selectedMinute, String(value))
                     }
-                    dropdownIconColor="#F4F8FF"
+                    dropdownIconColor={colors.text}
                     style={styles.timePicker}
                   >
                     <Picker.Item label="AM" value="AM" />
@@ -922,7 +926,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
       <AppText style={styles.label}>Paciente</AppText>
       {loadingPatients ? (
         <View style={styles.loadingCard}>
-          <ActivityIndicator color="#29B6FF" />
+          <ActivityIndicator color={colors.info} />
           <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
         </View>
       ) : patientOptions.length === 0 ? (
@@ -937,16 +941,16 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
           <Picker
             selectedValue={form.pacienteId}
             onValueChange={(value) => handleChange('pacienteId', String(value))}
-            dropdownIconColor="#F4F8FF"
+            dropdownIconColor={colors.text}
             style={styles.picker}
           >
-            <Picker.Item label="Selecciona un paciente" value="" color="#F4F8FF" />
+            <Picker.Item label="Selecciona un paciente" value="" color={colors.text} />
             {patientOptions.map((patient) => (
               <Picker.Item
                 key={patient.pacienteId}
                 label={patient.displayName}
                 value={String(patient.pacienteId)}
-                color="#F4F8FF"
+                color={colors.text}
               />
             ))}
           </Picker>
@@ -980,35 +984,35 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
       <AppTextInput
         style={styles.input}
         placeholder="Procedimiento"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor={colors.textMuted}
         value={form.procedimiento}
         onChangeText={(value) => handleChange('procedimiento', value)}
       />
       <AppTextInput
         style={styles.input}
         placeholder="Diagnostico"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor={colors.textMuted}
         value={form.diagnostico}
         onChangeText={(value) => handleChange('diagnostico', value)}
       />
       <AppTextInput
         style={styles.input}
         placeholder="Odontologo"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor={colors.textMuted}
         value={form.odontologo}
         onChangeText={(value) => handleChange('odontologo', value)}
       />
       <AppTextInput
         style={styles.input}
         placeholder="Piezas tratadas"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor={colors.textMuted}
         value={form.piezasTratadas}
         onChangeText={(value) => handleChange('piezasTratadas', value)}
       />
       <AppTextInput
         style={[styles.input, styles.multiline]}
         placeholder="Notas"
-        placeholderTextColor="#9FB3C8"
+        placeholderTextColor={colors.textMuted}
         value={form.notas}
         multiline
         onChangeText={(value) => handleChange('notas', value)}
@@ -1064,7 +1068,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
             <AppTextInput
               style={[styles.input, styles.multiline]}
               placeholder="Mensaje de la notificacion"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={notificationMessage}
               multiline
               onChangeText={setNotificationMessage}
@@ -1091,7 +1095,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
           disabled={isSubmitting}
         >
           {isSubmitting ? (
-            <ActivityIndicator color="#F4F8FF" />
+            <ActivityIndicator color={colors.text} />
           ) : (
             <AppText style={styles.primaryButtonText}>Guardar</AppText>
           )}
@@ -1126,20 +1130,20 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
               selectedValue={selectedPatientId}
               onValueChange={(value) => setSelectedPatientId(String(value))}
               enabled={!loadingPatients}
-              dropdownIconColor="#F4F8FF"
+              dropdownIconColor={colors.text}
               style={styles.picker}
             >
               <Picker.Item
                 label={loadingPatients ? 'Cargando pacientes...' : 'Todos los pacientes'}
                 value=""
-                color="#F4F8FF"
+                color={colors.text}
               />
               {patientOptions.map((patient) => (
                 <Picker.Item
                   key={patient.pacienteId}
                   label={patient.displayName}
                   value={String(patient.pacienteId)}
-                  color="#F4F8FF"
+                  color={colors.text}
                 />
               ))}
             </Picker>
@@ -1158,7 +1162,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
 
         {loadingRecords ? (
           <View style={styles.loadingCard}>
-            <ActivityIndicator color="#29B6FF" />
+            <ActivityIndicator color={colors.info} />
             <AppText style={styles.loadingText}>Cargando resumen...</AppText>
           </View>
         ) : visibleSummaries.length === 0 ? (
@@ -1221,7 +1225,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
 
         {loadingRecords ? (
           <View style={styles.loadingCard}>
-            <ActivityIndicator color="#29B6FF" />
+            <ActivityIndicator color={colors.info} />
             <AppText style={styles.loadingText}>Cargando historial...</AppText>
           </View>
         ) : filteredRecords.length === 0 ? (
@@ -1272,26 +1276,26 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   container: {
     padding: 24,
     paddingBottom: 120,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   heroCard: {
     borderRadius: 28,
     padding: 22,
     marginBottom: 18,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
   },
   eyebrow: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
@@ -1301,41 +1305,41 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   subtitle: {
     marginTop: 10,
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 15,
     lineHeight: 22,
   },
   filterCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 22,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginBottom: 18,
   },
   label: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
     marginBottom: 8,
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   picker: {
-    color: '#F4F8FF',
+    color: colors.text,
   },
   filterHint: {
     marginTop: 10,
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
   },
   sectionHeader: {
@@ -1344,54 +1348,54 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   sectionSubtitle: {
     marginTop: 4,
-    color: '#9FB3C8',
+    color: colors.textMuted,
   },
   loadingCard: {
     borderRadius: 20,
     padding: 22,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     alignItems: 'center',
     marginBottom: 16,
   },
   loadingText: {
     marginTop: 10,
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   emptyCard: {
     borderRadius: 22,
     padding: 20,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginBottom: 16,
   },
   emptyTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
     fontSize: 16,
     marginBottom: 6,
   },
   emptyText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     lineHeight: 20,
   },
   summaryCard: {
     borderRadius: 22,
     padding: 18,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginBottom: 12,
   },
   summaryCardActive: {
-    borderColor: '#29B6FF',
-    backgroundColor: '#29B6FF18',
+    borderColor: colors.info,
+    backgroundColor: `${colors.info}18`,
   },
   summaryHeader: {
     flexDirection: 'row',
@@ -1403,48 +1407,48 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   summaryName: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 17,
     fontWeight: '900',
   },
   summaryMeta: {
     marginTop: 4,
-    color: '#9FB3C8',
+    color: colors.textMuted,
   },
   summaryCountBadge: {
     minWidth: 74,
     borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: '#38E28E18',
+    backgroundColor: `${colors.success}18`,
     borderWidth: 1,
-    borderColor: '#38E28E',
+    borderColor: colors.success,
     alignItems: 'center',
   },
   summaryCountValue: {
-    color: '#38E28E',
+    color: colors.success,
     fontSize: 20,
     fontWeight: '900',
   },
   summaryCountLabel: {
-    color: '#38E28E',
+    color: colors.success,
     fontSize: 10,
     fontWeight: '800',
     textTransform: 'uppercase',
   },
   summaryPrimary: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '700',
   },
   summarySecondary: {
     marginTop: 6,
-    color: '#9FB3C8',
+    color: colors.textMuted,
     lineHeight: 20,
   },
   summaryAction: {
     marginTop: 10,
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
     fontSize: 13,
   },
@@ -1452,9 +1456,9 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     padding: 18,
     marginBottom: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
   },
   recordTopRow: {
     flexDirection: 'row',
@@ -1466,46 +1470,46 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 7,
     paddingHorizontal: 12,
-    backgroundColor: '#29B6FF18',
+    backgroundColor: `${colors.info}18`,
   },
   datePillText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
     fontSize: 12,
   },
   recordTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '900',
     marginBottom: 6,
   },
   recordPatient: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
     marginBottom: 10,
   },
   recordText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 5,
     lineHeight: 20,
   },
   formCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginTop: 10,
   },
   formTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   formSubtitle: {
     marginTop: 6,
     marginBottom: 14,
-    color: '#9FB3C8',
+    color: colors.textMuted,
     lineHeight: 20,
   },
   row: {
@@ -1517,19 +1521,19 @@ const styles = StyleSheet.create({
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     paddingVertical: 15,
     paddingHorizontal: 14,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   calendarButton: {
     paddingVertical: 10,
-    borderColor: '#29B6FF',
-    backgroundColor: '#29B6FF0D',
+    borderColor: colors.info,
+    backgroundColor: `${colors.info}0D`,
   },
   dateButtonLabel: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     textAlign: 'center',
     fontSize: 11,
     fontWeight: '800',
@@ -1537,14 +1541,14 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   dateButtonValue: {
-    color: '#F4F8FF',
+    color: colors.text,
     textAlign: 'center',
     fontSize: 15,
     fontWeight: '900',
     marginTop: 4,
   },
   dateButtonHint: {
-    color: '#29B6FF',
+    color: colors.info,
     textAlign: 'center',
     fontSize: 11,
     fontWeight: '700',
@@ -1553,11 +1557,11 @@ const styles = StyleSheet.create({
   timeButton: {
     marginLeft: 10,
     paddingVertical: 10,
-    borderColor: '#29B6FF',
-    backgroundColor: '#29B6FF0D',
+    borderColor: colors.info,
+    backgroundColor: `${colors.info}0D`,
   },
   timeButtonLabel: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     textAlign: 'center',
     fontSize: 11,
     fontWeight: '800',
@@ -1565,14 +1569,14 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   timeButtonValue: {
-    color: '#F4F8FF',
+    color: colors.text,
     textAlign: 'center',
     fontSize: 20,
     fontWeight: '900',
     marginTop: 2,
   },
   timeButtonHint: {
-    color: '#29B6FF',
+    color: colors.info,
     textAlign: 'center',
     fontSize: 11,
     fontWeight: '700',
@@ -1590,9 +1594,9 @@ const styles = StyleSheet.create({
     maxWidth: 460,
     borderRadius: 24,
     padding: 22,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 14 },
     shadowOpacity: 0.45,
@@ -1607,7 +1611,7 @@ const styles = StyleSheet.create({
     paddingRight: 14,
   },
   dateModalSelected: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 14,
     fontWeight: '800',
     marginTop: 7,
@@ -1616,9 +1620,9 @@ const styles = StyleSheet.create({
     marginTop: 18,
     borderRadius: 18,
     padding: 8,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
   },
   dateQuickActions: {
     flexDirection: 'row',
@@ -1632,14 +1636,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   timeModalEyebrow: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.9,
     textTransform: 'uppercase',
   },
   timeModalTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 21,
     fontWeight: '900',
     marginTop: 4,
@@ -1650,17 +1654,17 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   timeModalCloseText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 25,
     lineHeight: 28,
   },
   timeModalValue: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 46,
     fontWeight: '900',
     textAlign: 'center',
@@ -1679,7 +1683,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   timePickerLabel: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '800',
     marginBottom: 7,
@@ -1687,18 +1691,18 @@ const styles = StyleSheet.create({
   },
   timePickerWrapper: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#0A1728',
+    backgroundColor: colors.backgroundMuted,
   },
   timePicker: {
     height: 52,
-    color: '#F4F8FF',
-    backgroundColor: '#0A1728',
+    color: colors.text,
+    backgroundColor: colors.backgroundMuted,
   },
   timePickerSeparator: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 28,
     fontWeight: '900',
     paddingHorizontal: 12,
@@ -1719,16 +1723,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginHorizontal: 4,
     marginBottom: 8,
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   timeQuickButtonActive: {
-    backgroundColor: '#29B6FF22',
-    borderColor: '#29B6FF',
+    backgroundColor: `${colors.info}22`,
+    borderColor: colors.info,
   },
   timeQuickButtonText: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
   },
   timeConfirmButton: {
@@ -1736,19 +1740,19 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 14,
     marginTop: 6,
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
   },
   timeConfirmButtonText: {
-    color: '#03101F',
+    color: colors.onAccent,
     fontSize: 15,
     fontWeight: '900',
   },
   iosPickerCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     marginBottom: 12,
   },
   secondaryButton: {
@@ -1757,18 +1761,18 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   secondaryButtonText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
     fontSize: 15,
-    backgroundColor: '#071120',
-    color: '#F4F8FF',
+    backgroundColor: colors.background,
+    color: colors.text,
   },
   multiline: {
     minHeight: 96,
@@ -1778,9 +1782,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 16,
     marginBottom: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
   },
   notificationHeader: {
     flexDirection: 'row',
@@ -1793,12 +1797,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   notificationTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 16,
     fontWeight: '800',
   },
   notificationHint: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     lineHeight: 19,
     marginTop: 4,
   },
@@ -1808,16 +1812,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     alignItems: 'center',
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   notificationToggleActive: {
-    backgroundColor: '#29B6FF',
-    borderColor: '#29B6FF',
+    backgroundColor: colors.info,
+    borderColor: colors.info,
   },
   notificationToggleText: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
   },
   formActions: {
@@ -1830,17 +1834,17 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#9FB3C8',
-    backgroundColor: '#071120',
+    borderColor: colors.textMuted,
+    backgroundColor: colors.background,
     marginRight: 6,
   },
   cancelButtonText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontWeight: '800',
   },
   primaryButton: {
     flex: 1,
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     borderRadius: 14,
     paddingVertical: 15,
     alignItems: 'center',
@@ -1850,7 +1854,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   primaryButtonText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontWeight: '900',
     fontSize: 16,
   },
@@ -1861,7 +1865,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
@@ -1871,7 +1875,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   fabText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontSize: 30,
     lineHeight: 30,
     fontWeight: '800',

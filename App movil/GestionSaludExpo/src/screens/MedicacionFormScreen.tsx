@@ -36,6 +36,7 @@ import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate } from '../utils/localDate';
 import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 import { WebTimeInput } from '../components/WebTimeInput';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type PickerField =
   | 'fechaInicio'
@@ -207,6 +208,9 @@ export function MedicacionFormScreen({
   mode = 'list',
   initialMedication,
 }: MedicacionFormScreenProps) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isCreateMode = mode === 'create';
   const isEditing = Boolean(initialMedication?.medicacionId);
@@ -519,7 +523,7 @@ export function MedicacionFormScreen({
         const existing = marks[startDate] ?? {};
         const dots = existing.dots ?? [];
         if (!dots.some((dot) => dot.key === `start-${record.medicacionId}`)) {
-          dots.push({ key: `start-${record.medicacionId}`, color: '#38E28E' });
+          dots.push({ key: `start-${record.medicacionId}`, color: colors.success });
         }
         marks[startDate] = {
           ...existing,
@@ -533,7 +537,7 @@ export function MedicacionFormScreen({
         const existing = marks[endDate] ?? {};
         const dots = existing.dots ?? [];
         if (!dots.some((dot) => dot.key === `end-${record.medicacionId}`)) {
-          dots.push({ key: `end-${record.medicacionId}`, color: '#FF4D73' });
+          dots.push({ key: `end-${record.medicacionId}`, color: colors.accent });
         }
         marks[endDate] = {
           ...existing,
@@ -547,14 +551,14 @@ export function MedicacionFormScreen({
       marks[selectedDate] = {
         ...(marks[selectedDate] ?? {}),
         selected: true,
-        selectedColor: '#29B6FF',
-        selectedTextColor: '#F4F8FF',
+        selectedColor: colors.info,
+        selectedTextColor: colors.onAccent,
         marked: marks[selectedDate]?.marked ?? false,
       };
     }
 
     return marks;
-  }, [selectedDate, visibleRecords]);
+  }, [selectedDate, visibleRecords, colors]);
 
   const recordsForSelectedDay = useMemo(() => {
     if (!selectedDate) {
@@ -712,7 +716,7 @@ export function MedicacionFormScreen({
 
     return (
       <View style={styles.iosPickerWrapper}>
-        <DateTimePicker
+        <DateTimePicker themeVariant={colors.mode}
           mode={isTimeField ? 'time' : 'date'}
           display="spinner"
           locale="es-NI"
@@ -1064,10 +1068,10 @@ export function MedicacionFormScreen({
         <View style={styles.heroCard}>
           <View style={styles.heroTopRow}>
             <View style={styles.heroIconBadge}>
-              <Ionicons name="medkit-outline" size={28} color={appColors.text} />
+              <Ionicons name="medkit-outline" size={28} color={colors.text} />
             </View>
             <View style={styles.heroStatusPill}>
-              <Ionicons name={isCreateMode ? 'create-outline' : 'calendar-outline'} size={14} color={appColors.info} />
+              <Ionicons name={isCreateMode ? 'create-outline' : 'calendar-outline'} size={14} color={colors.info} />
               <AppText style={styles.heroStatusText}>{isCreateMode ? 'Formulario activo' : 'Historial'}</AppText>
             </View>
           </View>
@@ -1094,7 +1098,7 @@ export function MedicacionFormScreen({
               <AppText style={styles.label}>Paciente del historial</AppText>
               {loadingPatients ? (
                 <View style={styles.loadingRow}>
-                  <ActivityIndicator color="#29B6FF" />
+                  <ActivityIndicator color={colors.info} />
                   <AppText style={styles.loadingText}>Cargando personas...</AppText>
                 </View>
               ) : patientOptions.length === 0 ? (
@@ -1107,7 +1111,7 @@ export function MedicacionFormScreen({
                     style={styles.picker}
                     selectedValue={filterPacienteId}
                     onValueChange={(value) => setFilterPacienteId(String(value))}
-                    dropdownIconColor="#F4F8FF"
+                    dropdownIconColor={colors.text}
                   >
                     <Picker.Item label="Todos los pacientes" value="" />
                     {patientOptions.map((patient) => (
@@ -1127,19 +1131,19 @@ export function MedicacionFormScreen({
               <AppText style={styles.sectionHelper}>
                 Verde marca el inicio y rojo marca la finalizacion del tratamiento.
               </AppText>
-              <Calendar
+              <Calendar key={colors.mode}
                 markingType="multi-dot"
                 markedDates={markedDates}
                 onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
                 theme={{
-                  calendarBackground: '#132238',
-                  dayTextColor: '#F4F8FF',
-                  monthTextColor: '#F4F8FF',
-                  arrowColor: '#29B6FF',
-                  textSectionTitleColor: '#C9D7E8',
-                  selectedDayBackgroundColor: '#29B6FF',
-                  selectedDayTextColor: '#F4F8FF',
-                  todayTextColor: '#F4F8FF',
+                  calendarBackground: colors.surface,
+                  dayTextColor: colors.text,
+                  monthTextColor: colors.text,
+                  arrowColor: colors.info,
+                  textSectionTitleColor: colors.textSoft,
+                  selectedDayBackgroundColor: colors.info,
+                  selectedDayTextColor: colors.onAccent,
+                  todayTextColor: colors.text,
                 }}
                 style={styles.calendar}
               />
@@ -1257,7 +1261,7 @@ export function MedicacionFormScreen({
               {showHistorySection && hasHistoryRecords ? (
                 loadingRecords ? (
                   <View style={styles.stateBox}>
-                    <ActivityIndicator color="#29B6FF" />
+                    <ActivityIndicator color={colors.info} />
                     <AppText style={styles.stateText}>Cargando medicaciones...</AppText>
                   </View>
                 ) : (
@@ -1353,7 +1357,7 @@ export function MedicacionFormScreen({
             <View style={styles.formStepCard}>
               <View style={styles.stepHeader}>
                 <View style={styles.stepIcon}>
-                  <Ionicons name="person-outline" size={18} color={appColors.info} />
+                  <Ionicons name="person-outline" size={18} color={colors.info} />
                 </View>
                 <View style={styles.stepCopy}>
                   <AppText style={styles.stepTitle}>1. Persona asociada</AppText>
@@ -1362,7 +1366,7 @@ export function MedicacionFormScreen({
               </View>
               {loadingPatients ? (
                 <View style={styles.loadingRow}>
-                  <ActivityIndicator color="#29B6FF" />
+                  <ActivityIndicator color={colors.info} />
                   <AppText style={styles.loadingText}>Cargando personas...</AppText>
                 </View>
               ) : patientOptions.length === 0 ? (
@@ -1380,7 +1384,7 @@ export function MedicacionFormScreen({
                     style={styles.picker}
                     selectedValue={form.pacienteId}
                     onValueChange={(value) => handleChange('pacienteId', String(value))}
-                    dropdownIconColor="#F4F8FF"
+                    dropdownIconColor={colors.text}
                   >
                     {patientOptions.map((patient) => (
                       <Picker.Item
@@ -1394,7 +1398,7 @@ export function MedicacionFormScreen({
               )}
               {form.pacienteId ? (
                 <View style={styles.selectedPatientCard}>
-                  <Ionicons name="checkmark-circle" size={18} color={appColors.success} />
+                  <Ionicons name="checkmark-circle" size={18} color={colors.success} />
                   <AppText style={styles.selectedPatientText}>
                     {`Asignado a ${selectedPatientName ?? patientNameById[Number(form.pacienteId)] ?? 'la persona seleccionada'}`}
                   </AppText>
@@ -1406,7 +1410,7 @@ export function MedicacionFormScreen({
             <View style={styles.formStepCard}>
               <View style={styles.stepHeader}>
                 <View style={styles.stepIcon}>
-                  <Ionicons name="medical-outline" size={18} color={appColors.info} />
+                  <Ionicons name="medical-outline" size={18} color={colors.info} />
                 </View>
                 <View style={styles.stepCopy}>
                   <AppText style={styles.stepTitle}>2. Medicamento e indicacion</AppText>
@@ -1418,7 +1422,7 @@ export function MedicacionFormScreen({
                 <AppTextInput
                   style={styles.input}
                   placeholder="Ej. Amoxicilina, Ibuprofeno, Metformina"
-                  placeholderTextColor="#9FB3C8"
+                  placeholderTextColor={colors.textMuted}
                   value={form.nombre}
                   onChangeText={(value) => handleChange('nombre', value)}
                 />
@@ -1430,7 +1434,7 @@ export function MedicacionFormScreen({
                   <AppTextInput
                     style={styles.input}
                     placeholder="Ej. 500 mg, 1 tableta, 10 ml"
-                    placeholderTextColor="#9FB3C8"
+                    placeholderTextColor={colors.textMuted}
                     value={form.dosis}
                     onChangeText={(value) => handleChange('dosis', value)}
                   />
@@ -1440,7 +1444,7 @@ export function MedicacionFormScreen({
                   <AppTextInput
                     style={styles.input}
                     placeholder="Ej. Oral, intravenosa, topica"
-                    placeholderTextColor="#9FB3C8"
+                    placeholderTextColor={colors.textMuted}
                     value={form.via}
                     onChangeText={(value) => handleChange('via', value)}
                   />
@@ -1452,7 +1456,7 @@ export function MedicacionFormScreen({
                 <AppTextInput
                   style={[styles.input, styles.multiline]}
                   placeholder="Ej. Tomar despues de los alimentos durante 7 dias"
-                  placeholderTextColor="#9FB3C8"
+                  placeholderTextColor={colors.textMuted}
                   value={form.indicaciones}
                   multiline
                   onChangeText={(value) => handleChange('indicaciones', value)}
@@ -1463,7 +1467,7 @@ export function MedicacionFormScreen({
             <View style={styles.formStepCard}>
               <View style={styles.stepHeader}>
                 <View style={styles.stepIcon}>
-                  <Ionicons name="time-outline" size={18} color={appColors.info} />
+                  <Ionicons name="time-outline" size={18} color={colors.info} />
                 </View>
                 <View style={styles.stepCopy}>
                   <AppText style={styles.stepTitle}>3. Duracion y horario</AppText>
@@ -1477,7 +1481,7 @@ export function MedicacionFormScreen({
                 <View style={styles.dateGridItem}>
                   <AppText style={styles.label}>Inicio</AppText>
                   <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('fechaInicio')}>
-                    <Ionicons name="calendar-outline" size={18} color={appColors.info} />
+                    <Ionicons name="calendar-outline" size={18} color={colors.info} />
                     <AppText style={styles.dateButtonText}>{formatDisplayDate(form.fechaInicio)}</AppText>
                   </TouchableOpacity>
                   {renderIOSPicker('fechaInicio')}
@@ -1493,7 +1497,7 @@ export function MedicacionFormScreen({
                     />
                   ) : (
                     <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('horaMedicacion')}>
-                      <Ionicons name="alarm-outline" size={18} color={appColors.info} />
+                      <Ionicons name="alarm-outline" size={18} color={colors.info} />
                       <AppText style={styles.dateButtonText}>
                         {form.horaMedicacion ? formatDisplayTime(form.horaMedicacion) : 'Opcional'}
                       </AppText>
@@ -1519,8 +1523,8 @@ export function MedicacionFormScreen({
                   <Switch
                     value={isPermanentMedication}
                     onValueChange={setIsPermanentMedication}
-                    trackColor={{ false: '#27496D', true: colorAlpha(appColors.success, '66') }}
-                    thumbColor={isPermanentMedication ? appColors.success : '#F4F8FF'}
+                    trackColor={{ false: colors.border, true: colorAlpha(colors.success, '66') }}
+                    thumbColor={isPermanentMedication ? colors.success : colors.text}
                   />
                 </View>
               </View>
@@ -1529,7 +1533,7 @@ export function MedicacionFormScreen({
                 <View style={styles.fieldGroup}>
                   <AppText style={styles.label}>Finalizacion</AppText>
                   <TouchableOpacity style={styles.dateButton} onPress={() => showPicker('fechaFin')}>
-                    <Ionicons name="flag-outline" size={18} color={appColors.info} />
+                    <Ionicons name="flag-outline" size={18} color={colors.info} />
                     <AppText style={styles.dateButtonText}>
                       {form.fechaFin ? formatDisplayDate(form.fechaFin) : 'Selecciona una fecha opcional'}
                     </AppText>
@@ -1540,7 +1544,7 @@ export function MedicacionFormScreen({
                 </View>
               ) : (
                 <View style={styles.permanentInfoCard}>
-                  <Ionicons name="repeat-outline" size={18} color={appColors.success} />
+                  <Ionicons name="repeat-outline" size={18} color={colors.success} />
                   <View style={styles.toggleCopy}>
                     <AppText style={styles.permanentInfoTitle}>Recordatorio diario</AppText>
                     <AppText style={styles.permanentInfoText}>
@@ -1557,7 +1561,7 @@ export function MedicacionFormScreen({
             <View style={styles.attachmentCard}>
               <View style={styles.stepHeader}>
                 <View style={styles.stepIcon}>
-                  <Ionicons name="document-attach-outline" size={18} color={appColors.info} />
+                  <Ionicons name="document-attach-outline" size={18} color={colors.info} />
                 </View>
                 <View style={styles.stepCopy}>
                   <AppText style={styles.stepTitle}>Receta fisica adjunta</AppText>
@@ -1569,15 +1573,15 @@ export function MedicacionFormScreen({
 
               <View style={styles.attachmentActions}>
                 <TouchableOpacity style={styles.attachmentButton} onPress={handleTakePhoto}>
-                  <Ionicons name="camera-outline" size={16} color={appColors.info} />
+                  <Ionicons name="camera-outline" size={16} color={colors.info} />
                   <AppText style={styles.attachmentButtonText}>Tomar foto</AppText>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.attachmentButton} onPress={handlePickImage}>
-                  <Ionicons name="image-outline" size={16} color={appColors.info} />
+                  <Ionicons name="image-outline" size={16} color={colors.info} />
                   <AppText style={styles.attachmentButtonText}>Elegir imagen</AppText>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.attachmentButton} onPress={handlePickPdf}>
-                  <Ionicons name="document-text-outline" size={16} color={appColors.info} />
+                  <Ionicons name="document-text-outline" size={16} color={colors.info} />
                   <AppText style={styles.attachmentButtonText}>Elegir PDF</AppText>
                 </TouchableOpacity>
               </View>
@@ -1622,7 +1626,7 @@ export function MedicacionFormScreen({
 
             {isPermanentMedication ? (
               <View style={styles.permanentInfoCard}>
-                <Ionicons name="notifications-outline" size={18} color={appColors.success} />
+                <Ionicons name="notifications-outline" size={18} color={colors.success} />
                 <View style={styles.toggleCopy}>
                   <AppText style={styles.permanentInfoTitle}>Medicacion diaria</AppText>
                   <AppText style={styles.permanentInfoText}>
@@ -1635,7 +1639,7 @@ export function MedicacionFormScreen({
             ) : form.fechaFin ? (
               <View style={styles.inlineNotificationCard}>
                 <View style={styles.inlineNotificationIcon}>
-                  <Ionicons name="notifications-outline" size={20} color={appColors.info} />
+                  <Ionicons name="notifications-outline" size={20} color={colors.info} />
                 </View>
                 <View style={styles.inlineNotificationCopy}>
                   <AppText style={styles.inlineNotificationTitle}>Notificacion del tratamiento</AppText>
@@ -1657,7 +1661,7 @@ export function MedicacionFormScreen({
               </View>
             ) : (
               <View style={styles.lockedNotificationCard}>
-                <Ionicons name="lock-closed-outline" size={18} color={appColors.textMuted} />
+                <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />
                 <AppText style={styles.fieldHint}>
                   Agrega una fecha de finalizacion si quieres crear una notificacion.
                 </AppText>
@@ -1665,7 +1669,7 @@ export function MedicacionFormScreen({
             )}
 
             <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit}>
-              <Ionicons name="save-outline" size={20} color={appColors.text} />
+              <Ionicons name="save-outline" size={20} color={colors.text} />
               <AppText style={styles.btnText}>{isEditing ? 'Guardar cambios' : 'Guardar medicacion'}</AppText>
             </TouchableOpacity>
 
@@ -1673,7 +1677,7 @@ export function MedicacionFormScreen({
               <View style={styles.notificationCard}>
                 <View style={styles.stepHeader}>
                   <View style={styles.stepIcon}>
-                    <Ionicons name="notifications-outline" size={18} color={appColors.success} />
+                    <Ionicons name="notifications-outline" size={18} color={colors.success} />
                   </View>
                   <View style={styles.stepCopy}>
                     <AppText style={styles.stepTitle}>Notificacion del tratamiento</AppText>
@@ -1685,7 +1689,7 @@ export function MedicacionFormScreen({
                 <AppTextInput
                   style={[styles.input, styles.multiline]}
                   placeholder="Ej. Hoy finaliza el tratamiento indicado"
-                  placeholderTextColor="#9FB3C8"
+                  placeholderTextColor={colors.textMuted}
                   value={notificationForm.mensaje}
                   multiline
                   onChangeText={(value) => handleNotificationChange('mensaje', value)}
@@ -1718,7 +1722,7 @@ export function MedicacionFormScreen({
                 {renderIOSPicker('notificationTime')}
 
                 <TouchableOpacity style={styles.notificationBtn} onPress={handleCreateNotification}>
-                  <Ionicons name="alarm-outline" size={20} color={appColors.background} />
+                  <Ionicons name="alarm-outline" size={20} color={colors.onAccent} />
                   <AppText style={styles.notificationBtnText}>Crear notificacion push</AppText>
                 </TouchableOpacity>
               </View>
@@ -1736,14 +1740,14 @@ export function MedicacionFormScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 24,
@@ -1751,11 +1755,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   heroCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 26,
     padding: 22,
     borderWidth: 1,
-    borderColor: '#29B6FF',
+    borderColor: colors.info,
   },
   heroTopRow: {
     flexDirection: 'row',
@@ -1767,11 +1771,11 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 20,
-    backgroundColor: colorAlpha(appColors.info, '26'),
+    backgroundColor: colorAlpha(colors.info, '26'),
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '55'),
+    borderColor: colorAlpha(colors.info, '55'),
   },
   heroStatusPill: {
     flexDirection: 'row',
@@ -1782,15 +1786,15 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '44'),
+    borderColor: colorAlpha(colors.info, '44'),
   },
   heroStatusText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '800',
   },
   kicker: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.2,
@@ -1802,48 +1806,48 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
     lineHeight: 34,
   },
   subtitle: {
-    color: '#29B6FF',
+    color: colors.info,
     lineHeight: 20,
     marginTop: 8,
   },
   filterCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 16,
     padding: 16,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   calendarCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 20,
     padding: 18,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   daySection: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 20,
     padding: 18,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   recordsSection: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 20,
     padding: 18,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   formCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 24,
     padding: 0,
     gap: 14,
@@ -1851,12 +1855,12 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   formHeaderCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 22,
     padding: 18,
     gap: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -1865,43 +1869,43 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   formHeaderTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 22,
     fontWeight: '800',
     lineHeight: 27,
   },
   formHeaderText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 19,
   },
   progressBadge: {
     width: 76,
     height: 76,
     borderRadius: 24,
-    backgroundColor: colorAlpha(appColors.info, '20'),
+    backgroundColor: colorAlpha(colors.info, '20'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '66'),
+    borderColor: colorAlpha(colors.info, '66'),
     alignItems: 'center',
     justifyContent: 'center',
   },
   progressBadgeValue: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 20,
     fontWeight: '900',
   },
   progressBadgeLabel: {
-    color: appColors.info,
+    color: colors.info,
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
   },
   formStepCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 22,
     padding: 18,
     gap: 14,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   stepHeader: {
     flexDirection: 'row',
@@ -1912,38 +1916,38 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 14,
-    backgroundColor: colorAlpha(appColors.info, '18'),
+    backgroundColor: colorAlpha(colors.info, '18'),
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '40'),
+    borderColor: colorAlpha(colors.info, '40'),
   },
   stepCopy: {
     flex: 1,
     gap: 3,
   },
   stepTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 17,
     fontWeight: '800',
   },
   stepHint: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     lineHeight: 18,
   },
   notificationCard: {
     marginTop: 8,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 16,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#182A44',
+    borderColor: colors.surfaceStrong,
   },
   formTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   fieldGroup: {
     gap: 8,
@@ -1957,7 +1961,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionHelper: {
-    color: '#29B6FF',
+    color: colors.info,
     lineHeight: 19,
   },
   sectionToggle: {
@@ -1978,104 +1982,104 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   sectionToggleIcon: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 24,
     fontWeight: '700',
     width: 20,
     textAlign: 'center',
   },
   sectionToggleIconDisabled: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
   },
   countBadge: {
     minWidth: 34,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     alignItems: 'center',
   },
   countBadgeText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
     fontSize: 12,
   },
   label: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   fieldHint: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
     lineHeight: 18,
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   picker: {
-    color: '#F4F8FF',
+    color: colors.text,
   },
   toggleCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 16,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     justifyContent: 'space-between',
   },
   toggleCardActive: {
-    borderColor: colorAlpha(appColors.success, '66'),
-    backgroundColor: colorAlpha(appColors.success, '12'),
+    borderColor: colorAlpha(colors.success, '66'),
+    backgroundColor: colorAlpha(colors.success, '12'),
   },
   toggleCopy: {
     flex: 1,
     gap: 4,
   },
   toggleTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '700',
   },
   toggleDescription: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 18,
   },
   permanentInfoCard: {
     marginTop: 4,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '46'),
+    borderColor: colorAlpha(colors.success, '46'),
     borderRadius: 16,
     padding: 14,
-    backgroundColor: colorAlpha(appColors.success, '10'),
+    backgroundColor: colorAlpha(colors.success, '10'),
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
   },
   permanentInfoTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '700',
   },
   permanentInfoText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 18,
   },
   inlineNotificationCard: {
     marginTop: 4,
     borderWidth: 1,
-    borderColor: '#29B6FF',
+    borderColor: colors.info,
     borderRadius: 16,
     padding: 14,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -2085,7 +2089,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 16,
-    backgroundColor: colorAlpha(appColors.info, '18'),
+    backgroundColor: colorAlpha(colors.info, '18'),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2094,12 +2098,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   inlineNotificationTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '700',
   },
   inlineNotificationHint: {
-    color: '#29B6FF',
+    color: colors.info,
     lineHeight: 18,
   },
   inlineNotificationToggle: {
@@ -2107,22 +2111,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 999,
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     alignItems: 'center',
   },
   inlineNotificationToggleActive: {
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
   },
   inlineNotificationToggleText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontWeight: '700',
   },
   lockedNotificationCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 16,
     padding: 14,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
@@ -2130,11 +2134,11 @@ const styles = StyleSheet.create({
   attachmentCard: {
     marginTop: 4,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 18,
     padding: 16,
     gap: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   attachmentActions: {
     flexDirection: 'row',
@@ -2145,60 +2149,60 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '30'),
+    borderColor: colorAlpha(colors.info, '30'),
   },
   attachmentButtonText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
     fontSize: 13,
   },
   attachmentPreviewCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 16,
     padding: 14,
     gap: 8,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   attachmentPreviewImage: {
     width: '100%',
     height: 180,
     borderRadius: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   attachmentPreviewTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '700',
   },
   attachmentPreviewMeta: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   removeAttachmentButton: {
     alignSelf: 'flex-start',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#FF4D7318',
+    backgroundColor: `${colors.accent}18`,
   },
   removeAttachmentButtonText: {
-    color: '#FF4D73',
+    color: colors.accent,
     fontWeight: '700',
     fontSize: 12,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 14,
     fontSize: 16,
-    backgroundColor: '#071120',
-    color: '#F4F8FF',
+    backgroundColor: colors.background,
+    color: colors.text,
   },
   multiline: {
     minHeight: 92,
@@ -2206,17 +2210,17 @@ const styles = StyleSheet.create({
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 14,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
   dateButtonText: {
     fontSize: 16,
-    color: '#F4F8FF',
+    color: colors.text,
     flex: 1,
   },
   dateGrid: {
@@ -2235,7 +2239,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   primaryBtn: {
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     paddingVertical: 16,
     borderRadius: 12,
     marginTop: 4,
@@ -2245,13 +2249,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   btnText: {
-    color: '#F4F8FF',
+    color: colors.text,
     textAlign: 'center',
     fontWeight: '700',
     fontSize: 16,
   },
   notificationBtn: {
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
     paddingVertical: 16,
     borderRadius: 12,
     marginTop: 4,
@@ -2261,7 +2265,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   notificationBtnText: {
-    color: '#071120',
+    color: colors.onAccent,
     textAlign: 'center',
     fontWeight: '800',
     fontSize: 16,
@@ -2273,46 +2277,46 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   loadingText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   stateBox: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 18,
     alignItems: 'center',
     gap: 6,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   stateTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   stateText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     textAlign: 'center',
   },
   emptyBox: {
     borderWidth: 1,
-    borderColor: '#27496D',
-    backgroundColor: '#071120',
+    borderColor: colors.border,
+    backgroundColor: colors.background,
     borderRadius: 14,
     padding: 14,
     gap: 8,
   },
   emptyText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   secondaryBtn: {
     alignSelf: 'flex-start',
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 6,
   },
   secondaryBtnText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontWeight: '600',
   },
   selectedPatientCard: {
@@ -2322,23 +2326,23 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: colorAlpha(appColors.success, '14'),
+    backgroundColor: colorAlpha(colors.success, '14'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '45'),
+    borderColor: colorAlpha(colors.success, '45'),
   },
   selectedPatientText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     flex: 1,
     fontWeight: '700',
   },
   errorText: {
-    color: '#FF4D73',
+    color: colors.accent,
   },
   calendar: {
     borderRadius: 16,
   },
   dayLabel: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '600',
   },
   dayTypeBadge: {
@@ -2348,23 +2352,23 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   dayTypeStart: {
-    backgroundColor: '#38E28E18',
+    backgroundColor: `${colors.success}18`,
   },
   dayTypeEnd: {
-    backgroundColor: '#FF4D7318',
+    backgroundColor: `${colors.accent}18`,
   },
   dayTypeBadgeText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#071120',
+    color: colors.onAccent,
   },
   medicationCard: {
-    backgroundColor: '#F4F8FF',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     gap: 6,
     borderWidth: 1,
-    borderColor: '#29B6FF18',
+    borderColor: `${colors.info}18`,
   },
   medicationHeader: {
     flexDirection: 'row',
@@ -2374,17 +2378,17 @@ const styles = StyleSheet.create({
   medicationName: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#071120',
+    color: colors.text,
   },
   medicationMeta: {
-    color: '#29B6FF',
+    color: colors.info,
   },
   medicationDetail: {
-    color: '#27496D',
+    color: colors.textSoft,
   },
   medicationHighlight: {
     fontWeight: '700',
-    color: '#071120',
+    color: colors.text,
   },
   editRecordButton: {
     marginTop: 8,
@@ -2392,30 +2396,30 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 9,
-    backgroundColor: '#29B6FF18',
+    backgroundColor: `${colors.info}18`,
   },
   editRecordButtonText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
     fontSize: 13,
   },
   iosPickerWrapper: {
     marginTop: 6,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   iosPickerDoneBtn: {
     borderTopWidth: 1,
-    borderTopColor: '#27496D',
+    borderTopColor: colors.border,
     paddingVertical: 10,
     alignItems: 'center',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   iosPickerDoneText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
   },
   fab: {
@@ -2425,7 +2429,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
@@ -2435,7 +2439,7 @@ const styles = StyleSheet.create({
     elevation: 7,
   },
   fabText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontSize: 30,
     lineHeight: 32,
     fontWeight: '700',

@@ -6,8 +6,12 @@
 import React from 'react';
 import { View, StyleSheet, Linking, TouchableOpacity } from 'react-native';
 import { AppText } from '../components/AppText';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 export function ContactoScreen() {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.container}>
       <AppText style={styles.title}>Contactanos</AppText>
@@ -30,47 +34,47 @@ export function ContactoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   title: {
     fontSize: 26,
     fontWeight: '800',
     marginBottom: 12,
-    color: '#F4F8FF',
+    color: colors.text,
   },
   text: {
     fontSize: 16,
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 20,
     lineHeight: 24,
   },
   link: {
     fontSize: 16,
-    color: '#29B6FF',
+    color: colors.info,
     marginBottom: 10,
     fontWeight: '700',
   },
   card: {
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     padding: 18,
     borderRadius: 18,
     marginTop: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 6,
-    color: '#F4F8FF',
+    color: colors.text,
   },
   cardText: {
     fontSize: 16,
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 22,
   },
 });

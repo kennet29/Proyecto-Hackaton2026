@@ -9,10 +9,14 @@ import { AppText } from '../components/AppText';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { obtenerTema } from '../data/educacion';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EducacionTema'>;
 
 export function EducacionTemaScreen({ route, navigation }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const nivelId = route.params?.nivelId;
   const temaId = route.params?.temaId;
   const tema = nivelId && temaId ? obtenerTema(nivelId, temaId) : null;
@@ -75,49 +79,49 @@ export function EducacionTemaScreen({ route, navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 20,
     paddingBottom: 40,
   },
   label: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontWeight: '700',
   },
   title: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 26,
     fontWeight: '900',
     marginVertical: 8,
   },
   description: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 22,
   },
   section: {
     marginTop: 20,
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 16,
   },
   sectionTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
     marginBottom: 8,
   },
   sectionText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 6,
   },
   highlight: {
-    color: '#FF4D73',
+    color: colors.accent,
   },
   errorText: {
-    color: '#FF4D73',
+    color: colors.accent,
     fontSize: 18,
     textAlign: 'center',
   },
@@ -126,12 +130,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderRadius: 30,
     borderWidth: 1,
-    borderColor: '#FF4D73',
+    borderColor: colors.accent,
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
   backBtnText: {
-    color: '#FF4D73',
+    color: colors.accent,
     fontWeight: '700',
   },
 });

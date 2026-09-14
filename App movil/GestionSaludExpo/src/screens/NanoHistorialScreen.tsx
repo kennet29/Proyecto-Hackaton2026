@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
 import { getNanoHistory, NanoHistoryEntry } from '../utils/nanoHistory';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NanoHistorial'>;
 
@@ -39,6 +40,9 @@ function formatCreatedAt(value: string) {
 }
 
 export function NanoHistorialScreen({}: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const [history, setHistory] = useState<NanoHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -79,7 +83,7 @@ export function NanoHistorialScreen({}: Props) {
     <SafeAreaView style={styles.safeArea}>
       {loading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color={appColors.info} />
+          <ActivityIndicator size="large" color={colors.info} />
           <AppText style={styles.loadingText}>Cargando historial...</AppText>
         </View>
       ) : (
@@ -89,7 +93,7 @@ export function NanoHistorialScreen({}: Props) {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => void handleRefresh()}
-              tintColor={appColors.info}
+              tintColor={colors.info}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -103,7 +107,7 @@ export function NanoHistorialScreen({}: Props) {
 
           {!history.length ? (
             <View style={styles.emptyCard}>
-              <Ionicons name="time-outline" size={26} color={appColors.info} />
+              <Ionicons name="time-outline" size={26} color={colors.info} />
               <AppText style={styles.emptyTitle}>Todavia no hay historial</AppText>
               <AppText style={styles.emptyText}>
                 Analiza una comida con Nano y aqui aparecera guardada con su resumen nutricional.
@@ -168,7 +172,7 @@ export function NanoHistorialScreen({}: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -180,7 +184,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   loadingText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -191,18 +195,18 @@ const styles = StyleSheet.create({
   heroCard: {
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: appColors.border,
-    backgroundColor: appColors.surfaceStrong,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceStrong,
     padding: 18,
   },
   heroTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 22,
     fontWeight: '800',
   },
   heroSubtitle: {
     marginTop: 8,
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     lineHeight: 21,
   },
@@ -210,20 +214,20 @@ const styles = StyleSheet.create({
     marginTop: 18,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '88'),
-    backgroundColor: colorAlpha(appColors.info, '12'),
+    borderColor: colorAlpha(colors.info, '88'),
+    backgroundColor: colorAlpha(colors.info, '12'),
     padding: 24,
     alignItems: 'center',
   },
   emptyTitle: {
     marginTop: 14,
-    color: appColors.text,
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
   },
   emptyText: {
     marginTop: 8,
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     lineHeight: 21,
     textAlign: 'center',
@@ -232,8 +236,8 @@ const styles = StyleSheet.create({
     marginTop: 18,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: appColors.border,
-    backgroundColor: appColors.surfaceStrong,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceStrong,
     padding: 16,
   },
   entryHeader: {
@@ -246,13 +250,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   entryGoal: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 17,
     fontWeight: '800',
   },
   entryDate: {
     marginTop: 6,
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -260,10 +264,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: colorAlpha(appColors.success, '16'),
+    backgroundColor: colorAlpha(colors.success, '16'),
   },
   kcalBadgeText: {
-    color: appColors.success,
+    color: colors.success,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -275,13 +279,13 @@ const styles = StyleSheet.create({
   },
   feedbackText: {
     marginTop: 14,
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     lineHeight: 22,
   },
   noteText: {
     marginTop: 10,
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 13,
     lineHeight: 20,
     fontWeight: '600',
@@ -296,19 +300,19 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: colorAlpha(appColors.background, '66'),
+    backgroundColor: colorAlpha(colors.background, '66'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.border, 'A8'),
+    borderColor: colorAlpha(colors.border, 'A8'),
   },
   metricLabel: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
   },
   metricValue: {
     marginTop: 4,
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
     fontWeight: '800',
   },
@@ -322,10 +326,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    backgroundColor: colorAlpha(appColors.info, '16'),
+    backgroundColor: colorAlpha(colors.info, '16'),
   },
   microPillText: {
-    color: appColors.info,
+    color: colors.info,
     fontSize: 12,
     fontWeight: '700',
   },

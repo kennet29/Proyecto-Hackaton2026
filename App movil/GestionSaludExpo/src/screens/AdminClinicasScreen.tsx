@@ -24,6 +24,7 @@ import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
 import { apiFetch, buildJsonHeaders, parseJsonResponse } from '../utils/apiClient';
 import { LocationMapPicker } from '../components/LocationMapPicker';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AdminClinicas'>;
 type ClinicFilter = 'todas' | 'activas' | 'inactivas';
@@ -253,6 +254,9 @@ const clinicToForm = (clinic: Clinica): ClinicForm => ({
 });
 
 export function AdminClinicasScreen({ navigation }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 1000;
   const { token, user } = useAuth();
@@ -485,18 +489,18 @@ export function AdminClinicasScreen({ navigation }: Props) {
             style={styles.adminTab}
             onPress={() => navigation.navigate('AdminSolicitudes')}
           >
-            <Ionicons name="medkit-outline" size={17} color={appColors.textMuted} />
+            <Ionicons name="medkit-outline" size={17} color={colors.textMuted} />
             <AppText style={styles.adminTabText}>Solicitudes médicas</AppText>
           </TouchableOpacity>
           <View style={[styles.adminTab, styles.adminTabActive]}>
-            <Ionicons name="business-outline" size={17} color={appColors.background} />
+            <Ionicons name="business-outline" size={17} color={colors.onAccent} />
             <AppText style={[styles.adminTabText, styles.adminTabTextActive]}>Clínicas</AppText>
           </View>
         </View>
 
         <View style={[styles.hero, isDesktop && styles.heroDesktop]}>
           <View style={styles.heroIcon}>
-            <Ionicons name="business-outline" size={28} color={appColors.info} />
+            <Ionicons name="business-outline" size={28} color={colors.info} />
           </View>
           <View style={styles.heroCopy}>
             <AppText style={styles.eyebrow}>PANEL ADMINISTRATIVO</AppText>
@@ -506,15 +510,15 @@ export function AdminClinicasScreen({ navigation }: Props) {
             </AppText>
           </View>
           <TouchableOpacity style={styles.createButton} onPress={openCreate}>
-            <Ionicons name="add" size={19} color={appColors.background} />
+            <Ionicons name="add" size={19} color={colors.onAccent} />
             <AppText style={styles.createButtonText}>Nueva clínica</AppText>
           </TouchableOpacity>
         </View>
 
         <View style={styles.statsRow}>
-          <StatCard label="Total" value={counts.total} color={appColors.info} />
-          <StatCard label="Activas" value={counts.activas} color={appColors.success} />
-          <StatCard label="Inactivas" value={counts.inactivas} color={appColors.accent} />
+          <StatCard label="Total" value={counts.total} color={colors.info} />
+          <StatCard label="Activas" value={counts.activas} color={colors.success} />
+          <StatCard label="Inactivas" value={counts.inactivas} color={colors.accent} />
           <StatCard label="Con ubicación" value={counts.ubicadas} color="#C084FC" />
         </View>
 
@@ -532,19 +536,19 @@ export function AdminClinicasScreen({ navigation }: Props) {
 
         {success ? (
           <View style={styles.successBanner}>
-            <Ionicons name="checkmark-circle-outline" size={19} color={appColors.success} />
+            <Ionicons name="checkmark-circle-outline" size={19} color={colors.success} />
             <AppText style={styles.successText}>{success}</AppText>
           </View>
         ) : null}
 
         <View style={styles.toolbar}>
           <View style={styles.searchBox}>
-            <Ionicons name="search-outline" size={18} color={appColors.textMuted} />
+            <Ionicons name="search-outline" size={18} color={colors.textMuted} />
             <AppTextInput
               value={query}
               onChangeText={setQuery}
               placeholder="Buscar por clínica, ciudad, teléfono o correo"
-              placeholderTextColor={appColors.textMuted}
+              placeholderTextColor={colors.textMuted}
               style={styles.searchInput}
             />
           </View>
@@ -565,12 +569,12 @@ export function AdminClinicasScreen({ navigation }: Props) {
 
         {loading ? (
           <View style={styles.stateBox}>
-            <ActivityIndicator size="large" color={appColors.info} />
+            <ActivityIndicator size="large" color={colors.info} />
             <AppText style={styles.stateText}>Cargando clínicas...</AppText>
           </View>
         ) : error && !editorVisible ? (
           <View style={styles.stateBox}>
-            <Ionicons name="alert-circle-outline" size={30} color={appColors.accent} />
+            <Ionicons name="alert-circle-outline" size={30} color={colors.accent} />
             <AppText style={styles.errorText}>{error}</AppText>
             <TouchableOpacity onPress={() => void loadClinicas()}>
               <AppText style={styles.retryText}>Intentar nuevamente</AppText>
@@ -578,7 +582,7 @@ export function AdminClinicasScreen({ navigation }: Props) {
           </View>
         ) : filteredClinicas.length === 0 ? (
           <View style={styles.stateBox}>
-            <Ionicons name="business-outline" size={34} color={appColors.textMuted} />
+            <Ionicons name="business-outline" size={34} color={colors.textMuted} />
             <AppText style={styles.emptyTitle}>No hay clínicas registradas</AppText>
             <AppText style={styles.stateText}>Crea la primera clínica o cambia los filtros.</AppText>
             <TouchableOpacity style={styles.emptyButton} onPress={openCreate}>
@@ -619,7 +623,7 @@ export function AdminClinicasScreen({ navigation }: Props) {
                 </View>
                 <View style={styles.actionCell}>
                   <TouchableOpacity style={styles.editButton} onPress={() => openEdit(clinic)}>
-                    <Ionicons name="create-outline" size={17} color={appColors.info} />
+                    <Ionicons name="create-outline" size={17} color={colors.info} />
                     <AppText style={styles.editButtonText}>Editar</AppText>
                   </TouchableOpacity>
                 </View>
@@ -636,7 +640,7 @@ export function AdminClinicasScreen({ navigation }: Props) {
               >
                 <View style={styles.mobileHeader}>
                   <View style={styles.clinicIcon}>
-                    <Ionicons name="business" size={20} color={appColors.info} />
+                    <Ionicons name="business" size={20} color={colors.info} />
                   </View>
                   <View style={styles.mobileCopy}>
                     <AppText style={styles.primaryText}>{clinic.nombre}</AppText>
@@ -650,7 +654,7 @@ export function AdminClinicasScreen({ navigation }: Props) {
                   <AppText style={styles.tertiaryText}>{clinic.telefono || 'Sin teléfono'}</AppText>
                   <View style={styles.editLink}>
                     <AppText style={styles.editButtonText}>Editar</AppText>
-                    <Ionicons name="chevron-forward" size={15} color={appColors.info} />
+                    <Ionicons name="chevron-forward" size={15} color={colors.info} />
                   </View>
                 </View>
               </TouchableOpacity>
@@ -693,6 +697,9 @@ function ClinicEditor(props: {
   onClose: () => void;
   onSave: () => void;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const [activeTab, setActiveTab] = useState<EditorTab>('datos');
   const latitude = Number(props.form.latitud);
   const longitude = Number(props.form.longitud);
@@ -719,7 +726,7 @@ function ClinicEditor(props: {
               </AppText>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={props.onClose} disabled={props.saving}>
-              <Ionicons name="close" size={22} color={appColors.text} />
+              <Ionicons name="close" size={22} color={colors.text} />
             </TouchableOpacity>
           </View>
           {props.editing ? (
@@ -739,7 +746,7 @@ function ClinicEditor(props: {
                   <Ionicons
                     name={tab.icon}
                     size={16}
-                    color={activeTab === tab.id ? appColors.background : appColors.textMuted}
+                    color={activeTab === tab.id ? colors.background : colors.textMuted}
                   />
                   <AppText style={[styles.editorTabText, activeTab === tab.id && styles.editorTabTextActive]}>
                     {tab.label}
@@ -776,7 +783,7 @@ function ClinicEditor(props: {
                 value={props.form.descripcion}
                 onChangeText={(value) => props.onChange('descripcion', value)}
                 placeholder="Servicios, especialidades o información relevante"
-                placeholderTextColor={appColors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 style={[styles.formInput, styles.descriptionInput]}
               />
               <TouchableOpacity
@@ -817,10 +824,10 @@ function ClinicEditor(props: {
                 disabled={props.saving}
               >
                 {props.saving ? (
-                  <ActivityIndicator color={appColors.background} />
+                  <ActivityIndicator color={colors.onAccent} />
                 ) : (
                   <>
-                    <Ionicons name="save-outline" size={18} color={appColors.background} />
+                    <Ionicons name="save-outline" size={18} color={colors.onAccent} />
                     <AppText style={styles.saveButtonText}>
                       {props.editing ? 'Guardar cambios' : 'Crear clínica'}
                     </AppText>
@@ -842,6 +849,9 @@ function ClinicCatalogPanel(props: {
   token: string;
   userName: string | null;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const [services, setServices] = useState<CatalogService[]>([]);
   const [clinicServices, setClinicServices] = useState<ClinicService[]>([]);
   const [medicines, setMedicines] = useState<RareMedicine[]>([]);
@@ -1171,7 +1181,7 @@ function ClinicCatalogPanel(props: {
   if (loading) {
     return (
       <View style={styles.catalogLoading}>
-        <ActivityIndicator color={appColors.info} />
+        <ActivityIndicator color={colors.info} />
         <AppText style={styles.stateText}>Cargando catálogo...</AppText>
       </View>
     );
@@ -1182,7 +1192,7 @@ function ClinicCatalogPanel(props: {
     <ScrollView contentContainerStyle={styles.catalogScroll} keyboardShouldPersistTaps="handled">
       <View style={styles.catalogHeading}>
         <View style={styles.catalogHeadingIcon}>
-          <Ionicons name={isService ? 'medkit-outline' : 'medical-outline'} size={22} color={appColors.info} />
+          <Ionicons name={isService ? 'medkit-outline' : 'medical-outline'} size={22} color={colors.info} />
         </View>
         <View style={styles.catalogHeadingCopy}>
           <AppText style={styles.catalogTitle}>{isService ? 'Servicios de la clínica' : 'Medicamentos específicos o difíciles de encontrar'}</AppText>
@@ -1263,7 +1273,7 @@ function ClinicCatalogPanel(props: {
           </View>
         ) : null}
         <TouchableOpacity style={[styles.catalogPrimaryButton, saving && styles.disabledButton]} onPress={() => void (isService ? addService() : addMedicine())} disabled={saving}>
-          <Ionicons name="add-circle-outline" size={18} color={appColors.background} />
+          <Ionicons name="add-circle-outline" size={18} color={colors.onAccent} />
           <AppText style={styles.catalogPrimaryButtonText}>Agregar a la clínica</AppText>
         </TouchableOpacity>
       </View>
@@ -1273,7 +1283,7 @@ function ClinicCatalogPanel(props: {
         <CatalogInput label={isService ? 'Nombre del nuevo servicio' : 'Nombre genérico del medicamento'} value={newItemName} onChangeText={setNewItemName} placeholder={isService ? 'Ej. Resonancia magnética' : 'Ej. Nitisinona'} />
         <CatalogInput label={isService ? 'Categoría' : 'Presentación'} value={newItemDetail} onChangeText={setNewItemDetail} placeholder={isService ? 'Consulta, diagnóstico...' : 'Cápsulas, vial...'} />
         <TouchableOpacity style={styles.catalogSecondaryButton} onPress={() => void createCatalogItem()} disabled={saving}>
-          <Ionicons name="library-outline" size={17} color={appColors.info} />
+          <Ionicons name="library-outline" size={17} color={colors.info} />
           <AppText style={styles.catalogSecondaryButtonText}>Crear en catálogo maestro</AppText>
         </TouchableOpacity>
       </View>
@@ -1290,10 +1300,13 @@ function CatalogInput(props: {
   onChangeText: (value: string) => void;
   placeholder: string;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.catalogField}>
       <AppText style={styles.formLabel}>{props.label}</AppText>
-      <AppTextInput value={props.value} onChangeText={props.onChangeText} placeholder={props.placeholder} placeholderTextColor={appColors.textMuted} style={styles.formInput} />
+      <AppTextInput value={props.value} onChangeText={props.onChangeText} placeholder={props.placeholder} placeholderTextColor={colors.textMuted} style={styles.formInput} />
     </View>
   );
 }
@@ -1306,6 +1319,9 @@ function FormField(props: {
   placeholder?: string;
   autoCapitalize?: 'none';
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.formField, props.wide && styles.formFieldWide]}>
       <AppText style={styles.formLabel}>{props.label}</AppText>
@@ -1313,7 +1329,7 @@ function FormField(props: {
         value={props.value}
         onChangeText={props.onChangeText}
         placeholder={props.placeholder || props.label.replace(' *', '')}
-        placeholderTextColor={appColors.textMuted}
+        placeholderTextColor={colors.textMuted}
         autoCapitalize={props.autoCapitalize}
         style={styles.formInput}
       />
@@ -1322,7 +1338,10 @@ function FormField(props: {
 }
 
 function StatusBadge({ active }: { active: boolean }) {
-  const color = active ? appColors.success : appColors.accent;
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
+  const color = active ? colors.success : colors.accent;
   return (
     <View style={[styles.statusBadge, { backgroundColor: colorAlpha(color, '18') }]}>
       <View style={[styles.statusDot, { backgroundColor: color }]} />
@@ -1332,6 +1351,9 @@ function StatusBadge({ active }: { active: boolean }) {
 }
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.statCard}>
       <View style={[styles.statDot, { backgroundColor: color }]} />
@@ -1351,7 +1373,10 @@ function AccessState(props: {
   onPress: () => void;
   danger?: boolean;
 }) {
-  const accent = props.danger ? appColors.accent : appColors.info;
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
+  const accent = props.danger ? colors.accent : colors.info;
   return (
     <View style={styles.accessRoot}>
       <View style={styles.accessCard}>
@@ -1368,139 +1393,139 @@ function AccessState(props: {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: { flexGrow: 1, backgroundColor: 'transparent', padding: 16, paddingBottom: 48 },
   shell: { width: '100%', maxWidth: 1280, alignSelf: 'center' },
-  adminTabs: { alignSelf: 'flex-start', flexDirection: 'row', gap: 7, padding: 5, marginBottom: 14, borderWidth: 1, borderColor: appColors.border, borderRadius: 14, backgroundColor: appColors.surface },
+  adminTabs: { alignSelf: 'flex-start', flexDirection: 'row', gap: 7, padding: 5, marginBottom: 14, borderWidth: 1, borderColor: colors.border, borderRadius: 14, backgroundColor: colors.surface },
   adminTab: { minHeight: 38, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 13, borderRadius: 10 },
-  adminTabActive: { backgroundColor: appColors.info },
-  adminTabText: { color: appColors.textMuted, fontSize: 11, fontWeight: '800' },
-  adminTabTextActive: { color: appColors.background },
-  hero: { backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 20, padding: 18, marginBottom: 14 },
+  adminTabActive: { backgroundColor: colors.info },
+  adminTabText: { color: colors.textMuted, fontSize: 11, fontWeight: '800' },
+  adminTabTextActive: { color: colors.onAccent },
+  hero: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 20, padding: 18, marginBottom: 14 },
   heroDesktop: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24 },
-  heroIcon: { width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(appColors.info, '16'), marginRight: 15 },
+  heroIcon: { width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(colors.info, '16'), marginRight: 15 },
   heroCopy: { flex: 1 },
-  eyebrow: { color: appColors.info, fontSize: 10, fontWeight: '900', letterSpacing: 1.3, marginBottom: 5 },
-  title: { color: appColors.text, fontSize: 25, lineHeight: 32, fontWeight: '900' },
-  subtitle: { color: appColors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 },
-  createButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, backgroundColor: appColors.info, paddingHorizontal: 15, marginTop: 12 },
-  createButtonText: { color: appColors.background, fontSize: 12, fontWeight: '900' },
+  eyebrow: { color: colors.info, fontSize: 10, fontWeight: '900', letterSpacing: 1.3, marginBottom: 5 },
+  title: { color: colors.text, fontSize: 25, lineHeight: 32, fontWeight: '900' },
+  subtitle: { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 4 },
+  createButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, backgroundColor: colors.info, paddingHorizontal: 15, marginTop: 12 },
+  createButtonText: { color: colors.onAccent, fontSize: 12, fontWeight: '900' },
   statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 },
-  statCard: { minWidth: 140, flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 15, padding: 14 },
+  statCard: { minWidth: 140, flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 15, padding: 14 },
   statDot: { width: 9, height: 36, borderRadius: 5, marginRight: 12 },
-  statValue: { color: appColors.text, fontSize: 21, fontWeight: '900' },
-  statLabel: { color: appColors.textMuted, fontSize: 10, marginTop: 1 },
+  statValue: { color: colors.text, fontSize: 21, fontWeight: '900' },
+  statLabel: { color: colors.textMuted, fontSize: 10, marginTop: 1 },
   demoBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: colorAlpha('#F5B942', '12'), borderWidth: 1, borderColor: colorAlpha('#F5B942', '55'), borderRadius: 13, paddingHorizontal: 13, paddingVertical: 10, marginBottom: 12 },
   demoBannerCopy: { flex: 1, marginLeft: 9 },
   demoBannerTitle: { color: '#F5B942', fontSize: 11, fontWeight: '900' },
-  demoBannerText: { color: appColors.textMuted, fontSize: 9, lineHeight: 14, marginTop: 2 },
-  successBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12, borderWidth: 1, borderColor: colorAlpha(appColors.success, '55'), borderRadius: 12, backgroundColor: colorAlpha(appColors.success, '10'), padding: 11 },
-  successText: { color: appColors.success, fontSize: 11, fontWeight: '800' },
-  toolbar: { backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 16, padding: 12, marginBottom: 14 },
-  searchBox: { minHeight: 44, flexDirection: 'row', alignItems: 'center', backgroundColor: appColors.backgroundMuted, borderWidth: 1, borderColor: appColors.border, borderRadius: 11, paddingHorizontal: 12, marginBottom: 10 },
-  searchInput: { flex: 1, color: appColors.text, fontSize: 13, paddingHorizontal: 9, outlineStyle: 'none' } as any,
+  demoBannerText: { color: colors.textMuted, fontSize: 9, lineHeight: 14, marginTop: 2 },
+  successBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12, borderWidth: 1, borderColor: colorAlpha(colors.success, '55'), borderRadius: 12, backgroundColor: colorAlpha(colors.success, '10'), padding: 11 },
+  successText: { color: colors.success, fontSize: 11, fontWeight: '800' },
+  toolbar: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 12, marginBottom: 14 },
+  searchBox: { minHeight: 44, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.backgroundMuted, borderWidth: 1, borderColor: colors.border, borderRadius: 11, paddingHorizontal: 12, marginBottom: 10 },
+  searchInput: { flex: 1, color: colors.text, fontSize: 13, paddingHorizontal: 9, outlineStyle: 'none' } as any,
   filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
-  filterChip: { minHeight: 34, justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: appColors.border, paddingHorizontal: 12 },
-  filterChipActive: { backgroundColor: appColors.info, borderColor: appColors.info },
-  filterText: { color: appColors.textMuted, fontSize: 11, fontWeight: '700' },
-  filterTextActive: { color: appColors.background },
-  stateBox: { minHeight: 240, alignItems: 'center', justifyContent: 'center', backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 18, padding: 24 },
-  stateText: { color: appColors.textMuted, fontSize: 11, textAlign: 'center', marginTop: 9 },
-  errorText: { color: appColors.accent, textAlign: 'center', marginTop: 9 },
-  retryText: { color: appColors.info, fontWeight: '800', marginTop: 14 },
-  emptyTitle: { color: appColors.text, fontSize: 17, fontWeight: '800', marginTop: 10 },
-  emptyButton: { minHeight: 38, justifyContent: 'center', borderRadius: 10, backgroundColor: appColors.info, paddingHorizontal: 14, marginTop: 14 },
-  emptyButtonText: { color: appColors.background, fontSize: 11, fontWeight: '900' },
-  table: { backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 18, overflow: 'hidden' },
-  tableRow: { minHeight: 88, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: appColors.borderStrong, paddingHorizontal: 16 },
-  tableHeader: { minHeight: 46, backgroundColor: appColors.backgroundMuted },
-  headerCell: { color: appColors.textMuted, fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
+  filterChip: { minHeight: 34, justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12 },
+  filterChipActive: { backgroundColor: colors.info, borderColor: colors.info },
+  filterText: { color: colors.textMuted, fontSize: 11, fontWeight: '700' },
+  filterTextActive: { color: colors.onAccent },
+  stateBox: { minHeight: 240, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 18, padding: 24 },
+  stateText: { color: colors.textMuted, fontSize: 11, textAlign: 'center', marginTop: 9 },
+  errorText: { color: colors.accent, textAlign: 'center', marginTop: 9 },
+  retryText: { color: colors.info, fontWeight: '800', marginTop: 14 },
+  emptyTitle: { color: colors.text, fontSize: 17, fontWeight: '800', marginTop: 10 },
+  emptyButton: { minHeight: 38, justifyContent: 'center', borderRadius: 10, backgroundColor: colors.info, paddingHorizontal: 14, marginTop: 14 },
+  emptyButtonText: { color: colors.onAccent, fontSize: 11, fontWeight: '900' },
+  table: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 18, overflow: 'hidden' },
+  tableRow: { minHeight: 88, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.borderStrong, paddingHorizontal: 16 },
+  tableHeader: { minHeight: 46, backgroundColor: colors.backgroundMuted },
+  headerCell: { color: colors.textMuted, fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
   nameCell: { flex: 1.4, paddingRight: 14 },
   contactCell: { flex: 1, paddingRight: 14 },
   locationCell: { flex: 1.15, paddingRight: 14 },
   statusCell: { width: 105, alignItems: 'center' },
   actionCell: { width: 92, alignItems: 'flex-end' },
-  primaryText: { color: appColors.text, fontSize: 13, fontWeight: '800' },
-  secondaryText: { color: appColors.textSoft, fontSize: 11, lineHeight: 16, marginTop: 3 },
-  tertiaryText: { color: appColors.textMuted, fontSize: 9, lineHeight: 13, marginTop: 3 },
+  primaryText: { color: colors.text, fontSize: 13, fontWeight: '800' },
+  secondaryText: { color: colors.textSoft, fontSize: 11, lineHeight: 16, marginTop: 3 },
+  tertiaryText: { color: colors.textMuted, fontSize: 9, lineHeight: 13, marginTop: 3 },
   statusBadge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', borderRadius: 20, paddingHorizontal: 9, paddingVertical: 6 },
   statusDot: { width: 6, height: 6, borderRadius: 3, marginRight: 5 },
   statusText: { fontSize: 9, fontWeight: '900' },
-  editButton: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: appColors.info, borderRadius: 10, paddingHorizontal: 10 },
-  editButtonText: { color: appColors.info, fontSize: 10, fontWeight: '800' },
-  mobileCard: { backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 16, padding: 14, marginBottom: 10 },
+  editButton: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: colors.info, borderRadius: 10, paddingHorizontal: 10 },
+  editButtonText: { color: colors.info, fontSize: 10, fontWeight: '800' },
+  mobileCard: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 14, marginBottom: 10 },
   mobileHeader: { flexDirection: 'row', alignItems: 'center' },
-  clinicIcon: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(appColors.info, '18'), marginRight: 10 },
+  clinicIcon: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(colors.info, '18'), marginRight: 10 },
   mobileCopy: { flex: 1, minWidth: 0 },
-  mobileFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 11, marginTop: 11, borderTopWidth: 1, borderTopColor: appColors.borderStrong },
+  mobileFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 11, marginTop: 11, borderTopWidth: 1, borderTopColor: colors.borderStrong },
   editLink: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  modalBackdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(appColors.overlay, 'D8'), padding: 12 },
-  modalCard: { width: '100%', maxWidth: 780, maxHeight: '94%', backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 20, overflow: 'hidden' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1, borderBottomColor: appColors.borderStrong },
-  modalEyebrow: { color: appColors.info, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
-  modalTitle: { color: appColors.text, fontSize: 21, fontWeight: '900', marginTop: 3 },
-  closeButton: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: appColors.backgroundMuted },
-  editorTabs: { flexDirection: 'row', gap: 6, paddingHorizontal: 15, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: appColors.borderStrong, backgroundColor: appColors.backgroundMuted },
+  modalBackdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(colors.overlay, 'D8'), padding: 12 },
+  modalCard: { width: '100%', maxWidth: 780, maxHeight: '94%', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 20, overflow: 'hidden' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1, borderBottomColor: colors.borderStrong },
+  modalEyebrow: { color: colors.info, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  modalTitle: { color: colors.text, fontSize: 21, fontWeight: '900', marginTop: 3 },
+  closeButton: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: colors.backgroundMuted },
+  editorTabs: { flexDirection: 'row', gap: 6, paddingHorizontal: 15, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.borderStrong, backgroundColor: colors.backgroundMuted },
   editorTab: { flex: 1, minHeight: 38, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 10, paddingHorizontal: 8 },
-  editorTabActive: { backgroundColor: appColors.info },
-  editorTabText: { color: appColors.textMuted, fontSize: 10, fontWeight: '800' },
-  editorTabTextActive: { color: appColors.background },
+  editorTabActive: { backgroundColor: colors.info },
+  editorTabText: { color: colors.textMuted, fontSize: 10, fontWeight: '800' },
+  editorTabTextActive: { color: colors.onAccent },
   formScroll: { padding: 18 },
   formGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
   formField: { marginBottom: 13 },
   formFieldWide: { width: '50%', paddingHorizontal: 6 },
-  formLabel: { color: appColors.textSoft, fontSize: 11, fontWeight: '800', marginBottom: 6 },
-  formInput: { minHeight: 44, color: appColors.text, backgroundColor: appColors.backgroundMuted, borderWidth: 1, borderColor: appColors.border, borderRadius: 11, paddingHorizontal: 12, outlineStyle: 'none' } as any,
+  formLabel: { color: colors.textSoft, fontSize: 11, fontWeight: '800', marginBottom: 6 },
+  formInput: { minHeight: 44, color: colors.text, backgroundColor: colors.backgroundMuted, borderWidth: 1, borderColor: colors.border, borderRadius: 11, paddingHorizontal: 12, outlineStyle: 'none' } as any,
   descriptionInput: { minHeight: 88, paddingTop: 11, textAlignVertical: 'top' },
-  activeToggle: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: appColors.border, borderRadius: 13, backgroundColor: appColors.backgroundMuted, padding: 12, marginTop: 14 },
-  toggleTrack: { width: 42, height: 24, borderRadius: 12, justifyContent: 'center', backgroundColor: appColors.borderStrong, paddingHorizontal: 3 },
-  toggleTrackActive: { backgroundColor: appColors.success },
-  toggleThumb: { width: 18, height: 18, borderRadius: 9, backgroundColor: appColors.textMuted },
-  toggleThumbActive: { alignSelf: 'flex-end', backgroundColor: appColors.background },
+  activeToggle: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: 13, backgroundColor: colors.backgroundMuted, padding: 12, marginTop: 14 },
+  toggleTrack: { width: 42, height: 24, borderRadius: 12, justifyContent: 'center', backgroundColor: colors.borderStrong, paddingHorizontal: 3 },
+  toggleTrackActive: { backgroundColor: colors.success },
+  toggleThumb: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.textMuted },
+  toggleThumbActive: { alignSelf: 'flex-end', backgroundColor: colors.background },
   toggleCopy: { flex: 1, marginLeft: 11 },
-  toggleTitle: { color: appColors.text, fontSize: 12, fontWeight: '800' },
-  toggleText: { color: appColors.textMuted, fontSize: 9, lineHeight: 14, marginTop: 2 },
-  modalError: { color: appColors.accent, fontSize: 11, lineHeight: 16, marginTop: 12 },
+  toggleTitle: { color: colors.text, fontSize: 12, fontWeight: '800' },
+  toggleText: { color: colors.textMuted, fontSize: 9, lineHeight: 14, marginTop: 2 },
+  modalError: { color: colors.accent, fontSize: 11, lineHeight: 16, marginTop: 12 },
   catalogLoading: { minHeight: 300, alignItems: 'center', justifyContent: 'center' },
   catalogScroll: { padding: 18, paddingBottom: 28 },
   catalogHeading: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
-  catalogHeadingIcon: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(appColors.info, '16'), marginRight: 11 },
+  catalogHeadingIcon: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(colors.info, '16'), marginRight: 11 },
   catalogHeadingCopy: { flex: 1 },
-  catalogTitle: { color: appColors.text, fontSize: 15, fontWeight: '900' },
-  catalogSubtitle: { color: appColors.textMuted, fontSize: 10, lineHeight: 15, marginTop: 3 },
+  catalogTitle: { color: colors.text, fontSize: 15, fontWeight: '900' },
+  catalogSubtitle: { color: colors.textMuted, fontSize: 10, lineHeight: 15, marginTop: 3 },
   assignedList: { gap: 8, marginBottom: 15 },
-  catalogEmpty: { color: appColors.textMuted, fontSize: 11, textAlign: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: appColors.border, borderRadius: 12, padding: 18 },
-  catalogItem: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: appColors.border, borderRadius: 12, backgroundColor: appColors.backgroundMuted, padding: 11 },
+  catalogEmpty: { color: colors.textMuted, fontSize: 11, textAlign: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: colors.border, borderRadius: 12, padding: 18 },
+  catalogItem: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.backgroundMuted, padding: 11 },
   catalogItemCopy: { flex: 1, minWidth: 0 },
-  catalogItemTitle: { color: appColors.text, fontSize: 11, fontWeight: '900' },
-  catalogItemMeta: { color: appColors.textMuted, fontSize: 8, lineHeight: 13, marginTop: 3 },
-  availabilityButton: { minHeight: 31, justifyContent: 'center', borderRadius: 9, backgroundColor: colorAlpha(appColors.success, '18'), paddingHorizontal: 9 },
-  availabilityButtonOff: { backgroundColor: colorAlpha(appColors.accent, '18') },
-  availabilityText: { color: appColors.success, fontSize: 8, fontWeight: '900', textTransform: 'capitalize' },
-  availabilityTextOff: { color: appColors.accent },
-  catalogFormCard: { borderWidth: 1, borderColor: colorAlpha(appColors.info, '55'), borderRadius: 14, backgroundColor: colorAlpha(appColors.info, '0C'), padding: 13, marginBottom: 12 },
-  masterCatalogCard: { borderWidth: 1, borderColor: appColors.border, borderRadius: 14, backgroundColor: appColors.backgroundMuted, padding: 13 },
-  catalogFormTitle: { color: appColors.text, fontSize: 12, fontWeight: '900', marginBottom: 10 },
-  pickerFrame: { minHeight: 44, justifyContent: 'center', borderWidth: 1, borderColor: appColors.border, borderRadius: 11, backgroundColor: appColors.backgroundMuted, overflow: 'hidden', marginBottom: 10 },
-  picker: { color: appColors.text, backgroundColor: appColors.backgroundMuted },
+  catalogItemTitle: { color: colors.text, fontSize: 11, fontWeight: '900' },
+  catalogItemMeta: { color: colors.textMuted, fontSize: 8, lineHeight: 13, marginTop: 3 },
+  availabilityButton: { minHeight: 31, justifyContent: 'center', borderRadius: 9, backgroundColor: colorAlpha(colors.success, '18'), paddingHorizontal: 9 },
+  availabilityButtonOff: { backgroundColor: colorAlpha(colors.accent, '18') },
+  availabilityText: { color: colors.success, fontSize: 8, fontWeight: '900', textTransform: 'capitalize' },
+  availabilityTextOff: { color: colors.accent },
+  catalogFormCard: { borderWidth: 1, borderColor: colorAlpha(colors.info, '55'), borderRadius: 14, backgroundColor: colorAlpha(colors.info, '0C'), padding: 13, marginBottom: 12 },
+  masterCatalogCard: { borderWidth: 1, borderColor: colors.border, borderRadius: 14, backgroundColor: colors.backgroundMuted, padding: 13 },
+  catalogFormTitle: { color: colors.text, fontSize: 12, fontWeight: '900', marginBottom: 10 },
+  pickerFrame: { minHeight: 44, justifyContent: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: 11, backgroundColor: colors.backgroundMuted, overflow: 'hidden', marginBottom: 10 },
+  picker: { color: colors.text, backgroundColor: colors.backgroundMuted },
   catalogFieldsRow: { flexDirection: 'row', gap: 10 },
   catalogField: { flex: 1, minWidth: 0, marginBottom: 10 },
-  catalogPrimaryButton: { minHeight: 42, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 10, backgroundColor: appColors.success, paddingHorizontal: 13 },
-  catalogPrimaryButtonText: { color: appColors.background, fontSize: 10, fontWeight: '900' },
-  catalogSecondaryButton: { minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderColor: appColors.info, borderRadius: 10, paddingHorizontal: 13 },
-  catalogSecondaryButtonText: { color: appColors.info, fontSize: 10, fontWeight: '900' },
-  catalogSuccess: { color: appColors.success, fontSize: 10, lineHeight: 15, marginTop: 12 },
-  modalActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end', padding: 15, borderTopWidth: 1, borderTopColor: appColors.borderStrong },
-  cancelButton: { minHeight: 43, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: appColors.border, borderRadius: 11, paddingHorizontal: 17 },
-  cancelButtonText: { color: appColors.textSoft, fontSize: 11, fontWeight: '800' },
-  saveButton: { minHeight: 43, minWidth: 150, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, backgroundColor: appColors.success, paddingHorizontal: 17 },
-  saveButtonText: { color: appColors.background, fontSize: 11, fontWeight: '900' },
+  catalogPrimaryButton: { minHeight: 42, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 10, backgroundColor: colors.success, paddingHorizontal: 13 },
+  catalogPrimaryButtonText: { color: colors.onAccent, fontSize: 10, fontWeight: '900' },
+  catalogSecondaryButton: { minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderColor: colors.info, borderRadius: 10, paddingHorizontal: 13 },
+  catalogSecondaryButtonText: { color: colors.info, fontSize: 10, fontWeight: '900' },
+  catalogSuccess: { color: colors.success, fontSize: 10, lineHeight: 15, marginTop: 12 },
+  modalActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end', padding: 15, borderTopWidth: 1, borderTopColor: colors.borderStrong },
+  cancelButton: { minHeight: 43, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: 11, paddingHorizontal: 17 },
+  cancelButtonText: { color: colors.textSoft, fontSize: 11, fontWeight: '800' },
+  saveButton: { minHeight: 43, minWidth: 150, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 11, backgroundColor: colors.success, paddingHorizontal: 17 },
+  saveButtonText: { color: colors.onAccent, fontSize: 11, fontWeight: '900' },
   disabledButton: { opacity: 0.65 },
   accessRoot: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', padding: 20 },
-  accessCard: { width: '100%', maxWidth: 430, alignItems: 'center', backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border, borderRadius: 22, padding: 28 },
+  accessCard: { width: '100%', maxWidth: 430, alignItems: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 22, padding: 28 },
   accessIcon: { width: 68, height: 68, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 17 },
-  accessTitle: { color: appColors.text, fontSize: 22, fontWeight: '900', textAlign: 'center' },
-  accessMessage: { color: appColors.textMuted, fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 7 },
+  accessTitle: { color: colors.text, fontSize: 22, fontWeight: '900', textAlign: 'center' },
+  accessMessage: { color: colors.textMuted, fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 7 },
   accessButton: { minHeight: 46, minWidth: 180, alignItems: 'center', justifyContent: 'center', borderRadius: 12, marginTop: 20 },
-  accessButtonText: { color: appColors.background, fontWeight: '900' },
+  accessButtonText: { color: colors.onAccent, fontWeight: '900' },
 });

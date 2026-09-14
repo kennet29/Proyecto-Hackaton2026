@@ -25,6 +25,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type TipoDocumento = {
   tipodocumentoId: number;
@@ -62,6 +63,9 @@ const originOptions = [
 ] as const;
 
 export function DocumentoFormScreen() {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const [form, setForm] = useState({
     pacienteId: '',
     entidadOrigen: 'general',
@@ -560,7 +564,7 @@ export function DocumentoFormScreen() {
                 <AppText style={styles.cameraHint}>Coloca el documento dentro del encuadre.</AppText>
               </View>
               <TouchableOpacity style={styles.cameraCloseButton} onPress={closeWebCamera}>
-                <Ionicons name="close" size={24} color={appColors.text} />
+                <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
             <View style={styles.cameraViewport}>
@@ -574,12 +578,12 @@ export function DocumentoFormScreen() {
                   width: '100%',
                   maxHeight: 520,
                   objectFit: 'cover',
-                  backgroundColor: appColors.overlay,
+                  backgroundColor: colors.overlay,
                 },
               })}
             </View>
             <TouchableOpacity style={styles.captureButton} onPress={captureWebPhoto}>
-              <Ionicons name="camera" size={22} color={appColors.background} />
+              <Ionicons name="camera" size={22} color={colors.onAccent} />
               <AppText style={styles.captureButtonText}>Capturar foto</AppText>
             </TouchableOpacity>
           </View>
@@ -589,10 +593,10 @@ export function DocumentoFormScreen() {
       <View style={styles.heroCard}>
         <View style={styles.heroTopRow}>
           <View style={styles.heroIcon}>
-            <Ionicons name="folder-open-outline" size={30} color={appColors.text} />
+            <Ionicons name="folder-open-outline" size={30} color={colors.text} />
           </View>
           <View style={styles.heroPill}>
-            <Ionicons name="cloud-upload-outline" size={14} color={appColors.info} />
+            <Ionicons name="cloud-upload-outline" size={14} color={colors.info} />
             <AppText style={styles.heroPillText}>Archivos clínicos</AppText>
           </View>
         </View>
@@ -604,7 +608,7 @@ export function DocumentoFormScreen() {
       </View>
 
       <View style={styles.infoCard}>
-        <Ionicons name="information-circle-outline" size={22} color={appColors.info} />
+        <Ionicons name="information-circle-outline" size={22} color={colors.info} />
         <View style={styles.infoCopy}>
           <AppText style={styles.infoTitle}>Adjunta el documento</AppText>
           <AppText style={styles.infoText}>
@@ -619,7 +623,7 @@ export function DocumentoFormScreen() {
         <AppText style={styles.label}>Persona asociada</AppText>
         {loadingPatients ? (
           <View style={styles.loadingRow}>
-            <ActivityIndicator color={appColors.info} />
+            <ActivityIndicator color={colors.info} />
             <AppText style={styles.loadingText}>Cargando personas...</AppText>
           </View>
         ) : (
@@ -628,7 +632,7 @@ export function DocumentoFormScreen() {
               style={styles.picker}
               selectedValue={form.pacienteId}
               onValueChange={(value) => handleChange('pacienteId', String(value))}
-              dropdownIconColor={appColors.text}
+              dropdownIconColor={colors.text}
             >
               <Picker.Item label="Selecciona una persona" value="" />
               {patientOptions.map((patient) => (
@@ -643,7 +647,7 @@ export function DocumentoFormScreen() {
         )}
         {selectedPatient ? (
           <View style={styles.selectedCard}>
-            <Ionicons name="checkmark-circle" size={18} color={appColors.success} />
+            <Ionicons name="checkmark-circle" size={18} color={colors.success} />
             <AppText style={styles.selectedText}>{`Expediente de ${selectedPatient.displayName}`}</AppText>
           </View>
         ) : null}
@@ -667,7 +671,7 @@ export function DocumentoFormScreen() {
                 <Ionicons
                   name={origin.icon as any}
                   size={17}
-                  color={active ? appColors.background : appColors.info}
+                  color={active ? colors.background : colors.info}
                 />
                 <AppText style={[styles.originChipText, active && styles.originChipTextActive]}>{origin.label}</AppText>
               </TouchableOpacity>
@@ -680,7 +684,7 @@ export function DocumentoFormScreen() {
             <AppText style={styles.label}>{`Seleccionar ${selectedOrigin.label.toLowerCase()}`}</AppText>
             {loadingOriginRecords ? (
               <View style={styles.loadingRow}>
-                <ActivityIndicator color={appColors.info} />
+                <ActivityIndicator color={colors.info} />
                 <AppText style={styles.loadingText}>Cargando registros...</AppText>
               </View>
             ) : originRecords.length > 0 ? (
@@ -689,7 +693,7 @@ export function DocumentoFormScreen() {
                   style={styles.picker}
                   selectedValue={form.entidadId}
                   onValueChange={(value) => handleChange('entidadId', String(value))}
-                  dropdownIconColor={appColors.text}
+                  dropdownIconColor={colors.text}
                 >
                   <Picker.Item label={`Selecciona ${selectedOrigin.label.toLowerCase()}`} value="" />
                   {originRecords.map((record) => (
@@ -699,7 +703,7 @@ export function DocumentoFormScreen() {
               </View>
             ) : (
               <View style={styles.emptyOriginRecords}>
-                <Ionicons name="file-tray-outline" size={20} color={appColors.textMuted} />
+                <Ionicons name="file-tray-outline" size={20} color={colors.textMuted} />
                 <AppText style={styles.emptyOriginRecordsText}>
                   {`Esta persona no tiene registros de ${selectedOrigin.label.toLowerCase()}.`}
                 </AppText>
@@ -720,15 +724,15 @@ export function DocumentoFormScreen() {
 
         <View style={styles.attachmentActions}>
           <TouchableOpacity style={styles.attachmentButton} onPress={handlePickImage}>
-            <Ionicons name="image-outline" size={20} color={appColors.info} />
+            <Ionicons name="image-outline" size={20} color={colors.info} />
             <AppText style={styles.attachmentButtonText}>Elegir imagen</AppText>
           </TouchableOpacity>
           <TouchableOpacity style={styles.attachmentButton} onPress={handleTakePhoto}>
-            <Ionicons name="camera-outline" size={20} color={appColors.info} />
+            <Ionicons name="camera-outline" size={20} color={colors.info} />
             <AppText style={styles.attachmentButtonText}>Tomar foto</AppText>
           </TouchableOpacity>
           <TouchableOpacity style={styles.attachmentButton} onPress={handlePickPdf}>
-            <Ionicons name="document-attach-outline" size={20} color={appColors.info} />
+            <Ionicons name="document-attach-outline" size={20} color={colors.info} />
             <AppText style={styles.attachmentButtonText}>Subir PDF</AppText>
           </TouchableOpacity>
         </View>
@@ -739,7 +743,7 @@ export function DocumentoFormScreen() {
               <Image source={{ uri: attachment.uri }} style={styles.attachmentImage} />
             ) : (
               <View style={styles.pdfIcon}>
-                <Ionicons name="document-text" size={31} color={appColors.accent} />
+                <Ionicons name="document-text" size={31} color={colors.accent} />
               </View>
             )}
             <View style={styles.attachmentInfo}>
@@ -757,12 +761,12 @@ export function DocumentoFormScreen() {
               onPress={() => setAttachment(null)}
               accessibilityLabel="Quitar archivo adjunto"
             >
-              <Ionicons name="trash-outline" size={20} color={appColors.accent} />
+              <Ionicons name="trash-outline" size={20} color={colors.accent} />
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.emptyAttachment}>
-            <Ionicons name="cloud-upload-outline" size={22} color={appColors.textMuted} />
+            <Ionicons name="cloud-upload-outline" size={22} color={colors.textMuted} />
             <AppText style={styles.emptyAttachmentText}>Aún no has seleccionado un archivo</AppText>
           </View>
         )}
@@ -771,7 +775,7 @@ export function DocumentoFormScreen() {
         <AppTextInput
           style={[styles.input, styles.multiline]}
           placeholder="Describe qué contiene, fecha del estudio o indicaciones relevantes"
-          placeholderTextColor={appColors.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={form.notas}
           multiline
           onChangeText={(value) => handleChange('notas', value)}
@@ -787,7 +791,7 @@ export function DocumentoFormScreen() {
           onPress={handleSubmit}
           disabled={submitting}
         >
-          {submitting ? <ActivityIndicator color={appColors.text} /> : <Ionicons name="save-outline" size={20} color={appColors.text} />}
+          {submitting ? <ActivityIndicator color={colors.text} /> : <Ionicons name="save-outline" size={20} color={colors.text} />}
           <AppText style={styles.btnText}>{submitting ? 'Guardando...' : 'Guardar documento'}</AppText>
         </TouchableOpacity>
       </View>
@@ -796,7 +800,7 @@ export function DocumentoFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     padding: 24,
     paddingBottom: 110,
@@ -804,11 +808,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   heroCard: {
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: colors.surfaceStrong,
     borderRadius: 26,
     padding: 22,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   heroTopRow: {
     flexDirection: 'row',
@@ -820,11 +824,11 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 20,
-    backgroundColor: colorAlpha(appColors.info, '22'),
+    backgroundColor: colorAlpha(colors.info, '22'),
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '55'),
+    borderColor: colorAlpha(colors.info, '55'),
   },
   heroPill: {
     flexDirection: 'row',
@@ -835,15 +839,15 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '44'),
+    borderColor: colorAlpha(colors.info, '44'),
   },
   heroPillText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '800',
   },
   kicker: {
-    color: appColors.info,
+    color: colors.info,
     fontSize: 11,
     fontWeight: '900',
     letterSpacing: 1.2,
@@ -852,63 +856,63 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: '900',
-    color: appColors.text,
+    color: colors.text,
   },
   subtitle: {
     marginTop: 8,
-    color: appColors.textSoft,
+    color: colors.textSoft,
     lineHeight: 20,
   },
   infoCard: {
     flexDirection: 'row',
     gap: 12,
-    backgroundColor: colorAlpha(appColors.info, '12'),
+    backgroundColor: colorAlpha(colors.info, '12'),
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '45'),
+    borderColor: colorAlpha(colors.info, '45'),
   },
   infoCopy: {
     flex: 1,
     gap: 4,
   },
   infoTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontWeight: '900',
     fontSize: 16,
   },
   infoText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     lineHeight: 19,
   },
   formCard: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     padding: 18,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     gap: 10,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '900',
-    color: appColors.text,
+    color: colors.text,
   },
   label: {
     fontSize: 14,
     fontWeight: '800',
-    color: appColors.text,
+    color: colors.text,
     marginTop: 4,
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
   },
   picker: {
-    color: appColors.text,
+    color: colors.text,
   },
   selectedCard: {
     flexDirection: 'row',
@@ -916,17 +920,17 @@ const styles = StyleSheet.create({
     gap: 8,
     borderRadius: 14,
     padding: 12,
-    backgroundColor: colorAlpha(appColors.success, '14'),
+    backgroundColor: colorAlpha(colors.success, '14'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '45'),
+    borderColor: colorAlpha(colors.success, '45'),
   },
   selectedText: {
     flex: 1,
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontWeight: '700',
   },
   fieldHint: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     lineHeight: 18,
   },
   emptyOriginRecords: {
@@ -938,13 +942,13 @@ const styles = StyleSheet.create({
     padding: 13,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 14,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
   },
   emptyOriginRecordsText: {
     flex: 1,
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontWeight: '700',
   },
   attachmentActions: {
@@ -957,7 +961,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: colorAlpha(appColors.overlay, 'CC'),
+    backgroundColor: colorAlpha(colors.overlay, 'CC'),
   },
   cameraCard: {
     width: '100%',
@@ -966,8 +970,8 @@ const styles = StyleSheet.create({
     padding: 18,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: appColors.border,
-    backgroundColor: appColors.surface,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   cameraHeader: {
     flexDirection: 'row',
@@ -976,12 +980,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   cameraTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 20,
     fontWeight: '900',
   },
   cameraHint: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     marginTop: 3,
   },
   cameraCloseButton: {
@@ -990,14 +994,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
   },
   cameraViewport: {
     overflow: 'hidden',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: appColors.border,
-    backgroundColor: appColors.overlay,
+    borderColor: colors.border,
+    backgroundColor: colors.overlay,
   },
   captureButton: {
     minHeight: 52,
@@ -1006,10 +1010,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     borderRadius: 15,
-    backgroundColor: appColors.info,
+    backgroundColor: colors.info,
   },
   captureButtonText: {
-    color: appColors.background,
+    color: colors.onAccent,
     fontSize: 15,
     fontWeight: '900',
   },
@@ -1025,11 +1029,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '55'),
-    backgroundColor: colorAlpha(appColors.info, '0D'),
+    borderColor: colorAlpha(colors.info, '55'),
+    backgroundColor: colorAlpha(colors.info, '0D'),
   },
   attachmentButtonText: {
-    color: appColors.text,
+    color: colors.text,
     fontWeight: '800',
   },
   attachmentPreview: {
@@ -1039,14 +1043,14 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '55'),
-    backgroundColor: colorAlpha(appColors.success, '10'),
+    borderColor: colorAlpha(colors.success, '55'),
+    backgroundColor: colorAlpha(colors.success, '10'),
   },
   attachmentImage: {
     width: 72,
     height: 72,
     borderRadius: 12,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
   },
   pdfIcon: {
     width: 72,
@@ -1054,7 +1058,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    backgroundColor: colorAlpha(appColors.accent, '14'),
+    backgroundColor: colorAlpha(colors.accent, '14'),
   },
   attachmentInfo: {
     flex: 1,
@@ -1062,16 +1066,16 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   attachmentTitle: {
-    color: appColors.success,
+    color: colors.success,
     fontSize: 13,
     fontWeight: '900',
   },
   attachmentName: {
-    color: appColors.text,
+    color: colors.text,
     fontWeight: '800',
   },
   attachmentMeta: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
   },
   removeAttachmentButton: {
@@ -1081,8 +1085,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.accent, '45'),
-    backgroundColor: colorAlpha(appColors.accent, '10'),
+    borderColor: colorAlpha(colors.accent, '45'),
+    backgroundColor: colorAlpha(colors.accent, '10'),
   },
   emptyAttachment: {
     minHeight: 62,
@@ -1093,12 +1097,12 @@ const styles = StyleSheet.create({
     padding: 14,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 14,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
   },
   emptyAttachmentText: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontWeight: '700',
   },
   originGrid: {
@@ -1113,30 +1117,30 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   originChipActive: {
-    backgroundColor: appColors.info,
-    borderColor: appColors.info,
+    backgroundColor: colors.info,
+    borderColor: colors.info,
   },
   originChipText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontWeight: '800',
     fontSize: 12,
   },
   originChipTextActive: {
-    color: appColors.background,
+    color: colors.onAccent,
   },
   input: {
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 14,
     fontSize: 16,
-    backgroundColor: appColors.backgroundMuted,
-    color: appColors.text,
+    backgroundColor: colors.backgroundMuted,
+    color: colors.text,
   },
   multiline: {
     minHeight: 110,
@@ -1149,7 +1153,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   loadingText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
   },
   actions: {
     flexDirection: 'row',
@@ -1161,11 +1165,11 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: appColors.border,
-    backgroundColor: appColors.backgroundMuted,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundMuted,
   },
   cancelBtnText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontWeight: '800',
   },
   primaryBtn: {
@@ -1174,7 +1178,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: appColors.accent,
+    backgroundColor: colors.accent,
     paddingVertical: 15,
     borderRadius: 16,
   },
@@ -1182,7 +1186,7 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
   btnText: {
-    color: appColors.text,
+    color: colors.text,
     textAlign: 'center',
     fontWeight: '900',
     fontSize: 15,

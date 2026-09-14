@@ -29,6 +29,7 @@ import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
 import { saveNanoHistoryEntry } from '../utils/nanoHistory';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NanoConsejero'>;
 
@@ -370,6 +371,8 @@ function PieChart({
   size?: number;
   strokeWidth?: number;
 }) {
+  const colors = useAppColors();
+
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   let accumulated = 0;
@@ -381,7 +384,7 @@ function PieChart({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={colorAlpha(appColors.textMuted, '22')}
+          stroke={colorAlpha(colors.textMuted, '22')}
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -411,6 +414,9 @@ function PieChart({
 }
 
 export function NanoConsejeroScreen({ navigation }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token } = useAuth();
   const [activeView, setActiveView] = useState<'capture' | 'results'>('capture');
   const [selectedGoalId, setSelectedGoalId] = useState<string>(FOOD_GOALS[0].id);
@@ -689,7 +695,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
             <AppText style={styles.title}>Nano</AppText>
           </View>
           <Pressable style={styles.closeButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="close" size={20} color={appColors.textSoft} />
+            <Ionicons name="close" size={20} color={colors.textSoft} />
           </Pressable>
         </View>
 
@@ -710,7 +716,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
             <Ionicons
               name="camera-outline"
               size={16}
-              color={activeView === 'capture' ? appColors.text : appColors.textMuted}
+              color={activeView === 'capture' ? colors.text : colors.textMuted}
             />
             <AppText
               style={[
@@ -730,7 +736,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
             <Ionicons
               name="analytics-outline"
               size={16}
-              color={activeView === 'results' ? appColors.text : appColors.textMuted}
+              color={activeView === 'results' ? colors.text : colors.textMuted}
             />
             <AppText
               style={[
@@ -777,7 +783,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
                   <Ionicons
                     name={isActive ? 'radio-button-on' : 'radio-button-off'}
                     size={20}
-                    color={isActive ? goal.accent : appColors.textMuted}
+                    color={isActive ? goal.accent : colors.textMuted}
                   />
                 </TouchableOpacity>
               );
@@ -807,7 +813,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
                       ]}
                     />
                     <View style={styles.scanBadge}>
-                      <Ionicons name="scan-outline" size={14} color={appColors.text} />
+                      <Ionicons name="scan-outline" size={14} color={colors.text} />
                       <AppText style={styles.scanBadgeText}>Escaneando composicion</AppText>
                     </View>
                   </View>
@@ -816,7 +822,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
             ) : (
               <View style={styles.placeholderWrap}>
                 <View style={styles.placeholderIcon}>
-                  <Ionicons name="camera-outline" size={34} color={appColors.info} />
+                  <Ionicons name="camera-outline" size={34} color={colors.info} />
                 </View>
                 <AppText style={styles.placeholderTitle}>Sin foto todavia</AppText>
                 <AppText style={styles.placeholderText}>
@@ -834,7 +840,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
               <Ionicons
                 name={photo ? 'camera-reverse-outline' : 'camera'}
                 size={16}
-                color={appColors.text}
+                color={colors.text}
               />
               <AppText style={styles.floatingCameraButtonText}>
                 {capturing ? 'Abriendo...' : photo ? 'Otra foto' : 'Tomar foto'}
@@ -856,7 +862,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
                   setMicronutrients(null);
                 }}
               >
-                <Ionicons name="trash-outline" size={16} color={appColors.accent} />
+                <Ionicons name="trash-outline" size={16} color={colors.accent} />
                 <AppText style={styles.removePhotoButtonText}>Quitar foto</AppText>
               </TouchableOpacity>
             </View>
@@ -868,7 +874,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
             onPress={() => navigation.navigate('NanoHistorial')}
           >
             <View style={styles.historyButtonIcon}>
-              <Ionicons name="time-outline" size={18} color={appColors.info} />
+              <Ionicons name="time-outline" size={18} color={colors.info} />
             </View>
             <View style={styles.historyButtonCopy}>
               <AppText style={styles.historyButtonTitle}>Ver historial</AppText>
@@ -876,7 +882,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
                 Revisa los ultimos analisis guardados de Nano.
               </AppText>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={appColors.textMuted} />
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -886,7 +892,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
             disabled={capturing}
           >
             <View style={styles.galleryButtonIcon}>
-              <Ionicons name="images-outline" size={18} color={appColors.accent} />
+              <Ionicons name="images-outline" size={18} color={colors.accent} />
             </View>
             <View style={styles.historyButtonCopy}>
               <AppText style={styles.galleryButtonTitle}>Escoger de galeria</AppText>
@@ -894,7 +900,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
                 Selecciona una foto guardada para analizarla con Nano.
               </AppText>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={appColors.textMuted} />
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
 
@@ -908,7 +914,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
             <AppTextInput
               style={styles.noteInput}
               placeholder="Ejemplo: pollo a la plancha con poca sal y sin salsa"
-              placeholderTextColor={appColors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={mealNote}
               onChangeText={(value) => setMealNote(value.slice(0, MAX_MEAL_NOTE_LENGTH))}
               maxLength={MAX_MEAL_NOTE_LENGTH}
@@ -934,7 +940,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
             <Ionicons
               name={photo ? 'image-outline' : 'alert-circle-outline'}
               size={20}
-              color={photo ? appColors.success : appColors.textMuted}
+              color={photo ? colors.success : colors.textMuted}
             />
             <View style={styles.summaryTextWrap}>
               <AppText style={styles.summaryLabel}>Estado de la foto</AppText>
@@ -950,7 +956,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
             <Ionicons
               name={analysisText ? 'sparkles-outline' : 'chatbubble-ellipses-outline'}
               size={20}
-              color={analysisText ? appColors.info : appColors.textMuted}
+              color={analysisText ? colors.info : colors.textMuted}
             />
             <View style={styles.summaryTextWrap}>
               <AppText style={styles.summaryLabel}>Respuesta de Nano</AppText>
@@ -968,9 +974,9 @@ export function NanoConsejeroScreen({ navigation }: Props) {
           disabled={!photo || submitting}
         >
           {submitting ? (
-            <ActivityIndicator color={appColors.text} />
+            <ActivityIndicator color={colors.text} />
           ) : (
-            <Ionicons name="sparkles-outline" size={18} color={appColors.text} />
+            <Ionicons name="sparkles-outline" size={18} color={colors.text} />
           )}
           <AppText style={styles.readyButtonText}>
             {submitting ? 'Analizando comida...' : 'Analizar con Nano'}
@@ -982,7 +988,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
         {activeView === 'results' && analysisText ? (
           <View style={styles.analysisCard}>
             <View style={styles.analysisHeader}>
-              <Ionicons name="chatbubble-ellipses-outline" size={20} color={appColors.info} />
+              <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.info} />
               <AppText style={styles.analysisTitle}>Respuesta de Nano</AppText>
             </View>
             <AppText style={styles.analysisIntro}>
@@ -992,7 +998,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
               {(analysisPoints.length ? analysisPoints : [analysisText]).map((point, index) => (
                 <View key={`${point}-${index}`} style={styles.analysisPointRow}>
                   <View style={styles.analysisPointBullet}>
-                    <Ionicons name="checkmark" size={12} color={appColors.text} />
+                    <Ionicons name="checkmark" size={12} color={colors.text} />
                   </View>
                   <AppText style={styles.analysisPointText}>{point}</AppText>
                 </View>
@@ -1007,7 +1013,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
         {activeView === 'results' && primaryHighlights.length ? (
           <View style={styles.quickStatsCard}>
             <View style={styles.analysisHeader}>
-              <Ionicons name="flash-outline" size={20} color={appColors.success} />
+              <Ionicons name="flash-outline" size={20} color={colors.success} />
               <AppText style={styles.analysisTitle}>Datos principales</AppText>
             </View>
             <View style={styles.quickStatsGrid}>
@@ -1024,7 +1030,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
         {activeView === 'results' && composition ? (
           <View style={styles.balanceCard}>
             <View style={styles.analysisHeader}>
-              <Ionicons name="analytics-outline" size={20} color={appColors.accent} />
+              <Ionicons name="analytics-outline" size={20} color={colors.accent} />
               <AppText style={styles.analysisTitle}>Balance del plato</AppText>
             </View>
             <AppText style={styles.balanceSubtitle}>
@@ -1054,7 +1060,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
         {activeView === 'results' && micronutrientHighlights.length ? (
           <View style={styles.microSimpleCard}>
             <View style={styles.analysisHeader}>
-              <Ionicons name="leaf-outline" size={20} color={appColors.info} />
+              <Ionicons name="leaf-outline" size={20} color={colors.info} />
               <AppText style={styles.analysisTitle}>Vitaminas y minerales destacados</AppText>
             </View>
             <View style={styles.microChipGrid}>
@@ -1073,7 +1079,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
 
         {activeView === 'results' && !analysisText && !macronutrients && !micronutrients ? (
           <View style={styles.resultsEmptyCard}>
-            <Ionicons name="sparkles-outline" size={24} color={appColors.info} />
+            <Ionicons name="sparkles-outline" size={24} color={colors.info} />
             <AppText style={styles.resultsEmptyTitle}>Todavia no hay resultados</AppText>
             <AppText style={styles.resultsEmptyText}>
               Usa la vista de captura para tomar o escoger una foto y luego analizarla con Nano.
@@ -1092,7 +1098,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -1109,14 +1115,14 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   eyebrow: {
-    color: appColors.info,
+    color: colors.info,
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
   },
   title: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 32,
     fontWeight: '800',
     marginTop: 6,
@@ -1125,15 +1131,15 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   speechBubble: {
     marginTop: 24,
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: colors.surfaceStrong,
     borderRadius: 26,
     paddingHorizontal: 22,
     paddingVertical: 20,
@@ -1147,16 +1153,16 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: appColors.accent,
+    backgroundColor: colors.accent,
     marginRight: 10,
   },
   speechTitle: {
-    color: appColors.accent,
+    color: colors.accent,
     fontSize: 18,
     fontWeight: '800',
   },
   speechText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '500',
@@ -1165,9 +1171,9 @@ const styles = StyleSheet.create({
     marginTop: 18,
     padding: 6,
     borderRadius: 22,
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     flexDirection: 'row',
     gap: 8,
   },
@@ -1181,28 +1187,28 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   viewTabActive: {
-    backgroundColor: colorAlpha(appColors.info, '22'),
+    backgroundColor: colorAlpha(colors.info, '22'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '55'),
+    borderColor: colorAlpha(colors.info, '55'),
   },
   viewTabText: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 14,
     fontWeight: '800',
   },
   viewTabTextActive: {
-    color: appColors.text,
+    color: colors.text,
   },
   section: {
     marginTop: 22,
   },
   sectionTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
   },
   sectionSubtitle: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 14,
     lineHeight: 20,
     marginTop: 6,
@@ -1214,8 +1220,8 @@ const styles = StyleSheet.create({
   goalCard: {
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: appColors.border,
-    backgroundColor: appColors.surfaceStrong,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceStrong,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1233,12 +1239,12 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   goalLabel: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 16,
     fontWeight: '800',
   },
   goalDescription: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     lineHeight: 19,
     marginTop: 4,
@@ -1247,8 +1253,8 @@ const styles = StyleSheet.create({
     marginTop: 14,
     borderRadius: 28,
     borderWidth: 1,
-    borderColor: appColors.border,
-    backgroundColor: appColors.surfaceStrong,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceStrong,
     overflow: 'hidden',
     minHeight: 260,
     position: 'relative',
@@ -1271,7 +1277,7 @@ const styles = StyleSheet.create({
     margin: 14,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '90'),
+    borderColor: colorAlpha(colors.info, '90'),
   },
   scanLine: {
     position: 'absolute',
@@ -1280,10 +1286,10 @@ const styles = StyleSheet.create({
     top: 14,
     height: 16,
     borderRadius: 10,
-    backgroundColor: colorAlpha(appColors.info, '40'),
+    backgroundColor: colorAlpha(colors.info, '40'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.text, '55'),
-    shadowColor: appColors.info,
+    borderColor: colorAlpha(colors.text, '55'),
+    shadowColor: colors.info,
     shadowOpacity: 0.35,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 0 },
@@ -1295,15 +1301,15 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: colorAlpha(appColors.background, 'C8'),
+    backgroundColor: colorAlpha(colors.background, 'C8'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '60'),
+    borderColor: colorAlpha(colors.info, '60'),
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   scanBadgeText: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -1320,17 +1326,17 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colorAlpha(appColors.info, '18'),
+    backgroundColor: colorAlpha(colors.info, '18'),
     marginBottom: 16,
   },
   placeholderTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
     textAlign: 'center',
   },
   placeholderText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     lineHeight: 21,
     textAlign: 'center',
@@ -1344,21 +1350,21 @@ const styles = StyleSheet.create({
     minHeight: 40,
     borderRadius: 999,
     paddingHorizontal: 14,
-    backgroundColor: colorAlpha(appColors.info, 'E8'),
+    backgroundColor: colorAlpha(colors.info, 'E8'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.text, '26'),
+    borderColor: colorAlpha(colors.text, '26'),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: appColors.overlay,
+    shadowColor: colors.overlay,
     shadowOpacity: 0.25,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 8,
   },
   floatingCameraButtonText: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 13,
     fontWeight: '800',
   },
@@ -1370,7 +1376,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   photoMetaText: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -1379,15 +1385,15 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.accent, '88'),
-    backgroundColor: colorAlpha(appColors.accent, '12'),
+    borderColor: colorAlpha(colors.accent, '88'),
+    backgroundColor: colorAlpha(colors.accent, '12'),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
   removePhotoButtonText: {
-    color: appColors.accent,
+    color: colors.accent,
     fontSize: 13,
     fontWeight: '800',
   },
@@ -1395,8 +1401,8 @@ const styles = StyleSheet.create({
     marginTop: 14,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: appColors.border,
-    backgroundColor: appColors.surfaceStrong,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceStrong,
     paddingHorizontal: 16,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -1409,19 +1415,19 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colorAlpha(appColors.info, '16'),
+    backgroundColor: colorAlpha(colors.info, '16'),
   },
   historyButtonCopy: {
     flex: 1,
   },
   historyButtonTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 15,
     fontWeight: '800',
   },
   historyButtonSubtitle: {
     marginTop: 4,
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -1429,8 +1435,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.accent, '70'),
-    backgroundColor: colorAlpha(appColors.accent, '10'),
+    borderColor: colorAlpha(colors.accent, '70'),
+    backgroundColor: colorAlpha(colors.accent, '10'),
     paddingHorizontal: 16,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -1443,16 +1449,16 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colorAlpha(appColors.accent, '16'),
+    backgroundColor: colorAlpha(colors.accent, '16'),
   },
   galleryButtonTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 15,
     fontWeight: '800',
   },
   galleryButtonSubtitle: {
     marginTop: 4,
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -1460,20 +1466,20 @@ const styles = StyleSheet.create({
     marginTop: 14,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: appColors.border,
-    backgroundColor: appColors.surfaceStrong,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceStrong,
     padding: 16,
   },
   noteInput: {
     minHeight: 96,
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
     lineHeight: 21,
     fontWeight: '500',
   },
   noteCounter: {
     marginTop: 10,
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '700',
     textAlign: 'right',
@@ -1482,8 +1488,8 @@ const styles = StyleSheet.create({
     marginTop: 24,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: appColors.border,
-    backgroundColor: appColors.surfaceStrong,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceStrong,
     padding: 18,
   },
   summaryRow: {
@@ -1495,14 +1501,14 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   summaryLabel: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
   summaryValue: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 15,
     lineHeight: 21,
     fontWeight: '700',
@@ -1510,21 +1516,21 @@ const styles = StyleSheet.create({
   },
   summaryDivider: {
     height: 1,
-    backgroundColor: appColors.border,
+    backgroundColor: colors.border,
     marginVertical: 16,
   },
   readyButton: {
     marginTop: 18,
     minHeight: 54,
     borderRadius: 20,
-    backgroundColor: appColors.accent,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 10,
   },
   readyButtonText: {
-    color: appColors.text,
+    color: colors.onAccent,
     fontSize: 16,
     fontWeight: '800',
   },
@@ -1532,8 +1538,8 @@ const styles = StyleSheet.create({
     marginTop: 18,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '88'),
-    backgroundColor: colorAlpha(appColors.info, '14'),
+    borderColor: colorAlpha(colors.info, '88'),
+    backgroundColor: colorAlpha(colors.info, '14'),
     padding: 18,
   },
   analysisHeader: {
@@ -1543,12 +1549,12 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   analysisTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 16,
     fontWeight: '800',
   },
   analysisIntro: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     lineHeight: 21,
   },
@@ -1568,17 +1574,17 @@ const styles = StyleSheet.create({
     marginTop: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colorAlpha(appColors.info, '48'),
+    backgroundColor: colorAlpha(colors.info, '48'),
   },
   analysisPointText: {
     flex: 1,
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
     lineHeight: 21,
     fontWeight: '600',
   },
   analysisText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 15,
     lineHeight: 24,
   },
@@ -1603,13 +1609,13 @@ const styles = StyleSheet.create({
   },
   analysisMetricValue: {
     marginTop: 4,
-    color: appColors.text,
+    color: colors.text,
     fontSize: 15,
     fontWeight: '800',
   },
   analysisCaption: {
     marginTop: 14,
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     lineHeight: 18,
   },
@@ -1617,8 +1623,8 @@ const styles = StyleSheet.create({
     marginTop: 18,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '88'),
-    backgroundColor: colorAlpha(appColors.success, '10'),
+    borderColor: colorAlpha(colors.success, '88'),
+    backgroundColor: colorAlpha(colors.success, '10'),
     padding: 18,
   },
   quickStatsGrid: {
@@ -1630,9 +1636,9 @@ const styles = StyleSheet.create({
     width: '47%',
     borderRadius: 18,
     padding: 14,
-    backgroundColor: colorAlpha(appColors.background, '52'),
+    backgroundColor: colorAlpha(colors.background, '52'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.border, 'A8'),
+    borderColor: colorAlpha(colors.border, 'A8'),
   },
   quickStatLabel: {
     fontSize: 11,
@@ -1642,7 +1648,7 @@ const styles = StyleSheet.create({
   },
   quickStatValue: {
     marginTop: 8,
-    color: appColors.text,
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
   },
@@ -1650,12 +1656,12 @@ const styles = StyleSheet.create({
     marginTop: 18,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.accent, '88'),
-    backgroundColor: colorAlpha(appColors.accent, '10'),
+    borderColor: colorAlpha(colors.accent, '88'),
+    backgroundColor: colorAlpha(colors.accent, '10'),
     padding: 18,
   },
   balanceSubtitle: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     lineHeight: 21,
     marginBottom: 14,
@@ -1672,12 +1678,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   balanceLabel: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
     fontWeight: '700',
   },
   balanceValue: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     fontWeight: '800',
   },
@@ -1685,7 +1691,7 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 999,
     overflow: 'hidden',
-    backgroundColor: colorAlpha(appColors.textMuted, '24'),
+    backgroundColor: colorAlpha(colors.textMuted, '24'),
   },
   balanceFill: {
     height: '100%',
@@ -1695,8 +1701,8 @@ const styles = StyleSheet.create({
     marginTop: 18,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '88'),
-    backgroundColor: colorAlpha(appColors.info, '10'),
+    borderColor: colorAlpha(colors.info, '88'),
+    backgroundColor: colorAlpha(colors.info, '10'),
     padding: 18,
   },
   microChipGrid: {
@@ -1708,18 +1714,18 @@ const styles = StyleSheet.create({
     width: '47%',
     borderRadius: 18,
     padding: 14,
-    backgroundColor: colorAlpha(appColors.backgroundMuted, '88'),
+    backgroundColor: colorAlpha(colors.backgroundMuted, '88'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.border, 'A8'),
+    borderColor: colorAlpha(colors.border, 'A8'),
   },
   microChipLabel: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
     fontWeight: '700',
   },
   microChipValue: {
     marginTop: 8,
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -1732,12 +1738,12 @@ const styles = StyleSheet.create({
     marginTop: 18,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '88'),
-    backgroundColor: colorAlpha(appColors.success, '12'),
+    borderColor: colorAlpha(colors.success, '88'),
+    backgroundColor: colorAlpha(colors.success, '12'),
     padding: 18,
   },
   compositionSubtitle: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     lineHeight: 21,
     marginBottom: 14,
@@ -1750,9 +1756,9 @@ const styles = StyleSheet.create({
   macroCard: {
     width: '47%',
     borderRadius: 18,
-    backgroundColor: colorAlpha(appColors.background, '52'),
+    backgroundColor: colorAlpha(colors.background, '52'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.border, 'B0'),
+    borderColor: colorAlpha(colors.border, 'B0'),
     paddingHorizontal: 14,
     paddingVertical: 14,
   },
@@ -1763,7 +1769,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   macroCardLabel: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -1771,15 +1777,15 @@ const styles = StyleSheet.create({
   },
   macroCardValue: {
     marginTop: 6,
-    color: appColors.text,
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
   },
   pendingMacroCard: {
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '70'),
-    backgroundColor: colorAlpha(appColors.info, '12'),
+    borderColor: colorAlpha(colors.info, '70'),
+    backgroundColor: colorAlpha(colors.info, '12'),
     paddingHorizontal: 14,
     paddingVertical: 12,
     flexDirection: 'row',
@@ -1788,7 +1794,7 @@ const styles = StyleSheet.create({
   },
   pendingMacroText: {
     flex: 1,
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     lineHeight: 19,
     fontWeight: '600',
@@ -1797,12 +1803,12 @@ const styles = StyleSheet.create({
     marginTop: 18,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.border, 'B8'),
-    backgroundColor: colorAlpha(appColors.background, '54'),
+    borderColor: colorAlpha(colors.border, 'B8'),
+    backgroundColor: colorAlpha(colors.background, '54'),
     padding: 16,
   },
   pieSubtitle: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     lineHeight: 19,
     marginBottom: 14,
@@ -1822,19 +1828,19 @@ const styles = StyleSheet.create({
     width: 86,
     height: 86,
     borderRadius: 43,
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: colors.surfaceStrong,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.border, 'C0'),
+    borderColor: colorAlpha(colors.border, 'C0'),
     alignItems: 'center',
     justifyContent: 'center',
   },
   pieCenterValue: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 20,
     fontWeight: '800',
   },
   pieCenterLabel: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -1860,7 +1866,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   pieLegendLabel: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -1868,13 +1874,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   pieLegendPercent: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
     fontWeight: '800',
   },
   pieLegendGrams: {
     marginTop: 2,
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -1882,12 +1888,12 @@ const styles = StyleSheet.create({
     marginTop: 18,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.border, 'B8'),
-    backgroundColor: colorAlpha(appColors.background, '54'),
+    borderColor: colorAlpha(colors.border, 'B8'),
+    backgroundColor: colorAlpha(colors.background, '54'),
     padding: 16,
   },
   distributionTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 15,
     fontWeight: '800',
     marginBottom: 12,
@@ -1897,7 +1903,7 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 999,
     overflow: 'hidden',
-    backgroundColor: colorAlpha(appColors.textMuted, '24'),
+    backgroundColor: colorAlpha(colors.textMuted, '24'),
   },
   distributionSegment: {
     height: '100%',
@@ -1925,12 +1931,12 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   compositionLabel: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
     fontWeight: '700',
   },
   compositionValue: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     fontWeight: '800',
   },
@@ -1941,7 +1947,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   compositionMetaText: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -1949,8 +1955,8 @@ const styles = StyleSheet.create({
     marginTop: 18,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '88'),
-    backgroundColor: colorAlpha(appColors.info, '10'),
+    borderColor: colorAlpha(colors.info, '88'),
+    backgroundColor: colorAlpha(colors.info, '10'),
     padding: 18,
   },
   microList: {
@@ -1960,9 +1966,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingHorizontal: 14,
     paddingVertical: 14,
-    backgroundColor: colorAlpha(appColors.backgroundMuted, '70'),
+    backgroundColor: colorAlpha(colors.backgroundMuted, '70'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.border, 'A8'),
+    borderColor: colorAlpha(colors.border, 'A8'),
   },
   microRowHeader: {
     flexDirection: 'row',
@@ -1983,13 +1989,13 @@ const styles = StyleSheet.create({
   },
   microCell: {
     flex: 1,
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
     fontWeight: '600',
   },
   microCellValue: {
     minWidth: 68,
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     fontWeight: '800',
     textAlign: 'right',
@@ -2002,7 +2008,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   microPercentLabel: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -2013,7 +2019,7 @@ const styles = StyleSheet.create({
   microTrack: {
     height: 10,
     borderRadius: 999,
-    backgroundColor: colorAlpha(appColors.textMuted, '26'),
+    backgroundColor: colorAlpha(colors.textMuted, '26'),
     overflow: 'hidden',
   },
   microFill: {
@@ -2024,20 +2030,20 @@ const styles = StyleSheet.create({
     marginTop: 18,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '88'),
-    backgroundColor: colorAlpha(appColors.info, '10'),
+    borderColor: colorAlpha(colors.info, '88'),
+    backgroundColor: colorAlpha(colors.info, '10'),
     padding: 24,
     alignItems: 'center',
   },
   resultsEmptyTitle: {
     marginTop: 14,
-    color: appColors.text,
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
   },
   resultsEmptyText: {
     marginTop: 8,
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     lineHeight: 21,
     textAlign: 'center',
@@ -2047,12 +2053,12 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderRadius: 16,
     paddingHorizontal: 18,
-    backgroundColor: appColors.info,
+    backgroundColor: colors.info,
     alignItems: 'center',
     justifyContent: 'center',
   },
   resultsEmptyButtonText: {
-    color: appColors.text,
+    color: colors.onAccent,
     fontSize: 14,
     fontWeight: '800',
   },

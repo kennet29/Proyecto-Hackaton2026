@@ -23,6 +23,7 @@ import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { appColors, colorAlpha } from '../theme/colors';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type FeedbackState = { type: 'success' | 'error'; message: string } | null;
 type DateField = 'fechainicio' | 'fechaprobableparto' | 'fechaPrimerUltrasonido';
@@ -191,8 +192,11 @@ function numericValue(value: string, fieldName: string, required = true): number
 }
 
 export function EmbarazoScreen() {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token, user } = useAuth();
-  const pickerItemColor = Platform.OS === 'android' ? appColors.background : appColors.text;
+  const pickerItemColor = Platform.OS === 'android' ? colors.background : colors.text;
   const patientHeaders = useMemo(() => buildHeaders(token), [token]);
   const jsonHeaders = useMemo(() => buildHeaders(token, true), [token]);
   const defaultPacienteId = user?.pacienteId ? String(user.pacienteId) : '';
@@ -398,7 +402,7 @@ export function EmbarazoScreen() {
           <Ionicons
             name={feedback.type === 'success' ? 'checkmark-circle-outline' : 'alert-circle-outline'}
             size={18}
-            color={feedback.type === 'success' ? appColors.success : appColors.accent}
+            color={feedback.type === 'success' ? colors.success : colors.accent}
           />
           <AppText style={styles.feedbackText}>{feedback.message}</AppText>
         </View>
@@ -407,7 +411,7 @@ export function EmbarazoScreen() {
       <View style={styles.patientCard}>
         <AppText style={styles.label}>Paciente</AppText>
         {loadingPatients ? (
-          <ActivityIndicator color={appColors.info} />
+          <ActivityIndicator color={colors.info} />
         ) : (
           <View style={styles.darkPicker}>
             <Picker
@@ -428,10 +432,10 @@ export function EmbarazoScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.emptyCard}><ActivityIndicator color={appColors.info} /></View>
+        <View style={styles.emptyCard}><ActivityIndicator color={colors.info} /></View>
       ) : filteredRecords.length === 0 ? (
         <View style={styles.emptyCard}>
-          <Ionicons name="document-text-outline" size={29} color={appColors.info} />
+          <Ionicons name="document-text-outline" size={29} color={colors.info} />
           <AppText style={styles.emptyTitle}>Sin registros de embarazo</AppText>
           <AppText style={styles.emptyText}>Agrega la primera ficha obstétrica para este paciente.</AppText>
         </View>
@@ -593,7 +597,7 @@ export function EmbarazoScreen() {
 
           {Platform.OS === 'ios' && iosDateField ? (
             <View style={styles.iosPicker}>
-              <DateTimePicker
+              <DateTimePicker themeVariant={colors.mode}
                 mode="date"
                 display="spinner"
                 value={parseDateForPicker(form[iosDateField])}
@@ -613,7 +617,7 @@ export function EmbarazoScreen() {
             onPress={() => void submit()}
           >
             {submitting ? (
-              <ActivityIndicator color={appColors.text} />
+              <ActivityIndicator color={colors.text} />
             ) : (
               <AppText style={styles.saveButtonText}>Guardar ficha obstétrica</AppText>
             )}
@@ -628,7 +632,7 @@ export function EmbarazoScreen() {
           setFeedback(null);
         }}
       >
-        <Ionicons name={showForm ? 'close' : 'add'} size={22} color={appColors.text} />
+        <Ionicons name={showForm ? 'close' : 'add'} size={22} color={colors.text} />
         <AppText style={styles.toggleText}>{showForm ? 'Cerrar formulario' : 'Nueva ficha de embarazo'}</AppText>
       </TouchableOpacity>
     </ScrollView>
@@ -636,6 +640,9 @@ export function EmbarazoScreen() {
 }
 
 function RecordItem({ label, value }: { label: string; value: string }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.recordItem}>
       <AppText style={styles.recordLabel}>{label}</AppText>
@@ -645,6 +652,9 @@ function RecordItem({ label, value }: { label: string; value: string }) {
 }
 
 function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.formSection}>
       <AppText style={styles.formSectionTitle}>{title}</AppText>
@@ -654,11 +664,14 @@ function FormSection({ title, children }: { title: string; children: React.React
 }
 
 function DateInput({ label, value, onPress }: { label: string; value: string; onPress: () => void }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.field}>
       <AppText style={styles.formLabel}>{label}</AppText>
       <TouchableOpacity style={styles.inputShell} onPress={onPress}>
-        <Ionicons name="calendar-outline" size={18} color={appColors.info} />
+        <Ionicons name="calendar-outline" size={18} color={colors.info} />
         <AppText style={value ? styles.dateValue : styles.placeholder}>
           {value ? formatDate(value) : 'Selecciona una fecha'}
         </AppText>
@@ -678,6 +691,9 @@ function NumberInput({
   onChange: (value: string) => void;
   full?: boolean;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.field, !full && styles.halfField]}>
       <AppText style={styles.formLabel}>{label}</AppText>
@@ -687,7 +703,7 @@ function NumberInput({
         onChangeText={onChange}
         keyboardType="number-pad"
         placeholder="0"
-        placeholderTextColor={appColors.textMuted}
+        placeholderTextColor={colors.textMuted}
       />
     </View>
   );
@@ -706,6 +722,9 @@ function TextField({
   placeholder: string;
   multiline?: boolean;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.field}>
       <AppText style={styles.formLabel}>{label}</AppText>
@@ -714,7 +733,7 @@ function TextField({
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor={appColors.textMuted}
+        placeholderTextColor={colors.textMuted}
         multiline={multiline}
       />
     </View>
@@ -734,6 +753,9 @@ function PickerInput({
   onChange: (value: string) => void;
   compact?: boolean;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.field, compact && styles.halfField]}>
       <AppText style={styles.formLabel}>{label}</AppText>
@@ -744,7 +766,7 @@ function PickerInput({
               key={option.value || 'empty'}
               label={option.label}
               value={option.value}
-              color={Platform.OS === 'android' ? appColors.background : appColors.text}
+              color={Platform.OS === 'android' ? colors.background : colors.text}
             />
           ))}
         </Picker>
@@ -753,7 +775,7 @@ function PickerInput({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: 16, paddingBottom: 42 },
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
@@ -767,8 +789,8 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   headerCopy: { flex: 1 },
-  title: { color: appColors.text, fontSize: 24, fontWeight: '900' },
-  subtitle: { color: appColors.textMuted, fontSize: 12, lineHeight: 17, marginTop: 3 },
+  title: { color: colors.text, fontSize: 24, fontWeight: '900' },
+  subtitle: { color: colors.textMuted, fontSize: 12, lineHeight: 17, marginTop: 3 },
   feedback: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -777,70 +799,70 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 14,
   },
-  success: { backgroundColor: colorAlpha(appColors.success, '12'), borderColor: colorAlpha(appColors.success, '55') },
-  error: { backgroundColor: colorAlpha(appColors.accent, '12'), borderColor: colorAlpha(appColors.accent, '55') },
-  feedbackText: { color: appColors.textSoft, fontSize: 12, lineHeight: 17, marginLeft: 8, flex: 1 },
+  success: { backgroundColor: colorAlpha(colors.success, '12'), borderColor: colorAlpha(colors.success, '55') },
+  error: { backgroundColor: colorAlpha(colors.accent, '12'), borderColor: colorAlpha(colors.accent, '55') },
+  feedbackText: { color: colors.textSoft, fontSize: 12, lineHeight: 17, marginLeft: 8, flex: 1 },
   patientCard: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 14,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     marginBottom: 16,
   },
-  label: { color: appColors.textSoft, fontSize: 12, fontWeight: '800', marginBottom: 8 },
+  label: { color: colors.textSoft, fontSize: 12, fontWeight: '800', marginBottom: 8 },
   darkPicker: {
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: appColors.borderStrong,
+    borderColor: colors.borderStrong,
     overflow: 'hidden',
   },
   emptyCard: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 24,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     alignItems: 'center',
     marginBottom: 14,
   },
-  emptyTitle: { color: appColors.text, fontSize: 16, fontWeight: '800', marginTop: 9 },
-  emptyText: { color: appColors.textMuted, fontSize: 12, textAlign: 'center', marginTop: 4 },
+  emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 9 },
+  emptyText: { color: colors.textMuted, fontSize: 12, textAlign: 'center', marginTop: 4 },
   recordCard: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     marginBottom: 14,
   },
   recordHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
   recordEyebrow: { color: '#FB7185', fontSize: 9, fontWeight: '900', letterSpacing: 1 },
-  recordTitle: { color: appColors.text, fontSize: 17, fontWeight: '900', marginTop: 3 },
+  recordTitle: { color: colors.text, fontSize: 17, fontWeight: '900', marginTop: 3 },
   statusChip: { backgroundColor: colorAlpha('#FB7185', '18'), borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5 },
   statusText: { color: '#FB7185', fontSize: 10, fontWeight: '800', textTransform: 'capitalize' },
   infoGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5, marginTop: 15 },
   recordItem: { width: '50%', paddingHorizontal: 5, marginBottom: 13 },
-  recordLabel: { color: appColors.textMuted, fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
-  recordValue: { color: appColors.textSoft, fontSize: 12, lineHeight: 17, fontWeight: '700', marginTop: 3 },
-  notes: { borderTopWidth: 1, borderTopColor: appColors.borderStrong, paddingTop: 12 },
-  notesLabel: { color: appColors.info, fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
-  notesText: { color: appColors.textSoft, fontSize: 12, lineHeight: 18, marginTop: 4 },
+  recordLabel: { color: colors.textMuted, fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
+  recordValue: { color: colors.textSoft, fontSize: 12, lineHeight: 17, fontWeight: '700', marginTop: 3 },
+  notes: { borderTopWidth: 1, borderTopColor: colors.borderStrong, paddingTop: 12 },
+  notesLabel: { color: colors.info, fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
+  notesText: { color: colors.textSoft, fontSize: 12, lineHeight: 18, marginTop: 4 },
   formCard: {
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: colors.surfaceStrong,
     borderRadius: 22,
     padding: 16,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     marginTop: 2,
     marginBottom: 14,
   },
-  formTitle: { color: appColors.text, fontSize: 19, fontWeight: '900' },
-  formHint: { color: appColors.textMuted, fontSize: 11, marginTop: 4, marginBottom: 6 },
+  formTitle: { color: colors.text, fontSize: 19, fontWeight: '900' },
+  formHint: { color: colors.textMuted, fontSize: 11, marginTop: 4, marginBottom: 6 },
   formSection: {
     borderTopWidth: 1,
-    borderTopColor: appColors.borderStrong,
+    borderTopColor: colors.borderStrong,
     paddingTop: 15,
     marginTop: 15,
   },
@@ -848,53 +870,53 @@ const styles = StyleSheet.create({
   field: { flex: 1, marginBottom: 12 },
   halfField: { width: '48%' },
   row: { flexDirection: 'row', gap: 10 },
-  formLabel: { color: appColors.textSoft, fontSize: 11, fontWeight: '700', marginBottom: 6 },
+  formLabel: { color: colors.textSoft, fontSize: 11, fontWeight: '700', marginBottom: 6 },
   inputShell: {
     minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 12,
   },
-  dateValue: { color: appColors.text, fontSize: 14, marginLeft: 8 },
-  placeholder: { color: appColors.textMuted, fontSize: 14, marginLeft: 8 },
+  dateValue: { color: colors.text, fontSize: 14, marginLeft: 8 },
+  placeholder: { color: colors.textMuted, fontSize: 14, marginLeft: 8 },
   textInput: {
     minHeight: 48,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 12,
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
   },
   multiline: { minHeight: 88, paddingTop: 12, textAlignVertical: 'top' },
   formPicker: {
     minHeight: 48,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 12,
     overflow: 'hidden',
     justifyContent: 'center',
   },
-  iosPicker: { backgroundColor: appColors.text, borderRadius: 15, overflow: 'hidden', marginBottom: 14 },
-  iosDone: { alignItems: 'center', padding: 11, borderTopWidth: 1, borderTopColor: appColors.textMuted },
-  iosDoneText: { color: appColors.background, fontWeight: '800' },
+  iosPicker: { backgroundColor: colors.surface, borderRadius: 15, overflow: 'hidden', marginBottom: 14 },
+  iosDone: { alignItems: 'center', padding: 11, borderTopWidth: 1, borderTopColor: colors.textMuted },
+  iosDoneText: { color: colors.onAccent, fontWeight: '800' },
   saveButton: { backgroundColor: '#FB7185', borderRadius: 13, paddingVertical: 15, alignItems: 'center', marginTop: 5 },
-  saveButtonText: { color: appColors.text, fontSize: 14, fontWeight: '900' },
+  saveButtonText: { color: colors.text, fontSize: 14, fontWeight: '900' },
   disabled: { opacity: 0.65 },
   toggleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: appColors.info,
+    backgroundColor: colors.info,
     borderRadius: 14,
     paddingVertical: 14,
     gap: 7,
   },
-  toggleText: { color: appColors.text, fontSize: 14, fontWeight: '900' },
+  toggleText: { color: colors.onAccent, fontSize: 14, fontWeight: '900' },
 });

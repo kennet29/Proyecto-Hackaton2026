@@ -21,6 +21,7 @@ import { RootStackParamList } from '../navigation/types';
 import { apiFetch, buildJsonHeaders, parseJsonResponse } from '../utils/apiClient';
 import { appColors, colorAlpha } from '../theme/colors';
 import { AltchaWidget } from '../components/AltchaWidget';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CambiarContrasena'>;
 type ApiMessage = { message?: string; token?: string; expira?: string };
@@ -33,6 +34,9 @@ const SECURITY_QUESTIONS: Array<{ id: SecurityQuestion; label: string; icon: key
 ];
 
 export function CambiarContrasenaScreen({ navigation }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 980;
   const [step, setStep] = useState<1 | 2>(1);
@@ -135,7 +139,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
       <View style={[styles.shell, isDesktop && styles.shellDesktop]}>
         <View style={[styles.hero, isDesktop && styles.heroDesktop]}>
           <View style={styles.heroIcon}>
-            <Ionicons name="key-outline" size={30} color={appColors.info} />
+            <Ionicons name="key-outline" size={30} color={colors.info} />
           </View>
           <AppText style={styles.eyebrow}>SEGURIDAD DE LA CUENTA</AppText>
           <AppText style={styles.heroTitle}>Recupera el acceso de forma segura</AppText>
@@ -149,7 +153,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
               ['lock-closed-outline', 'Tu contraseña nunca se muestra'],
             ].map(([icon, text]) => (
               <View key={text} style={styles.trustItem}>
-                <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={18} color={appColors.success} />
+                <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={18} color={colors.success} />
                 <AppText style={styles.trustText}>{text}</AppText>
               </View>
             ))}
@@ -166,7 +170,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
               {[1, 2].map((item) => (
                 <View key={item} style={[styles.stepDot, step >= item && styles.stepDotActive]}>
                   {step > item ? (
-                    <Ionicons name="checkmark" size={14} color={appColors.background} />
+                    <Ionicons name="checkmark" size={14} color={colors.onAccent} />
                   ) : (
                     <AppText style={[styles.stepNumber, step >= item && styles.stepNumberActive]}>{item}</AppText>
                   )}
@@ -180,14 +184,14 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
               <View>
                 <AppText style={styles.label}>Correo de la cuenta</AppText>
                 <View style={styles.inputWrap}>
-                  <Ionicons name="mail-outline" size={19} color={appColors.textMuted} />
+                  <Ionicons name="mail-outline" size={19} color={colors.textMuted} />
                   <AppTextInput
                     style={styles.input}
                     placeholder="nombre@correo.com"
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
-                    placeholderTextColor={appColors.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     value={email}
                     onChangeText={setEmail}
                   />
@@ -207,7 +211,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
                         style={[styles.questionOption, selected && styles.questionOptionActive]}
                         onPress={() => setSecurityQuestion(question.id)}
                       >
-                        <Ionicons name={question.icon} size={18} color={selected ? appColors.info : appColors.textMuted} />
+                        <Ionicons name={question.icon} size={18} color={selected ? colors.info : colors.textMuted} />
                         <AppText style={[styles.questionText, selected && styles.questionTextActive]}>{question.label}</AppText>
                         <View style={[styles.radio, selected && styles.radioActive]}>
                           {selected ? <View style={styles.radioCenter} /> : null}
@@ -221,11 +225,11 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
               <View>
                 <AppText style={styles.label}>Tu respuesta</AppText>
                 <View style={styles.inputWrap}>
-                  <Ionicons name="chatbubble-ellipses-outline" size={19} color={appColors.textMuted} />
+                  <Ionicons name="chatbubble-ellipses-outline" size={19} color={colors.textMuted} />
                   <AppTextInput
                     style={styles.input}
                     placeholder="Escribe la respuesta que registraste"
-                    placeholderTextColor={appColors.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     value={securityAnswer}
                     onChangeText={setSecurityAnswer}
                   />
@@ -240,10 +244,10 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
                 onPress={requestCode}
                 disabled={sendingCode}
               >
-                {sendingCode ? <ActivityIndicator color={appColors.background} /> : (
+                {sendingCode ? <ActivityIndicator color={colors.onAccent} /> : (
                   <>
                     <AppText style={styles.primaryButtonText}>Continuar</AppText>
-                    <Ionicons name="arrow-forward" size={18} color={appColors.background} />
+                    <Ionicons name="arrow-forward" size={18} color={colors.onAccent} />
                   </>
                 )}
               </TouchableOpacity>
@@ -251,7 +255,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
           ) : (
             <View style={styles.form}>
               <View style={styles.successBanner}>
-                <Ionicons name="checkmark-circle" size={23} color={appColors.success} />
+                <Ionicons name="checkmark-circle" size={23} color={colors.success} />
                 <View style={styles.bannerCopy}>
                   <AppText style={styles.successTitle}>Identidad verificada</AppText>
                   <AppText style={styles.successText}>Usa el código generado para {email.trim().toLowerCase()}.</AppText>
@@ -264,7 +268,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
                   <AppTextInput
                     style={styles.codeInput}
                     placeholder="AB12"
-                    placeholderTextColor={appColors.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     value={code}
                     onChangeText={setCode}
                     autoCapitalize="characters"
@@ -279,18 +283,18 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
               <View>
                 <AppText style={styles.label}>Nueva contraseña</AppText>
                 <View style={styles.inputWrap}>
-                  <Ionicons name="lock-closed-outline" size={19} color={appColors.textMuted} />
+                  <Ionicons name="lock-closed-outline" size={19} color={colors.textMuted} />
                   <AppTextInput
                     style={styles.input}
                     placeholder="Escribe una contraseña segura"
-                    placeholderTextColor={appColors.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     secureTextEntry={!showPassword}
                     value={newPassword}
                     onChangeText={setNewPassword}
                     autoComplete="new-password"
                   />
                   <TouchableOpacity onPress={() => setShowPassword((current) => !current)}>
-                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={appColors.textMuted} />
+                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textMuted} />
                   </TouchableOpacity>
                 </View>
                 <View style={styles.requirements}>
@@ -299,7 +303,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
                       <Ionicons
                         name={check.valid ? 'checkmark-circle' : 'ellipse-outline'}
                         size={15}
-                        color={check.valid ? appColors.success : appColors.textMuted}
+                        color={check.valid ? colors.success : colors.textMuted}
                       />
                       <AppText style={[styles.requirementText, check.valid && styles.requirementValid]}>{check.label}</AppText>
                     </View>
@@ -310,11 +314,11 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
               <View>
                 <AppText style={styles.label}>Confirma tu contraseña</AppText>
                 <View style={styles.inputWrap}>
-                  <Ionicons name="lock-closed-outline" size={19} color={appColors.textMuted} />
+                  <Ionicons name="lock-closed-outline" size={19} color={colors.textMuted} />
                   <AppTextInput
                     style={styles.input}
                     placeholder="Repite la contraseña"
-                    placeholderTextColor={appColors.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     secureTextEntry={!showPassword}
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
@@ -324,7 +328,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
                     <Ionicons
                       name={newPassword === confirmPassword ? 'checkmark-circle' : 'close-circle'}
                       size={20}
-                      color={newPassword === confirmPassword ? appColors.success : appColors.accent}
+                      color={newPassword === confirmPassword ? colors.success : colors.accent}
                     />
                   ) : null}
                 </View>
@@ -335,15 +339,15 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
                 onPress={onSubmit}
                 disabled={saving}
               >
-                {saving ? <ActivityIndicator color={appColors.background} /> : (
+                {saving ? <ActivityIndicator color={colors.onAccent} /> : (
                   <>
-                    <Ionicons name="shield-checkmark" size={18} color={appColors.background} />
+                    <Ionicons name="shield-checkmark" size={18} color={colors.onAccent} />
                     <AppText style={styles.primaryButtonText}>Actualizar contraseña</AppText>
                   </>
                 )}
               </TouchableOpacity>
               <TouchableOpacity style={styles.backButton} onPress={() => setStep(1)}>
-                <Ionicons name="arrow-back" size={17} color={appColors.textMuted} />
+                <Ionicons name="arrow-back" size={17} color={colors.textMuted} />
                 <AppText style={styles.backButtonText}>Cambiar datos de verificación</AppText>
               </TouchableOpacity>
             </View>
@@ -354,7 +358,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'transparent' },
   scrollContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   shell: { width: '100%', maxWidth: 760, gap: 18 },
@@ -363,80 +367,80 @@ const styles = StyleSheet.create({
   heroDesktop: { flex: 0.8, justifyContent: 'center', padding: 38 },
   heroIcon: {
     width: 62, height: 62, borderRadius: 20, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colorAlpha(appColors.info, '14'), borderWidth: 1, borderColor: colorAlpha(appColors.info, '44'),
+    backgroundColor: colorAlpha(colors.info, '14'), borderWidth: 1, borderColor: colorAlpha(colors.info, '44'),
     marginBottom: 24,
   },
-  eyebrow: { color: appColors.info, fontSize: 12, fontWeight: '900', letterSpacing: 1.3, marginBottom: 10 },
-  heroTitle: { color: appColors.text, fontSize: 38, lineHeight: 44, fontWeight: '900', maxWidth: 460 },
-  heroText: { color: appColors.textMuted, fontSize: 16, lineHeight: 25, marginTop: 14, maxWidth: 480 },
+  eyebrow: { color: colors.info, fontSize: 12, fontWeight: '900', letterSpacing: 1.3, marginBottom: 10 },
+  heroTitle: { color: colors.text, fontSize: 38, lineHeight: 44, fontWeight: '900', maxWidth: 460 },
+  heroText: { color: colors.textMuted, fontSize: 16, lineHeight: 25, marginTop: 14, maxWidth: 480 },
   trustList: { marginTop: 30, gap: 14 },
   trustItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  trustText: { color: appColors.textSoft, fontSize: 14 },
+  trustText: { color: colors.textSoft, fontSize: 14 },
   card: {
-    padding: 22, borderRadius: 24, borderWidth: 1, borderColor: appColors.border,
-    backgroundColor: appColors.surface, shadowColor: '#000', shadowOffset: { width: 0, height: 16 },
+    padding: 22, borderRadius: 24, borderWidth: 1, borderColor: colors.border,
+    backgroundColor: colors.surface, shadowColor: '#000', shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.25, shadowRadius: 30, elevation: 16,
   },
   cardDesktop: { flex: 1.2, padding: 30 },
   progressHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 16,
-    paddingBottom: 22, borderBottomWidth: 1, borderBottomColor: appColors.border,
+    paddingBottom: 22, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   progressCopy: { flex: 1 },
-  cardTitle: { color: appColors.text, fontSize: 23, fontWeight: '900' },
-  cardSubtitle: { color: appColors.textMuted, fontSize: 13, marginTop: 4 },
+  cardTitle: { color: colors.text, fontSize: 23, fontWeight: '900' },
+  cardSubtitle: { color: colors.textMuted, fontSize: 13, marginTop: 4 },
   steps: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   stepDot: {
     width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted,
+    borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted,
   },
-  stepDotActive: { backgroundColor: appColors.info, borderColor: appColors.info },
-  stepNumber: { color: appColors.textMuted, fontSize: 12, fontWeight: '900' },
-  stepNumberActive: { color: appColors.background },
+  stepDotActive: { backgroundColor: colors.info, borderColor: colors.info },
+  stepNumber: { color: colors.textMuted, fontSize: 12, fontWeight: '900' },
+  stepNumberActive: { color: colors.onAccent },
   form: { paddingTop: 22, gap: 18 },
-  label: { color: appColors.textSoft, fontSize: 13, fontWeight: '800', marginBottom: 8 },
+  label: { color: colors.textSoft, fontSize: 13, fontWeight: '800', marginBottom: 8 },
   inputWrap: {
     minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14,
-    borderRadius: 14, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted,
+    borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted,
   },
-  input: { flex: 1, minWidth: 0, color: appColors.text, fontSize: 15, paddingVertical: 13, outlineStyle: 'none' } as any,
-  helperText: { color: appColors.textMuted, fontSize: 11, marginTop: 7 },
+  input: { flex: 1, minWidth: 0, color: colors.text, fontSize: 15, paddingVertical: 13, outlineStyle: 'none' } as any,
+  helperText: { color: colors.textMuted, fontSize: 11, marginTop: 7 },
   questionGrid: { gap: 8 },
   questionOption: {
     minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 13,
-    borderRadius: 13, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted,
+    borderRadius: 13, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted,
   },
-  questionOptionActive: { borderColor: appColors.info, backgroundColor: colorAlpha(appColors.info, '10') },
-  questionText: { flex: 1, color: appColors.textMuted, fontSize: 13, fontWeight: '600' },
-  questionTextActive: { color: appColors.text },
-  radio: { width: 17, height: 17, borderRadius: 9, borderWidth: 1, borderColor: appColors.textMuted, alignItems: 'center', justifyContent: 'center' },
-  radioActive: { borderColor: appColors.info },
-  radioCenter: { width: 9, height: 9, borderRadius: 5, backgroundColor: appColors.info },
+  questionOptionActive: { borderColor: colors.info, backgroundColor: colorAlpha(colors.info, '10') },
+  questionText: { flex: 1, color: colors.textMuted, fontSize: 13, fontWeight: '600' },
+  questionTextActive: { color: colors.text },
+  radio: { width: 17, height: 17, borderRadius: 9, borderWidth: 1, borderColor: colors.textMuted, alignItems: 'center', justifyContent: 'center' },
+  radioActive: { borderColor: colors.info },
+  radioCenter: { width: 9, height: 9, borderRadius: 5, backgroundColor: colors.info },
   primaryButton: {
-    minHeight: 52, borderRadius: 14, backgroundColor: appColors.info, flexDirection: 'row',
+    minHeight: 52, borderRadius: 14, backgroundColor: colors.info, flexDirection: 'row',
     alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 18,
   },
-  primaryButtonText: { color: appColors.background, fontSize: 15, fontWeight: '900' },
+  primaryButtonText: { color: colors.onAccent, fontSize: 15, fontWeight: '900' },
   disabled: { opacity: 0.6 },
   successBanner: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 11, padding: 14, borderRadius: 14,
-    borderWidth: 1, borderColor: colorAlpha(appColors.success, '44'), backgroundColor: colorAlpha(appColors.success, '0D'),
+    borderWidth: 1, borderColor: colorAlpha(colors.success, '44'), backgroundColor: colorAlpha(colors.success, '0D'),
   },
   bannerCopy: { flex: 1 },
-  successTitle: { color: appColors.success, fontSize: 14, fontWeight: '900' },
-  successText: { color: appColors.textMuted, fontSize: 12, marginTop: 3, lineHeight: 17 },
+  successTitle: { color: colors.success, fontSize: 14, fontWeight: '900' },
+  successText: { color: colors.textMuted, fontSize: 12, marginTop: 3, lineHeight: 17 },
   codeInputWrap: {
-    minHeight: 62, borderRadius: 14, borderWidth: 1, borderColor: appColors.info,
-    backgroundColor: colorAlpha(appColors.info, '0A'), alignItems: 'center', justifyContent: 'center',
+    minHeight: 62, borderRadius: 14, borderWidth: 1, borderColor: colors.info,
+    backgroundColor: colorAlpha(colors.info, '0A'), alignItems: 'center', justifyContent: 'center',
   },
   codeInput: {
-    width: '100%', color: appColors.text, textAlign: 'center', fontSize: 25, fontWeight: '900',
+    width: '100%', color: colors.text, textAlign: 'center', fontSize: 25, fontWeight: '900',
     letterSpacing: 12, paddingVertical: 12, outlineStyle: 'none',
   } as any,
   requirements: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 9 },
   requirement: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  requirementText: { color: appColors.textMuted, fontSize: 11 },
-  requirementValid: { color: appColors.success },
+  requirementText: { color: colors.textMuted, fontSize: 11 },
+  requirementValid: { color: colors.success },
   backButton: { minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
-  backButtonText: { color: appColors.textMuted, fontSize: 13, fontWeight: '700' },
+  backButtonText: { color: colors.textMuted, fontSize: 13, fontWeight: '700' },
 });

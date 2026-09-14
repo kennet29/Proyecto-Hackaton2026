@@ -27,21 +27,22 @@ import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate } from '../utils/localDate';
 import { WebTimeInput } from '../components/WebTimeInput';
 import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 const webPickerInputStyle = {
   flex: 1,
   minWidth: 0,
   minHeight: 52,
   borderRadius: 14,
-  border: '1px solid #27496D',
-  backgroundColor: '#071120',
-  color: '#F4F8FF',
+  border: '1px solid var(--app-border)',
+  backgroundColor: 'var(--app-input-bg)',
+  color: 'var(--app-text)',
   padding: '0 14px',
   fontFamily: '"SpaceGrotesk_400Regular", "Segoe UI", Arial, sans-serif',
   fontSize: 15,
   fontWeight: 700,
   outline: 'none',
-  colorScheme: 'dark',
+  colorScheme: 'var(--app-color-scheme)',
 };
 
 type PickerField = 'fecha' | 'proximaDosis' | 'notificationDate' | 'notificationTime';
@@ -152,9 +153,12 @@ const composeDateTime = (dateValue?: string, timeValue?: string) => {
 const todayString = () => toDateOnlyString(new Date());
 
 export function VacunaFormScreen() {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { width } = useWindowDimensions();
   const isWideLayout = width >= 900;
-  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
+  const pickerItemColor = Platform.OS === 'android' ? colors.background : colors.text;
   const [form, setForm] = useState({
     pacienteId: '',
     nombre: '',
@@ -320,7 +324,7 @@ export function VacunaFormScreen() {
         const existing = marks[applicationDate] ?? {};
         const dots = existing.dots ?? [];
         if (!dots.some((dot) => dot.key === `application-${record.vacunaId}`)) {
-          dots.push({ key: `application-${record.vacunaId}`, color: '#38E28E' });
+          dots.push({ key: `application-${record.vacunaId}`, color: colors.success });
         }
         marks[applicationDate] = {
           ...existing,
@@ -334,7 +338,7 @@ export function VacunaFormScreen() {
         const existing = marks[nextDoseDate] ?? {};
         const dots = existing.dots ?? [];
         if (!dots.some((dot) => dot.key === `next-dose-${record.vacunaId}`)) {
-          dots.push({ key: `next-dose-${record.vacunaId}`, color: '#FF4D73' });
+          dots.push({ key: `next-dose-${record.vacunaId}`, color: colors.accent });
         }
         marks[nextDoseDate] = {
           ...existing,
@@ -348,14 +352,14 @@ export function VacunaFormScreen() {
       marks[selectedDate] = {
         ...(marks[selectedDate] ?? {}),
         selected: true,
-        selectedColor: '#29B6FF',
-        selectedTextColor: '#F4F8FF',
+        selectedColor: colors.info,
+        selectedTextColor: colors.onAccent,
         marked: marks[selectedDate]?.marked ?? false,
       };
     }
 
     return marks;
-  }, [selectedDate, visibleRecords]);
+  }, [selectedDate, visibleRecords, colors]);
 
   const recordsForSelectedDay = useMemo(() => {
     if (!selectedDate) {
@@ -578,7 +582,7 @@ export function VacunaFormScreen() {
 
     return (
       <View style={styles.iosPickerWrapper}>
-        <DateTimePicker
+        <DateTimePicker themeVariant={colors.mode}
           mode={isTimeField ? 'time' : 'date'}
           display="spinner"
           locale="es-NI"
@@ -641,7 +645,7 @@ export function VacunaFormScreen() {
           <AppText style={styles.label}>Filtrar por persona</AppText>
           {loadingPatients ? (
             <View style={styles.loadingRow}>
-              <ActivityIndicator color="#29B6FF" />
+              <ActivityIndicator color={colors.info} />
               <AppText style={styles.loadingText}>Cargando personas...</AppText>
             </View>
           ) : patientOptions.length === 0 ? (
@@ -657,7 +661,7 @@ export function VacunaFormScreen() {
                 style={styles.picker}
                 selectedValue={filterPacienteId}
                 onValueChange={(value) => setFilterPacienteId(String(value))}
-                dropdownIconColor="#F4F8FF"
+                dropdownIconColor={colors.text}
               >
                 <Picker.Item label="Todas las personas" value="" color={pickerItemColor} />
                 {patientOptions.map((patient) => (
@@ -677,7 +681,7 @@ export function VacunaFormScreen() {
           <AppText style={styles.formTitle}>Calendario de vacunas</AppText>
           {loadingRecords ? (
             <View style={styles.stateBox}>
-              <ActivityIndicator color="#29B6FF" />
+              <ActivityIndicator color={colors.info} />
               <AppText style={styles.stateText}>Cargando calendario...</AppText>
             </View>
           ) : visibleRecords.length === 0 ? (
@@ -688,7 +692,7 @@ export function VacunaFormScreen() {
               </AppText>
             </View>
           ) : (
-            <Calendar
+            <Calendar key={colors.mode}
               markedDates={markedDates}
               markingType="multi-dot"
               onDayPress={handleDayPress}
@@ -696,14 +700,14 @@ export function VacunaFormScreen() {
               enableSwipeMonths
               firstDay={1}
               theme={{
-                calendarBackground: '#0D1B2A',
-                dayTextColor: '#F4F8FF',
-                monthTextColor: '#F4F8FF',
-                textSectionTitleColor: '#29B6FF',
-                todayTextColor: '#38E28E',
-                arrowColor: '#29B6FF',
-                selectedDayBackgroundColor: '#29B6FF',
-                selectedDayTextColor: '#F4F8FF',
+                calendarBackground: colors.backgroundMuted,
+                dayTextColor: colors.text,
+                monthTextColor: colors.text,
+                textSectionTitleColor: colors.info,
+                todayTextColor: colors.success,
+                arrowColor: colors.info,
+                selectedDayBackgroundColor: colors.info,
+                selectedDayTextColor: colors.onAccent,
               }}
               style={styles.calendar}
             />
@@ -812,7 +816,7 @@ export function VacunaFormScreen() {
           {showHistorySection && hasHistoryRecords ? (
             loadingRecords ? (
               <View style={styles.stateBox}>
-                <ActivityIndicator color="#29B6FF" />
+                <ActivityIndicator color={colors.info} />
                 <AppText style={styles.stateText}>Cargando vacunas...</AppText>
               </View>
             ) : (
@@ -847,7 +851,7 @@ export function VacunaFormScreen() {
             <AppText style={styles.label}>Paciente</AppText>
             {loadingPatients ? (
               <View style={styles.loadingRow}>
-                <ActivityIndicator color="#29B6FF" />
+                <ActivityIndicator color={colors.info} />
                 <AppText style={styles.loadingText}>Cargando personas...</AppText>
               </View>
             ) : patientOptions.length === 0 ? (
@@ -865,7 +869,7 @@ export function VacunaFormScreen() {
                   style={styles.picker}
                   selectedValue={form.pacienteId}
                   onValueChange={(value) => handleChange('pacienteId', String(value))}
-                  dropdownIconColor="#F4F8FF"
+                  dropdownIconColor={colors.text}
                 >
                   {patientOptions.map((patient) => (
                     <Picker.Item
@@ -884,7 +888,7 @@ export function VacunaFormScreen() {
             <AppTextInput
               style={styles.input}
               placeholder="Nombre vacuna"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.nombre}
               onChangeText={(value) => handleChange('nombre', value)}
             />
@@ -915,7 +919,7 @@ export function VacunaFormScreen() {
                 <AppTextInput
                   style={styles.input}
                   placeholder="Lote"
-                  placeholderTextColor="#9FB3C8"
+                  placeholderTextColor={colors.textMuted}
                   value={form.lote}
                   onChangeText={(value) => handleChange('lote', value)}
                 />
@@ -990,7 +994,7 @@ export function VacunaFormScreen() {
                 <AppTextInput
                   style={[styles.input, styles.multiline]}
                   placeholder="Mensaje de la notificacion"
-                  placeholderTextColor="#9FB3C8"
+                  placeholderTextColor={colors.textMuted}
                   value={notificationForm.mensaje}
                   multiline
                   onChangeText={(value) => handleNotificationChange('mensaje', value)}
@@ -1043,14 +1047,14 @@ export function VacunaFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 24,
@@ -1065,14 +1069,14 @@ const styles = StyleSheet.create({
     paddingTop: 26,
   },
   heroCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#1B3355',
+    borderColor: colors.borderStrong,
   },
   kicker: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.2,
@@ -1084,70 +1088,70 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
     lineHeight: 34,
   },
   subtitle: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 20,
     marginTop: 8,
   },
   filterCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 14,
     padding: 16,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   calendarCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 16,
     padding: 18,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   daySection: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 20,
     padding: 18,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   recordsSection: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 16,
     padding: 18,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   formCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 22,
     gap: 14,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   notificationCard: {
     marginTop: 8,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 16,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   formTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   sectionHelper: {
-    color: '#29B6FF',
+    color: colors.info,
     lineHeight: 19,
   },
   sectionToggle: {
@@ -1168,32 +1172,32 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   sectionToggleIcon: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 24,
     fontWeight: '700',
     width: 20,
     textAlign: 'center',
   },
   sectionToggleIconDisabled: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
   },
   countBadge: {
     minWidth: 34,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     alignItems: 'center',
   },
   countBadgeText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
     fontSize: 12,
   },
   label: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   formGrid: {
     gap: 12,
@@ -1209,34 +1213,34 @@ const styles = StyleSheet.create({
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   picker: {
-    color: '#F4F8FF',
+    color: colors.text,
   },
   fixedChannelCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 16,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   fixedChannelText: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '600',
   },
   inlineNotificationCard: {
     marginTop: 4,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 16,
     padding: 14,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1247,12 +1251,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   inlineNotificationTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '700',
   },
   inlineNotificationHint: {
-    color: '#29B6FF',
+    color: colors.info,
     lineHeight: 18,
   },
   inlineNotificationToggle: {
@@ -1260,24 +1264,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 999,
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     alignItems: 'center',
   },
   inlineNotificationToggleActive: {
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
   },
   inlineNotificationToggleText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontWeight: '700',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 14,
     fontSize: 16,
-    backgroundColor: '#071120',
-    color: '#F4F8FF',
+    backgroundColor: colors.background,
+    color: colors.text,
   },
   webDateInput: {
     minHeight: 52,
@@ -1292,16 +1296,16 @@ const styles = StyleSheet.create({
   dateButton: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     minHeight: 52,
     paddingHorizontal: 14,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     justifyContent: 'center',
   },
   dateButtonText: {
     fontSize: 16,
-    color: '#F4F8FF',
+    color: colors.text,
     textAlign: 'center',
   },
   dateTimeRow: {
@@ -1309,7 +1313,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   primaryBtn: {
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
     minHeight: 54,
     borderRadius: 14,
     marginTop: 6,
@@ -1317,13 +1321,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   btnText: {
-    color: '#F4F8FF',
+    color: colors.text,
     textAlign: 'center',
     fontWeight: '700',
     fontSize: 16,
   },
   notificationBtn: {
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
     minHeight: 52,
     borderRadius: 14,
     marginTop: 4,
@@ -1331,7 +1335,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   notificationBtnText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     textAlign: 'center',
     fontWeight: '700',
     fontSize: 16,
@@ -1343,56 +1347,56 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   loadingText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   stateBox: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 18,
     alignItems: 'center',
     gap: 6,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   stateTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   stateText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     textAlign: 'center',
   },
   emptyBox: {
     borderWidth: 1,
-    borderColor: '#27496D',
-    backgroundColor: '#071120',
+    borderColor: colors.border,
+    backgroundColor: colors.background,
     borderRadius: 14,
     padding: 14,
     gap: 8,
   },
   emptyText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   errorText: {
-    color: '#FF4D73',
+    color: colors.accent,
   },
   secondaryBtn: {
     alignSelf: 'flex-start',
-    backgroundColor: '#FF4D73',
+    backgroundColor: colors.accent,
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 6,
   },
   secondaryBtnText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontWeight: '600',
   },
   calendar: {
     borderRadius: 16,
   },
   dayLabel: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '600',
   },
   dayTypeBadge: {
@@ -1402,23 +1406,23 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   dayTypeApplied: {
-    backgroundColor: '#38E28E18',
+    backgroundColor: `${colors.success}18`,
   },
   dayTypeNext: {
-    backgroundColor: '#FF4D7318',
+    backgroundColor: `${colors.accent}18`,
   },
   dayTypeBadgeText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#071120',
+    color: colors.onAccent,
   },
   vaccineCard: {
-    backgroundColor: '#F4F8FF',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     gap: 6,
     borderWidth: 1,
-    borderColor: '#F4F8FF',
+    borderColor: colors.text,
   },
   vaccineHeader: {
     flexDirection: 'row',
@@ -1428,35 +1432,35 @@ const styles = StyleSheet.create({
   vaccineName: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#071120',
+    color: colors.text,
   },
   vaccineMeta: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
   },
   vaccineDetail: {
-    color: '#27496D',
+    color: colors.textSoft,
   },
   vaccineHighlight: {
     fontWeight: '700',
-    color: '#071120',
+    color: colors.text,
   },
   iosPickerWrapper: {
     marginTop: 6,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   iosPickerDoneBtn: {
     borderTopWidth: 1,
-    borderTopColor: '#27496D',
+    borderTopColor: colors.border,
     paddingVertical: 10,
     alignItems: 'center',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   iosPickerDoneText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
   },
   fab: {
@@ -1466,7 +1470,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
@@ -1476,7 +1480,7 @@ const styles = StyleSheet.create({
     elevation: 7,
   },
   fabText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontSize: 30,
     lineHeight: 32,
     fontWeight: '700',

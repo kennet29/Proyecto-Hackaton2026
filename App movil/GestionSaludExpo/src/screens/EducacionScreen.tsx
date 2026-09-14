@@ -9,10 +9,14 @@ import { AppText } from '../components/AppText';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { nivelesEducativos } from '../data/educacion';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Educacion'>;
 
 export function EducacionScreen({ navigation }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <SafeAreaView style={styles.container}>
       <AppText style={styles.title}>Elige Un Nivel</AppText>
@@ -57,57 +61,57 @@ export function EducacionScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     padding: 20,
   },
   title: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 24,
     fontWeight: '900',
     marginBottom: 6,
   },
   subtitle: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 16,
   },
   libraryCard: {
-    backgroundColor: '#123A52',
-    borderColor: '#29B6FF',
+    backgroundColor: colors.surfaceStrong,
+    borderColor: colors.info,
     borderWidth: 1,
     borderRadius: 22,
     padding: 18,
     marginBottom: 16,
   },
   libraryTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 6,
   },
   libraryDescription: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 20,
   },
   listContent: {
     paddingBottom: 30,
   },
   card: {
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     borderRadius: 22,
     padding: 18,
     marginBottom: 16,
   },
   cardLabel: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 20,
     fontWeight: '800',
     marginBottom: 6,
   },
   cardDescription: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 20,
     marginBottom: 10,
   },
@@ -117,13 +121,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tag: {
-    backgroundColor: '#29B6FF22',
+    backgroundColor: `${colors.info}22`,
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   tagText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 12,
   },
 });

@@ -26,6 +26,7 @@ import {
   SolicitudMedica,
   updateDemoSolicitud,
 } from './AdminSolicitudesMedicasScreen';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AdminSolicitudDetalle'>;
 type ApiError = { message?: string | string[]; error?: string };
@@ -61,6 +62,9 @@ const statusMeta = (estado: Estado) => {
 };
 
 export function AdminSolicitudDetalleScreen({ navigation, route }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { width } = useWindowDimensions();
   const compact = width < 720;
   const desktop = Platform.OS === 'web' && width >= 1040;
@@ -173,7 +177,7 @@ export function AdminSolicitudDetalleScreen({ navigation, route }: Props) {
   if (!token || !isAdminRole(user?.role)) {
     return (
       <View style={styles.centerState}>
-        <Ionicons name="shield-outline" size={42} color={appColors.accent} />
+        <Ionicons name="shield-outline" size={42} color={colors.accent} />
         <AppText style={styles.stateTitle}>Acceso administrativo requerido</AppText>
         <AppText style={styles.stateText}>
           Debes iniciar sesión con una cuenta administradora para ver este expediente.
@@ -195,7 +199,7 @@ export function AdminSolicitudDetalleScreen({ navigation, route }: Props) {
   if (loading) {
     return (
       <View style={styles.centerState}>
-        <ActivityIndicator color={appColors.info} size="large" />
+        <ActivityIndicator color={colors.info} size="large" />
         <AppText style={styles.stateText}>Cargando expediente...</AppText>
       </View>
     );
@@ -204,7 +208,7 @@ export function AdminSolicitudDetalleScreen({ navigation, route }: Props) {
   if (!solicitud) {
     return (
       <View style={styles.centerState}>
-        <Ionicons name="alert-circle-outline" size={42} color={appColors.accent} />
+        <Ionicons name="alert-circle-outline" size={42} color={colors.accent} />
         <AppText style={styles.stateTitle}>Solicitud no disponible</AppText>
         <AppText style={styles.stateText}>{error}</AppText>
         <TouchableOpacity
@@ -227,7 +231,7 @@ export function AdminSolicitudDetalleScreen({ navigation, route }: Props) {
             style={styles.backButton}
             onPress={() => navigation.navigate('AdminSolicitudes')}
           >
-            <Ionicons name="arrow-back" size={18} color={appColors.text} />
+            <Ionicons name="arrow-back" size={18} color={colors.text} />
             <AppText style={styles.backText}>Solicitudes</AppText>
           </TouchableOpacity>
           <View style={[styles.statusBadge, { borderColor: meta.color }]}>
@@ -361,7 +365,7 @@ export function AdminSolicitudDetalleScreen({ navigation, route }: Props) {
               value={reviewNote}
               onChangeText={setReviewNote}
               placeholder="Escribe una observación para el solicitante..."
-              placeholderTextColor={appColors.textMuted}
+              placeholderTextColor={colors.textMuted}
               style={styles.notesInput}
             />
 
@@ -371,7 +375,7 @@ export function AdminSolicitudDetalleScreen({ navigation, route }: Props) {
             <DecisionButton
               label="Aceptar solicitud"
               icon="checkmark-circle-outline"
-              color={appColors.success}
+              color={colors.success}
               loading={saving === 'aprobado'}
               disabled={Boolean(saving)}
               onPress={() => void applyDecision('aprobado')}
@@ -387,7 +391,7 @@ export function AdminSolicitudDetalleScreen({ navigation, route }: Props) {
             <DecisionButton
               label="Rechazar solicitud"
               icon="close-circle-outline"
-              color={appColors.accent}
+              color={colors.accent}
               loading={saving === 'rechazado'}
               disabled={Boolean(saving)}
               onPress={() => void applyDecision('rechazado')}
@@ -408,6 +412,9 @@ function PaperSection({
   title: string;
   children: React.ReactNode;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -430,6 +437,9 @@ function PaperField({
   value?: string | null;
   compact: boolean;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.field, compact && styles.fieldCompact]}>
       <AppText style={styles.fieldLabel}>{label.toUpperCase()}</AppText>
@@ -439,12 +449,15 @@ function PaperField({
 }
 
 function DocumentRow({ label, available }: { label: string; available: boolean }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.documentRow}>
       <Ionicons
         name={available ? 'checkbox' : 'square-outline'}
         size={18}
-        color={available ? '#168A55' : '#8793A0'}
+        color={available ? '#168A55' : colors.textMuted}
       />
       <AppText style={styles.documentLabel}>{label}</AppText>
       <AppText style={[styles.documentState, available && styles.documentAvailable]}>
@@ -455,6 +468,9 @@ function DocumentRow({ label, available }: { label: string; available: boolean }
 }
 
 function Signature({ label, value }: { label: string; value?: string }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.signature}>
       <View style={styles.signatureLine}>
@@ -480,6 +496,9 @@ function DecisionButton({
   disabled: boolean;
   onPress: () => void;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <TouchableOpacity
       style={[
@@ -500,82 +519,82 @@ function DecisionButton({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   page: { flexGrow: 1, backgroundColor: 'transparent', padding: 14, paddingBottom: 48 },
   content: { width: '100%', maxWidth: 1220, alignSelf: 'center' },
   topbar: { minHeight: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  backButton: { flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 42, paddingHorizontal: 13, borderRadius: 11, backgroundColor: appColors.surface, borderWidth: 1, borderColor: appColors.border },
-  backText: { color: appColors.text, fontSize: 12, fontWeight: '800' },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 18, paddingHorizontal: 11, paddingVertical: 8, backgroundColor: appColors.surface },
+  backButton: { flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 42, paddingHorizontal: 13, borderRadius: 11, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  backText: { color: colors.text, fontSize: 12, fontWeight: '800' },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 18, paddingHorizontal: 11, paddingVertical: 8, backgroundColor: colors.surface },
   statusDot: { width: 7, height: 7, borderRadius: 4, marginRight: 7 },
   statusText: { fontSize: 10, fontWeight: '900' },
   demoBanner: { flexDirection: 'row', alignItems: 'center', padding: 11, marginBottom: 13, borderRadius: 12, borderWidth: 1, borderColor: colorAlpha('#F5B942', '55'), backgroundColor: colorAlpha('#F5B942', '12') },
-  demoText: { flex: 1, marginLeft: 9, color: appColors.textSoft, fontSize: 10 },
+  demoText: { flex: 1, marginLeft: 9, color: colors.textSoft, fontSize: 10 },
   layout: { flexDirection: 'column' },
   layoutDesktop: { flexDirection: 'row', alignItems: 'flex-start', gap: 18 },
-  paper: { flex: 1, width: '100%', maxWidth: 794, minHeight: 1080, alignSelf: 'center', backgroundColor: '#FFFFFF', paddingHorizontal: 44, paddingTop: 38, paddingBottom: 26, shadowColor: '#000000', shadowOpacity: 0.25, shadowRadius: 22, shadowOffset: { width: 0, height: 10 }, elevation: 10 },
+  paper: { flex: 1, width: '100%', maxWidth: 794, minHeight: 1080, alignSelf: 'center', backgroundColor: colors.surface, paddingHorizontal: 44, paddingTop: 38, paddingBottom: 26, shadowColor: '#000000', shadowOpacity: 0.25, shadowRadius: 22, shadowOffset: { width: 0, height: 10 }, elevation: 10 },
   paperCompact: { minHeight: 0, paddingHorizontal: 17, paddingTop: 20, paddingBottom: 20 },
-  paperHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderBottomWidth: 3, borderBottomColor: '#12345A', paddingBottom: 17 },
+  paperHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderBottomWidth: 3, borderBottomColor: colors.info, paddingBottom: 17 },
   paperHeaderCompact: { gap: 8 },
   brand: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   brandCopy: { flex: 1 },
   logo: { width: 46, height: 46, marginRight: 11, borderRadius: 7, alignItems: 'center', justifyContent: 'center', backgroundColor: '#12345A' },
-  brandName: { color: '#12345A', fontSize: 17, fontWeight: '900', letterSpacing: 0.7 },
-  brandSub: { color: '#59697A', fontSize: 8, marginTop: 2 },
-  folio: { minWidth: 120, borderWidth: 1, borderColor: '#AAB4BF', paddingHorizontal: 10, paddingVertical: 8, alignItems: 'flex-end' },
-  folioLabel: { color: '#687583', fontSize: 7, fontWeight: '800' },
-  folioValue: { color: '#12345A', fontSize: 15, fontWeight: '900', marginTop: 2 },
-  folioDate: { color: '#59697A', fontSize: 7, marginTop: 2 },
+  brandName: { color: colors.info, fontSize: 17, fontWeight: '900', letterSpacing: 0.7 },
+  brandSub: { color: colors.textMuted, fontSize: 8, marginTop: 2 },
+  folio: { minWidth: 120, borderWidth: 1, borderColor: colors.textMuted, paddingHorizontal: 10, paddingVertical: 8, alignItems: 'flex-end' },
+  folioLabel: { color: colors.textMuted, fontSize: 7, fontWeight: '800' },
+  folioValue: { color: colors.info, fontSize: 15, fontWeight: '900', marginTop: 2 },
+  folioDate: { color: colors.textMuted, fontSize: 7, marginTop: 2 },
   titleBlock: { alignItems: 'center', paddingVertical: 21 },
-  paperTitle: { color: '#172A3D', fontSize: 18, fontWeight: '900', textAlign: 'center', letterSpacing: 0.5 },
-  paperSubtitle: { color: '#687583', fontSize: 9, textAlign: 'center', marginTop: 5 },
-  section: { borderWidth: 1, borderColor: '#AAB4BF', marginBottom: 13 },
-  sectionHeader: { minHeight: 31, flexDirection: 'row', alignItems: 'center', backgroundColor: '#E8EEF4', borderBottomWidth: 1, borderBottomColor: '#AAB4BF' },
+  paperTitle: { color: colors.text, fontSize: 18, fontWeight: '900', textAlign: 'center', letterSpacing: 0.5 },
+  paperSubtitle: { color: colors.textMuted, fontSize: 9, textAlign: 'center', marginTop: 5 },
+  section: { borderWidth: 1, borderColor: colors.textMuted, marginBottom: 13 },
+  sectionHeader: { minHeight: 31, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceStrong, borderBottomWidth: 1, borderBottomColor: colors.textMuted },
   sectionNumber: { width: 31, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', backgroundColor: '#12345A' },
   sectionNumberText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
-  sectionTitle: { color: '#12345A', fontSize: 9, fontWeight: '900', letterSpacing: 0.6, marginLeft: 10 },
+  sectionTitle: { color: colors.info, fontSize: 9, fontWeight: '900', letterSpacing: 0.6, marginLeft: 10 },
   sectionBody: { padding: 10 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
   field: { width: '50%', minHeight: 48, paddingHorizontal: 5, paddingVertical: 6 },
   fieldCompact: { width: '100%' },
-  fieldLabel: { color: '#687583', fontSize: 7, fontWeight: '800', letterSpacing: 0.4, marginBottom: 5 },
-  fieldValue: { color: '#172A3D', fontSize: 10, fontWeight: '700', paddingBottom: 5, borderBottomWidth: 1, borderBottomColor: '#D6DDE4' },
-  documentRow: { minHeight: 35, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#E1E5E9' },
-  documentLabel: { flex: 1, color: '#354454', fontSize: 9, marginLeft: 8 },
-  documentState: { color: '#8793A0', fontSize: 7, fontWeight: '900' },
+  fieldLabel: { color: colors.textMuted, fontSize: 7, fontWeight: '800', letterSpacing: 0.4, marginBottom: 5 },
+  fieldValue: { color: colors.text, fontSize: 10, fontWeight: '700', paddingBottom: 5, borderBottomWidth: 1, borderBottomColor: colors.border },
+  documentRow: { minHeight: 35, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.border },
+  documentLabel: { flex: 1, color: colors.textSoft, fontSize: 9, marginLeft: 8 },
+  documentState: { color: colors.textMuted, fontSize: 7, fontWeight: '900' },
   documentAvailable: { color: '#168A55' },
-  declaration: { color: '#354454', fontSize: 9, lineHeight: 15 },
+  declaration: { color: colors.textSoft, fontSize: 9, lineHeight: 15 },
   signatures: { flexDirection: 'row', gap: 30, marginTop: 24 },
   signaturesCompact: { flexDirection: 'column', gap: 16 },
   signature: { flex: 1, minWidth: 140 },
-  signatureLine: { minHeight: 24, justifyContent: 'flex-end', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#59697A' },
-  signatureValue: { color: '#354454', fontSize: 8, paddingBottom: 3 },
-  signatureLabel: { color: '#687583', fontSize: 7, textAlign: 'center', marginTop: 4 },
-  internal: { borderWidth: 2, borderColor: '#12345A', padding: 12, backgroundColor: '#F7F9FB' },
+  signatureLine: { minHeight: 24, justifyContent: 'flex-end', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.textMuted },
+  signatureValue: { color: colors.textSoft, fontSize: 8, paddingBottom: 3 },
+  signatureLabel: { color: colors.textMuted, fontSize: 7, textAlign: 'center', marginTop: 4 },
+  internal: { borderWidth: 2, borderColor: colors.info, padding: 12, backgroundColor: colors.backgroundMuted },
   internalTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  internalTitle: { flex: 1, color: '#12345A', fontSize: 9, fontWeight: '900', letterSpacing: 0.5 },
+  internalTitle: { flex: 1, color: colors.info, fontSize: 9, fontWeight: '900', letterSpacing: 0.5 },
   paperStatus: { fontSize: 8, fontWeight: '900' },
-  reviewLabel: { color: '#687583', fontSize: 7, fontWeight: '800' },
-  reviewValue: { color: '#172A3D', fontSize: 9, fontWeight: '700', marginTop: 3 },
+  reviewLabel: { color: colors.textMuted, fontSize: 7, fontWeight: '800' },
+  reviewValue: { color: colors.text, fontSize: 9, fontWeight: '700', marginTop: 3 },
   observationLabel: { marginTop: 10 },
-  observation: { minHeight: 48, borderWidth: 1, borderColor: '#CBD3DC', marginTop: 5, padding: 8, backgroundColor: '#FFFFFF' },
-  observationText: { color: '#354454', fontSize: 8, lineHeight: 13 },
-  paperFooter: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 17, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#CBD3DC' },
-  footerText: { color: '#8793A0', fontSize: 7 },
-  actions: { width: '100%', maxWidth: 794, alignSelf: 'center', marginTop: 16, padding: 18, borderWidth: 1, borderColor: appColors.border, borderRadius: 18, backgroundColor: appColors.surface },
+  observation: { minHeight: 48, borderWidth: 1, borderColor: colors.border, marginTop: 5, padding: 8, backgroundColor: colors.surface },
+  observationText: { color: colors.textSoft, fontSize: 8, lineHeight: 13 },
+  paperFooter: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 17, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border },
+  footerText: { color: colors.textMuted, fontSize: 7 },
+  actions: { width: '100%', maxWidth: 794, alignSelf: 'center', marginTop: 16, padding: 18, borderWidth: 1, borderColor: colors.border, borderRadius: 18, backgroundColor: colors.surface },
   actionsDesktop: { width: 330, marginTop: 0, position: 'sticky', top: 14 } as any,
-  actionsEyebrow: { color: appColors.info, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
-  actionsTitle: { color: appColors.text, fontSize: 20, fontWeight: '900', marginTop: 5 },
-  actionsText: { color: appColors.textMuted, fontSize: 11, lineHeight: 17, marginTop: 5 },
-  notesInput: { minHeight: 110, marginTop: 14, marginBottom: 12, padding: 12, borderWidth: 1, borderColor: appColors.border, borderRadius: 12, backgroundColor: appColors.backgroundMuted, color: appColors.text, fontSize: 12, textAlignVertical: 'top', outlineStyle: 'none' } as any,
+  actionsEyebrow: { color: colors.info, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  actionsTitle: { color: colors.text, fontSize: 20, fontWeight: '900', marginTop: 5 },
+  actionsText: { color: colors.textMuted, fontSize: 11, lineHeight: 17, marginTop: 5 },
+  notesInput: { minHeight: 110, marginTop: 14, marginBottom: 12, padding: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.backgroundMuted, color: colors.text, fontSize: 12, textAlignVertical: 'top', outlineStyle: 'none' } as any,
   decisionButton: { minHeight: 47, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 12, marginTop: 9 },
   decisionDisabled: { opacity: 0.55 },
   decisionText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900', textAlign: 'center' },
-  errorText: { color: appColors.accent, fontSize: 10, lineHeight: 15, marginBottom: 3 },
-  successText: { color: appColors.success, fontSize: 10, lineHeight: 15, marginBottom: 3 },
+  errorText: { color: colors.accent, fontSize: 10, lineHeight: 15, marginBottom: 3 },
+  successText: { color: colors.success, fontSize: 10, lineHeight: 15, marginBottom: 3 },
   centerState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: 'transparent' },
-  stateTitle: { color: appColors.text, fontSize: 21, fontWeight: '900', textAlign: 'center', marginTop: 12 },
-  stateText: { maxWidth: 430, color: appColors.textMuted, fontSize: 12, lineHeight: 19, textAlign: 'center', marginTop: 7 },
-  stateButton: { minHeight: 45, minWidth: 170, alignItems: 'center', justifyContent: 'center', borderRadius: 12, marginTop: 18, paddingHorizontal: 16, backgroundColor: appColors.info },
-  stateButtonText: { color: appColors.background, fontWeight: '900' },
+  stateTitle: { color: colors.text, fontSize: 21, fontWeight: '900', textAlign: 'center', marginTop: 12 },
+  stateText: { maxWidth: 430, color: colors.textMuted, fontSize: 12, lineHeight: 19, textAlign: 'center', marginTop: 7 },
+  stateButton: { minHeight: 45, minWidth: 170, alignItems: 'center', justifyContent: 'center', borderRadius: 12, marginTop: 18, paddingHorizontal: 16, backgroundColor: colors.info },
+  stateButtonText: { color: colors.onAccent, fontWeight: '900' },
 });

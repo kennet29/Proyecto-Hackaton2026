@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
 import { fetchLinkedPatients as fetchLinkedPatientsList } from '../utils/linkedPatients';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PacienteForm'>;
 
@@ -31,6 +32,9 @@ type LinkedPatient = {
 };
 
 export function PacienteFormScreen({ navigation }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token } = useAuth();
   const [linkedPatients, setLinkedPatients] = useState<LinkedPatient[]>([]);
   const [loadingPatients, setLoadingPatients] = useState(false);
@@ -95,7 +99,7 @@ export function PacienteFormScreen({ navigation }: Props) {
             onPress={() => navigation.navigate('PacienteEditor')}
             accessibilityLabel="Crear paciente"
           >
-            <Ionicons name="add" size={28} color="#F4F8FF" />
+            <Ionicons name="add" size={28} color={colors.text} />
           </TouchableOpacity>
         </View>
 
@@ -110,7 +114,7 @@ export function PacienteFormScreen({ navigation }: Props) {
 
         {loadingPatients ? (
           <View style={styles.loadingCard}>
-            <ActivityIndicator size="large" color="#29B6FF" />
+            <ActivityIndicator size="large" color={colors.info} />
             <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
           </View>
         ) : null}
@@ -130,13 +134,13 @@ export function PacienteFormScreen({ navigation }: Props) {
           >
             <View style={styles.patientCardHeader}>
               <View style={styles.patientIcon}>
-                <Ionicons name="person-outline" size={22} color="#29B6FF" />
+                <Ionicons name="person-outline" size={22} color={colors.info} />
               </View>
               <View style={styles.patientMain}>
                 <AppText style={styles.patientName}>{patient.nombreCompleto}</AppText>
                 <AppText style={styles.patientId}>ID #{patient.pacienteId}</AppText>
               </View>
-              <Ionicons name="create-outline" size={22} color="#29B6FF" />
+              <Ionicons name="create-outline" size={22} color={colors.info} />
             </View>
             {patient.sexo ? <AppText style={styles.patientMeta}>Genero: {patient.sexo}</AppText> : null}
             {patient.parentesco ? <AppText style={styles.patientMeta}>Parentesco: {patient.parentesco}</AppText> : null}
@@ -148,15 +152,15 @@ export function PacienteFormScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   container: {
     padding: 24,
     paddingBottom: 36,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -167,10 +171,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   subtitle: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginTop: 4,
     maxWidth: 240,
   },
@@ -178,7 +182,7 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 18,
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -191,48 +195,48 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   linkText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
   },
   errorText: {
-    color: '#FF4D73',
+    color: colors.accent,
     marginBottom: 12,
   },
   loadingCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
-    backgroundColor: '#132238',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 18,
     alignItems: 'center',
   },
   loadingText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginTop: 10,
   },
   emptyCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
-    backgroundColor: '#132238',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 18,
   },
   emptyTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
     fontSize: 16,
     marginBottom: 4,
   },
   emptyText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   patientCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
-    backgroundColor: '#132238',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 14,
     marginBottom: 10,
@@ -246,7 +250,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 14,
-    backgroundColor: '#29B6FF18',
+    backgroundColor: `${colors.info}18`,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -257,14 +261,14 @@ const styles = StyleSheet.create({
   patientName: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   patientId: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginTop: 2,
   },
   patientMeta: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 2,
   },
 });

@@ -32,6 +32,7 @@ import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate } from '../utils/localDate';
 import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type TipoCondicion = {
   tipocondicionId: number;
@@ -133,6 +134,9 @@ export function CondicionCronicaFormScreen({
   selectedTipoCondicion,
   typedConditionName,
 }: CondicionCronicaFormScreenProps) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isCreateMode = mode === 'create';
   const { token, user } = useAuth();
@@ -753,7 +757,7 @@ export function CondicionCronicaFormScreen({
 
             {loadingPatients || loadingRecords ? (
               <View style={styles.stateBox}>
-                <ActivityIndicator color="#38E28E" />
+                <ActivityIndicator color={colors.success} />
                 <AppText style={styles.stateText}>Cargando personas y condiciones...</AppText>
               </View>
             ) : groupedPatientConditions.length === 0 ? (
@@ -812,7 +816,7 @@ export function CondicionCronicaFormScreen({
                   style={styles.picker}
                   selectedValue={form.pacienteId}
                   onValueChange={(value) => handleChange('pacienteId', String(value))}
-                  dropdownIconColor="#F4F8FF"
+                  dropdownIconColor={colors.text}
                 >
                   <Picker.Item label="Selecciona un paciente" value="" />
                   {patientOptions.map((patient) => (
@@ -861,11 +865,11 @@ export function CondicionCronicaFormScreen({
             <AppText style={styles.label}>Condicion clinica</AppText>
             <View style={styles.conditionInputCard}>
               <View style={styles.conditionInputWrapper}>
-                <Ionicons name="medical-outline" size={20} color={appColors.info} />
+                <Ionicons name="medical-outline" size={20} color={colors.info} />
                 <AppTextInput
                   style={styles.conditionInput}
                   placeholder="Escribe la condicion. Ej. Diabetes tipo 2"
-                  placeholderTextColor="#9FB3C8"
+                  placeholderTextColor={colors.textMuted}
                   value={form.condicionNombre}
                   autoCapitalize="words"
                   onChangeText={(value) =>
@@ -889,7 +893,7 @@ export function CondicionCronicaFormScreen({
                   })
                 }
               >
-                <Ionicons name="search-outline" size={18} color={appColors.text} />
+                <Ionicons name="search-outline" size={18} color={colors.text} />
                 <AppText style={styles.conditionPickerButtonText}>Buscar en lista</AppText>
               </TouchableOpacity>
               {selectedConditionName ? (
@@ -897,7 +901,7 @@ export function CondicionCronicaFormScreen({
                   <Ionicons
                     name={form.tipocondicionId ? 'checkmark-circle' : 'add-circle-outline'}
                     size={18}
-                    color={form.tipocondicionId ? appColors.success : appColors.info}
+                    color={form.tipocondicionId ? colors.success : colors.info}
                   />
                   <AppText style={styles.selectedConditionText}>
                     {form.tipocondicionId
@@ -918,7 +922,7 @@ export function CondicionCronicaFormScreen({
             </TouchableOpacity>
             {Platform.OS === 'ios' && showIOSDiagnosticoPicker ? (
               <View style={styles.iosPickerCard}>
-                <DateTimePicker
+                <DateTimePicker themeVariant={colors.mode}
                   value={parseDateForPicker(form.fechadiagnostico)}
                   mode="date"
                   display="spinner"
@@ -936,21 +940,21 @@ export function CondicionCronicaFormScreen({
             <AppTextInput
               style={styles.input}
               placeholder="Estado"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.estado}
               onChangeText={(value) => handleChange('estado', value)}
             />
             <AppTextInput
               style={styles.input}
               placeholder="Severidad"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.severidad}
               onChangeText={(value) => handleChange('severidad', value)}
             />
             <AppTextInput
               style={styles.input}
               placeholder="Tratamiento principal"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.tratamientoprincipal}
               onChangeText={(value) => handleChange('tratamientoprincipal', value)}
             />
@@ -961,7 +965,7 @@ export function CondicionCronicaFormScreen({
             </TouchableOpacity>
             {Platform.OS === 'ios' && showIOSSeguimientoPicker ? (
               <View style={styles.iosPickerCard}>
-                <DateTimePicker
+                <DateTimePicker themeVariant={colors.mode}
                   value={parseDateForPicker(form.proximoseguimiento)}
                   mode="date"
                   display="spinner"
@@ -979,7 +983,7 @@ export function CondicionCronicaFormScreen({
             <View style={styles.attachmentsCard}>
               <View style={styles.attachmentsHeader}>
                 <View style={styles.attachmentsHeaderIcon}>
-                  <Ionicons name="document-attach-outline" size={22} color={appColors.info} />
+                  <Ionicons name="document-attach-outline" size={22} color={colors.info} />
                 </View>
                 <View style={styles.attachmentsHeaderCopy}>
                   <AppText style={styles.attachmentsTitle}>Resultados y diagnósticos</AppText>
@@ -996,15 +1000,15 @@ export function CondicionCronicaFormScreen({
 
               <View style={styles.attachmentActions}>
                 <TouchableOpacity style={styles.attachmentAction} onPress={handlePickImages}>
-                  <Ionicons name="images-outline" size={19} color={appColors.info} />
+                  <Ionicons name="images-outline" size={19} color={colors.info} />
                   <AppText style={styles.attachmentActionText}>Imágenes</AppText>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.attachmentAction} onPress={handleTakePhoto}>
-                  <Ionicons name="camera-outline" size={19} color={appColors.info} />
+                  <Ionicons name="camera-outline" size={19} color={colors.info} />
                   <AppText style={styles.attachmentActionText}>Tomar foto</AppText>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.attachmentAction} onPress={handlePickPdfs}>
-                  <Ionicons name="document-text-outline" size={19} color={appColors.info} />
+                  <Ionicons name="document-text-outline" size={19} color={colors.info} />
                   <AppText style={styles.attachmentActionText}>Subir PDF</AppText>
                 </TouchableOpacity>
               </View>
@@ -1017,7 +1021,7 @@ export function CondicionCronicaFormScreen({
                       style={styles.picker}
                       selectedValue={attachmentTypeId}
                       onValueChange={(value) => setAttachmentTypeId(String(value))}
-                      dropdownIconColor={appColors.text}
+                      dropdownIconColor={colors.text}
                     >
                       <Picker.Item label="Selecciona el tipo" value="" />
                       {documentTypes.map((type) => (
@@ -1037,7 +1041,7 @@ export function CondicionCronicaFormScreen({
                           <Image source={{ uri: attachment.uri }} style={styles.attachmentThumb} />
                         ) : (
                           <View style={styles.pdfThumb}>
-                            <Ionicons name="document-text" size={25} color={appColors.accent} />
+                            <Ionicons name="document-text" size={25} color={colors.accent} />
                           </View>
                         )}
                         <View style={styles.attachmentItemCopy}>
@@ -1059,7 +1063,7 @@ export function CondicionCronicaFormScreen({
                           }
                           accessibilityLabel={`Quitar ${attachment.name}`}
                         >
-                          <Ionicons name="trash-outline" size={19} color={appColors.accent} />
+                          <Ionicons name="trash-outline" size={19} color={colors.accent} />
                         </TouchableOpacity>
                       </View>
                     ))}
@@ -1067,7 +1071,7 @@ export function CondicionCronicaFormScreen({
                 </>
               ) : (
                 <View style={styles.attachmentsEmpty}>
-                  <Ionicons name="cloud-upload-outline" size={20} color={appColors.textMuted} />
+                  <Ionicons name="cloud-upload-outline" size={20} color={colors.textMuted} />
                   <AppText style={styles.attachmentsEmptyText}>No hay archivos seleccionados</AppText>
                 </View>
               )}
@@ -1076,7 +1080,7 @@ export function CondicionCronicaFormScreen({
             <AppTextInput
               style={[styles.input, styles.multiline]}
               placeholder="Notas"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.notas}
               multiline
               onChangeText={(value) => handleChange('notas', value)}
@@ -1103,26 +1107,26 @@ export function CondicionCronicaFormScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   container: {
     padding: 24,
     paddingBottom: 110,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     gap: 16,
   },
   heroCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#1B3355',
+    borderColor: colors.borderStrong,
   },
   kicker: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.2,
@@ -1131,56 +1135,56 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   subtitle: {
     marginTop: 8,
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 20,
   },
   filterCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   formCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   formTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
     marginBottom: 12,
   },
   label: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#F4F8FF',
+    color: colors.text,
     marginBottom: 8,
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   picker: {
-    color: '#F4F8FF',
+    color: colors.text,
   },
   conditionInputCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     marginBottom: 12,
     gap: 10,
   },
@@ -1190,14 +1194,14 @@ const styles = StyleSheet.create({
     gap: 10,
     borderRadius: 14,
     paddingHorizontal: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#1B3355',
+    borderColor: colors.borderStrong,
   },
   conditionInput: {
     flex: 1,
     minHeight: 54,
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 16,
   },
   conditionPickerButton: {
@@ -1207,10 +1211,10 @@ const styles = StyleSheet.create({
     gap: 8,
     borderRadius: 14,
     paddingVertical: 13,
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
   },
   conditionPickerButtonText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontWeight: '800',
   },
   selectedConditionCard: {
@@ -1219,39 +1223,39 @@ const styles = StyleSheet.create({
     gap: 8,
     borderRadius: 14,
     padding: 12,
-    backgroundColor: colorAlpha(appColors.info, '14'),
+    backgroundColor: colorAlpha(colors.info, '14'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '40'),
+    borderColor: colorAlpha(colors.info, '40'),
   },
   selectedConditionText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     flex: 1,
     fontWeight: '700',
   },
   fieldHint: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     lineHeight: 18,
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 12,
     marginBottom: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   dateButtonText: {
-    color: '#F4F8FF',
+    color: colors.text,
     textAlign: 'center',
     fontSize: 15,
   },
   iosPickerCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     marginBottom: 12,
   },
   secondaryBtn: {
@@ -1260,27 +1264,27 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   secondaryBtnText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 14,
     marginBottom: 12,
     fontSize: 15,
-    backgroundColor: '#071120',
-    color: '#F4F8FF',
+    backgroundColor: colors.background,
+    color: colors.text,
   },
   attachmentsCard: {
     gap: 12,
     padding: 14,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '45'),
+    borderColor: colorAlpha(colors.info, '45'),
     borderRadius: 18,
-    backgroundColor: colorAlpha(appColors.info, '0A'),
+    backgroundColor: colorAlpha(colors.info, '0A'),
   },
   attachmentsHeader: {
     flexDirection: 'row',
@@ -1293,18 +1297,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 13,
-    backgroundColor: colorAlpha(appColors.info, '16'),
+    backgroundColor: colorAlpha(colors.info, '16'),
   },
   attachmentsHeaderCopy: {
     flex: 1,
   },
   attachmentsTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 16,
     fontWeight: '900',
   },
   attachmentsHint: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     marginTop: 2,
     lineHeight: 17,
   },
@@ -1315,10 +1319,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
-    backgroundColor: appColors.info,
+    backgroundColor: colors.info,
   },
   attachmentsCountText: {
-    color: appColors.background,
+    color: colors.onAccent,
     fontWeight: '900',
   },
   attachmentActions: {
@@ -1336,26 +1340,26 @@ const styles = StyleSheet.create({
     gap: 7,
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '55'),
+    borderColor: colorAlpha(colors.info, '55'),
     borderRadius: 13,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
   },
   attachmentActionText: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 13,
     fontWeight: '800',
   },
   attachmentTypeLabel: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     fontWeight: '800',
   },
   attachmentTypePicker: {
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 13,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
   },
   attachmentsList: {
     gap: 8,
@@ -1366,15 +1370,15 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 10,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '40'),
+    borderColor: colorAlpha(colors.success, '40'),
     borderRadius: 14,
-    backgroundColor: colorAlpha(appColors.success, '0C'),
+    backgroundColor: colorAlpha(colors.success, '0C'),
   },
   attachmentThumb: {
     width: 52,
     height: 52,
     borderRadius: 10,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
   },
   pdfThumb: {
     width: 52,
@@ -1382,18 +1386,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 10,
-    backgroundColor: colorAlpha(appColors.accent, '14'),
+    backgroundColor: colorAlpha(colors.accent, '14'),
   },
   attachmentItemCopy: {
     flex: 1,
     minWidth: 0,
   },
   attachmentName: {
-    color: appColors.text,
+    color: colors.text,
     fontWeight: '800',
   },
   attachmentMeta: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     marginTop: 3,
   },
@@ -1403,7 +1407,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 11,
-    backgroundColor: colorAlpha(appColors.accent, '10'),
+    backgroundColor: colorAlpha(colors.accent, '10'),
   },
   attachmentsEmpty: {
     minHeight: 52,
@@ -1413,12 +1417,12 @@ const styles = StyleSheet.create({
     gap: 8,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 13,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
   },
   attachmentsEmptyText: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontWeight: '700',
   },
   multiline: {
@@ -1435,22 +1439,22 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#9FB3C8',
-    backgroundColor: '#071120',
+    borderColor: colors.textMuted,
+    backgroundColor: colors.background,
   },
   cancelBtnText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontWeight: '700',
   },
   primaryBtn: {
     flex: 1,
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontWeight: '800',
     fontSize: 16,
   },
@@ -1460,40 +1464,40 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   sectionSubtitle: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginTop: 2,
   },
   emptyText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 12,
   },
   stateBox: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 18,
     alignItems: 'center',
     gap: 8,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   stateTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
     fontSize: 16,
   },
   stateText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     textAlign: 'center',
   },
   personCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     gap: 12,
   },
   personHeader: {
@@ -1503,12 +1507,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   personName: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
     fontSize: 17,
   },
   personMeta: {
-    color: '#29B6FF',
+    color: colors.info,
     marginTop: 2,
   },
   countBadge: {
@@ -1516,21 +1520,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     alignItems: 'center',
   },
   countBadgeText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
     fontSize: 12,
   },
   emptyInlineText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   conditionRow: {
     borderRadius: 14,
     padding: 14,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     gap: 4,
   },
   conditionHeader: {
@@ -1540,33 +1544,33 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   conditionName: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '700',
     flex: 1,
   },
   conditionState: {
-    color: '#38E28E',
+    color: colors.success,
     fontWeight: '700',
   },
   conditionText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 13,
   },
   card: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   cardTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
     fontSize: 16,
     marginBottom: 8,
   },
   cardText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 4,
   },
   fab: {
@@ -1576,7 +1580,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
@@ -1586,7 +1590,7 @@ const styles = StyleSheet.create({
     elevation: 7,
   },
   fabText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontSize: 30,
     lineHeight: 32,
     fontWeight: '700',

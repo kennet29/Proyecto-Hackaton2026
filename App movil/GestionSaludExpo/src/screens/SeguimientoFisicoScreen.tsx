@@ -26,6 +26,7 @@ import { API_URL } from '../config/api';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { RootStackParamList } from '../navigation/types';
 import { toLocalDateOnlyString } from '../utils/localDate';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type SeguimientoRecord = {
   seguimientoFisicoId: number;
@@ -302,8 +303,11 @@ const getAchievementCategoryColor = (value: AchievementCategory) => {
 };
 
 export function SeguimientoFisicoScreen({ navigation }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token } = useAuth();
-  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
+  const pickerItemColor = Platform.OS === 'android' ? colors.background : colors.text;
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(today());
@@ -455,11 +459,11 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
     (historial?.registros ?? []).forEach((record) => {
       const existing = marks[record.fecha] ?? {};
       const existingRank = getIntensityRank(
-        existing.dotColor === '#FF4D73'
+        existing.dotColor === colors.accent
           ? 'intensa'
           : existing.dotColor === '#F9A826'
             ? 'moderada'
-            : existing.dotColor === '#38E28E'
+            : existing.dotColor === colors.success
               ? 'leve'
               : null,
       );
@@ -467,21 +471,21 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
       marks[record.fecha] = {
         ...existing,
         marked: true,
-        dotColor: currentRank >= existingRank ? getIntensityColor(record.intensidad) : existing.dotColor ?? '#29B6FF',
+        dotColor: currentRank >= existingRank ? getIntensityColor(record.intensidad) : existing.dotColor ?? colors.info,
       };
     });
     if (selectedCalendarDate) {
       marks[selectedCalendarDate] = {
         ...(marks[selectedCalendarDate] ?? {}),
         selected: true,
-        selectedColor: '#29B6FF',
-        selectedTextColor: '#F4F8FF',
+        selectedColor: colors.info,
+        selectedTextColor: colors.onAccent,
         marked: marks[selectedCalendarDate]?.marked ?? false,
-        dotColor: marks[selectedCalendarDate]?.dotColor ?? '#29B6FF',
+        dotColor: marks[selectedCalendarDate]?.dotColor ?? colors.info,
       };
     }
     return marks;
-  }, [historial?.registros, selectedCalendarDate]);
+  }, [historial?.registros, selectedCalendarDate, colors]);
 
   const selectedDayRecord = useMemo(() => {
     return (historial?.registros ?? []).find((item) => item.fecha === selectedCalendarDate) ?? null;
@@ -659,13 +663,13 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => loadData(selectedPatientId, true)}
-            tintColor="#F4F8FF"
+            tintColor={colors.text}
           />
         }
       >
         <View style={styles.hero}>
           <View style={styles.heroIcon}>
-            <Ionicons name="fitness-outline" size={26} color="#29B6FF" />
+            <Ionicons name="fitness-outline" size={26} color={colors.info} />
           </View>
           <View style={styles.heroCopy}>
             <AppText style={styles.heroEyebrow}>BIENESTAR Y ACTIVIDAD</AppText>
@@ -682,20 +686,20 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
               })
             }
           >
-            <Ionicons name="add" size={20} color="#071120" />
+            <Ionicons name="add" size={20} color={colors.onAccent} />
             <AppText style={styles.heroAddButtonText}>Nuevo registro</AppText>
           </TouchableOpacity>
         </View>
 
         <View style={styles.patientSelectorCard}>
           <View style={styles.patientSelectorIcon}>
-            <Ionicons name="person-outline" size={20} color="#29B6FF" />
+            <Ionicons name="person-outline" size={20} color={colors.info} />
           </View>
           <View style={styles.patientSelectorCopy}>
             <AppText style={styles.fieldEyebrow}>PACIENTE</AppText>
           {loadingPatients ? (
             <View style={styles.loadingBox}>
-              <ActivityIndicator color="#29B6FF" />
+              <ActivityIndicator color={colors.info} />
               <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
             </View>
           ) : patients.length === 0 ? (
@@ -738,7 +742,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
           </View>
           {loadingData ? (
             <View style={styles.loadingBox}>
-              <ActivityIndicator color="#29B6FF" />
+              <ActivityIndicator color={colors.info} />
               <AppText style={styles.loadingText}>Cargando resumen...</AppText>
             </View>
           ) : (
@@ -748,7 +752,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                   icon="scale-outline"
                   label="Peso actual"
                   value={formatNumber(resumen?.peso?.actual, ' kg')}
-                  color="#29B6FF"
+                  color={colors.info}
                 />
                 <SummaryMetric
                   icon="swap-vertical-outline"
@@ -760,7 +764,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                   icon="timer-outline"
                   label="Ejercicio"
                   value={formatNumber(resumen?.ejercicio?.minutosTotales, ' min')}
-                  color="#38E28E"
+                  color={colors.success}
                 />
                 <SummaryMetric
                   icon="footsteps-outline"
@@ -772,7 +776,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                   icon="flame-outline"
                   label="Calorías"
                   value={formatNumber(resumen?.ejercicio?.caloriasTotales)}
-                  color="#FF4D73"
+                  color={colors.accent}
                 />
                 <SummaryMetric
                   icon="flag-outline"
@@ -802,19 +806,19 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
           </View>
 
           <View style={styles.calendarPanel}>
-            <Calendar
+            <Calendar key={colors.mode}
               markedDates={markedDates}
               onDayPress={handleCalendarDayPress}
               initialDate={selectedCalendarDate}
               enableSwipeMonths
               firstDay={1}
               theme={{
-                calendarBackground: '#F4F8FF',
-                todayTextColor: '#29B6FF',
-                arrowColor: '#29B6FF',
-                selectedDayBackgroundColor: '#29B6FF',
-                selectedDayTextColor: '#F4F8FF',
-                monthTextColor: '#071120',
+                calendarBackground: colors.surface, dayTextColor: colors.text,
+                todayTextColor: colors.info,
+                arrowColor: colors.info,
+                selectedDayBackgroundColor: colors.info,
+                selectedDayTextColor: colors.onAccent,
+                monthTextColor: colors.text,
                 textDayFontFamily: 'SpaceGrotesk_400Regular',
                 textMonthFontFamily: 'Nunito_700Bold',
                 textDayHeaderFontFamily: 'SpaceGrotesk_600SemiBold',
@@ -825,7 +829,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
 
           <View style={styles.calendarLegend}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#38E28E' }]} />
+              <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
               <AppText style={styles.legendText}>Leve</AppText>
             </View>
             <View style={styles.legendItem}>
@@ -833,7 +837,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
               <AppText style={styles.legendText}>Moderada</AppText>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#FF4D73' }]} />
+              <View style={[styles.legendDot, { backgroundColor: colors.accent }]} />
               <AppText style={styles.legendText}>Intensa</AppText>
             </View>
           </View>
@@ -915,7 +919,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
               <Ionicons
                 name={showDemoData ? 'server-outline' : 'flask-outline'}
                 size={16}
-                color={showDemoData ? '#071120' : '#F9A826'}
+                color={showDemoData ? colors.background : '#F9A826'}
               />
               <AppText style={[styles.demoButtonText, showDemoData && styles.demoButtonTextActive]}>
                 {showDemoData ? 'Datos reales' : 'Ver demo'}
@@ -957,11 +961,11 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
               <AppText style={styles.trendTitle}>Peso y calorías por fecha</AppText>
               <View style={styles.combinedLegendRow}>
                 <View style={styles.combinedLegendItem}>
-                  <View style={[styles.combinedLegendSwatch, { backgroundColor: '#29B6FF' }]} />
+                  <View style={[styles.combinedLegendSwatch, { backgroundColor: colors.info }]} />
                   <AppText style={styles.combinedLegendText}>Peso</AppText>
                 </View>
                 <View style={styles.combinedLegendItem}>
-                  <View style={[styles.combinedLegendSwatch, { backgroundColor: '#FF4D73' }]} />
+                  <View style={[styles.combinedLegendSwatch, { backgroundColor: colors.accent }]} />
                   <AppText style={styles.combinedLegendText}>Calorias</AppText>
                 </View>
               </View>
@@ -1103,7 +1107,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
               <Ionicons
                 name={showPesoProgress ? 'chevron-up' : 'chevron-down'}
                 size={17}
-                color="#29B6FF"
+                color={colors.info}
               />
             </View>
           </TouchableOpacity>
@@ -1137,7 +1141,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
               <Ionicons
                 name={showHistorialReciente ? 'chevron-up' : 'chevron-down'}
                 size={17}
-                color="#29B6FF"
+                color={colors.info}
               />
             </View>
           </TouchableOpacity>
@@ -1180,7 +1184,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
           <AppText style={styles.sectionTitle}>Logros</AppText>
           {loadingData ? (
             <View style={styles.loadingBox}>
-              <ActivityIndicator color="#29B6FF" />
+              <ActivityIndicator color={colors.info} />
               <AppText style={styles.loadingText}>Cargando logros...</AppText>
             </View>
           ) : logros?.logros?.length ? (
@@ -1276,7 +1280,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
           })
         }
       >
-        <Ionicons name="add" size={25} color="#071120" />
+        <Ionicons name="add" size={25} color={colors.onAccent} />
       </TouchableOpacity>
     </View>
   );
@@ -1293,6 +1297,9 @@ function SummaryMetric({
   value: string;
   color: string;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.summaryMetric}>
       <View style={[styles.summaryMetricIcon, { backgroundColor: `${color}18` }]}>
@@ -1305,6 +1312,9 @@ function SummaryMetric({
 }
 
 function AchievementStat({ label, value }: { label: string; value: string }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.achievementStat}>
       <AppText style={styles.achievementStatValue}>{value}</AppText>
@@ -1313,26 +1323,26 @@ function AchievementStat({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   container: {
     padding: 20,
     paddingBottom: 110,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     gap: 16,
     width: '100%',
     maxWidth: 1180,
     alignSelf: 'center',
   },
   hero: {
-    backgroundColor: '#182A44',
+    backgroundColor: colors.surfaceStrong,
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
@@ -1342,9 +1352,9 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 17,
-    backgroundColor: '#29B6FF18',
+    backgroundColor: `${colors.info}18`,
     borderWidth: 1,
-    borderColor: '#29B6FF55',
+    borderColor: `${colors.info}55`,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1353,20 +1363,20 @@ const styles = StyleSheet.create({
     minWidth: 220,
   },
   heroEyebrow: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 1.4,
     marginBottom: 2,
   },
   heroTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 24,
     lineHeight: 29,
     fontWeight: '900',
   },
   heroText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 3,
@@ -1377,22 +1387,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 7,
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
     borderRadius: 14,
     paddingHorizontal: 15,
     paddingVertical: 11,
   },
   heroAddButtonText: {
-    color: '#071120',
+    color: colors.onAccent,
     fontSize: 12,
     fontWeight: '900',
   },
   patientSelectorCard: {
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -1401,7 +1411,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 14,
-    backgroundColor: '#29B6FF18',
+    backgroundColor: `${colors.info}18`,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1410,7 +1420,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   fieldEyebrow: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 9,
     fontWeight: '900',
     letterSpacing: 1,
@@ -1423,41 +1433,41 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   calendarSubtitle: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 6,
   },
   calendarPill: {
-    backgroundColor: '#29B6FF18',
+    backgroundColor: `${colors.info}18`,
     borderWidth: 1,
-    borderColor: '#29B6FF',
+    borderColor: colors.info,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   calendarPillText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 12,
     fontWeight: '700',
   },
   calendarPanel: {
-    backgroundColor: '#F4F8FF',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 10,
     borderWidth: 1,
-    borderColor: '#C9D7E8',
+    borderColor: colors.textSoft,
   },
   calendar: {
     borderRadius: 16,
   },
   card: {
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 16,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   cardHeading: {
     flexDirection: 'row',
@@ -1466,12 +1476,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sectionTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '900',
   },
   sectionSubtitle: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 3,
@@ -1479,21 +1489,21 @@ const styles = StyleSheet.create({
   recordCountBadge: {
     minWidth: 64,
     borderRadius: 14,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     paddingHorizontal: 10,
     paddingVertical: 7,
     alignItems: 'center',
   },
   recordCountValue: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 17,
     lineHeight: 20,
     fontWeight: '900',
   },
   recordCountLabel: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1508,10 +1518,10 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     flexBasis: 145,
     minHeight: 115,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#1B3355',
+    borderColor: colors.borderStrong,
     padding: 13,
   },
   summaryMetricIcon: {
@@ -1523,19 +1533,19 @@ const styles = StyleSheet.create({
     marginBottom: 9,
   },
   summaryMetricValue: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 20,
     lineHeight: 24,
     fontWeight: '900',
   },
   summaryMetricLabel: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 11,
     lineHeight: 15,
     marginTop: 2,
   },
   subsectionTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 14,
     fontWeight: '700',
     marginTop: 4,
@@ -1550,20 +1560,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#29B6FF12',
+    backgroundColor: `${colors.info}12`,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 7,
     borderWidth: 1,
-    borderColor: '#29B6FF45',
+    borderColor: `${colors.info}45`,
   },
   collapsibleActionText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 11,
     fontWeight: '800',
   },
   collapsedHint: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -1571,18 +1581,18 @@ const styles = StyleSheet.create({
     minHeight: 48,
     borderRadius: 13,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#1B3355',
+    borderColor: colors.borderStrong,
     justifyContent: 'center',
   },
   input: {
-    backgroundColor: '#F4F8FF',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#071120',
+    color: colors.text,
   },
   textArea: {
     minHeight: 92,
@@ -1600,18 +1610,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fieldLabel: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 13,
     fontWeight: '700',
   },
   primaryBtn: {
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -1623,19 +1633,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginTop: 8,
   },
   emptyText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 20,
   },
   errorText: {
-    color: '#FF4D73',
+    color: colors.accent,
     lineHeight: 20,
   },
   metricText: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 14,
   },
   achievementGrid: {
@@ -1652,20 +1662,20 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexShrink: 1,
     flexBasis: 130,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     padding: 12,
   },
   achievementStatValue: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 17,
     lineHeight: 21,
     fontWeight: '900',
   },
   achievementStatLabel: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 10,
     marginTop: 3,
     textTransform: 'uppercase',
@@ -1673,7 +1683,7 @@ const styles = StyleSheet.create({
   },
   achievementBadge: {
     minWidth: '48%',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 14,
     borderWidth: 1,
     paddingHorizontal: 12,
@@ -1687,20 +1697,20 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   achievementTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 14,
     fontWeight: '700',
   },
   achievementDescription: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 12,
     lineHeight: 18,
   },
   achievementProgressCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     padding: 12,
     gap: 8,
   },
@@ -1715,14 +1725,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   achievementProgressText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '600',
   },
   achievementProgressTrack: {
     height: 8,
     borderRadius: 999,
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     overflow: 'hidden',
   },
   achievementProgressFill: {
@@ -1734,12 +1744,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   sectionDividerTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 16,
     fontWeight: '800',
   },
   sectionDividerText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -1753,7 +1763,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   chartSubtitle: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 6,
@@ -1778,7 +1788,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   demoButtonTextActive: {
-    color: '#071120',
+    color: colors.onAccent,
   },
   demoNotice: {
     flexDirection: 'row',
@@ -1792,7 +1802,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   demoNoticeText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 11,
     lineHeight: 16,
     flex: 1,
@@ -1806,26 +1816,26 @@ const styles = StyleSheet.create({
   },
   trendRangeChip: {
     borderWidth: 1,
-    borderColor: '#27496D',
-    backgroundColor: '#071120',
+    borderColor: colors.border,
+    backgroundColor: colors.background,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
   },
   trendRangeChipActive: {
-    backgroundColor: '#29B6FF',
-    borderColor: '#29B6FF',
+    backgroundColor: colors.info,
+    borderColor: colors.info,
   },
   trendRangeChipText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '700',
   },
   trendRangeChipTextActive: {
-    color: '#071120',
+    color: colors.onAccent,
   },
   trendSummaryText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 12,
     marginBottom: 12,
   },
@@ -1833,11 +1843,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'stretch',
     gap: 10,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 16,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   barChartYAxis: {
     width: 50,
@@ -1850,7 +1860,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   barChartAxisLabel: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -1869,7 +1879,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1,
-    backgroundColor: '#27496D',
+    backgroundColor: colors.border,
   },
   barChartGridTop: {
     top: 18,
@@ -1887,10 +1897,10 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   lineChartWeightSegment: {
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
   },
   lineChartCaloriesSegment: {
-    backgroundColor: '#FF4D73',
+    backgroundColor: colors.accent,
   },
   lineChartPoint: {
     position: 'absolute',
@@ -1898,21 +1908,21 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 999,
     borderWidth: 2,
-    borderColor: '#F4F8FF',
+    borderColor: colors.text,
     zIndex: 3,
   },
   lineChartWeightPoint: {
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
   },
   lineChartCaloriesPoint: {
-    backgroundColor: '#FF4D73',
+    backgroundColor: colors.accent,
   },
   lineChartEmptyPoint: {
     position: 'absolute',
     width: 10,
     height: 10,
     borderRadius: 999,
-    backgroundColor: '#9FB3C8',
+    backgroundColor: colors.textMuted,
     zIndex: 2,
   },
   lineChartValueLabel: {
@@ -1924,15 +1934,15 @@ const styles = StyleSheet.create({
     zIndex: 4,
   },
   lineChartWeightLabel: {
-    color: '#29B6FF',
+    color: colors.info,
   },
   lineChartCaloriesLabel: {
-    color: '#FF4D73',
+    color: colors.accent,
   },
   lineChartDateLabel: {
     position: 'absolute',
     width: 48,
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 11,
     fontWeight: '600',
     textAlign: 'center',
@@ -1946,9 +1956,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 7,
@@ -1959,17 +1969,17 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   legendText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '600',
   },
   dayDetailBox: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 14,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   dayDetailHeader: {
     flexDirection: 'row',
@@ -1978,7 +1988,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   dayDetailEyebrow: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -1986,7 +1996,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   dayDetailTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 16,
     fontWeight: '800',
   },
@@ -1998,7 +2008,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dayIntensityBadgeText: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -2008,36 +2018,36 @@ const styles = StyleSheet.create({
   },
   dayDetailMetricCard: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     paddingHorizontal: 12,
     paddingVertical: 10,
     gap: 4,
   },
   dayDetailMetricLabel: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '700',
   },
   dayDetailMetricValue: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '800',
   },
   calendarEmptyBox: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     padding: 14,
   },
   trendBlock: {
     gap: 10,
   },
   trendTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -2057,19 +2067,19 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   combinedLegendText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '700',
   },
   trendChart: {
     position: 'relative',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 16,
     paddingTop: 14,
     paddingBottom: 12,
     minHeight: 188,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   trendBaseline: {
     position: 'absolute',
@@ -2077,7 +2087,7 @@ const styles = StyleSheet.create({
     right: 10,
     bottom: 52,
     height: 1,
-    backgroundColor: '#27496D',
+    backgroundColor: colors.border,
   },
   trendPlotArea: {
     position: 'relative',
@@ -2090,13 +2100,13 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#F4F8FF',
+    borderColor: colors.text,
     marginLeft: -6,
     marginBottom: -6,
     zIndex: 3,
   },
   trendCaloriesPoint: {
-    backgroundColor: '#FF4D73',
+    backgroundColor: colors.accent,
   },
   trendLine: {
     position: 'absolute',
@@ -2108,7 +2118,7 @@ const styles = StyleSheet.create({
   },
   trendPointValue: {
     position: 'absolute',
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 11,
     fontWeight: '700',
     textAlign: 'center',
@@ -2117,7 +2127,7 @@ const styles = StyleSheet.create({
   },
   trendDateTick: {
     position: 'absolute',
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 11,
     fontWeight: '600',
     bottom: 0,
@@ -2130,18 +2140,18 @@ const styles = StyleSheet.create({
   },
   listItem: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 16,
     padding: 14,
     gap: 4,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   itemTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '700',
   },
   itemText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   fab: {
     position: 'absolute',
@@ -2150,7 +2160,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',

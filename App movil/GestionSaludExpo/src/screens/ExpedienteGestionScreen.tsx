@@ -22,6 +22,7 @@ import {
   fetchLinkedPatients as fetchLinkedPatientsList,
   invalidateLinkedPatientsCache,
 } from '../utils/linkedPatients';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ExpedienteGestion'>;
 
@@ -77,6 +78,9 @@ const toApiBirthDate = (value: string): string | null => {
 };
 
 const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   if (!feedback) return null;
   const isSuccess = feedback.type === 'success';
   return (
@@ -84,7 +88,7 @@ const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => 
       <Ionicons
         name={isSuccess ? 'checkmark-circle-outline' : 'alert-circle-outline'}
         size={18}
-        color={isSuccess ? '#38E28E' : '#FF4D73'}
+        color={isSuccess ? colors.success : colors.accent}
       />
       <AppText style={styles.feedbackText}>{feedback.message}</AppText>
     </View>
@@ -92,6 +96,9 @@ const FeedbackBanner: React.FC<{ feedback: FeedbackState }> = ({ feedback }) => 
 };
 
 export function ExpedienteGestionScreen({ navigation }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { user, token } = useAuth();
   const [linkedPatients, setLinkedPatients] = useState<LinkedPerson[]>([]);
   const [loadingPatients, setLoadingPatients] = useState(true);
@@ -282,7 +289,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
       <View style={styles.heroCard}>
         <View style={styles.heroHeading}>
           <View style={styles.heroIcon}>
-            <Ionicons name="people-outline" size={25} color={appColors.info} />
+            <Ionicons name="people-outline" size={25} color={colors.info} />
           </View>
           <View style={styles.heroCopy}>
             <AppText style={styles.heroEyebrow}>EXPEDIENTE FAMILIAR</AppText>
@@ -310,7 +317,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
             <Ionicons
               name={showPersonForm ? 'close-outline' : 'person-add-outline'}
               size={19}
-              color={showPersonForm ? appColors.text : appColors.background}
+              color={showPersonForm ? colors.text : colors.background}
             />
             <AppText
               style={[
@@ -325,7 +332,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
             style={styles.shareHistoryBtn}
             onPress={() => navigation.navigate('CompartirHistorial')}
           >
-            <Ionicons name="share-social-outline" size={19} color={appColors.info} />
+            <Ionicons name="share-social-outline" size={19} color={colors.info} />
             <AppText style={styles.shareHistoryText}>Compartir expediente</AppText>
           </TouchableOpacity>
         </View>
@@ -345,13 +352,13 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
 
         {loadingPatients ? (
           <View style={styles.stateCard}>
-            <ActivityIndicator color="#29B6FF" />
+            <ActivityIndicator color={colors.info} />
             <AppText style={styles.stateTitle}>Cargando personas</AppText>
             <AppText style={styles.stateText}>Estamos consultando tus vinculos registrados.</AppText>
           </View>
         ) : linkedPatients.length === 0 ? (
           <View style={styles.stateCard}>
-            <Ionicons name="people-outline" size={28} color="#29B6FF" />
+            <Ionicons name="people-outline" size={28} color={colors.info} />
             <AppText style={styles.stateTitle}>Aun no tienes personas vinculadas</AppText>
             <AppText style={styles.stateText}>
               Crea la primera persona para comenzar a llenar el expediente familiar o personal.
@@ -376,18 +383,18 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                     </View>
                     <View style={styles.personDetails}>
                       <View style={styles.personDetail}>
-                        <Ionicons name="finger-print-outline" size={14} color={appColors.textMuted} />
+                        <Ionicons name="finger-print-outline" size={14} color={colors.textMuted} />
                         <AppText style={styles.personMeta}>ID #{person.pacienteId}</AppText>
                       </View>
                       {person.parentesco ? (
                         <View style={styles.personDetail}>
-                          <Ionicons name="people-outline" size={14} color={appColors.textMuted} />
+                          <Ionicons name="people-outline" size={14} color={colors.textMuted} />
                           <AppText style={styles.personMeta}>{person.parentesco}</AppText>
                         </View>
                       ) : null}
                       {person.contacto ? (
                         <View style={styles.personDetail}>
-                          <Ionicons name="call-outline" size={14} color={appColors.textMuted} />
+                          <Ionicons name="call-outline" size={14} color={colors.textMuted} />
                           <AppText style={styles.personContact}>{person.contacto}</AppText>
                         </View>
                       ) : null}
@@ -405,7 +412,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                       })
                     }
                   >
-                    <Ionicons name="pulse-outline" size={17} color={appColors.background} />
+                    <Ionicons name="pulse-outline" size={17} color={colors.onAccent} />
                     <AppText style={styles.personActionPrimaryText}>Ver resumen</AppText>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -415,7 +422,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                       navigation.navigate('PacienteEditor', { pacienteId: person.pacienteId })
                     }
                   >
-                    <Ionicons name="create-outline" size={17} color={appColors.info} />
+                    <Ionicons name="create-outline" size={17} color={colors.info} />
                     <AppText style={styles.personActionText}>Editar</AppText>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -428,7 +435,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                       })
                     }
                   >
-                    <Ionicons name="share-social-outline" size={18} color={appColors.success} />
+                    <Ionicons name="share-social-outline" size={18} color={colors.success} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -447,14 +454,14 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               <AppTextInput
                 style={styles.input}
                 placeholder="Nombres"
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 value={personForm.nombres}
                 onChangeText={(text) => handlePersonInput('nombres', text)}
               />
               <AppTextInput
                 style={styles.input}
                 placeholder="Apellidos"
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 value={personForm.apellidos}
                 onChangeText={(text) => handlePersonInput('apellidos', text)}
               />
@@ -490,7 +497,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               <AppTextInput
                 style={styles.input}
                 placeholder="Fecha de nacimiento (dd/mm/aaaa)"
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 keyboardType="numbers-and-punctuation"
                 autoCapitalize="none"
                 value={personForm.fechanacimiento}
@@ -499,7 +506,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               <AppTextInput
                 style={styles.input}
                 placeholder="Telefono"
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 keyboardType="phone-pad"
                 value={personForm.telefono}
                 onChangeText={(text) => handlePersonInput('telefono', text)}
@@ -507,7 +514,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               <AppTextInput
                 style={styles.input}
                 placeholder="Correo electronico"
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={personForm.email}
@@ -516,14 +523,14 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               <AppTextInput
                 style={styles.input}
                 placeholder="Parentesco o rol"
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 value={personForm.parentesco}
                 onChangeText={(text) => handlePersonInput('parentesco', text)}
               />
               <AppTextInput
                 style={[styles.input, styles.multilineInput]}
                 placeholder="Notas"
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 multiline
                 textAlignVertical="top"
                 value={personForm.notas}
@@ -543,7 +550,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                 <Ionicons
                   name={personForm.esPrincipal ? 'star' : 'star-outline'}
                   size={22}
-                  color={personForm.esPrincipal ? appColors.background : appColors.accent}
+                  color={personForm.esPrincipal ? colors.background : colors.accent}
                 />
               </View>
               <View style={styles.principalButtonCopy}>
@@ -561,7 +568,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                 <Ionicons
                   name={personForm.esPrincipal ? 'checkmark' : 'add'}
                   size={16}
-                  color={personForm.esPrincipal ? appColors.background : appColors.textSoft}
+                  color={personForm.esPrincipal ? colors.background : colors.textSoft}
                 />
               </View>
             </TouchableOpacity>
@@ -572,10 +579,10 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
               disabled={submittingPerson}
             >
               {submittingPerson ? (
-                <ActivityIndicator color="#071120" />
+                <ActivityIndicator color={colors.onAccent} />
               ) : (
                 <>
-                  <Ionicons name="save-outline" size={18} color="#071120" />
+                  <Ionicons name="save-outline" size={18} color={colors.onAccent} />
                   <AppText style={styles.submitBtnText}>Guardar persona</AppText>
                 </>
               )}
@@ -587,7 +594,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -601,11 +608,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   heroCard: {
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: colors.surfaceStrong,
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: appColors.borderStrong,
+    borderColor: colors.borderStrong,
     gap: 18,
   },
   heroHeading: {
@@ -616,9 +623,9 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 17,
-    backgroundColor: colorAlpha(appColors.info, '18'),
+    backgroundColor: colorAlpha(colors.info, '18'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '45'),
+    borderColor: colorAlpha(colors.info, '45'),
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 13,
@@ -628,20 +635,20 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   heroEyebrow: {
-    color: appColors.info,
+    color: colors.info,
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 1.4,
     marginBottom: 2,
   },
   heroTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 24,
     fontWeight: '900',
     lineHeight: 29,
   },
   heroSubtitle: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 3,
@@ -650,22 +657,22 @@ const styles = StyleSheet.create({
     minWidth: 74,
     minHeight: 56,
     borderRadius: 17,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,
     paddingHorizontal: 10,
   },
   totalValue: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 20,
     lineHeight: 23,
     fontWeight: '900',
   },
   totalLabel: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 9,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
@@ -676,11 +683,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   panelCard: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     padding: 18,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     gap: 14,
   },
   panelHeaderRow: {
@@ -690,12 +697,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   panelTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 20,
     fontWeight: '800',
   },
   panelHelper: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     lineHeight: 19,
   },
@@ -706,23 +713,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: appColors.success,
+    backgroundColor: colors.success,
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   primaryActionBtnSecondary: {
-    backgroundColor: colorAlpha(appColors.text, '10'),
+    backgroundColor: colorAlpha(colors.text, '10'),
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   primaryActionText: {
-    color: appColors.background,
+    color: colors.onAccent,
     fontWeight: '800',
     fontSize: 13,
   },
   primaryActionTextSecondary: {
-    color: appColors.text,
+    color: colors.text,
   },
   shareHistoryBtn: {
     flex: 1,
@@ -731,15 +738,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: colorAlpha(appColors.info, '12'),
+    backgroundColor: colorAlpha(colors.info, '12'),
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '55'),
+    borderColor: colorAlpha(colors.info, '55'),
   },
   shareHistoryText: {
-    color: appColors.info,
+    color: colors.info,
     fontWeight: '800',
     fontSize: 13,
   },
@@ -751,39 +758,39 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   feedbackSuccess: {
-    backgroundColor: colorAlpha(appColors.success, '14'),
+    backgroundColor: colorAlpha(colors.success, '14'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '55'),
+    borderColor: colorAlpha(colors.success, '55'),
   },
   feedbackError: {
-    backgroundColor: colorAlpha(appColors.accent, '14'),
+    backgroundColor: colorAlpha(colors.accent, '14'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.accent, '55'),
+    borderColor: colorAlpha(colors.accent, '55'),
   },
   feedbackText: {
     flex: 1,
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '600',
   },
   stateCard: {
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderRadius: 18,
     padding: 20,
     alignItems: 'center',
     gap: 8,
     borderWidth: 1,
-    borderColor: appColors.borderStrong,
+    borderColor: colors.borderStrong,
   },
   stateTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 16,
     fontWeight: '800',
     textAlign: 'center',
   },
   stateText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     lineHeight: 19,
     textAlign: 'center',
@@ -799,11 +806,11 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     flexBasis: 360,
     maxWidth: 560,
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: colors.surfaceStrong,
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: appColors.borderStrong,
+    borderColor: colors.borderStrong,
     gap: 12,
   },
   personMainRow: {
@@ -816,10 +823,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: appColors.info,
+    backgroundColor: colors.info,
   },
   personAvatarText: {
-    color: appColors.background,
+    color: colors.onAccent,
     fontSize: 16,
     fontWeight: '900',
   },
@@ -834,28 +841,28 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   personName: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 16,
     fontWeight: '800',
     flexShrink: 1,
   },
   personBadge: {
-    backgroundColor: colorAlpha(appColors.success, '18'),
+    backgroundColor: colorAlpha(colors.success, '18'),
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   personBadgeText: {
-    color: appColors.success,
+    color: colors.success,
     fontSize: 11,
     fontWeight: '800',
   },
   personMeta: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
   },
   personContact: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 12,
   },
   personDetails: {
@@ -870,7 +877,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   personNotes: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     lineHeight: 17,
   },
@@ -878,32 +885,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     borderTopWidth: 1,
-    borderTopColor: appColors.borderStrong,
+    borderTopColor: colors.borderStrong,
     paddingTop: 12,
   },
   personAction: {
     flex: 1,
     minHeight: 44,
     borderRadius: 13,
-    backgroundColor: colorAlpha(appColors.info, '10'),
+    backgroundColor: colorAlpha(colors.info, '10'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '45'),
+    borderColor: colorAlpha(colors.info, '45'),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
   personActionPrimary: {
-    backgroundColor: appColors.success,
-    borderColor: appColors.success,
+    backgroundColor: colors.success,
+    borderColor: colors.success,
   },
   personActionText: {
-    color: appColors.info,
+    color: colors.info,
     fontSize: 12,
     fontWeight: '800',
   },
   personActionPrimaryText: {
-    color: appColors.background,
+    color: colors.onAccent,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -911,27 +918,27 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 13,
-    backgroundColor: colorAlpha(appColors.success, '10'),
+    backgroundColor: colorAlpha(colors.success, '10'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '45'),
+    borderColor: colorAlpha(colors.success, '45'),
     alignItems: 'center',
     justifyContent: 'center',
   },
   formCard: {
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: colors.surfaceStrong,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: appColors.borderStrong,
+    borderColor: colors.borderStrong,
     padding: 16,
     gap: 14,
   },
   formTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
   },
   formSubtitle: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     lineHeight: 19,
   },
@@ -939,13 +946,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   input: {
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.borderStrong,
+    borderColor: colors.borderStrong,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 13,
-    color: appColors.text,
+    color: colors.text,
     fontSize: 15,
   },
   multilineInput: {
@@ -955,7 +962,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fieldLabel: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -970,35 +977,35 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 12,
     paddingHorizontal: 8,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.borderStrong,
+    borderColor: colors.borderStrong,
   },
   segmentOptionActive: {
-    backgroundColor: colorAlpha(appColors.info, '22'),
-    borderColor: appColors.info,
+    backgroundColor: colorAlpha(colors.info, '22'),
+    borderColor: colors.info,
   },
   segmentOptionText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '800',
   },
   segmentOptionTextActive: {
-    color: appColors.info,
+    color: colors.info,
   },
   principalButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: appColors.borderStrong,
+    borderColor: colors.borderStrong,
   },
   principalButtonActive: {
-    backgroundColor: colorAlpha(appColors.accent, '18'),
-    borderColor: appColors.accent,
+    backgroundColor: colorAlpha(colors.accent, '18'),
+    borderColor: colors.accent,
   },
   principalButtonIcon: {
     width: 44,
@@ -1006,7 +1013,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: appColors.text,
+    backgroundColor: colors.surface,
   },
   principalButtonCopy: {
     flex: 1,
@@ -1017,21 +1024,21 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   principalStatusActive: {
-    backgroundColor: appColors.accent,
-    borderColor: appColors.accent,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   switchTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
     fontWeight: '800',
   },
   switchHelper: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 12,
     marginTop: 2,
     maxWidth: 240,
@@ -1041,7 +1048,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: appColors.accent,
+    backgroundColor: colors.accent,
     borderRadius: 16,
     paddingVertical: 14,
   },
@@ -1049,7 +1056,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   submitBtnText: {
-    color: appColors.background,
+    color: colors.onAccent,
     fontSize: 15,
     fontWeight: '800',
   },

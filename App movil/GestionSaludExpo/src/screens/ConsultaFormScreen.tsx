@@ -22,6 +22,7 @@ import { useAuth } from '../context/AuthContext';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ConsultaForm'>;
 type DatePickerField = 'consulta-date' | 'consulta-time' | 'notification-date' | 'notification-time';
@@ -113,6 +114,9 @@ const composeDateTime = (dateValue?: string, timeValue?: string) => {
 };
 
 export function ConsultaFormScreen({ route }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { consulta } = route.params || {};
   const isEditing = Boolean(consulta?.consultaId);
   const [currentConsultaId, setCurrentConsultaId] = useState<number | null>(
@@ -301,7 +305,7 @@ export function ConsultaFormScreen({ route }: Props) {
 
     return (
       <View style={styles.iosPickerCard}>
-        <DateTimePicker
+        <DateTimePicker themeVariant={colors.mode}
           value={isDateField ? parseDateForPicker(currentDateValue) : parseTimeForPicker(currentTimeValue)}
           mode={isDateField ? 'date' : 'time'}
           display="spinner"
@@ -526,7 +530,7 @@ export function ConsultaFormScreen({ route }: Props) {
             selectedValue={form.pacienteId}
             onValueChange={(value) => handleChange('pacienteId', String(value))}
             enabled={!loadingPatients}
-            dropdownIconColor="#F4F8FF"
+            dropdownIconColor={colors.text}
           >
             <Picker.Item
               label={loadingPatients ? 'Cargando personas...' : 'Selecciona una persona'}
@@ -559,7 +563,7 @@ export function ConsultaFormScreen({ route }: Props) {
         <AppTextInput
           style={styles.input}
           placeholder="Motivo principal de la consulta"
-          placeholderTextColor="#9FB3C8"
+          placeholderTextColor={colors.textMuted}
           value={form.motivo}
           onChangeText={(value) => handleChange('motivo', value)}
         />
@@ -568,7 +572,7 @@ export function ConsultaFormScreen({ route }: Props) {
         <AppTextInput
           style={[styles.input, styles.multiline]}
           placeholder="Diagnostico clinico"
-          placeholderTextColor="#9FB3C8"
+          placeholderTextColor={colors.textMuted}
           value={form.diagnostico}
           multiline
           onChangeText={(value) => handleChange('diagnostico', value)}
@@ -578,7 +582,7 @@ export function ConsultaFormScreen({ route }: Props) {
         <AppTextInput
           style={[styles.input, styles.multiline]}
           placeholder="Tratamiento o indicaciones"
-          placeholderTextColor="#9FB3C8"
+          placeholderTextColor={colors.textMuted}
           value={form.tratamiento}
           multiline
           onChangeText={(value) => handleChange('tratamiento', value)}
@@ -598,7 +602,7 @@ export function ConsultaFormScreen({ route }: Props) {
       <View style={[styles.sectionCard, styles.notificationCard]}>
         <View style={styles.notificationHeader}>
           <View style={styles.notificationIconBadge}>
-            <Ionicons name="notifications-outline" size={22} color="#071120" />
+            <Ionicons name="notifications-outline" size={22} color={colors.onAccent} />
           </View>
           <View style={styles.notificationHeaderCopy}>
             <AppText style={styles.sectionTitle}>Notificación de seguimiento</AppText>
@@ -619,7 +623,7 @@ export function ConsultaFormScreen({ route }: Props) {
           <Ionicons
             name={notificationReady ? 'checkmark-circle-outline' : 'lock-closed-outline'}
             size={19}
-            color={notificationReady ? '#38E28E' : '#FF4D73'}
+            color={notificationReady ? colors.success : colors.accent}
           />
           <AppText
             style={[
@@ -633,7 +637,7 @@ export function ConsultaFormScreen({ route }: Props) {
 
         <View style={styles.notificationMetaRow}>
           <View style={styles.channelPill}>
-            <Ionicons name="phone-portrait-outline" size={15} color="#29B6FF" />
+            <Ionicons name="phone-portrait-outline" size={15} color={colors.info} />
             <AppText style={styles.channelPillText}>Push</AppText>
           </View>
           <AppText style={styles.notificationMetaText}>Se enviará en la fecha y hora seleccionadas.</AppText>
@@ -643,7 +647,7 @@ export function ConsultaFormScreen({ route }: Props) {
         <AppTextInput
           style={[styles.input, styles.multiline]}
           placeholder="Mensaje de la notificación"
-          placeholderTextColor="#9FB3C8"
+          placeholderTextColor={colors.textMuted}
           value={notificationForm.mensaje}
           multiline
           onChangeText={(value) => handleNotificationChange('mensaje', value)}
@@ -672,7 +676,7 @@ export function ConsultaFormScreen({ route }: Props) {
           onPress={handleCreateNotification}
           disabled={!notificationReady}
         >
-          <Ionicons name="alarm-outline" size={18} color="#071120" />
+          <Ionicons name="alarm-outline" size={18} color={colors.onAccent} />
           <AppText style={styles.notificationBtnText}>
             {notificationReady ? 'Programar notificación' : 'Guarda la consulta primero'}
           </AppText>
@@ -682,22 +686,22 @@ export function ConsultaFormScreen({ route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     padding: 20,
     paddingBottom: 36,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     gap: 16,
   },
   heroCard: {
-    backgroundColor: '#182A44',
+    backgroundColor: colors.surfaceStrong,
     borderRadius: 26,
     padding: 22,
     borderWidth: 1,
-    borderColor: '#1B3355',
+    borderColor: colors.borderStrong,
   },
   kicker: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.2,
@@ -706,25 +710,25 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
     lineHeight: 34,
   },
   subtitle: {
     marginTop: 8,
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 20,
   },
   sectionCard: {
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     borderRadius: 22,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   notificationCard: {
     gap: 12,
-    borderColor: '#1B3355',
-    backgroundColor: '#182A44',
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.surfaceStrong,
   },
   notificationHeader: {
     flexDirection: 'row',
@@ -737,7 +741,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
   },
   notificationHeaderCopy: {
     flex: 1,
@@ -752,12 +756,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   notificationStatusReady: {
-    backgroundColor: '#38E28E18',
-    borderColor: '#38E28E66',
+    backgroundColor: `${colors.success}18`,
+    borderColor: `${colors.success}66`,
   },
   notificationStatusLocked: {
-    backgroundColor: '#FF4D7318',
-    borderColor: '#FF4D7366',
+    backgroundColor: `${colors.accent}18`,
+    borderColor: `${colors.accent}66`,
   },
   notificationStatusText: {
     flex: 1,
@@ -765,10 +769,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   notificationStatusTextReady: {
-    color: '#38E28E',
+    color: colors.success,
   },
   notificationStatusTextLocked: {
-    color: '#FF4D73',
+    color: colors.accent,
   },
   notificationMetaRow: {
     flexDirection: 'row',
@@ -783,30 +787,30 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 7,
-    backgroundColor: '#29B6FF18',
+    backgroundColor: `${colors.info}18`,
     borderWidth: 1,
-    borderColor: '#29B6FF55',
+    borderColor: `${colors.info}55`,
   },
   channelPillText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 12,
     fontWeight: '800',
   },
   notificationMetaText: {
     flex: 1,
     minWidth: 180,
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 12,
     lineHeight: 17,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
     marginBottom: 6,
   },
   sectionHelper: {
-    color: '#29B6FF',
+    color: colors.info,
     lineHeight: 19,
     marginBottom: 14,
   },
@@ -814,42 +818,42 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     marginBottom: 8,
-    color: '#F4F8FF',
+    color: colors.text,
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     marginBottom: 12,
     overflow: 'hidden',
-    backgroundColor: '#0D1B2A',
+    backgroundColor: colors.backgroundMuted,
   },
   picker: {
-    color: '#F4F8FF',
+    color: colors.text,
   },
   fixedChannelCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 16,
     marginBottom: 12,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: colors.backgroundMuted,
   },
   fixedChannelText: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '600',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
     fontSize: 16,
-    backgroundColor: '#0D1B2A',
-    color: '#F4F8FF',
+    backgroundColor: colors.backgroundMuted,
+    color: colors.text,
   },
   multiline: {
     minHeight: 100,
@@ -863,27 +867,27 @@ const styles = StyleSheet.create({
   dateButton: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 12,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: colors.backgroundMuted,
   },
   disabledField: {
     opacity: 0.45,
   },
   dateButtonText: {
     fontSize: 15,
-    color: '#F4F8FF',
+    color: colors.text,
     textAlign: 'center',
   },
   iosPickerCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     marginBottom: 12,
     overflow: 'hidden',
-    backgroundColor: '#0D1B2A',
+    backgroundColor: colors.backgroundMuted,
   },
   secondaryBtn: {
     alignSelf: 'flex-end',
@@ -891,17 +895,17 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   secondaryBtnText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
   },
   primaryBtn: {
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     paddingVertical: 16,
     borderRadius: 14,
     marginTop: 6,
   },
   primaryBtnText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     textAlign: 'center',
     fontWeight: '700',
     fontSize: 16,
@@ -911,7 +915,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
     paddingVertical: 16,
     borderRadius: 14,
     marginTop: 6,
@@ -920,13 +924,13 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   notificationBtnText: {
-    color: '#071120',
+    color: colors.onAccent,
     textAlign: 'center',
     fontWeight: '800',
     fontSize: 16,
   },
   errorText: {
-    color: '#FF4D73',
+    color: colors.accent,
     marginBottom: 12,
   },
 });

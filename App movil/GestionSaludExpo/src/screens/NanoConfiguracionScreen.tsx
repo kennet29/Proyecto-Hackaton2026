@@ -23,8 +23,12 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { appColors, colorAlpha } from '../theme/colors';
 import { getNanoAppearanceUnlockRule } from '../utils/nanoAppearanceUnlocks';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 export function NanoConfiguracionScreen() {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token, user } = useAuth();
   const { width } = useWindowDimensions();
   const [selectedId, setSelectedId] = useState('base');
@@ -70,7 +74,7 @@ export function NanoConfiguracionScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.hero}>
         <View style={styles.heroIcon}>
-          <Ionicons name="color-palette-outline" size={27} color={appColors.accent} />
+          <Ionicons name="color-palette-outline" size={27} color={colors.accent} />
         </View>
         <View style={styles.heroCopy}>
           <AppText style={styles.eyebrow}>CONFIGURACIÓN</AppText>
@@ -83,7 +87,7 @@ export function NanoConfiguracionScreen() {
 
       {savedMessage ? (
         <View style={styles.feedback}>
-          <Ionicons name="checkmark-circle-outline" size={18} color={appColors.success} />
+          <Ionicons name="checkmark-circle-outline" size={18} color={colors.success} />
           <AppText style={styles.feedbackText}>{savedMessage}</AppText>
         </View>
       ) : null}
@@ -117,12 +121,12 @@ export function NanoConfiguracionScreen() {
                 <NanoAppearancePreview appearance={appearance} size={96} />
                 {selected ? (
                   <View style={styles.selectedBadge}>
-                    <Ionicons name="checkmark" size={16} color={appColors.background} />
+                    <Ionicons name="checkmark" size={16} color={colors.onAccent} />
                   </View>
                 ) : null}
                 {!unlocked ? (
                   <View style={styles.lockedBadge}>
-                    <Ionicons name="lock-closed" size={15} color={appColors.background} />
+                    <Ionicons name="lock-closed" size={15} color={colors.onAccent} />
                   </View>
                 ) : null}
               </View>
@@ -141,7 +145,7 @@ export function NanoConfiguracionScreen() {
       </View>
 
       <View style={styles.infoCard}>
-        <Ionicons name="phone-portrait-outline" size={20} color={appColors.info} />
+        <Ionicons name="phone-portrait-outline" size={20} color={colors.info} />
         <AppText style={styles.infoText}>
           La selección se guarda en este dispositivo y se refleja al volver al menú principal.
         </AppText>
@@ -150,16 +154,16 @@ export function NanoConfiguracionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'transparent' },
   content: { width: '100%', maxWidth: 980, alignSelf: 'center', padding: 18, paddingBottom: 42 },
   hero: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: colors.surfaceStrong,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     padding: 18,
     marginBottom: 16,
   },
@@ -167,41 +171,41 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 17,
-    backgroundColor: colorAlpha(appColors.accent, '18'),
+    backgroundColor: colorAlpha(colors.accent, '18'),
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 13,
   },
   heroCopy: { flex: 1 },
-  eyebrow: { color: appColors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 },
-  title: { color: appColors.text, fontSize: 23, fontWeight: '900', marginTop: 2 },
-  subtitle: { color: appColors.textMuted, fontSize: 12, lineHeight: 17, marginTop: 4 },
+  eyebrow: { color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 },
+  title: { color: colors.text, fontSize: 23, fontWeight: '900', marginTop: 2 },
+  subtitle: { color: colors.textMuted, fontSize: 12, lineHeight: 17, marginTop: 4 },
   feedback: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colorAlpha(appColors.success, '12'),
+    backgroundColor: colorAlpha(colors.success, '12'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '55'),
+    borderColor: colorAlpha(colors.success, '55'),
     borderRadius: 13,
     padding: 11,
     marginBottom: 16,
   },
-  feedbackText: { color: appColors.textSoft, fontSize: 12, marginLeft: 8, flex: 1 },
+  feedbackText: { color: colors.textSoft, fontSize: 12, marginLeft: 8, flex: 1 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12 },
   card: {
     minHeight: 210,
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 19,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     padding: 16,
     alignItems: 'center',
   },
   cardTwoColumns: { width: '48%' },
   cardThreeColumns: { width: '31.5%' },
   cardSelected: {
-    borderColor: appColors.accent,
-    backgroundColor: colorAlpha(appColors.accent, '0F'),
+    borderColor: colors.accent,
+    backgroundColor: colorAlpha(colors.accent, '0F'),
   },
   cardLocked: { opacity: 0.58 },
   previewWrap: { position: 'relative', marginBottom: 12 },
@@ -212,9 +216,9 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: appColors.success,
+    backgroundColor: colors.success,
     borderWidth: 2,
-    borderColor: appColors.surface,
+    borderColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -225,25 +229,25 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: appColors.textMuted,
+    backgroundColor: colors.textMuted,
     borderWidth: 2,
-    borderColor: appColors.surface,
+    borderColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardTitle: { color: appColors.text, fontSize: 15, fontWeight: '900', textAlign: 'center' },
-  cardDescription: { color: appColors.textMuted, fontSize: 11, textAlign: 'center', marginTop: 4 },
-  cardAction: { color: appColors.info, fontSize: 10, fontWeight: '900', marginTop: 13 },
-  cardActionSelected: { color: appColors.success },
+  cardTitle: { color: colors.text, fontSize: 15, fontWeight: '900', textAlign: 'center' },
+  cardDescription: { color: colors.textMuted, fontSize: 11, textAlign: 'center', marginTop: 4 },
+  cardAction: { color: colors.info, fontSize: 10, fontWeight: '900', marginTop: 13 },
+  cardActionSelected: { color: colors.success },
   infoCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: colorAlpha(appColors.info, '10'),
+    backgroundColor: colorAlpha(colors.info, '10'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '40'),
+    borderColor: colorAlpha(colors.info, '40'),
     borderRadius: 15,
     padding: 13,
     marginTop: 18,
   },
-  infoText: { color: appColors.textSoft, fontSize: 11, lineHeight: 16, marginLeft: 9, flex: 1 },
+  infoText: { color: colors.textSoft, fontSize: 11, lineHeight: 16, marginLeft: 9, flex: 1 },
 });

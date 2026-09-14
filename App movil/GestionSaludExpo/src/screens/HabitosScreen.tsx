@@ -22,6 +22,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Habitos'>;
 
@@ -68,8 +69,11 @@ const getImpactAccent = (value?: string | null) => {
 };
 
 export function HabitosScreen(_: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token, user } = useAuth();
-  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
+  const pickerItemColor = Platform.OS === 'android' ? colors.background : colors.text;
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [types, setTypes] = useState<TipoHabito[]>([]);
   const [records, setRecords] = useState<Habito[]>([]);
@@ -240,7 +244,7 @@ export function HabitosScreen(_: Props) {
   if (loading) {
     return (
       <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" color="#38E28E" />
+        <ActivityIndicator size="large" color={colors.success} />
         <AppText style={styles.loadingText}>Cargando habitos...</AppText>
       </View>
     );
@@ -333,7 +337,7 @@ export function HabitosScreen(_: Props) {
           <AppTextInput
             style={styles.input}
             placeholder="Ej. actividad fisica, alimentacion, sueno"
-            placeholderTextColor="#9FB3C8"
+            placeholderTextColor={colors.textMuted}
             value={form.categoria}
             onChangeText={(value) => handleChange('categoria', value)}
           />
@@ -344,7 +348,7 @@ export function HabitosScreen(_: Props) {
               <AppTextInput
                 style={styles.input}
                 placeholder="Ej. bajo, medio, alto"
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 value={form.nivel}
                 onChangeText={(value) => handleChange('nivel', value)}
               />
@@ -354,7 +358,7 @@ export function HabitosScreen(_: Props) {
               <AppTextInput
                 style={styles.input}
                 placeholder="Ej. diario, semanal"
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 value={form.frecuencia}
                 onChangeText={(value) => handleChange('frecuencia', value)}
               />
@@ -370,7 +374,7 @@ export function HabitosScreen(_: Props) {
               <AppTextInput
                 style={styles.input}
                 placeholder="Ej. 30"
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 keyboardType="decimal-pad"
                 value={form.cantidad}
                 onChangeText={(value) => handleChange('cantidad', value)}
@@ -381,7 +385,7 @@ export function HabitosScreen(_: Props) {
               <AppTextInput
                 style={styles.input}
                 placeholder="Ej. min, veces, litros"
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 value={form.unidad}
                 onChangeText={(value) => handleChange('unidad', value)}
               />
@@ -392,7 +396,7 @@ export function HabitosScreen(_: Props) {
           <AppTextInput
             style={styles.input}
             placeholder="YYYY-MM-DD"
-            placeholderTextColor="#9FB3C8"
+            placeholderTextColor={colors.textMuted}
             value={form.inicio}
             onChangeText={(value) => handleChange('inicio', value)}
           />
@@ -404,7 +408,7 @@ export function HabitosScreen(_: Props) {
           <AppTextInput
             style={styles.input}
             placeholder="Ej. positivo, moderado, alto riesgo"
-            placeholderTextColor="#9FB3C8"
+            placeholderTextColor={colors.textMuted}
             value={form.impactosalud}
             onChangeText={(value) => handleChange('impactosalud', value)}
           />
@@ -413,7 +417,7 @@ export function HabitosScreen(_: Props) {
           <AppTextInput
             style={[styles.input, styles.multiline]}
             placeholder="Agrega contexto, detonantes, cambios o recomendaciones"
-            placeholderTextColor="#9FB3C8"
+            placeholderTextColor={colors.textMuted}
             multiline
             textAlignVertical="top"
             value={form.observaciones}
@@ -515,20 +519,20 @@ export function HabitosScreen(_: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   loadingScreen: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   loadingText: {
     marginTop: 10,
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   container: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 20,
@@ -536,109 +540,109 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   header: {
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
     borderRadius: 24,
     padding: 20,
     gap: 8,
     borderWidth: 1,
-    borderColor: '#38E28E',
+    borderColor: colors.success,
   },
   headerBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   headerBadgeText: {
-    color: '#38E28E',
+    color: colors.success,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
   },
   title: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 28,
     fontWeight: '800',
   },
   subtitle: {
-    color: '#38E28E',
+    color: colors.success,
     lineHeight: 20,
   },
   card: {
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     borderRadius: 22,
     padding: 18,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   sectionHeader: {
     gap: 4,
   },
   cardTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
   },
   cardSubtitle: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
     lineHeight: 18,
   },
   label: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '700',
     fontSize: 13,
   },
   pickerShell: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#0D1B2A',
+    backgroundColor: colors.backgroundMuted,
   },
   contextBox: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     padding: 12,
     gap: 4,
   },
   contextText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 13,
   },
   warningText: {
-    color: '#FF4D73',
-    backgroundColor: '#FF4D7318',
+    color: colors.accent,
+    backgroundColor: `${colors.accent}18`,
     borderRadius: 10,
     padding: 10,
     fontWeight: '600',
   },
   formSection: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     padding: 14,
     gap: 10,
   },
   formSectionTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '800',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 12,
     fontSize: 15,
-    color: '#F4F8FF',
-    backgroundColor: '#0D1B2A',
+    color: colors.text,
+    backgroundColor: colors.backgroundMuted,
   },
   row: {
     flexDirection: 'row',
@@ -652,7 +656,7 @@ const styles = StyleSheet.create({
     minHeight: 92,
   },
   primaryBtn: {
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
@@ -661,38 +665,38 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
   primaryBtnText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontSize: 15,
     fontWeight: '800',
   },
   insightBox: {
-    backgroundColor: '#0D1B2A',
+    backgroundColor: colors.backgroundMuted,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#29B6FF18',
+    borderColor: `${colors.info}18`,
     padding: 14,
     gap: 6,
   },
   insightTitle: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 14,
     fontWeight: '800',
   },
   insightText: {
-    color: '#29B6FF',
+    color: colors.info,
     lineHeight: 19,
   },
   emptyText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   separator: {
     height: 12,
   },
   recordCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     padding: 14,
     gap: 10,
   },
@@ -707,12 +711,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   recordTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
     fontSize: 16,
   },
   recordText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -733,20 +737,20 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   metaChip: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   metaChipText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '700',
   },
   recordNote: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
     lineHeight: 19,
   },

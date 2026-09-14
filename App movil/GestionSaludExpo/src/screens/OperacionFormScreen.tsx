@@ -28,6 +28,7 @@ import type { RootStackParamList } from '../navigation/types';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate } from '../utils/localDate';
 import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type TipoOperacion = {
   tipooperacionId: number;
@@ -133,10 +134,13 @@ type OperacionFormScreenProps = {
 };
 
 export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isCreateMode = mode === 'create';
   const { token, user } = useAuth();
-  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
+  const pickerItemColor = Platform.OS === 'android' ? colors.background : colors.text;
   const [patientOptions, setPatientOptions] = useState<LinkedPatient[]>([]);
   const [typeOptions, setTypeOptions] = useState<TipoOperacion[]>([]);
   const [records, setRecords] = useState<OperacionRecord[]>([]);
@@ -437,7 +441,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                   selectedValue={selectedPatientId}
                   onValueChange={(value) => setSelectedPatientId(String(value))}
                   enabled={!loadingPatients}
-                  dropdownIconColor="#F4F8FF"
+                  dropdownIconColor={colors.text}
                   style={styles.picker}
                 >
                   <Picker.Item
@@ -469,7 +473,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
 
             {loadingRecords ? (
               <View style={styles.loadingCard}>
-                <ActivityIndicator color="#29B6FF" />
+                <ActivityIndicator color={colors.info} />
                 <AppText style={styles.loadingText}>Cargando resumen de operaciones...</AppText>
               </View>
             ) : visiblePatientSummaries.length === 0 ? (
@@ -544,7 +548,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
 
             {loadingRecords ? (
               <View style={styles.loadingCard}>
-                <ActivityIndicator color="#29B6FF" />
+                <ActivityIndicator color={colors.info} />
                 <AppText style={styles.loadingText}>Cargando historial...</AppText>
               </View>
             ) : filteredRecords.length === 0 ? (
@@ -630,7 +634,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                 selectedValue={form.pacienteId}
                 onValueChange={(value) => handleChange('pacienteId', String(value))}
                 enabled={!loadingPatients}
-                dropdownIconColor="#F4F8FF"
+                dropdownIconColor={colors.text}
                 style={styles.picker}
               >
                 <Picker.Item
@@ -655,7 +659,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                 selectedValue={form.tipooperacionId}
                 onValueChange={(value) => handleTypeChange(String(value))}
                 enabled={!loadingTypes}
-                dropdownIconColor="#F4F8FF"
+                dropdownIconColor={colors.text}
                 style={styles.picker}
               >
                 <Picker.Item
@@ -681,7 +685,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
 
             {Platform.OS === 'ios' && showIOSDatePicker ? (
               <View style={styles.iosPickerCard}>
-                <DateTimePicker
+                <DateTimePicker themeVariant={colors.mode}
                   value={parseDateForPicker(form.fecha)}
                   mode="date"
                   display="spinner"
@@ -702,21 +706,21 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
             <AppTextInput
               style={styles.input}
               placeholder="Nombre del procedimiento"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.tipo}
               onChangeText={(value) => handleChange('tipo', value)}
             />
             <AppTextInput
               style={styles.input}
               placeholder="Hospital"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.hospital}
               onChangeText={(value) => handleChange('hospital', value)}
             />
             <AppTextInput
               style={styles.input}
               placeholder="Cirujano"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.cirujano}
               onChangeText={(value) => handleChange('cirujano', value)}
             />
@@ -726,7 +730,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                 style={styles.picker}
                 selectedValue={form.estado}
                 onValueChange={(value) => handleChange('estado', String(value))}
-                dropdownIconColor="#F4F8FF"
+                dropdownIconColor={colors.text}
               >
                 <Picker.Item label="Programada" value="programada" color={pickerItemColor} />
                 <Picker.Item label="En curso" value="en curso" color={pickerItemColor} />
@@ -737,14 +741,14 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
             <AppTextInput
               style={styles.input}
               placeholder="Resultado"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.resultado}
               onChangeText={(value) => handleChange('resultado', value)}
             />
             <AppTextInput
               style={[styles.input, styles.multiline]}
               placeholder="Complicaciones"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.complicaciones}
               multiline
               onChangeText={(value) => handleChange('complicaciones', value)}
@@ -783,26 +787,26 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   container: {
     padding: 24,
     paddingBottom: 120,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   heroCard: {
     borderRadius: 28,
     padding: 22,
     marginBottom: 18,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
   },
   eyebrow: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
@@ -812,41 +816,41 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   subtitle: {
     marginTop: 10,
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 15,
     lineHeight: 22,
   },
   filterCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 22,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginBottom: 18,
   },
   label: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
     marginBottom: 8,
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   picker: {
-    color: '#F4F8FF',
+    color: colors.text,
   },
   filterHint: {
     marginTop: 10,
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
   },
   sectionHeader: {
@@ -855,54 +859,54 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   sectionSubtitle: {
     marginTop: 4,
-    color: '#9FB3C8',
+    color: colors.textMuted,
   },
   loadingCard: {
     borderRadius: 20,
     padding: 22,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     alignItems: 'center',
     marginBottom: 16,
   },
   loadingText: {
     marginTop: 10,
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   emptyCard: {
     borderRadius: 22,
     padding: 20,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginBottom: 16,
   },
   emptyTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
     fontSize: 16,
     marginBottom: 6,
   },
   emptyText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     lineHeight: 20,
   },
   summaryCard: {
     borderRadius: 22,
     padding: 18,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginBottom: 12,
   },
   summaryCardActive: {
-    borderColor: '#29B6FF',
-    backgroundColor: '#29B6FF18',
+    borderColor: colors.info,
+    backgroundColor: `${colors.info}18`,
   },
   summaryHeader: {
     flexDirection: 'row',
@@ -914,43 +918,43 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   summaryName: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 17,
     fontWeight: '900',
   },
   summaryMeta: {
     marginTop: 4,
-    color: '#9FB3C8',
+    color: colors.textMuted,
   },
   summaryCountBadge: {
     minWidth: 60,
     borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: '#38E28E18',
+    backgroundColor: `${colors.success}18`,
     borderWidth: 1,
-    borderColor: '#38E28E',
+    borderColor: colors.success,
     alignItems: 'center',
   },
   summaryCountValue: {
-    color: '#38E28E',
+    color: colors.success,
     fontSize: 20,
     fontWeight: '900',
   },
   summaryCountLabel: {
-    color: '#38E28E',
+    color: colors.success,
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
   },
   summaryPrimary: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '700',
   },
   summarySecondary: {
     marginTop: 6,
-    color: '#9FB3C8',
+    color: colors.textMuted,
     lineHeight: 20,
   },
   chipRow: {
@@ -963,20 +967,20 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 7,
     paddingHorizontal: 10,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     marginRight: 8,
     marginBottom: 8,
   },
   chipText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '700',
   },
   summaryAction: {
     marginTop: 8,
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
     fontSize: 13,
   },
@@ -984,13 +988,13 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     padding: 18,
     marginBottom: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
   },
   recordCardAlert: {
-    borderColor: '#FF4D73',
-    backgroundColor: '#071120',
+    borderColor: colors.accent,
+    backgroundColor: colors.background,
   },
   recordTopRow: {
     flexDirection: 'row',
@@ -1002,10 +1006,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 7,
     paddingHorizontal: 12,
-    backgroundColor: '#29B6FF18',
+    backgroundColor: `${colors.info}18`,
   },
   datePillText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
     fontSize: 12,
   },
@@ -1020,67 +1024,67 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   recordTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '900',
     marginBottom: 6,
   },
   recordPatient: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
     marginBottom: 10,
   },
   recordText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 5,
     lineHeight: 20,
   },
   recordAlertText: {
-    color: '#FF4D73',
+    color: colors.accent,
     marginTop: 4,
     lineHeight: 20,
     fontWeight: '700',
   },
   formCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginTop: 10,
   },
   formTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   formSubtitle: {
     marginTop: 6,
     marginBottom: 14,
-    color: '#9FB3C8',
+    color: colors.textMuted,
     lineHeight: 20,
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     paddingVertical: 15,
     paddingHorizontal: 14,
     marginBottom: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   dateButtonText: {
-    color: '#F4F8FF',
+    color: colors.text,
     textAlign: 'center',
     fontSize: 15,
     fontWeight: '700',
   },
   iosPickerCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     marginBottom: 12,
   },
   secondaryButton: {
@@ -1089,18 +1093,18 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   secondaryButtonText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
     fontSize: 15,
-    backgroundColor: '#071120',
-    color: '#F4F8FF',
+    backgroundColor: colors.background,
+    color: colors.text,
   },
   multiline: {
     minHeight: 96,
@@ -1116,24 +1120,24 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#9FB3C8',
-    backgroundColor: '#071120',
+    borderColor: colors.textMuted,
+    backgroundColor: colors.background,
     marginRight: 6,
   },
   cancelButtonText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontWeight: '800',
   },
   primaryButton: {
     flex: 1,
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     borderRadius: 14,
     paddingVertical: 15,
     alignItems: 'center',
     marginLeft: 6,
   },
   primaryButtonText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontWeight: '900',
     fontSize: 16,
   },
@@ -1144,7 +1148,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
@@ -1154,7 +1158,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   fabText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontSize: 30,
     lineHeight: 30,
     fontWeight: '800',

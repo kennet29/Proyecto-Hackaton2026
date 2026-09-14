@@ -28,6 +28,7 @@ import {
 } from '../utils/clinicalSummaryCache';
 import { appColors, colorAlpha } from '../theme/colors';
 import { parseCalendarDate } from '../utils/localDate';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PacienteResumen'>;
 
@@ -366,6 +367,9 @@ const clinicalAreas: ClinicalArea[] = [
 ];
 
 export function PacienteResumenScreen({ navigation, route }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { width } = useWindowDimensions();
   const isDesktopLayout = width >= 1024;
   const { token, user } = useAuth();
@@ -473,16 +477,16 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
   }, [patientOptions, selectedPatientId, summary, user?.username]);
 
   const metrics = useMemo<Metric[]>(() => summary ? [
-    { label: 'Consultas', value: summary.overview.totalConsultas, icon: 'document-text-outline', color: appColors.info },
+    { label: 'Consultas', value: summary.overview.totalConsultas, icon: 'document-text-outline', color: colors.info },
     { label: 'Condiciones', value: summary.overview.condicionesActivas, icon: 'heart-outline', color: '#A78BFA' },
-    { label: 'Alergias', value: summary.overview.alergiasActivas, icon: 'warning-outline', color: appColors.accent },
-    { label: 'Medicaciones', value: summary.overview.medicacionesActivas, icon: 'medical-outline', color: appColors.success },
+    { label: 'Alergias', value: summary.overview.alergiasActivas, icon: 'warning-outline', color: colors.accent },
+    { label: 'Medicaciones', value: summary.overview.medicacionesActivas, icon: 'medical-outline', color: colors.success },
     { label: 'Exámenes', value: summary.overview.examenesClinicos, icon: 'flask-outline', color: '#F9A826' },
     { label: 'Vacunas', value: summary.overview.vacunasAplicadas, icon: 'shield-checkmark-outline', color: '#2DD4BF' },
     { label: 'Seguimientos', value: summary.overview.seguimientosActivos, icon: 'pulse-outline', color: '#60A5FA' },
     { label: 'Citas pendientes', value: summary.overview.citasPendientes, icon: 'calendar-outline', color: '#FB7185' },
     { label: 'Recordatorios', value: summary.overview.recordatoriosPendientes, icon: 'notifications-outline', color: '#C084FC' },
-  ] : [], [summary]);
+  ] : [], [summary, colors]);
 
   const selectedLabel =
     patientOptions.find((item) => String(item.pacienteId) === selectedPatientId)?.displayName ??
@@ -504,14 +508,14 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={() => fetchSummary(selectedPatientId, true)}
-          tintColor={appColors.info}
-          colors={[appColors.info]}
+          tintColor={colors.info}
+          colors={[colors.info]}
         />
       }
     >
       <View style={styles.pageHeader}>
         <View style={styles.headerIcon}>
-          <MaterialCommunityIcons name="clipboard-pulse-outline" size={25} color={appColors.info} />
+          <MaterialCommunityIcons name="clipboard-pulse-outline" size={25} color={colors.info} />
         </View>
         <View style={styles.headerCopy}>
           <AppText style={styles.eyebrow}>EXPEDIENTE CLÍNICO</AppText>
@@ -528,12 +532,12 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
             onValueChange={(value) => setSelectedPatientId(String(value))}
             enabled={!loadingPatients}
             style={styles.picker}
-            dropdownIconColor={appColors.textSoft}
+            dropdownIconColor={colors.textSoft}
           >
             <Picker.Item
               label={loadingPatients ? 'Cargando pacientes...' : 'Selecciona un paciente'}
               value=""
-              color={appColors.textMuted}
+              color={colors.textMuted}
             />
             {patientOptions.map((patient) => (
               <Picker.Item
@@ -551,7 +555,7 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
           <Ionicons
             name={dataSource === 'cache' ? 'cloud-offline-outline' : 'alert-circle-outline'}
             size={18}
-            color={dataSource === 'cache' ? '#F9A826' : appColors.accent}
+            color={dataSource === 'cache' ? '#F9A826' : colors.accent}
           />
           <AppText style={styles.noticeText}>{error}</AppText>
         </View>
@@ -567,7 +571,7 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
 
       {(loadingPatients || loadingSummary) && !refreshing ? (
         <View style={styles.loadingCard}>
-          <ActivityIndicator size="large" color={appColors.info} />
+          <ActivityIndicator size="large" color={colors.info} />
           <AppText style={styles.loadingTitle}>Preparando expediente</AppText>
           <AppText style={styles.loadingText}>Estamos reuniendo la información clínica de {selectedLabel}.</AppText>
         </View>
@@ -607,7 +611,7 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
                 onPress={() => navigation.navigate('PacienteEditor', { pacienteId: summary.patient.pacienteId })}
                 accessibilityLabel="Editar datos del paciente"
               >
-                <Ionicons name="create-outline" size={20} color={appColors.text} />
+                <Ionicons name="create-outline" size={20} color={colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -622,7 +626,7 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
               <Ionicons
                 name={dataSource === 'cache' ? 'cloud-offline-outline' : 'cloud-done-outline'}
                 size={15}
-                color={dataSource === 'cache' ? '#F9A826' : appColors.success}
+                color={dataSource === 'cache' ? '#F9A826' : colors.success}
               />
               <AppText style={styles.syncText}>
                 {dataSource === 'cache' ? 'Copia local' : 'Sincronizado'} · {formatDateTime(summary.generatedAt)}
@@ -636,7 +640,7 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
           />
           <View style={styles.narrativeCard}>
             <View style={styles.narrativeIcon}>
-              <Ionicons name="reader-outline" size={21} color={appColors.info} />
+              <Ionicons name="reader-outline" size={21} color={colors.info} />
             </View>
             <View style={styles.narrativeContent}>
               <AppText style={styles.narrativeLead}>{patientNarrative?.profile}</AppText>
@@ -677,7 +681,7 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
                     : 'Toca para registrar cómo te sientes'}
                 </AppText>
               </View>
-              <Ionicons name="chevron-forward" size={19} color={appColors.textMuted} />
+              <Ionicons name="chevron-forward" size={19} color={colors.textMuted} />
             </View>
 
             {mentalHealth ? (
@@ -713,10 +717,10 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
             ) : (
               summary.alerts.map((alert, index) => {
                 const tone = alert.level === 'high'
-                  ? appColors.accent
+                  ? colors.accent
                   : alert.level === 'medium'
                     ? '#F9A826'
-                    : appColors.info;
+                    : colors.info;
                 return (
                   <View key={`${alert.title}-${index}`} style={styles.alertRow}>
                     <View style={[styles.alertIcon, { backgroundColor: colorAlpha(tone, '18') }]}>
@@ -752,8 +756,8 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
           <SectionHeader title="Próximos cuidados" subtitle="Citas y controles planificados" />
           <View style={styles.sectionCard}>
             <View style={styles.upcomingRow}>
-              <View style={[styles.upcomingIcon, { backgroundColor: colorAlpha(appColors.info, '18') }]}>
-                <Ionicons name="calendar-outline" size={21} color={appColors.info} />
+              <View style={[styles.upcomingIcon, { backgroundColor: colorAlpha(colors.info, '18') }]}>
+                <Ionicons name="calendar-outline" size={21} color={colors.info} />
               </View>
               <View style={styles.upcomingCopy}>
                 <AppText style={styles.itemLabel}>PRÓXIMA CITA</AppText>
@@ -773,8 +777,8 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
             </View>
             <View style={styles.divider} />
             <View style={styles.upcomingRow}>
-              <View style={[styles.upcomingIcon, { backgroundColor: colorAlpha(appColors.success, '18') }]}>
-                <Ionicons name="pulse-outline" size={21} color={appColors.success} />
+              <View style={[styles.upcomingIcon, { backgroundColor: colorAlpha(colors.success, '18') }]}>
+                <Ionicons name="pulse-outline" size={21} color={colors.success} />
               </View>
               <View style={styles.upcomingCopy}>
                 <AppText style={styles.itemLabel}>PRÓXIMO CONTROL</AppText>
@@ -802,7 +806,7 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
                   {index > 0 ? <View style={styles.divider} /> : null}
                   <View style={styles.treatmentRow}>
                     <View style={styles.pillIcon}>
-                      <MaterialCommunityIcons name="pill" size={20} color={appColors.success} />
+                      <MaterialCommunityIcons name="pill" size={20} color={colors.success} />
                     </View>
                     <View style={styles.treatmentCopy}>
                       <AppText style={styles.itemTitle}>{item.nombre}</AppText>
@@ -871,13 +875,13 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
                 onPress={() => navigation.navigate(area.route as never)}
               >
                 <View style={styles.areaIcon}>
-                  <Ionicons name={area.icon} size={21} color={appColors.info} />
+                  <Ionicons name={area.icon} size={21} color={colors.info} />
                 </View>
                 <View style={styles.areaCopy}>
                   <AppText style={styles.areaTitle}>{area.title}</AppText>
                   <AppText style={styles.areaSubtitle}>{area.subtitle}</AppText>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color={appColors.textMuted} />
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
               </TouchableOpacity>
             ))}
           </View>
@@ -888,6 +892,9 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
 }
 
 function SectionHeader({ title, subtitle, badge }: { title: string; subtitle: string; badge?: number }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionHeaderCopy}>
@@ -912,9 +919,12 @@ function InfoItem({
   value: string;
   wide?: boolean;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.infoItem, wide && styles.infoItemWide]}>
-      <Ionicons name={icon} size={16} color={appColors.info} />
+      <Ionicons name={icon} size={16} color={colors.info} />
       <View style={styles.infoCopy}>
         <AppText style={styles.infoLabel}>{label}</AppText>
         <AppText style={styles.infoValue} numberOfLines={2}>{value}</AppText>
@@ -932,6 +942,9 @@ function NarrativeLine({
   text: string;
   last?: boolean;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.narrativeLine, last && styles.narrativeLineLast]}>
       <AppText style={styles.narrativeLabel}>{label}</AppText>
@@ -941,10 +954,13 @@ function NarrativeLine({
 }
 
 function HealthyState() {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.healthyState}>
       <View style={styles.healthyIcon}>
-        <Ionicons name="checkmark-circle" size={25} color={appColors.success} />
+        <Ionicons name="checkmark-circle" size={25} color={colors.success} />
       </View>
       <View style={styles.healthyCopy}>
         <AppText style={styles.healthyTitle}>Sin alertas prioritarias</AppText>
@@ -961,9 +977,12 @@ function EmptyInline({
   icon: React.ComponentProps<typeof Ionicons>['name'];
   text: string;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.emptyInline}>
-      <Ionicons name={icon} size={22} color={appColors.textMuted} />
+      <Ionicons name={icon} size={22} color={colors.textMuted} />
       <AppText style={styles.emptyInlineText}>{text}</AppText>
     </View>
   );
@@ -978,16 +997,19 @@ function EmptyState({
   title: string;
   text: string;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.emptyState}>
-      <View style={styles.emptyStateIcon}><Ionicons name={icon} size={28} color={appColors.info} /></View>
+      <View style={styles.emptyStateIcon}><Ionicons name={icon} size={28} color={colors.info} /></View>
       <AppText style={styles.emptyStateTitle}>{title}</AppText>
       <AppText style={styles.emptyStateText}>{text}</AppText>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'transparent' },
   content: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 44 },
   pageHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 18 },
@@ -995,36 +1017,36 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 15,
-    backgroundColor: colorAlpha(appColors.info, '18'),
+    backgroundColor: colorAlpha(colors.info, '18'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '45'),
+    borderColor: colorAlpha(colors.info, '45'),
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 13,
   },
   headerCopy: { flex: 1 },
-  eyebrow: { color: appColors.info, fontSize: 10, fontWeight: '900', letterSpacing: 1.5, marginBottom: 3 },
-  pageTitle: { color: appColors.text, fontSize: 25, lineHeight: 30, fontWeight: '900' },
-  pageSubtitle: { color: appColors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 4 },
+  eyebrow: { color: colors.info, fontSize: 10, fontWeight: '900', letterSpacing: 1.5, marginBottom: 3 },
+  pageTitle: { color: colors.text, fontSize: 25, lineHeight: 30, fontWeight: '900' },
+  pageSubtitle: { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 4 },
   selectorCard: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 14,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     marginBottom: 14,
   },
-  fieldLabel: { color: appColors.textSoft, fontSize: 12, fontWeight: '800', marginBottom: 8 },
+  fieldLabel: { color: colors.textSoft, fontSize: 12, fontWeight: '800', marginBottom: 8 },
   pickerShell: {
     height: 52,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderRadius: 13,
     borderWidth: 1,
-    borderColor: appColors.borderStrong,
+    borderColor: colors.borderStrong,
     overflow: 'hidden',
     justifyContent: 'center',
   },
-  picker: { color: appColors.text, marginHorizontal: -4 },
+  picker: { color: colors.text, marginHorizontal: -4 },
   notice: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1034,43 +1056,43 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   noticeWarning: { backgroundColor: '#F9A82612', borderColor: '#F9A82655' },
-  noticeError: { backgroundColor: colorAlpha(appColors.accent, '12'), borderColor: colorAlpha(appColors.accent, '55') },
-  noticeText: { color: appColors.textSoft, fontSize: 12, lineHeight: 17, marginLeft: 9, flex: 1 },
+  noticeError: { backgroundColor: colorAlpha(colors.accent, '12'), borderColor: colorAlpha(colors.accent, '55') },
+  noticeText: { color: colors.textSoft, fontSize: 12, lineHeight: 17, marginLeft: 9, flex: 1 },
   loadingCard: {
     alignItems: 'center',
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     padding: 28,
   },
-  loadingTitle: { color: appColors.text, fontSize: 17, fontWeight: '800', marginTop: 13 },
-  loadingText: { color: appColors.textMuted, fontSize: 13, textAlign: 'center', lineHeight: 19, marginTop: 5 },
+  loadingTitle: { color: colors.text, fontSize: 17, fontWeight: '800', marginTop: 13 },
+  loadingText: { color: colors.textMuted, fontSize: 13, textAlign: 'center', lineHeight: 19, marginTop: 5 },
   emptyState: {
     alignItems: 'center',
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     padding: 26,
   },
   emptyStateIcon: {
     width: 54,
     height: 54,
     borderRadius: 18,
-    backgroundColor: colorAlpha(appColors.info, '18'),
+    backgroundColor: colorAlpha(colors.info, '18'),
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
-  emptyStateTitle: { color: appColors.text, fontSize: 17, fontWeight: '800', textAlign: 'center' },
-  emptyStateText: { color: appColors.textMuted, fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 6 },
+  emptyStateTitle: { color: colors.text, fontSize: 17, fontWeight: '800', textAlign: 'center' },
+  emptyStateText: { color: colors.textMuted, fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 6 },
   patientCard: {
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: colors.surfaceStrong,
     borderRadius: 24,
     padding: 17,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     marginBottom: 24,
   },
   patientTop: { flexDirection: 'row', alignItems: 'flex-start' },
@@ -1078,23 +1100,23 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 19,
-    backgroundColor: appColors.info,
+    backgroundColor: colors.info,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  avatarText: { color: appColors.background, fontSize: 20, fontWeight: '900' },
+  avatarText: { color: colors.onAccent, fontSize: 20, fontWeight: '900' },
   patientIdentity: { flex: 1, minWidth: 0 },
-  patientName: { color: appColors.text, fontSize: 21, lineHeight: 26, fontWeight: '900' },
-  patientId: { color: appColors.textMuted, fontSize: 12, marginTop: 2 },
+  patientName: { color: colors.text, fontSize: 21, lineHeight: 26, fontWeight: '900' },
+  patientId: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  tag: { backgroundColor: appColors.backgroundMuted, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
-  tagText: { color: appColors.textSoft, fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
+  tag: { backgroundColor: colors.backgroundMuted, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
+  tagText: { color: colors.textSoft, fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
   editButton: {
     width: 40,
     height: 40,
     borderRadius: 13,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
@@ -1109,55 +1131,55 @@ const styles = StyleSheet.create({
   },
   infoItemWide: { width: '100%' },
   infoCopy: { flex: 1, marginLeft: 8 },
-  infoLabel: { color: appColors.textMuted, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
-  infoValue: { color: appColors.text, fontSize: 12, lineHeight: 17, fontWeight: '700', marginTop: 2 },
+  infoLabel: { color: colors.textMuted, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  infoValue: { color: colors.text, fontSize: 12, lineHeight: 17, fontWeight: '700', marginTop: 2 },
   syncRow: {
     flexDirection: 'row',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: appColors.borderStrong,
+    borderTopColor: colors.borderStrong,
     paddingTop: 12,
   },
-  syncText: { color: appColors.textMuted, fontSize: 11, marginLeft: 7, flex: 1 },
+  syncText: { color: colors.textMuted, fontSize: 11, marginLeft: 7, flex: 1 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 11, marginTop: 2 },
   sectionHeaderCopy: { flex: 1 },
-  sectionTitle: { color: appColors.text, fontSize: 18, fontWeight: '900' },
-  sectionSubtitle: { color: appColors.textMuted, fontSize: 12, marginTop: 3 },
+  sectionTitle: { color: colors.text, fontSize: 18, fontWeight: '900' },
+  sectionSubtitle: { color: colors.textMuted, fontSize: 12, marginTop: 3 },
   countBadge: {
     minWidth: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 7,
   },
-  countBadgeText: { color: appColors.textSoft, fontSize: 12, fontWeight: '900' },
+  countBadgeText: { color: colors.textSoft, fontSize: 12, fontWeight: '900' },
   sectionCard: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     marginBottom: 24,
   },
   narrativeCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: colorAlpha(appColors.info, '0D'),
+    backgroundColor: colorAlpha(colors.info, '0D'),
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '3D'),
+    borderColor: colorAlpha(colors.info, '3D'),
     marginBottom: 24,
   },
   narrativeIcon: {
     width: 40,
     height: 40,
     borderRadius: 13,
-    backgroundColor: colorAlpha(appColors.info, '18'),
+    backgroundColor: colorAlpha(colors.info, '18'),
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -1167,7 +1189,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   narrativeLead: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 15,
     lineHeight: 21,
     fontWeight: '900',
@@ -1175,14 +1197,14 @@ const styles = StyleSheet.create({
   },
   narrativeLine: {
     borderTopWidth: 1,
-    borderTopColor: colorAlpha(appColors.info, '26'),
+    borderTopColor: colorAlpha(colors.info, '26'),
     paddingVertical: 9,
   },
   narrativeLineLast: {
     paddingBottom: 0,
   },
   narrativeLabel: {
-    color: appColors.info,
+    color: colors.info,
     fontSize: 9,
     lineHeight: 13,
     fontWeight: '900',
@@ -1191,7 +1213,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   narrativeText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 12,
     lineHeight: 18,
   },
@@ -1217,8 +1239,8 @@ const styles = StyleSheet.create({
     marginRight: 11,
   },
   mentalHealthHeaderCopy: { flex: 1, minWidth: 0 },
-  mentalHealthTitle: { color: appColors.text, fontSize: 14, fontWeight: '800' },
-  mentalHealthDate: { color: appColors.textMuted, fontSize: 11, marginTop: 3 },
+  mentalHealthTitle: { color: colors.text, fontSize: 14, fontWeight: '800' },
+  mentalHealthDate: { color: colors.textMuted, fontSize: 11, marginTop: 3 },
   mentalMetricRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1229,15 +1251,15 @@ const styles = StyleSheet.create({
     borderColor: colorAlpha('#C084FC', '2E'),
   },
   mentalMetric: { flex: 1, alignItems: 'center' },
-  mentalMetricValue: { color: appColors.text, fontSize: 15, fontWeight: '900' },
-  mentalMetricLabel: { color: appColors.textMuted, fontSize: 10, marginTop: 2 },
+  mentalMetricValue: { color: colors.text, fontSize: 15, fontWeight: '900' },
+  mentalMetricLabel: { color: colors.textMuted, fontSize: 10, marginTop: 2 },
   mentalMetricDivider: {
     width: 1,
     height: 28,
     backgroundColor: colorAlpha('#C084FC', '2E'),
   },
   mentalHealthSummary: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 12,
     lineHeight: 18,
     marginTop: 11,
@@ -1245,20 +1267,20 @@ const styles = StyleSheet.create({
   alertRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 15 },
   alertIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginRight: 11 },
   alertCopy: { flex: 1 },
-  alertTitle: { color: appColors.text, fontSize: 14, fontWeight: '800' },
-  alertDetail: { color: appColors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 3 },
+  alertTitle: { color: colors.text, fontSize: 14, fontWeight: '800' },
+  alertDetail: { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 3 },
   healthyState: { flexDirection: 'row', alignItems: 'center' },
   healthyIcon: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: colorAlpha(appColors.success, '18'),
+    backgroundColor: colorAlpha(colors.success, '18'),
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 11,
   },
   healthyCopy: { flex: 1 },
-  healthyTitle: { color: appColors.text, fontSize: 14, fontWeight: '800', marginBottom: 3 },
+  healthyTitle: { color: colors.text, fontSize: 14, fontWeight: '800', marginBottom: 3 },
   metricGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1267,9 +1289,9 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     width: '31.5%',
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 16,
     padding: 12,
     marginBottom: 10,
@@ -1282,66 +1304,66 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 8,
   },
-  metricValue: { color: appColors.text, fontSize: 25, lineHeight: 29, fontWeight: '900' },
-  metricLabel: { color: appColors.textMuted, fontSize: 11, lineHeight: 15, minHeight: 30 },
+  metricValue: { color: colors.text, fontSize: 25, lineHeight: 29, fontWeight: '900' },
+  metricLabel: { color: colors.textMuted, fontSize: 11, lineHeight: 15, minHeight: 30 },
   upcomingRow: { flexDirection: 'row', alignItems: 'flex-start' },
   upcomingIcon: { width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center', marginRight: 11 },
   upcomingCopy: { flex: 1 },
-  itemLabel: { color: appColors.info, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
-  itemTitle: { color: appColors.text, fontSize: 14, lineHeight: 19, fontWeight: '800', marginTop: 2 },
-  itemDetail: { color: appColors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 3 },
-  divider: { height: 1, backgroundColor: appColors.borderStrong, marginVertical: 15 },
+  itemLabel: { color: colors.info, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  itemTitle: { color: colors.text, fontSize: 14, lineHeight: 19, fontWeight: '800', marginTop: 2 },
+  itemDetail: { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 3 },
+  divider: { height: 1, backgroundColor: colors.borderStrong, marginVertical: 15 },
   treatmentRow: { flexDirection: 'row', alignItems: 'flex-start' },
   pillIcon: {
     width: 40,
     height: 40,
     borderRadius: 13,
-    backgroundColor: colorAlpha(appColors.success, '18'),
+    backgroundColor: colorAlpha(colors.success, '18'),
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 11,
   },
   treatmentCopy: { flex: 1 },
-  treatmentDose: { color: appColors.success, fontSize: 12, fontWeight: '800', marginTop: 2 },
-  dateCaption: { color: appColors.textSoft, fontSize: 10, lineHeight: 15, marginTop: 6 },
+  treatmentDose: { color: colors.success, fontSize: 12, fontWeight: '800', marginTop: 2 },
+  dateCaption: { color: colors.textSoft, fontSize: 10, lineHeight: 15, marginTop: 6 },
   timelineRow: { flexDirection: 'row', minHeight: 76 },
   timelineRail: { width: 22, alignItems: 'center', marginRight: 8 },
   timelineDot: {
     width: 11,
     height: 11,
     borderRadius: 6,
-    backgroundColor: appColors.info,
+    backgroundColor: colors.info,
     borderWidth: 3,
-    borderColor: colorAlpha(appColors.info, '33'),
+    borderColor: colorAlpha(colors.info, '33'),
     marginTop: 4,
   },
-  timelineLine: { width: 1, flex: 1, backgroundColor: appColors.border, marginVertical: 4 },
+  timelineLine: { width: 1, flex: 1, backgroundColor: colors.border, marginVertical: 4 },
   timelineCopy: { flex: 1, paddingBottom: 16 },
   timelineHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
-  timelineType: { color: appColors.info, fontSize: 9, fontWeight: '900', letterSpacing: 0.8, textTransform: 'uppercase' },
-  timelineDate: { color: appColors.textMuted, fontSize: 9, textAlign: 'right', maxWidth: '48%' },
+  timelineType: { color: colors.info, fontSize: 9, fontWeight: '900', letterSpacing: 0.8, textTransform: 'uppercase' },
+  timelineDate: { color: colors.textMuted, fontSize: 9, textAlign: 'right', maxWidth: '48%' },
   timelineDateDesktop: { fontSize: 11, lineHeight: 16 },
   pointerRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 13 },
   pointerNumber: {
     width: 25,
     height: 25,
     borderRadius: 9,
-    backgroundColor: colorAlpha(appColors.success, '18'),
+    backgroundColor: colorAlpha(colors.success, '18'),
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
-  pointerNumberText: { color: appColors.success, fontSize: 11, fontWeight: '900' },
-  pointerText: { color: appColors.textSoft, fontSize: 12, lineHeight: 18, flex: 1, paddingTop: 3 },
+  pointerNumberText: { color: colors.success, fontSize: 11, fontWeight: '900' },
+  pointerText: { color: colors.textSoft, fontSize: 12, lineHeight: 18, flex: 1, paddingTop: 3 },
   emptyInline: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4 },
-  emptyInlineText: { color: appColors.textMuted, fontSize: 13, lineHeight: 18, marginLeft: 9, flex: 1 },
+  emptyInlineText: { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginLeft: 9, flex: 1 },
   areaGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
   areaCard: {
     width: '50%',
     minHeight: 88,
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 17,
     padding: 12,
     marginBottom: 10,
@@ -1353,12 +1375,12 @@ const styles = StyleSheet.create({
     width: 37,
     height: 37,
     borderRadius: 12,
-    backgroundColor: colorAlpha(appColors.info, '14'),
+    backgroundColor: colorAlpha(colors.info, '14'),
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 9,
   },
   areaCopy: { flex: 1, minWidth: 0 },
-  areaTitle: { color: appColors.text, fontSize: 12, fontWeight: '800' },
-  areaSubtitle: { color: appColors.textMuted, fontSize: 9, lineHeight: 13, marginTop: 2 },
+  areaTitle: { color: colors.text, fontSize: 12, fontWeight: '800' },
+  areaSubtitle: { color: colors.textMuted, fontSize: 9, lineHeight: 13, marginTop: 2 },
 });

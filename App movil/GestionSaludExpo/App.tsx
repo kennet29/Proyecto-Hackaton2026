@@ -5,7 +5,7 @@
 
 import React, { useEffect } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
-import { DefaultTheme, LinkingOptions, NavigationContainer } from '@react-navigation/native';
+import { DefaultTheme, LinkingOptions, NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
@@ -90,6 +90,7 @@ import { useOfflineWriteSync } from './src/hooks/useOfflineWriteSync';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
 import { OfflineStatusBanner } from './src/components/OfflineStatusBanner';
 import { appColors } from './src/theme/colors';
+import { AppColors, useAppColors } from './src/theme/useAppColors';
 import { appFontFamilies } from './src/theme/typography';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -107,15 +108,15 @@ const WEB_FORM_CSS = `
     min-height: 46px;
     border: 0;
     border-radius: 12px;
-    background-color: #0D1B2A;
-    color: #F4F8FF;
+    background-color: var(--app-input-bg, #0D1B2A);
+    color: var(--app-text, #F4F8FF);
     font-family: "SpaceGrotesk_600SemiBold", "Segoe UI", Arial, sans-serif;
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0;
     padding: 0 14px;
     outline: none;
-    color-scheme: dark;
+    color-scheme: var(--app-color-scheme, dark);
   }
 
   select:focus {
@@ -123,8 +124,8 @@ const WEB_FORM_CSS = `
   }
 
   select option {
-    background-color: #0D1B2A;
-    color: #F4F8FF;
+    background-color: var(--app-input-bg, #0D1B2A);
+    color: var(--app-text, #F4F8FF);
     font-family: "SpaceGrotesk_600SemiBold", "Segoe UI", Arial, sans-serif;
     font-size: 15px;
     font-weight: 600;
@@ -138,13 +139,14 @@ const WEB_FORM_CSS = `
 
   input[type="date"],
   input[type="time"] {
-    color-scheme: dark;
+    color-scheme: var(--app-color-scheme, dark);
   }
 `;
 
-const sharedScreenOptions = (fontScale: number) => ({
-  headerStyle: { backgroundColor: appColors.background },
-  headerTintColor: appColors.text,
+const sharedScreenOptions = (fontScale: number, colors: Pick<AppColors, 'background' | 'text'> = appColors) => ({
+  headerStyle: { backgroundColor: colors.background },
+  headerTintColor: colors.text,
+  contentStyle: { backgroundColor: colors.background },
   headerTitleStyle: { fontFamily: appFontFamilies.headingBold, fontSize: 18 * fontScale },
 });
 
@@ -220,6 +222,7 @@ const linking: LinkingOptions<RootStackParamList> = {
 };
 
 const PrivateNavigator = () => {
+  const colors = useAppColors();
   const { initialPrivateRoute, token, user } = useAuth();
   const { fontScale } = useFontSize();
   usePushNotifications(token, user?.id ?? null);
@@ -230,7 +233,7 @@ const PrivateNavigator = () => {
       <OfflineStatusBanner state={offlineSync} />
       <Stack.Navigator
         initialRouteName={initialPrivateRoute ?? 'MenuPrincipal'}
-        screenOptions={sharedScreenOptions(fontScale)}
+        screenOptions={sharedScreenOptions(fontScale, colors)}
       >
       <Stack.Screen
         name="MenuPrincipal"
@@ -509,10 +512,11 @@ const PrivateNavigator = () => {
 };
 
 const PublicNavigator = () => {
+  const colors = useAppColors();
   const { fontScale } = useFontSize();
 
   return (
-  <Stack.Navigator initialRouteName="Login" screenOptions={sharedScreenOptions(fontScale)}>
+  <Stack.Navigator initialRouteName="Login" screenOptions={({ route }) => sharedScreenOptions(fontScale, ['Login', 'Registro', 'IniciarSesion'].includes(route.name) ? appColors : colors)}>
     <Stack.Screen
       name="IniciarSesion"
       component={IniciarSesionScreen}
@@ -562,6 +566,21 @@ const PublicNavigator = () => {
 const RootNavigator = () => {
   const { isHydrated, token } = useAuth();
   const { mode } = useBackgroundMode();
+  const colors = useAppColors();
+  const navigationRef = useNavigationContainerRef<RootStackParamList>();
+  const [routeName, setRouteName] = React.useState('Login');
+  const isLightMode = mode === 'light' && !['Login', 'Registro', 'IniciarSesion'].includes(routeName);
+  const activeColors = isLightMode ? colors : appColors;
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const root = document.documentElement;
+    root.style.setProperty('--app-input-bg', activeColors.backgroundMuted);
+    root.style.setProperty('--app-text', activeColors.text);
+    root.style.setProperty('--app-border', activeColors.border);
+    root.style.setProperty('--app-color-scheme', isLightMode ? 'light' : 'dark');
+    root.dataset.theme = isLightMode ? 'light' : 'dark';
+  }, [activeColors, isLightMode]);
 
   if (!isHydrated) {
     return (
@@ -572,15 +591,25 @@ const RootNavigator = () => {
   }
 
   return (
-    <View style={[styles.appRoot, { backgroundColor: mode === 'light' ? '#FFFFFF' : appColors.background }]}>
+    <View style={[styles.appRoot, { backgroundColor: activeColors.background }]}>
+      <StatusBar style={isLightMode ? 'dark' : 'light'} />
       <View style={styles.appFrame}>
         <NavigationContainer
+          ref={navigationRef}
+          onReady={() => setRouteName(navigationRef.getCurrentRoute()?.name ?? 'Login')}
+          onStateChange={() => setRouteName(navigationRef.getCurrentRoute()?.name ?? 'Login')}
           linking={linking}
           theme={{
             ...DefaultTheme,
+            dark: !isLightMode,
             colors: {
               ...DefaultTheme.colors,
-              background: mode === 'light' ? '#FFFFFF' : appColors.background,
+              background: activeColors.background,
+              card: activeColors.surface,
+              text: activeColors.text,
+              border: activeColors.border,
+              primary: activeColors.info,
+              notification: activeColors.accent,
             },
           }}
         >
@@ -636,7 +665,6 @@ export default function App() {
       <FontSizeProvider>
         <AuthProvider>
           <AppErrorBoundary>
-            <StatusBar style="light" />
             <RootNavigator />
           </AppErrorBoundary>
         </AuthProvider>

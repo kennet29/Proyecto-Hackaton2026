@@ -8,6 +8,7 @@ import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import { AppText } from './AppText';
 import { appColors } from '../theme/colors';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = {
   latitude?: number | null;
@@ -18,6 +19,9 @@ type Props = {
 const NICARAGUA_CENTER = { latitude: 12.1364, longitude: -86.2514 };
 
 export function LocationMapPicker({ latitude, longitude, onLocationChange }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const region = useMemo<Region>(() => ({
     latitude: latitude ?? NICARAGUA_CENTER.latitude,
     longitude: longitude ?? NICARAGUA_CENTER.longitude,
@@ -34,9 +38,9 @@ export function LocationMapPicker({ latitude, longitude, onLocationChange }: Pro
   </View>;
 }
 
-const styles = StyleSheet.create({
-  wrapper: { overflow: 'hidden', borderRadius: 14, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.backgroundMuted },
+const createStyles = (colors: AppColors) => StyleSheet.create({
+  wrapper: { overflow: 'hidden', borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted },
   map: { height: 210, width: '100%' },
-  hint: { paddingHorizontal: 11, paddingVertical: 8, backgroundColor: appColors.surface },
-  hintText: { color: appColors.textMuted, fontSize: 12, lineHeight: 16 },
+  hint: { paddingHorizontal: 11, paddingVertical: 8, backgroundColor: colors.surface },
+  hintText: { color: colors.textMuted, fontSize: 12, lineHeight: 16 },
 });

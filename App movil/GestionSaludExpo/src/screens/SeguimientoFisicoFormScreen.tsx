@@ -21,6 +21,7 @@ import { API_URL } from '../config/api';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SeguimientoFisicoForm'>;
 
@@ -106,6 +107,9 @@ const emptyForm = (patientId = ''): FormState => ({
 });
 
 export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token, user } = useAuth();
   const requestedPatientId = route.params?.patientId ? String(route.params.patientId) : '';
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
@@ -307,7 +311,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
         <AppText style={styles.sectionTitle}>Paciente</AppText>
         {loadingPatients ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color="#29B6FF" />
+            <ActivityIndicator color={colors.info} />
             <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
           </View>
         ) : patients.length === 0 ? (
@@ -318,7 +322,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
               selectedValue={form.pacienteId}
               onValueChange={(value) => handleChange('pacienteId', String(value))}
               style={styles.picker}
-              dropdownIconColor="#F4F8FF"
+              dropdownIconColor={colors.text}
             >
               {patients.map((patient) => (
                 <Picker.Item
@@ -329,7 +333,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
                       : patient.displayName
                   }
                   value={String(patient.pacienteId)}
-                  color="#F4F8FF"
+                  color={colors.text}
                 />
               ))}
             </Picker>
@@ -346,7 +350,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
         </AppText>
         {loadingHistory ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color="#29B6FF" />
+            <ActivityIndicator color={colors.info} />
             <AppText style={styles.loadingText}>Cargando registros recientes...</AppText>
           </View>
         ) : templateRecords.length ? (
@@ -390,7 +394,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           value={form.fecha}
           onChangeText={(value) => handleChange('fecha', value)}
           placeholder="Fecha (YYYY-MM-DD)"
-          placeholderTextColor="#9FB3C8"
+          placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
         />
 
@@ -402,7 +406,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
               value={form.peso}
               onChangeText={(value) => handleChange('peso', value)}
               placeholder="Peso (kg)"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               keyboardType="decimal-pad"
             />
           </View>
@@ -413,7 +417,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
               value={form.minutosEjercicio}
               onChangeText={(value) => handleChange('minutosEjercicio', value)}
               placeholder="Ejercicio min"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               keyboardType="numeric"
             />
           </View>
@@ -425,7 +429,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           value={form.tipoEjercicio}
           onChangeText={(value) => handleChange('tipoEjercicio', value)}
           placeholder="Tipo de ejercicio"
-          placeholderTextColor="#9FB3C8"
+          placeholderTextColor={colors.textMuted}
         />
 
         <AppText style={styles.fieldLabel}>Intensidad</AppText>
@@ -434,14 +438,14 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
             selectedValue={form.intensidad}
             onValueChange={(value) => handleChange('intensidad', String(value))}
             style={styles.picker}
-            dropdownIconColor="#F4F8FF"
+            dropdownIconColor={colors.text}
           >
             {intensidadOptions.map((item) => (
               <Picker.Item
                 key={`intensidad-${item.value || 'none'}`}
                 label={item.label}
                 value={item.value}
-                color="#F4F8FF"
+                color={colors.text}
               />
             ))}
           </Picker>
@@ -455,7 +459,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
               value={form.pasos}
               onChangeText={(value) => handleChange('pasos', value)}
               placeholder="Pasos"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               keyboardType="numeric"
             />
           </View>
@@ -466,7 +470,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
               value={form.caloriasQuemadas}
               onChangeText={(value) => handleChange('caloriasQuemadas', value)}
               placeholder="Calorias"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               keyboardType="numeric"
             />
           </View>
@@ -478,7 +482,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           value={form.distanciaKm}
           onChangeText={(value) => handleChange('distanciaKm', value)}
           placeholder="Distancia (km)"
-          placeholderTextColor="#9FB3C8"
+          placeholderTextColor={colors.textMuted}
           keyboardType="decimal-pad"
         />
 
@@ -488,7 +492,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           value={form.notas}
           onChangeText={(value) => handleChange('notas', value)}
           placeholder="Notas"
-          placeholderTextColor="#9FB3C8"
+          placeholderTextColor={colors.textMuted}
           multiline
           textAlignVertical="top"
         />
@@ -499,7 +503,7 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
           disabled={submitting || !form.pacienteId}
         >
           {submitting ? (
-            <ActivityIndicator color="#F4F8FF" />
+            <ActivityIndicator color={colors.text} />
           ) : (
             <AppText style={styles.primaryBtnText}>Guardar seguimiento</AppText>
           )}
@@ -509,44 +513,44 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     padding: 20,
     paddingBottom: 40,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     gap: 16,
   },
   hero: {
-    backgroundColor: '#29B6FF18',
+    backgroundColor: `${colors.info}18`,
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#29B6FF',
+    borderColor: colors.info,
   },
   heroTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 24,
     fontWeight: '800',
     marginBottom: 6,
   },
   heroText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 14,
     lineHeight: 20,
   },
   card: {
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 16,
     gap: 12,
   },
   sectionTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '700',
   },
   sectionText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -554,23 +558,23 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#315579',
-    backgroundColor: '#0C1C31',
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.backgroundMuted,
   },
   picker: {
     height: 50,
-    color: '#F4F8FF',
-    backgroundColor: '#0C1C31',
+    color: colors.text,
+    backgroundColor: colors.backgroundMuted,
   },
   input: {
-    backgroundColor: '#0C1C31',
+    backgroundColor: colors.backgroundMuted,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#315579',
+    borderColor: colors.borderStrong,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#F4F8FF',
+    color: colors.text,
   },
   textArea: {
     minHeight: 92,
@@ -585,18 +589,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fieldLabel: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 13,
     fontWeight: '700',
   },
   primaryBtn: {
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -608,39 +612,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginTop: 8,
   },
   emptyText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 20,
   },
   errorText: {
-    color: '#FF4D73',
+    color: colors.accent,
     lineHeight: 20,
   },
   templateCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 12,
     gap: 4,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   templateCardActive: {
-    borderColor: '#29B6FF',
-    backgroundColor: '#29B6FF18',
+    borderColor: colors.info,
+    backgroundColor: `${colors.info}18`,
   },
   templateTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '700',
   },
   templateText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 13,
   },
   templateAction: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
     marginTop: 6,
   },

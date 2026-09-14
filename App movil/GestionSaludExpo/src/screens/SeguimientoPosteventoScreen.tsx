@@ -21,6 +21,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type DateFieldKey = 'fechaEvento' | 'fechaSeguimiento' | 'proximoControl';
 
@@ -29,15 +30,15 @@ const webDateInputStyle = {
   minWidth: 0,
   minHeight: 52,
   borderRadius: 14,
-  border: '1px solid #27496D',
-  backgroundColor: '#071120',
-  color: '#F4F8FF',
+  border: '1px solid var(--app-border)',
+  backgroundColor: 'var(--app-input-bg)',
+  color: 'var(--app-text)',
   padding: '0 14px',
   fontFamily: '"SpaceGrotesk_400Regular", "Segoe UI", Arial, sans-serif',
   fontSize: 15,
   fontWeight: 700,
   outline: 'none',
-  colorScheme: 'dark',
+  colorScheme: 'var(--app-color-scheme)',
 };
 
 type LinkedPatient = {
@@ -134,6 +135,9 @@ const buildEntryMeta = (entry: FollowUpEntry) => {
 };
 
 export function SeguimientoPosteventoScreen() {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token, user } = useAuth();
   const authHeaders = useMemo<Record<string, string>>(() => {
     const base: Record<string, string> = {};
@@ -215,7 +219,7 @@ export function SeguimientoPosteventoScreen() {
       )}
       {Platform.OS === 'ios' && iosDateField === key ? (
         <View style={styles.iosPickerCard}>
-          <DateTimePicker
+          <DateTimePicker themeVariant={colors.mode}
             mode="date"
             display="spinner"
             value={parseDateForPicker(form[key])}
@@ -556,7 +560,7 @@ export function SeguimientoPosteventoScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.heroCard}>
         <View style={styles.heroIcon}>
-          <Ionicons name="pulse-outline" size={28} color="#29B6FF" />
+          <Ionicons name="pulse-outline" size={28} color={colors.info} />
         </View>
         <View style={styles.heroCopy}>
           <AppText style={styles.kicker}>EVOLUCIÓN CLÍNICA</AppText>
@@ -570,7 +574,7 @@ export function SeguimientoPosteventoScreen() {
       <View style={styles.formCard}>
       <View style={styles.blockHeader}>
         <View style={styles.blockIcon}>
-          <Ionicons name="folder-open-outline" size={20} color="#29B6FF" />
+          <Ionicons name="folder-open-outline" size={20} color={colors.info} />
         </View>
         <View style={styles.blockHeaderCopy}>
           <AppText style={styles.blockTitle}>Caso relacionado</AppText>
@@ -616,7 +620,7 @@ export function SeguimientoPosteventoScreen() {
               <Ionicons
                 name={option.icon}
                 size={20}
-                color={active ? '#071120' : '#29B6FF'}
+                color={active ? colors.background : colors.info}
               />
               <AppText style={[styles.eventOptionText, active && styles.eventOptionTextActive]}>
                 {option.label}
@@ -664,7 +668,7 @@ export function SeguimientoPosteventoScreen() {
       <AppTextInput
         style={styles.input}
         placeholder="Escribe un titulo"
-        placeholderTextColor="#F4F8FF"
+        placeholderTextColor={colors.text}
         value={form.tituloEvento}
         onChangeText={(value) => handleChange('tituloEvento', value)}
       />
@@ -680,7 +684,7 @@ export function SeguimientoPosteventoScreen() {
 
       <View style={styles.blockHeader}>
         <View style={styles.blockIcon}>
-          <Ionicons name="analytics-outline" size={20} color="#29B6FF" />
+          <Ionicons name="analytics-outline" size={20} color={colors.info} />
         </View>
         <View style={styles.blockHeaderCopy}>
           <AppText style={styles.blockTitle}>Estado actual</AppText>
@@ -713,7 +717,7 @@ export function SeguimientoPosteventoScreen() {
       <View style={styles.painScale}>
         {Array.from({ length: 11 }, (_, level) => {
           const active = form.nivelDolor === String(level);
-          const color = level <= 3 ? '#38E28E' : level <= 6 ? '#FFB547' : '#FF4D73';
+          const color = level <= 3 ? colors.success : level <= 6 ? '#FFB547' : colors.accent;
           return (
             <TouchableOpacity
               key={level}
@@ -737,7 +741,7 @@ export function SeguimientoPosteventoScreen() {
       <AppTextInput
         style={[styles.input, styles.multiline]}
         placeholder="Describe la evolucion"
-        placeholderTextColor="#F4F8FF"
+        placeholderTextColor={colors.text}
         value={form.evolucion}
         multiline
         onChangeText={(value) => handleChange('evolucion', value)}
@@ -747,7 +751,7 @@ export function SeguimientoPosteventoScreen() {
       <AppTextInput
         style={[styles.input, styles.multiline]}
         placeholder="Describe sintomas o cambios"
-        placeholderTextColor="#F4F8FF"
+        placeholderTextColor={colors.text}
         value={form.sintomas}
         multiline
         onChangeText={(value) => handleChange('sintomas', value)}
@@ -755,7 +759,7 @@ export function SeguimientoPosteventoScreen() {
 
       <View style={styles.blockHeader}>
         <View style={styles.blockIcon}>
-          <Ionicons name="home-outline" size={20} color="#29B6FF" />
+          <Ionicons name="home-outline" size={20} color={colors.info} />
         </View>
         <View style={styles.blockHeaderCopy}>
           <AppText style={styles.blockTitle}>Plan de seguimiento</AppText>
@@ -766,7 +770,7 @@ export function SeguimientoPosteventoScreen() {
       <AppTextInput
         style={[styles.input, styles.multiline]}
         placeholder="Medicamentos en uso"
-        placeholderTextColor="#F4F8FF"
+        placeholderTextColor={colors.text}
         value={form.medicacionActual}
         multiline
         onChangeText={(value) => handleChange('medicacionActual', value)}
@@ -776,7 +780,7 @@ export function SeguimientoPosteventoScreen() {
       <AppTextInput
         style={[styles.input, styles.multiline]}
         placeholder="Indica los cuidados"
-        placeholderTextColor="#F4F8FF"
+        placeholderTextColor={colors.text}
         value={form.cuidadosHogar}
         multiline
         onChangeText={(value) => handleChange('cuidadosHogar', value)}
@@ -786,7 +790,7 @@ export function SeguimientoPosteventoScreen() {
       <AppTextInput
         style={[styles.input, styles.multiline]}
         placeholder="Agrega notas complementarias"
-        placeholderTextColor="#F4F8FF"
+        placeholderTextColor={colors.text}
         value={form.notas}
         multiline
         onChangeText={(value) => handleChange('notas', value)}
@@ -803,7 +807,7 @@ export function SeguimientoPosteventoScreen() {
           <Ionicons
             name={requiereAtencion ? 'alert-circle' : 'checkmark-circle-outline'}
             size={21}
-            color={requiereAtencion ? '#FF4D73' : '#38E28E'}
+            color={requiereAtencion ? colors.accent : colors.success}
           />
           <View style={styles.attentionCopy}>
             <AppText style={[styles.attentionTitle, requiereAtencion && styles.attentionTitleActive]}>
@@ -815,7 +819,7 @@ export function SeguimientoPosteventoScreen() {
                 : 'Toca aquí si el caso necesita revisión prioritaria.'}
             </AppText>
           </View>
-          <Ionicons name="chevron-forward" size={18} color="#9FB3C8" />
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
 
@@ -825,9 +829,9 @@ export function SeguimientoPosteventoScreen() {
         disabled={submitting}
       >
         {submitting ? (
-          <ActivityIndicator color="#071120" />
+          <ActivityIndicator color={colors.onAccent} />
         ) : (
-          <Ionicons name="save-outline" size={20} color="#071120" />
+          <Ionicons name="save-outline" size={20} color={colors.onAccent} />
         )}
         <AppText style={styles.saveBtnText}>{submitting ? 'Guardando...' : 'Guardar seguimiento'}</AppText>
       </TouchableOpacity>
@@ -844,7 +848,7 @@ export function SeguimientoPosteventoScreen() {
       </View>
       {screenError ? <AppText style={styles.errorText}>{screenError}</AppText> : null}
       {loadingEntries ? (
-        <ActivityIndicator color="#29B6FF" style={styles.loader} />
+        <ActivityIndicator color={colors.info} style={styles.loader} />
       ) : recentEntries.length ? (
         recentEntries.map((entry) => (
           <View key={entry.seguimientoPosteventoId} style={styles.entryCard}>
@@ -886,11 +890,11 @@ export function SeguimientoPosteventoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     padding: 24,
     paddingBottom: 100,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     gap: 16,
   },
   heroCard: {
@@ -899,9 +903,9 @@ const styles = StyleSheet.create({
     gap: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 22,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   heroIcon: {
     width: 56,
@@ -909,13 +913,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 18,
-    backgroundColor: '#29B6FF18',
+    backgroundColor: `${colors.info}18`,
   },
   heroCopy: {
     flex: 1,
   },
   kicker: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 11,
     fontWeight: '900',
     letterSpacing: 1.1,
@@ -924,19 +928,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   subtitle: {
     marginTop: 5,
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 20,
   },
   formCard: {
     padding: 18,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 22,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   blockHeader: {
     flexDirection: 'row',
@@ -946,7 +950,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#27496D',
+    borderTopColor: colors.border,
   },
   blockIcon: {
     width: 40,
@@ -954,43 +958,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 13,
-    backgroundColor: '#29B6FF12',
+    backgroundColor: `${colors.info}12`,
   },
   blockHeaderCopy: {
     flex: 1,
   },
   blockTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 17,
     fontWeight: '900',
   },
   blockHint: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 12,
     marginTop: 2,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
     marginTop: 8,
     marginBottom: 10,
   },
   label: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '700',
     marginBottom: 8,
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     marginBottom: 12,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   picker: {
-    color: '#F4F8FF',
+    color: colors.text,
   },
   optionGrid: {
     flexDirection: 'row',
@@ -1008,30 +1012,30 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   eventOptionActive: {
-    borderColor: '#29B6FF',
-    backgroundColor: '#29B6FF',
+    borderColor: colors.info,
+    backgroundColor: colors.info,
   },
   eventOptionText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontWeight: '800',
   },
   eventOptionTextActive: {
-    color: '#071120',
+    color: colors.onAccent,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
     fontSize: 16,
-    backgroundColor: '#071120',
-    color: '#F4F8FF',
+    backgroundColor: colors.background,
+    color: colors.text,
   },
   row: {
     flexDirection: 'row',
@@ -1049,35 +1053,35 @@ const styles = StyleSheet.create({
   dateButton: {
     minHeight: 52,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     paddingHorizontal: 14,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     justifyContent: 'center',
     marginBottom: 12,
   },
   dateButtonText: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 16,
     textAlign: 'center',
   },
   iosPickerCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     marginBottom: 12,
   },
   iosPickerDoneBtn: {
     borderTopWidth: 1,
-    borderTopColor: '#27496D',
+    borderTopColor: colors.border,
     paddingVertical: 10,
     alignItems: 'center',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   iosPickerDoneText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
   },
   multiline: {
@@ -1099,9 +1103,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   statusDot: {
     width: 8,
@@ -1109,7 +1113,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   statusOptionText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontWeight: '800',
   },
   painScale: {
@@ -1123,12 +1127,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   painLevelText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontWeight: '900',
   },
   painLegend: {
@@ -1138,7 +1142,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   painLegendText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 11,
   },
   toggleRow: {
@@ -1150,28 +1154,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 11,
     borderWidth: 1,
-    borderColor: '#38E28E55',
+    borderColor: `${colors.success}55`,
     borderRadius: 15,
     padding: 13,
-    backgroundColor: '#38E28E0C',
+    backgroundColor: `${colors.success}0C`,
   },
   attentionButtonActive: {
-    borderColor: '#FF4D73',
-    backgroundColor: '#FF4D7312',
+    borderColor: colors.accent,
+    backgroundColor: `${colors.accent}12`,
   },
   attentionCopy: {
     flex: 1,
   },
   attentionTitle: {
-    color: '#38E28E',
+    color: colors.success,
     fontWeight: '900',
     fontSize: 14,
   },
   attentionTitleActive: {
-    color: '#FF4D73',
+    color: colors.accent,
   },
   attentionHint: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 12,
     marginTop: 3,
   },
@@ -1181,14 +1185,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     borderRadius: 14,
   },
   disabledBtn: {
     opacity: 0.6,
   },
   saveBtnText: {
-    color: '#071120',
+    color: colors.onAccent,
     textAlign: 'center',
     fontWeight: '900',
     fontSize: 16,
@@ -1200,7 +1204,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   historyHint: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 12,
   },
   historyCount: {
@@ -1210,18 +1214,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 18,
-    backgroundColor: '#29B6FF18',
+    backgroundColor: `${colors.info}18`,
   },
   historyCountText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '900',
   },
   entryCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   entryTopRow: {
     flexDirection: 'row',
@@ -1234,12 +1238,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   entryTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
     fontSize: 16,
   },
   entryType: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 12,
     fontWeight: '800',
     textTransform: 'capitalize',
@@ -1251,48 +1255,48 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   entryStatusActive: {
-    backgroundColor: '#29B6FF18',
+    backgroundColor: `${colors.info}18`,
   },
   entryStatusObservation: {
     backgroundColor: '#FFB54718',
   },
   entryStatusClosed: {
-    backgroundColor: '#38E28E18',
+    backgroundColor: `${colors.success}18`,
   },
   entryStatusText: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 11,
     fontWeight: '900',
     textTransform: 'capitalize',
   },
   entryMeta: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 19,
     marginBottom: 4,
   },
   entryHighlights: {
-    color: '#29B6FF',
+    color: colors.info,
     marginBottom: 6,
     fontWeight: '700',
   },
   entryNotes: {
-    color: '#F4F8FF',
+    color: colors.text,
     lineHeight: 19,
   },
   emptyState: {
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     borderRadius: 16,
     padding: 16,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     marginBottom: 12,
   },
   emptyStateText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     lineHeight: 19,
   },
   errorText: {
-    color: '#FF4D73',
+    color: colors.accent,
     marginBottom: 12,
   },
   loader: {

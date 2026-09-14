@@ -7,13 +7,15 @@ import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { AppText } from './AppText';
 import { OfflineSyncState } from '../hooks/useOfflineWriteSync';
-import { appColors } from '../theme/colors';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = {
   state: OfflineSyncState;
 };
 
 export const OfflineStatusBanner: React.FC<Props> = ({ state }) => {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const hasWork = state.pending > 0 || state.failed > 0;
   if (state.isConnected !== false && !state.isSyncing && !hasWork) {
     return null;
@@ -49,7 +51,7 @@ export const OfflineStatusBanner: React.FC<Props> = ({ state }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     minHeight: 38,
     paddingHorizontal: 14,
@@ -60,28 +62,28 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   offline: {
-    backgroundColor: '#7C4A03',
+    backgroundColor: colors.surfaceStrong,
   },
   syncing: {
-    backgroundColor: appColors.border,
+    backgroundColor: colors.surfaceStrong,
   },
   failed: {
-    backgroundColor: '#8A2138',
+    backgroundColor: `${colors.accent}20`,
   },
   text: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 13,
     fontWeight: '700',
   },
   retryButton: {
     borderWidth: 1,
-    borderColor: appColors.text,
+    borderColor: colors.text,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   retryText: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 12,
     fontWeight: '800',
   },

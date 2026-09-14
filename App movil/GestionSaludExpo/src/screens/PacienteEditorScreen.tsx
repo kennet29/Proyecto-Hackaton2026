@@ -24,6 +24,7 @@ import { API_URL } from '../config/api';
 import { invalidateLinkedPatientsCache } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate } from '../utils/localDate';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PacienteEditor'>;
 
@@ -69,6 +70,9 @@ function FieldLabel({
   children: React.ReactNode;
   required?: boolean;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <AppText style={styles.label}>
       {children}
@@ -82,6 +86,9 @@ function FieldLabel({
 }
 
 export function PacienteEditorScreen({ navigation, route }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const pacienteId = route.params?.pacienteId ?? null;
   const isEditing = pacienteId !== null;
   const { token, user } = useAuth();
@@ -256,7 +263,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
   if (loading) {
     return (
       <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" color="#29B6FF" />
+        <ActivityIndicator size="large" color={colors.info} />
         <AppText style={styles.loadingText}>Cargando paciente...</AppText>
       </View>
     );
@@ -275,7 +282,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
       <AppTextInput
         style={styles.input}
         placeholder="Ej. María José"
-        placeholderTextColor="#8298AF"
+        placeholderTextColor={colors.textMuted}
         value={form.nombres}
         onChangeText={(value) => handleChange('nombres', value)}
         autoCapitalize="words"
@@ -286,7 +293,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
       <AppTextInput
         style={styles.input}
         placeholder="Ej. López García"
-        placeholderTextColor="#8298AF"
+        placeholderTextColor={colors.textMuted}
         value={form.apellidos}
         onChangeText={(value) => handleChange('apellidos', value)}
         autoCapitalize="words"
@@ -310,7 +317,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
       <AppTextInput
         style={styles.input}
         placeholder="Ej. 8888 8888"
-        placeholderTextColor="#8298AF"
+        placeholderTextColor={colors.textMuted}
         keyboardType="phone-pad"
         value={form.telefono}
         onChangeText={(value) => handleChange('telefono', value)}
@@ -321,7 +328,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
       <AppTextInput
         style={styles.input}
         placeholder="Ej. nombre@correo.com"
-        placeholderTextColor="#8298AF"
+        placeholderTextColor={colors.textMuted}
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
@@ -343,7 +350,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
       </TouchableOpacity>
 
       {showIOSDatePicker ? (
-        <DateTimePicker
+        <DateTimePicker themeVariant={colors.mode}
           value={parseDateForPicker(form.fechaNacimiento)}
           mode="date"
           display="spinner"
@@ -358,7 +365,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
       <AppTextInput
         style={styles.input}
         placeholder="Ej. Madre, hijo o cónyuge"
-        placeholderTextColor="#8298AF"
+        placeholderTextColor={colors.textMuted}
         value={form.parentesco}
         onChangeText={(value) => handleChange('parentesco', value)}
         autoCapitalize="sentences"
@@ -369,7 +376,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         <Switch
           value={form.esPrincipal}
           onValueChange={(value) => handleChange('esPrincipal', value)}
-          thumbColor={form.esPrincipal ? '#29B6FF' : undefined}
+          thumbColor={form.esPrincipal ? colors.info : undefined}
         />
       </View>
 
@@ -382,100 +389,100 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   loadingScreen: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
   },
   loadingText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginTop: 10,
   },
   container: {
     padding: 24,
     paddingBottom: 36,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   title: {
     fontSize: 26,
     fontWeight: '800',
     marginBottom: 6,
-    color: '#F4F8FF',
+    color: colors.text,
   },
   subtitle: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 8,
   },
   requiredHint: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
     marginBottom: 20,
   },
   label: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#F4F8FF',
+    color: colors.text,
     marginBottom: 8,
   },
   requiredMark: {
     color: '#FF8A80',
   },
   optionalText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontWeight: '500',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
     fontSize: 16,
-    backgroundColor: '#0D1B2A',
-    color: '#F4F8FF',
+    backgroundColor: colors.backgroundMuted,
+    color: colors.text,
   },
   pickerShell: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     marginBottom: 12,
     overflow: 'hidden',
-    backgroundColor: '#0D1B2A',
+    backgroundColor: colors.backgroundMuted,
   },
   dateField: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: colors.backgroundMuted,
   },
   dateValue: {
     fontSize: 16,
-    color: '#F4F8FF',
+    color: colors.text,
   },
   datePlaceholder: {
     fontSize: 16,
-    color: '#9FB3C8',
+    color: colors.textMuted,
   },
   primaryBtn: {
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     paddingVertical: 16,
     borderRadius: 14,
     marginTop: 8,
   },
   btnText: {
-    color: '#F4F8FF',
+    color: colors.text,
     textAlign: 'center',
     fontWeight: '700',
     fontSize: 16,
   },
   switchRow: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -484,10 +491,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
-    backgroundColor: '#0D1B2A',
+    backgroundColor: colors.backgroundMuted,
   },
   switchLabel: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '700',
     flex: 1,

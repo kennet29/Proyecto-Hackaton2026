@@ -9,10 +9,14 @@ import { AppText } from '../components/AppText';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { obtenerNivel } from '../data/educacion';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EducacionNivel'>;
 
 export function EducacionNivelScreen({ route, navigation }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const nivelId = route.params?.nivelId;
   const nivel = useMemo(
     () => (nivelId ? obtenerNivel(nivelId) : null),
@@ -71,30 +75,30 @@ export function EducacionNivelScreen({ route, navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     padding: 20,
   },
   title: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 24,
     fontWeight: '900',
     marginBottom: 6,
   },
   subtitle: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 16,
   },
   section: {
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 16,
     marginBottom: 18,
   },
   sectionTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
     marginBottom: 10,
   },
@@ -104,46 +108,46 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tag: {
-    backgroundColor: '#29B6FF22',
+    backgroundColor: `${colors.info}22`,
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   tagText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 12,
   },
   card: {
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 18,
     marginBottom: 14,
   },
   cardTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 6,
   },
   cardDescription: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 10,
   },
   smallTag: {
-    backgroundColor: '#FF4D7322',
+    backgroundColor: `${colors.accent}22`,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   smallTagText: {
-    color: '#FF4D73',
+    color: colors.accent,
     fontSize: 11,
   },
   listContent: {
     paddingBottom: 30,
   },
   errorText: {
-    color: '#FF4D73',
+    color: colors.accent,
     fontSize: 18,
     textAlign: 'center',
     marginTop: 24,
@@ -153,12 +157,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderRadius: 30,
     borderWidth: 1,
-    borderColor: '#FF4D73',
+    borderColor: colors.accent,
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
   backBtnText: {
-    color: '#FF4D73',
+    color: colors.accent,
     fontWeight: '700',
   },
 });

@@ -31,8 +31,8 @@ RUN npm ci --omit=dev && npm cache clean --force
 # Copy compiled code from builder
 COPY --from=builder /app/dist ./dist
 
-# Create non-root user permissions
-RUN chown -R node:node /app
+# Conserva adjuntos clínicos fuera del ciclo de vida del contenedor.
+RUN mkdir -p /app/uploads && chown -R node:node /app
 
 USER node
 

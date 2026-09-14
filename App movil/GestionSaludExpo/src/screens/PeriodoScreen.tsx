@@ -23,6 +23,7 @@ import { appColors, colorAlpha } from '../theme/colors';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type PeriodoRecord = {
   periodoId: number;
@@ -87,8 +88,11 @@ const formatEnum = (value?: string | null) => {
 };
 
 export function PeriodoScreen() {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token, user } = useAuth();
-  const pickerItemColor = Platform.OS === 'android' ? appColors.background : appColors.text;
+  const pickerItemColor = Platform.OS === 'android' ? colors.background : colors.text;
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [modulePassword, setModulePassword] = useState('');
@@ -332,14 +336,14 @@ export function PeriodoScreen() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={() => loadData(selectedPatientId, true)}
-          tintColor={appColors.text}
+          tintColor={colors.text}
         />
       }
     >
       <View style={styles.hero}>
         <View style={styles.heroHeader}>
           <View style={styles.heroIcon}>
-            <Ionicons name="moon-outline" size={24} color={appColors.text} />
+            <Ionicons name="moon-outline" size={24} color={colors.text} />
           </View>
           <View style={styles.heroCopy}>
             <AppText style={styles.heroEyebrow}>Bienestar femenino</AppText>
@@ -351,15 +355,15 @@ export function PeriodoScreen() {
         </AppText>
         <View style={styles.heroChips}>
           <View style={styles.chip}>
-            <Ionicons name="calendar-outline" size={14} color={appColors.accent} />
+            <Ionicons name="calendar-outline" size={14} color={colors.accent} />
             <AppText style={styles.chipText}>Ciclos</AppText>
           </View>
           <View style={styles.chip}>
-            <Ionicons name="pulse-outline" size={14} color={appColors.info} />
+            <Ionicons name="pulse-outline" size={14} color={colors.info} />
             <AppText style={styles.chipText}>Síntomas</AppText>
           </View>
           <View style={styles.chip}>
-            <Ionicons name="analytics-outline" size={14} color={appColors.success} />
+            <Ionicons name="analytics-outline" size={14} color={colors.success} />
             <AppText style={styles.chipText}>Predicción</AppText>
           </View>
         </View>
@@ -380,7 +384,7 @@ export function PeriodoScreen() {
             <Ionicons
               name={isUnlocked ? 'lock-open-outline' : 'lock-closed-outline'}
               size={14}
-              color={isUnlocked ? appColors.success : appColors.accent}
+              color={isUnlocked ? colors.success : colors.accent}
             />
             <AppText
               style={[
@@ -394,7 +398,7 @@ export function PeriodoScreen() {
         </View>
         {!hasFemalePatients ? (
           <View style={styles.noticeBox}>
-            <Ionicons name="information-circle-outline" size={20} color={appColors.accent} />
+            <Ionicons name="information-circle-outline" size={20} color={colors.accent} />
             <AppText style={styles.errorText}>
               Este módulo se habilita cuando existe una persona vinculada con género femenino.
             </AppText>
@@ -412,7 +416,7 @@ export function PeriodoScreen() {
                 setPrediction(null);
               }}
             >
-              <Ionicons name="lock-closed-outline" size={18} color={appColors.text} />
+              <Ionicons name="lock-closed-outline" size={18} color={colors.text} />
               <AppText style={styles.secondaryBtnText}>Bloquear módulo</AppText>
             </TouchableOpacity>
           </>
@@ -426,12 +430,12 @@ export function PeriodoScreen() {
               value={modulePassword}
               onChangeText={setModulePassword}
               placeholder="Contraseña adicional del módulo"
-              placeholderTextColor={appColors.textMuted}
+              placeholderTextColor={colors.textMuted}
               secureTextEntry
               autoCapitalize="none"
             />
             <TouchableOpacity style={styles.primaryBtn} onPress={handleUnlock}>
-              <Ionicons name="lock-open-outline" size={18} color={appColors.background} />
+              <Ionicons name="lock-open-outline" size={18} color={colors.onAccent} />
               <AppText style={styles.primaryBtnText}>Desbloquear módulo</AppText>
             </TouchableOpacity>
           </>
@@ -444,7 +448,7 @@ export function PeriodoScreen() {
         <AppText style={styles.sectionTitle}>Paciente</AppText>
         {loadingPatients ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color="#FF4D73" />
+            <ActivityIndicator color={colors.accent} />
             <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
           </View>
         ) : patients.length === 0 ? (
@@ -482,7 +486,7 @@ export function PeriodoScreen() {
           value={form.fechaInicio}
           onChangeText={(value) => handleChange('fechaInicio', value)}
           placeholder="Fecha inicio (YYYY-MM-DD)"
-          placeholderTextColor={appColors.textMuted}
+          placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
         />
         <AppTextInput
@@ -490,7 +494,7 @@ export function PeriodoScreen() {
           value={form.fechaFin}
           onChangeText={(value) => handleChange('fechaFin', value)}
           placeholder="Fecha fin (opcional)"
-          placeholderTextColor={appColors.textMuted}
+          placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
         />
         <View style={styles.row}>
@@ -499,7 +503,7 @@ export function PeriodoScreen() {
             value={form.duracionDias}
             onChangeText={(value) => handleChange('duracionDias', value)}
             placeholder="Duración"
-            placeholderTextColor={appColors.textMuted}
+            placeholderTextColor={colors.textMuted}
             keyboardType="numeric"
           />
           <AppTextInput
@@ -507,7 +511,7 @@ export function PeriodoScreen() {
             value={form.cicloDias}
             onChangeText={(value) => handleChange('cicloDias', value)}
             placeholder="Ciclo"
-            placeholderTextColor={appColors.textMuted}
+            placeholderTextColor={colors.textMuted}
             keyboardType="numeric"
           />
         </View>
@@ -533,14 +537,14 @@ export function PeriodoScreen() {
           value={form.sintomas}
           onChangeText={(value) => handleChange('sintomas', value)}
           placeholder="Síntomas separados por coma"
-          placeholderTextColor={appColors.textMuted}
+          placeholderTextColor={colors.textMuted}
         />
         <AppTextInput
           style={[styles.input, styles.textArea]}
           value={form.observaciones}
           onChangeText={(value) => handleChange('observaciones', value)}
           placeholder="Observaciones"
-          placeholderTextColor={appColors.textMuted}
+          placeholderTextColor={colors.textMuted}
           multiline
           textAlignVertical="top"
         />
@@ -550,10 +554,10 @@ export function PeriodoScreen() {
           disabled={submitting || !form.pacienteId}
         >
           {submitting ? (
-            <ActivityIndicator color={appColors.background} />
+            <ActivityIndicator color={colors.onAccent} />
           ) : (
             <>
-              <Ionicons name="save-outline" size={18} color={appColors.background} />
+              <Ionicons name="save-outline" size={18} color={colors.onAccent} />
               <AppText style={styles.primaryBtnText}>Guardar periodo</AppText>
             </>
           )}
@@ -564,7 +568,7 @@ export function PeriodoScreen() {
         <AppText style={styles.sectionTitle}>Resumen</AppText>
         {loadingData ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color="#FF4D73" />
+            <ActivityIndicator color={colors.accent} />
             <AppText style={styles.loadingText}>Cargando historial...</AppText>
           </View>
         ) : !selectedPatientId ? (
@@ -635,7 +639,7 @@ export function PeriodoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   scroll: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -649,11 +653,11 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   hero: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 18,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.accent, 'CC'),
+    borderColor: colorAlpha(colors.accent, 'CC'),
     gap: 14,
   },
   heroHeader: {
@@ -667,26 +671,26 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colorAlpha(appColors.accent, '28'),
+    backgroundColor: colorAlpha(colors.accent, '28'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.accent, '65'),
+    borderColor: colorAlpha(colors.accent, '65'),
   },
   heroCopy: {
     flex: 1,
   },
   heroEyebrow: {
-    color: appColors.accent,
+    color: colors.accent,
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
   },
   heroTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 25,
     fontWeight: '800',
   },
   heroText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     lineHeight: 21,
   },
@@ -702,22 +706,22 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 7,
-    backgroundColor: colorAlpha(appColors.backgroundMuted, 'C8'),
+    backgroundColor: colorAlpha(colors.backgroundMuted, 'C8'),
     borderWidth: 1,
-    borderColor: appColors.borderStrong,
+    borderColor: colors.borderStrong,
   },
   chipText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '700',
   },
   card: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     gap: 12,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.border, '9A'),
+    borderColor: colorAlpha(colors.border, '9A'),
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -726,13 +730,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sectionLabel: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
   },
   sectionTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 18,
     fontWeight: '700',
   },
@@ -746,22 +750,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   statusBadgeSuccess: {
-    backgroundColor: colorAlpha(appColors.success, '18'),
-    borderColor: colorAlpha(appColors.success, '6B'),
+    backgroundColor: colorAlpha(colors.success, '18'),
+    borderColor: colorAlpha(colors.success, '6B'),
   },
   statusBadgeLocked: {
-    backgroundColor: colorAlpha(appColors.accent, '18'),
-    borderColor: colorAlpha(appColors.accent, '6B'),
+    backgroundColor: colorAlpha(colors.accent, '18'),
+    borderColor: colorAlpha(colors.accent, '6B'),
   },
   statusBadgeText: {
     fontSize: 12,
     fontWeight: '800',
   },
   statusBadgeTextSuccess: {
-    color: appColors.success,
+    color: colors.success,
   },
   statusBadgeTextLocked: {
-    color: appColors.accent,
+    color: colors.accent,
   },
   noticeBox: {
     flexDirection: 'row',
@@ -769,20 +773,20 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: colorAlpha(appColors.accent, '12'),
+    backgroundColor: colorAlpha(colors.accent, '12'),
   },
   pickerWrapper: {
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: appColors.text,
+    backgroundColor: colors.surface,
   },
   input: {
-    backgroundColor: appColors.text,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: appColors.background,
+    color: colors.text,
   },
   textArea: {
     minHeight: 92,
@@ -798,13 +802,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     justifyContent: 'center',
-    backgroundColor: appColors.accent,
+    backgroundColor: colors.accent,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: appColors.background,
+    color: colors.onAccent,
     fontSize: 15,
     fontWeight: '800',
   },
@@ -816,75 +820,75 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     marginTop: 8,
   },
   emptyText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     lineHeight: 20,
   },
   errorText: {
-    color: appColors.accent,
+    color: colors.accent,
     flex: 1,
     lineHeight: 20,
     fontWeight: '700',
   },
   successText: {
-    color: appColors.success,
+    color: colors.success,
     lineHeight: 20,
     fontWeight: '700',
   },
   helperText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     lineHeight: 20,
   },
   metricText: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 14,
   },
   highlightBox: {
-    backgroundColor: colorAlpha(appColors.accent, '18'),
+    backgroundColor: colorAlpha(colors.accent, '18'),
     borderRadius: 14,
     padding: 14,
     gap: 4,
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.accent, '4D'),
+    borderColor: colorAlpha(colors.accent, '4D'),
   },
   highlightTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontWeight: '700',
   },
   highlightText: {
-    color: appColors.accent,
+    color: colors.accent,
   },
   listItem: {
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 12,
     gap: 4,
-    backgroundColor: colorAlpha(appColors.backgroundMuted, '88'),
+    backgroundColor: colorAlpha(colors.backgroundMuted, '88'),
   },
   itemTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontWeight: '700',
   },
   itemText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
   },
   secondaryBtn: {
     flexDirection: 'row',
     gap: 8,
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
-    backgroundColor: colorAlpha(appColors.backgroundMuted, '80'),
+    backgroundColor: colorAlpha(colors.backgroundMuted, '80'),
   },
   secondaryBtnText: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 15,
     fontWeight: '700',
   },

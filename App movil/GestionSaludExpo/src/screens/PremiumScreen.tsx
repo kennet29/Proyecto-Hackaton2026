@@ -14,6 +14,7 @@ import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch, buildJsonHeaders, parseJsonResponse } from '../utils/apiClient';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Premium'>;
 type PlanId = 'mensual' | 'trimestral';
@@ -69,6 +70,9 @@ const benefits = [
 ];
 
 export function PremiumScreen({ navigation }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('trimestral');
   const [selectedBank, setSelectedBank] = useState<BankId>('banpro');
@@ -119,7 +123,7 @@ export function PremiumScreen({ navigation }: Props) {
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.hero}>
         <View style={styles.heroIcon}>
-          <Ionicons name="diamond-outline" size={30} color={appColors.background} />
+          <Ionicons name="diamond-outline" size={30} color={colors.onAccent} />
         </View>
         <AppText style={styles.eyebrow}>GESTIÓN SALUD PREMIUM</AppText>
         <AppText style={styles.title}>Tu salud, con más herramientas.</AppText>
@@ -133,7 +137,7 @@ export function PremiumScreen({ navigation }: Props) {
         {benefits.map((benefit) => (
           <View key={benefit.title} style={styles.benefitRow}>
             <View style={styles.benefitIcon}>
-              <Ionicons name={benefit.icon} size={20} color={appColors.info} />
+              <Ionicons name={benefit.icon} size={20} color={colors.info} />
             </View>
             <View style={styles.benefitCopy}>
               <AppText style={styles.benefitTitle}>{benefit.title}</AppText>
@@ -212,7 +216,7 @@ export function PremiumScreen({ navigation }: Props) {
               <Ionicons
                 name={active ? 'checkmark-circle' : 'ellipse-outline'}
                 size={23}
-                color={active ? appColors.success : appColors.textMuted}
+                color={active ? colors.success : colors.textMuted}
               />
             </TouchableOpacity>
           );
@@ -220,7 +224,7 @@ export function PremiumScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.accountCard}>
-        <Ionicons name="business-outline" size={20} color={appColors.success} />
+        <Ionicons name="business-outline" size={20} color={colors.success} />
         <View style={styles.accountCopy}>
           <AppText style={styles.accountLabel}>Cuenta para transferencia {bank.name}</AppText>
           <AppText style={styles.accountValue}>{account?.numeroCuenta || 'Cuenta pendiente de configuración'}</AppText>
@@ -230,13 +234,13 @@ export function PremiumScreen({ navigation }: Props) {
       </View>
 
       <TouchableOpacity onPress={() => void chooseReceipt()} style={styles.receiptButton}>
-        <Ionicons name={receipt ? 'document-text' : 'cloud-upload-outline'} size={21} color={appColors.info} />
+        <Ionicons name={receipt ? 'document-text' : 'cloud-upload-outline'} size={21} color={colors.info} />
         <View style={styles.receiptCopy}><AppText style={styles.receiptTitle}>{receipt ? 'Comprobante seleccionado' : 'Subir factura o recibo'}</AppText><AppText style={styles.receiptDetail}>{receipt ? receipt.name : 'Acepta PDF, JPG o PNG de hasta 5 MB.'}</AppText></View>
       </TouchableOpacity>
 
       <TouchableOpacity disabled={submitting} accessibilityRole="button" activeOpacity={0.85} onPress={() => void handleCheckout()} style={styles.checkoutButton}>
         <AppText style={styles.checkoutText}>{submitting ? 'Enviando comprobante…' : `Enviar pago de ${bank.name}`}</AppText>
-        <Ionicons name="arrow-forward" size={20} color={appColors.background} />
+        <Ionicons name="arrow-forward" size={20} color={colors.onAccent} />
       </TouchableOpacity>
       <AppText style={styles.legal}>El cobro se realizará únicamente después de confirmar el pago.</AppText>
 
@@ -247,54 +251,54 @@ export function PremiumScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: appColors.background, padding: 20, paddingBottom: 38 },
+const createStyles = (colors: AppColors) => StyleSheet.create({
+  container: { flexGrow: 1, backgroundColor: colors.background, padding: 20, paddingBottom: 38 },
   hero: { alignItems: 'center', paddingVertical: 22 },
-  heroIcon: { width: 60, height: 60, borderRadius: 30, backgroundColor: appColors.success, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
-  eyebrow: { color: appColors.success, fontSize: 11, fontWeight: '900', letterSpacing: 1.3 },
-  title: { color: appColors.text, fontSize: 28, lineHeight: 34, fontWeight: '900', textAlign: 'center', marginTop: 8 },
-  subtitle: { color: appColors.textSoft, fontSize: 15, lineHeight: 22, textAlign: 'center', marginTop: 10, maxWidth: 500 },
-  benefitsCard: { backgroundColor: appColors.surface, borderColor: appColors.border, borderWidth: 1, borderRadius: 20, padding: 18, gap: 16 },
-  sectionTitle: { color: appColors.text, fontSize: 18, fontWeight: '900' },
+  heroIcon: { width: 60, height: 60, borderRadius: 30, backgroundColor: colors.success, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
+  eyebrow: { color: colors.success, fontSize: 11, fontWeight: '900', letterSpacing: 1.3 },
+  title: { color: colors.text, fontSize: 28, lineHeight: 34, fontWeight: '900', textAlign: 'center', marginTop: 8 },
+  subtitle: { color: colors.textSoft, fontSize: 15, lineHeight: 22, textAlign: 'center', marginTop: 10, maxWidth: 500 },
+  benefitsCard: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 20, padding: 18, gap: 16 },
+  sectionTitle: { color: colors.text, fontSize: 18, fontWeight: '900' },
   benefitRow: { flexDirection: 'row', gap: 12 },
-  benefitIcon: { height: 38, width: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(appColors.info, '18') },
+  benefitIcon: { height: 38, width: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(colors.info, '18') },
   benefitCopy: { flex: 1 },
-  benefitTitle: { color: appColors.text, fontSize: 15, fontWeight: '800' },
-  benefitDetail: { color: appColors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 2 },
+  benefitTitle: { color: colors.text, fontSize: 15, fontWeight: '800' },
+  benefitDetail: { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 2 },
   plansHeader: { marginTop: 24, marginBottom: 12 },
-  sectionHint: { color: appColors.textMuted, fontSize: 13, marginTop: 3 },
-  planCard: { borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface, borderRadius: 18, padding: 16, marginBottom: 12 },
-  planCardActive: { borderColor: appColors.success, backgroundColor: colorAlpha(appColors.success, '12') },
+  sectionHint: { color: colors.textMuted, fontSize: 13, marginTop: 3 },
+  planCard: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: 18, padding: 16, marginBottom: 12 },
+  planCardActive: { borderColor: colors.success, backgroundColor: colorAlpha(colors.success, '12') },
   planTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  radio: { height: 22, width: 22, borderRadius: 11, borderWidth: 2, borderColor: appColors.textMuted, alignItems: 'center', justifyContent: 'center' },
-  radioActive: { borderColor: appColors.success },
-  radioDot: { height: 10, width: 10, borderRadius: 5, backgroundColor: appColors.success },
+  radio: { height: 22, width: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.textMuted, alignItems: 'center', justifyContent: 'center' },
+  radioActive: { borderColor: colors.success },
+  radioDot: { height: 10, width: 10, borderRadius: 5, backgroundColor: colors.success },
   planCopy: { flex: 1 },
   planTitleRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
-  planTitle: { color: appColors.text, fontSize: 15, fontWeight: '900' },
-  savingBadge: { color: appColors.background, backgroundColor: appColors.success, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 3, fontSize: 10, fontWeight: '900' },
-  planDetail: { color: appColors.textMuted, fontSize: 12, lineHeight: 17, marginTop: 3 },
-  price: { color: appColors.text, fontSize: 16, fontWeight: '900', textAlign: 'right' },
-  period: { color: appColors.textMuted, fontSize: 11, textAlign: 'right', marginTop: 2 },
+  planTitle: { color: colors.text, fontSize: 15, fontWeight: '900' },
+  savingBadge: { color: colors.onAccent, backgroundColor: colors.success, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 3, fontSize: 10, fontWeight: '900' },
+  planDetail: { color: colors.textMuted, fontSize: 12, lineHeight: 17, marginTop: 3 },
+  price: { color: colors.text, fontSize: 16, fontWeight: '900', textAlign: 'right' },
+  period: { color: colors.textMuted, fontSize: 11, textAlign: 'right', marginTop: 2 },
   paymentHeader: { marginTop: 12, marginBottom: 12 },
   paymentList: { gap: 9, marginBottom: 8 },
-  paymentCard: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface, padding: 13 },
-  paymentCardActive: { borderColor: appColors.success, backgroundColor: colorAlpha(appColors.success, '12') },
+  paymentCard: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 13 },
+  paymentCardActive: { borderColor: colors.success, backgroundColor: colorAlpha(colors.success, '12') },
   bankLogoSurface: { width: 88, height: 44, borderRadius: 10, borderWidth: 1, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', padding: 4 },
   bankLogo: { width: '100%', height: '100%' },
   paymentCopy: { flex: 1 },
-  paymentName: { color: appColors.text, fontSize: 15, fontWeight: '900' },
-  paymentDetail: { color: appColors.textMuted, fontSize: 12, marginTop: 2 },
-  accountCard: { flexDirection: 'row', gap: 10, borderRadius: 14, borderWidth: 1, borderColor: colorAlpha(appColors.success, '66'), backgroundColor: colorAlpha(appColors.success, '10'), padding: 13, marginBottom: 8 },
+  paymentName: { color: colors.text, fontSize: 15, fontWeight: '900' },
+  paymentDetail: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  accountCard: { flexDirection: 'row', gap: 10, borderRadius: 14, borderWidth: 1, borderColor: colorAlpha(colors.success, '66'), backgroundColor: colorAlpha(colors.success, '10'), padding: 13, marginBottom: 8 },
   accountCopy: { flex: 1 },
-  accountLabel: { color: appColors.textSoft, fontSize: 12, fontWeight: '800' },
-  accountValue: { color: appColors.text, fontSize: 16, fontWeight: '900', marginTop: 3 },
-  accountDetail: { color: appColors.textMuted, fontSize: 12, marginTop: 3 },
-  receiptButton: { flexDirection: 'row', alignItems: 'center', gap: 11, borderWidth: 1, borderStyle: 'dashed', borderColor: appColors.info, borderRadius: 14, padding: 13, marginBottom: 8, backgroundColor: colorAlpha(appColors.info, '0D') },
-  receiptCopy: { flex: 1 }, receiptTitle: { color: appColors.text, fontSize: 14, fontWeight: '900' }, receiptDetail: { color: appColors.textMuted, fontSize: 12, marginTop: 2 },
-  checkoutButton: { minHeight: 52, borderRadius: 15, backgroundColor: appColors.success, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 8 },
-  checkoutText: { color: appColors.background, fontSize: 15, fontWeight: '900' },
-  legal: { color: appColors.textMuted, fontSize: 11, textAlign: 'center', lineHeight: 16, marginTop: 10 },
+  accountLabel: { color: colors.textSoft, fontSize: 12, fontWeight: '800' },
+  accountValue: { color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 3 },
+  accountDetail: { color: colors.textMuted, fontSize: 12, marginTop: 3 },
+  receiptButton: { flexDirection: 'row', alignItems: 'center', gap: 11, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.info, borderRadius: 14, padding: 13, marginBottom: 8, backgroundColor: colorAlpha(colors.info, '0D') },
+  receiptCopy: { flex: 1 }, receiptTitle: { color: colors.text, fontSize: 14, fontWeight: '900' }, receiptDetail: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  checkoutButton: { minHeight: 52, borderRadius: 15, backgroundColor: colors.success, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 8 },
+  checkoutText: { color: colors.onAccent, fontSize: 15, fontWeight: '900' },
+  legal: { color: colors.textMuted, fontSize: 11, textAlign: 'center', lineHeight: 16, marginTop: 10 },
   secondaryButton: { alignSelf: 'center', paddingVertical: 14, paddingHorizontal: 22, marginTop: 4 },
-  secondaryText: { color: appColors.info, fontSize: 14, fontWeight: '800' },
+  secondaryText: { color: colors.info, fontSize: 14, fontWeight: '800' },
 });

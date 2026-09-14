@@ -22,6 +22,7 @@ import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { WebTimeInput } from '../components/WebTimeInput';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type FeedbackState = { type: 'success' | 'error'; message: string } | null;
 
@@ -315,6 +316,9 @@ const normalizeTipoCondicion = (item: Record<string, unknown>): TipoCondicion | 
 };
 
 const FeedbackBanner = ({ feedback }: { feedback: FeedbackState }) => {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   if (!feedback) {
     return null;
   }
@@ -332,6 +336,9 @@ const FeedbackBanner = ({ feedback }: { feedback: FeedbackState }) => {
 };
 
 export function ControlCronicoScreen() {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token, user } = useAuth();
   const requestHeaders = useMemo(() => buildHeaders(token, false), [token]);
   const jsonHeaders = useMemo(() => buildHeaders(token, true), [token]);
@@ -767,7 +774,7 @@ export function ControlCronicoScreen() {
         <AppText style={styles.label}>Paciente</AppText>
         {loadingPatients ? (
           <View style={styles.inlineState}>
-            <ActivityIndicator color="#29B6FF" />
+            <ActivityIndicator color={colors.info} />
             <AppText style={styles.inlineStateText}>Cargando pacientes...</AppText>
           </View>
         ) : patientOptions.length === 0 ? (
@@ -778,7 +785,7 @@ export function ControlCronicoScreen() {
               style={styles.picker}
               selectedValue={form.pacienteId}
               onValueChange={(value) => handleChange('pacienteId', String(value))}
-              dropdownIconColor="#F4F8FF"
+              dropdownIconColor={colors.text}
             >
               {patientOptions.map((patient) => (
                 <Picker.Item
@@ -833,7 +840,7 @@ export function ControlCronicoScreen() {
 
       {loading ? (
         <View style={styles.stateBox}>
-          <ActivityIndicator color="#29B6FF" />
+          <ActivityIndicator color={colors.info} />
           <AppText style={styles.stateText}>Cargando historial...</AppText>
         </View>
       ) : filteredRecords.length === 0 ? (
@@ -898,7 +905,7 @@ export function ControlCronicoScreen() {
                 style={styles.picker}
                 selectedValue={form.condicioncronicaId}
                 onValueChange={(value) => handleChange('condicioncronicaId', String(value))}
-                dropdownIconColor="#F4F8FF"
+                dropdownIconColor={colors.text}
               >
                 {patientCondiciones.map((item) => (
                   <Picker.Item
@@ -917,7 +924,7 @@ export function ControlCronicoScreen() {
           </TouchableOpacity>
           {Platform.OS === 'ios' && showIOSControlPicker ? (
             <View style={styles.iosPickerWrapper}>
-              <DateTimePicker
+              <DateTimePicker themeVariant={colors.mode}
                 mode="date"
                 display="spinner"
                 value={parseDateForPicker(form.fechacontrol)}
@@ -950,7 +957,7 @@ export function ControlCronicoScreen() {
           )}
           {Platform.OS === 'ios' && showIOSControlTimePicker ? (
             <View style={styles.iosPickerWrapper}>
-              <DateTimePicker
+              <DateTimePicker themeVariant={colors.mode}
                 mode="time"
                 display="spinner"
                 value={parseTimeForPicker(form.horacontrol)}
@@ -979,7 +986,7 @@ export function ControlCronicoScreen() {
               </AppText>
             </View>
             <TouchableOpacity style={styles.addMeasurementBtn} onPress={addMeasurement}>
-              <Ionicons name="add" size={18} color="#29B6FF" />
+              <Ionicons name="add" size={18} color={colors.info} />
               <AppText style={styles.addMeasurementText}>Agregar</AppText>
             </TouchableOpacity>
           </View>
@@ -1012,7 +1019,7 @@ export function ControlCronicoScreen() {
                   <Ionicons
                     name={measurement.expanded ? 'chevron-up' : 'chevron-down'}
                     size={20}
-                    color="#29B6FF"
+                    color={colors.info}
                   />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -1020,7 +1027,7 @@ export function ControlCronicoScreen() {
                   onPress={() => removeMeasurement(measurement.id)}
                   disabled={measurements.length === 1}
                 >
-                  <Ionicons name="trash-outline" size={18} color="#FF4D73" />
+                  <Ionicons name="trash-outline" size={18} color={colors.accent} />
                 </TouchableOpacity>
               </View>
 
@@ -1046,7 +1053,7 @@ export function ControlCronicoScreen() {
                   <AppTextInput
                     style={styles.input}
                     placeholder="Otro indicador"
-                    placeholderTextColor="#9FB3C8"
+                    placeholderTextColor={colors.textMuted}
                     value={measurement.indicador}
                     onChangeText={(value) => handleMeasurementChange(measurement.id, 'indicador', value)}
                   />
@@ -1057,7 +1064,7 @@ export function ControlCronicoScreen() {
                       <AppTextInput
                         style={styles.input}
                         placeholder="Ej. 120"
-                        placeholderTextColor="#9FB3C8"
+                        placeholderTextColor={colors.textMuted}
                         value={measurement.valor}
                         onChangeText={(value) => handleMeasurementChange(measurement.id, 'valor', value)}
                         keyboardType="decimal-pad"
@@ -1068,7 +1075,7 @@ export function ControlCronicoScreen() {
                       <AppTextInput
                         style={styles.input}
                         placeholder="mg/dL, mmHg..."
-                        placeholderTextColor="#9FB3C8"
+                        placeholderTextColor={colors.textMuted}
                         value={measurement.unidad}
                         onChangeText={(value) => handleMeasurementChange(measurement.id, 'unidad', value)}
                       />
@@ -1095,7 +1102,7 @@ export function ControlCronicoScreen() {
                   <AppTextInput
                     style={styles.input}
                     placeholder="Escribe otro resultado u observación"
-                    placeholderTextColor="#9FB3C8"
+                    placeholderTextColor={colors.textMuted}
                     value={measurement.resultado}
                     onChangeText={(value) => handleMeasurementChange(measurement.id, 'resultado', value)}
                   />
@@ -1108,7 +1115,7 @@ export function ControlCronicoScreen() {
           <AppTextInput
             style={[styles.input, styles.multiline]}
             placeholder="Resumen clinico"
-            placeholderTextColor="#9FB3C8"
+            placeholderTextColor={colors.textMuted}
             value={form.conclusiones}
             onChangeText={(value) => handleChange('conclusiones', value)}
             multiline
@@ -1121,7 +1128,7 @@ export function ControlCronicoScreen() {
           </TouchableOpacity>
           {Platform.OS === 'ios' && showIOSProximoPicker ? (
             <View style={styles.iosPickerWrapper}>
-              <DateTimePicker
+              <DateTimePicker themeVariant={colors.mode}
                 mode="date"
                 display="spinner"
                 value={parseDateForPicker(form.proximocontrol)}
@@ -1144,7 +1151,7 @@ export function ControlCronicoScreen() {
           <AppTextInput
             style={styles.input}
             placeholder="Responsable del control"
-            placeholderTextColor="#9FB3C8"
+            placeholderTextColor={colors.textMuted}
             value={form.medico}
             onChangeText={(value) => handleChange('medico', value)}
           />
@@ -1155,7 +1162,7 @@ export function ControlCronicoScreen() {
             onPress={() => void handleSubmit()}
           >
             {isSubmitting ? (
-              <ActivityIndicator color="#F4F8FF" />
+              <ActivityIndicator color={colors.text} />
             ) : (
               <AppText style={styles.primaryBtnText}>Guardar control</AppText>
             )}
@@ -1170,10 +1177,10 @@ export function ControlCronicoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 24,
@@ -1181,14 +1188,14 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   heroCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#1B3355',
+    borderColor: colors.borderStrong,
   },
   kicker: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.2,
@@ -1198,12 +1205,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   title: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 28,
     fontWeight: '800',
   },
   subtitle: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 14,
     lineHeight: 20,
   },
@@ -1213,32 +1220,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   feedbackSuccess: {
-    backgroundColor: '#38E28E18',
-    borderColor: '#38E28E',
+    backgroundColor: `${colors.success}18`,
+    borderColor: colors.success,
   },
   feedbackError: {
-    backgroundColor: '#FF4D7318',
-    borderColor: '#FF4D73',
+    backgroundColor: `${colors.accent}18`,
+    borderColor: colors.accent,
   },
   feedbackText: {
     fontSize: 13,
     fontWeight: '600',
   },
   feedbackTextSuccess: {
-    color: '#38E28E',
+    color: colors.success,
   },
   feedbackTextError: {
-    color: '#FF4D73',
+    color: colors.accent,
   },
   filterCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   label: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 14,
     fontWeight: '700',
     marginBottom: 8,
@@ -1246,39 +1253,39 @@ const styles = StyleSheet.create({
   pickerWrapper: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   picker: {
-    color: '#F4F8FF',
+    color: colors.text,
   },
   filterHint: {
     marginTop: 10,
-    color: '#29B6FF',
+    color: colors.info,
   },
   summaryCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     gap: 12,
   },
   sectionHeader: {
     gap: 2,
   },
   sectionTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
   },
   sectionSubtitle: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 13,
   },
   conditionBadgeRow: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 14,
     padding: 14,
     flexDirection: 'row',
@@ -1287,12 +1294,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   conditionBadgeTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '700',
     fontSize: 15,
   },
   conditionBadgeMeta: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginTop: 2,
     fontSize: 12,
   },
@@ -1300,15 +1307,15 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    backgroundColor: '#38E28E18',
+    backgroundColor: `${colors.success}18`,
   },
   conditionStatusText: {
-    color: '#38E28E',
+    color: colors.success,
     fontWeight: '800',
     fontSize: 11,
   },
   emptySelectText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 13,
   },
   inlineState: {
@@ -1317,34 +1324,34 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   inlineStateText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   stateBox: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 20,
     alignItems: 'center',
     gap: 6,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   stateTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 4,
   },
   stateText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     textAlign: 'center',
   },
   card: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 16,
     gap: 6,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   cardTopRow: {
     flexDirection: 'row',
@@ -1356,45 +1363,45 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 17,
     fontWeight: '700',
   },
   cardSubtitle: {
-    color: '#38E28E',
+    color: colors.success,
     fontSize: 12,
   },
   resultPill: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
   resultPillText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 11,
     fontWeight: '800',
     textAlign: 'center',
   },
   cardText: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 13,
   },
   formCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 20,
     padding: 18,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   formTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
   },
   formSubtitle: {
-    color: '#29B6FF',
+    color: colors.info,
     lineHeight: 19,
   },
   measurementsHeader: {
@@ -1411,27 +1418,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   addMeasurementText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
   },
   measurementCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 16,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   measurementCardExpanded: {
-    borderColor: '#29B6FF',
-    backgroundColor: '#0B1929',
+    borderColor: colors.info,
+    backgroundColor: colors.backgroundMuted,
   },
   measurementTopRow: {
     flexDirection: 'row',
@@ -1452,10 +1459,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 11,
-    backgroundColor: '#29B6FF18',
+    backgroundColor: `${colors.info}18`,
   },
   measurementNumberText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '900',
   },
   measurementToggleCopy: {
@@ -1463,12 +1470,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   measurementTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '700',
     fontSize: 15,
   },
   measurementSummary: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 12,
     lineHeight: 18,
   },
@@ -1478,15 +1485,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    backgroundColor: '#FF4D7310',
+    backgroundColor: `${colors.accent}10`,
     borderWidth: 1,
-    borderColor: '#FF4D7335',
+    borderColor: `${colors.accent}35`,
   },
   measurementBody: {
     marginTop: 12,
     paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: '#27496D',
+    borderTopColor: colors.border,
   },
   quickOptions: {
     flexDirection: 'row',
@@ -1499,20 +1506,20 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#27496D',
-    backgroundColor: '#071120',
+    borderColor: colors.border,
+    backgroundColor: colors.background,
   },
   quickOptionActive: {
-    borderColor: '#29B6FF',
-    backgroundColor: '#29B6FF',
+    borderColor: colors.info,
+    backgroundColor: colors.info,
   },
   quickOptionText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '700',
   },
   quickOptionTextActive: {
-    color: '#071120',
+    color: colors.onAccent,
   },
   measurementFieldsRow: {
     flexDirection: 'row',
@@ -1528,29 +1535,29 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#27496D',
-    backgroundColor: '#071120',
+    borderColor: colors.border,
+    backgroundColor: colors.background,
   },
   resultOptionActive: {
-    borderColor: '#38E28E',
-    backgroundColor: '#38E28E18',
+    borderColor: colors.success,
+    backgroundColor: `${colors.success}18`,
   },
   resultOptionText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 12,
     fontWeight: '700',
   },
   resultOptionTextActive: {
-    color: '#38E28E',
+    color: colors.success,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 14,
     fontSize: 15,
-    color: '#F4F8FF',
-    backgroundColor: '#071120',
+    color: colors.text,
+    backgroundColor: colors.background,
     marginBottom: 12,
   },
   multiline: {
@@ -1559,23 +1566,23 @@ const styles = StyleSheet.create({
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 14,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     marginBottom: 12,
   },
   dateButtonText: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     textAlign: 'center',
   },
   iosPickerWrapper: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 16,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     overflow: 'hidden',
     marginBottom: 12,
   },
@@ -1583,20 +1590,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#27496D',
+    borderTopColor: colors.border,
   },
   iosPickerDoneText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '700',
   },
   primaryBtn: {
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -1610,7 +1617,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
@@ -1620,7 +1627,7 @@ const styles = StyleSheet.create({
     elevation: 7,
   },
   fabText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontSize: 30,
     lineHeight: 32,
     fontWeight: '700',

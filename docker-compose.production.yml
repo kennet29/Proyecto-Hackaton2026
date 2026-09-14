@@ -1,0 +1,39 @@
+services:
+  # Solo Caddy queda publicado. Gestiona certificados TLS y redirige al gateway interno.
+  caddy:
+    image: caddy:2-alpine
+    container_name: gestionsalud-caddy
+    depends_on:
+      - gateway
+    environment:
+      SERVER_DOMAIN: ${SERVER_DOMAIN}
+      CADDY_EMAIL: ${CADDY_EMAIL}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    networks:
+      - gestionsalud-net
+
+  # No se exponen servicios internos en el servidor público.
+  gateway:
+    ports: !reset []
+  sqlserver:
+    ports: !reset []
+  backend:
+    ports: !reset []
+    volumes:
+      - backend_uploads:/app/uploads
+  landing:
+    ports: !reset []
+  app-web:
+    ports: !reset []
+
+volumes:
+  caddy_data:
+  caddy_config:
+  backend_uploads:

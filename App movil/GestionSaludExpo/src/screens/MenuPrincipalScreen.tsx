@@ -25,6 +25,7 @@ import {
   NanoAppearance,
   NanoAppearancePreview,
 } from '../components/NanoAppearancePreview';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type MenuTabKey = 'inicio' | 'medico' | 'bienestar' | 'gestion';
 
@@ -516,6 +517,9 @@ const WEB_SCROLLBAR_CSS = `
 `;
 
 export function MenuPrincipalScreen({ navigation }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token, logout, user } = useAuth();
   const { mode, toggleBackground } = useBackgroundMode();
   const [activeTab, setActiveTab] = useState<MenuTabKey>('inicio');
@@ -540,16 +544,16 @@ export function MenuPrincipalScreen({ navigation }: Props) {
         icon: '#10203A',
       }
     : {
-        background: appColors.background,
-        surface: appColors.surface,
-        surfaceStrong: appColors.surfaceStrong,
-        webSurface: '#102039',
-        text: appColors.text,
-        textSoft: appColors.textSoft,
-        textMuted: appColors.textMuted,
-        border: appColors.border,
-        borderStrong: appColors.borderStrong,
-        icon: appColors.background,
+        background: colors.background,
+        surface: colors.surface,
+        surfaceStrong: colors.surfaceStrong,
+        webSurface: colors.surface,
+        text: colors.text,
+        textSoft: colors.textSoft,
+        textMuted: colors.textMuted,
+        border: colors.border,
+        borderStrong: colors.borderStrong,
+        icon: colors.background,
       };
 
   const activeMeta = useMemo(
@@ -594,13 +598,13 @@ export function MenuPrincipalScreen({ navigation }: Props) {
             label: 'Clínicas y Servicios',
             description: 'Administra instituciones de salud, su catálogo y los servicios disponibles.',
             icon: 'business-outline' as const,
-            accent: appColors.success,
+            accent: colors.success,
             navigateTo: 'AdminInstituciones' as const,
           }]
         : []),
       ...permittedOptions,
     ];
-  }, [activeTab, isLightMode, user?.role]);
+  }, [activeTab, isLightMode, user?.role, colors]);
   const activeNanoAppearance = useMemo(() => getNanoAppearance(nanoAppearanceId), [nanoAppearanceId]);
 
   useFocusEffect(
@@ -746,7 +750,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                     {tab.nanoAppearance ? (
                       <NanoAppearancePreview appearance={tab.nanoAppearance} size={38} />
                     ) : (
-                      <Ionicons name={tab.icon} size={27} color={isActive ? appColors.info : theme.icon} />
+                      <Ionicons name={tab.icon} size={27} color={isActive ? colors.info : theme.icon} />
                     )}
                   </View>
                   <AppText style={[styles.navLabel, { color: theme.textMuted }, styles.webNavLabel, isActive && styles.navLabelActive]}>{tab.label}</AppText>
@@ -833,7 +837,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                   {tab.nanoAppearance ? (
                     <NanoAppearancePreview appearance={tab.nanoAppearance} size={46} />
                   ) : (
-                    <Ionicons name={tab.icon} size={29} color={isActive ? appColors.info : theme.icon} />
+                    <Ionicons name={tab.icon} size={29} color={isActive ? colors.info : theme.icon} />
                   )}
                 </View>
                 <AppText style={[styles.navLabel, { color: theme.textMuted }, isWebWide && styles.webNavLabel, isActive && styles.navLabelActive]}>{tab.label}</AppText>
@@ -853,7 +857,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
         <View style={styles.logoutOverlay}>
           <View style={styles.logoutCard}>
             <View style={styles.logoutIconWrap}>
-              <Ionicons name="log-out-outline" size={30} color={appColors.accent} />
+              <Ionicons name="log-out-outline" size={30} color={colors.accent} />
             </View>
             <AppText style={styles.logoutTitle}>Cerrar sesion</AppText>
             <AppText style={styles.logoutMessage}>
@@ -866,7 +870,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
               </TouchableOpacity>
               <TouchableOpacity style={styles.logoutPrimaryButton} onPress={acceptWebLogout}>
                 <AppText style={styles.logoutPrimaryText}>Salir</AppText>
-                <Ionicons name="arrow-forward" size={18} color={appColors.background} />
+                <Ionicons name="arrow-forward" size={18} color={colors.onAccent} />
               </TouchableOpacity>
             </View>
           </View>
@@ -876,17 +880,17 @@ export function MenuPrincipalScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: appColors.background,
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 10,
     paddingBottom: 12,
-    backgroundColor: appColors.background,
+    backgroundColor: colors.background,
     alignItems: 'center',
   },
   webContainer: {
@@ -943,7 +947,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -979,7 +983,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
-    backgroundColor: colorAlpha(appColors.overlay, 'B8'),
+    backgroundColor: colorAlpha(colors.overlay, 'B8'),
   },
   logoutCard: {
     width: '100%',
@@ -987,10 +991,10 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     padding: 26,
     alignItems: 'center',
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: colors.surfaceStrong,
     borderWidth: 1,
-    borderColor: appColors.border,
-    shadowColor: appColors.overlay,
+    borderColor: colors.border,
+    shadowColor: colors.overlay,
     shadowOpacity: 0.35,
     shadowRadius: 28,
     shadowOffset: { width: 0, height: 18 },
@@ -1002,20 +1006,20 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colorAlpha(appColors.accent, '18'),
+    backgroundColor: colorAlpha(colors.accent, '18'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.accent, '55'),
+    borderColor: colorAlpha(colors.accent, '55'),
     marginBottom: 18,
   },
   logoutTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 26,
     fontWeight: '900',
     textAlign: 'center',
     marginBottom: 10,
   },
   logoutMessage: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 15,
     lineHeight: 23,
     textAlign: 'center',
@@ -1032,12 +1036,12 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
   logoutSecondaryText: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 15,
     fontWeight: '800',
   },
@@ -1049,15 +1053,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: appColors.accent,
+    backgroundColor: colors.accent,
   },
   logoutPrimaryText: {
-    color: appColors.background,
+    color: colors.onAccent,
     fontSize: 15,
     fontWeight: '900',
   },
   pageTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 24,
     fontWeight: '800',
   },
@@ -1068,7 +1072,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
   },
   userLabel: {
-    color: appColors.info,
+    color: colors.info,
     fontSize: 12,
     fontWeight: '700',
     marginTop: 8,
@@ -1080,7 +1084,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   pageSubtitle: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     marginTop: 6,
     lineHeight: 21,
@@ -1100,12 +1104,12 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   webSectionTitle: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
   },
   webSectionMeta: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -1127,7 +1131,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   card: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     padding: 18,
     borderRadius: 18,
     marginBottom: 14,
@@ -1137,7 +1141,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   lightModeCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderColor: '#E1EAF4',
     borderLeftColor: '#0B6FEA',
     borderLeftWidth: 8,
@@ -1160,7 +1164,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    backgroundColor: '#102039',
+    backgroundColor: colors.surface,
   },
   gridCard: {
     flex: 1,
@@ -1188,7 +1192,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1202,20 +1206,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardLabel: {
-    color: appColors.text,
+    color: colors.text,
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 2,
   },
   cardDescription: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 13,
     lineHeight: 18,
   },
   navbar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: appColors.surfaceStrong,
+    backgroundColor: colors.surfaceStrong,
     borderRadius: 28,
     paddingHorizontal: 10,
     paddingVertical: 10,
@@ -1264,10 +1268,10 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: appColors.text,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: appColors.overlay,
+    shadowColor: colors.overlay,
     shadowOpacity: 0.08,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
@@ -1278,10 +1282,10 @@ const styles = StyleSheet.create({
     borderRadius: 22,
   },
   iconCircleActive: {
-    backgroundColor: colorAlpha(appColors.info, '30'),
+    backgroundColor: colorAlpha(colors.info, '30'),
   },
   navLabel: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -1289,6 +1293,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   navLabelActive: {
-    color: appColors.info,
+    color: colors.info,
   },
 });

@@ -22,6 +22,7 @@ import { API_URL } from '../config/api';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type SaludMentalRecord = {
   saludmentalId: number;
@@ -191,10 +192,13 @@ const formatAlertTitle = (value: string) => {
 };
 
 export function SaludMentalScreen() {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { token, user } = useAuth();
   const { width } = useWindowDimensions();
   const isCompact = width < 480;
-  const pickerItemColor = '#F4F8FF';
+  const pickerItemColor = colors.text;
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [historial, setHistorial] = useState<SaludMentalHistorial | null>(null);
@@ -414,7 +418,7 @@ export function SaludMentalScreen() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={() => loadData(selectedPatientId, true)}
-          tintColor="#F4F8FF"
+          tintColor={colors.text}
         />
       }
     >
@@ -430,7 +434,7 @@ export function SaludMentalScreen() {
           </AppText>
         </View>
         <TouchableOpacity style={styles.heroAction} onPress={() => setShowForm((current) => !current)}>
-          <Ionicons name={showForm ? 'close' : 'add'} size={20} color="#071120" />
+          <Ionicons name={showForm ? 'close' : 'add'} size={20} color={colors.onAccent} />
           <AppText style={styles.heroActionText}>{showForm ? 'Cerrar' : 'Nuevo registro'}</AppText>
         </TouchableOpacity>
       </View>
@@ -443,7 +447,7 @@ export function SaludMentalScreen() {
           <AppText style={styles.fieldEyebrow}>PACIENTE</AppText>
         {loadingPatients ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color="#38E28E" />
+            <ActivityIndicator color={colors.success} />
             <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
           </View>
         ) : patients.length === 0 ? (
@@ -454,9 +458,9 @@ export function SaludMentalScreen() {
               selectedValue={form.pacienteId}
               onValueChange={(value) => handleChange('pacienteId', String(value))}
               style={styles.picker}
-              dropdownIconColor="#F4F8FF"
+              dropdownIconColor={colors.text}
             >
-              <Picker.Item label="Selecciona un paciente" value="" color="#C9D7E8" />
+              <Picker.Item label="Selecciona un paciente" value="" color={colors.textSoft} />
               {patients.map((patient) => (
                 <Picker.Item
                   key={patient.pacienteId}
@@ -494,7 +498,7 @@ export function SaludMentalScreen() {
           <Ionicons
             name={showForm ? 'chevron-up' : 'chevron-down'}
             size={20}
-            color="#9FB3C8"
+            color={colors.textMuted}
           />
         </TouchableOpacity>
 
@@ -507,7 +511,7 @@ export function SaludMentalScreen() {
             style={styles.input}
             value={form.fecha}
             onChangeText={(value) => handleChange('fecha', value)}
-            placeholderTextColor="#9FB3C8"
+            placeholderTextColor={colors.textMuted}
             placeholder="Fecha (YYYY-MM-DD)"
             autoCapitalize="none"
           />
@@ -531,7 +535,7 @@ export function SaludMentalScreen() {
                   selectedValue={form.estadoAnimo}
                   onValueChange={(value) => handleChange('estadoAnimo', String(value))}
                   style={styles.picker}
-                  dropdownIconColor="#F4F8FF"
+                  dropdownIconColor={colors.text}
                 >
                   {scoreOptions.map((item) => (
                     <Picker.Item key={`animo-${item.value}`} label={item.label} value={item.value} color={pickerItemColor} />
@@ -551,7 +555,7 @@ export function SaludMentalScreen() {
                   selectedValue={form.estres}
                   onValueChange={(value) => handleChange('estres', String(value))}
                   style={styles.picker}
-                  dropdownIconColor="#F4F8FF"
+                  dropdownIconColor={colors.text}
                 >
                   {scoreOptions.map((item) => (
                     <Picker.Item key={`estres-${item.value}`} label={item.label} value={item.value} color={pickerItemColor} />
@@ -572,7 +576,7 @@ export function SaludMentalScreen() {
                 selectedValue={form.ansiedad}
                 onValueChange={(value) => handleChange('ansiedad', String(value))}
                 style={styles.picker}
-                dropdownIconColor="#F4F8FF"
+                dropdownIconColor={colors.text}
               >
                 {scoreOptions.map((item) => (
                   <Picker.Item
@@ -596,7 +600,7 @@ export function SaludMentalScreen() {
                 style={[styles.input, styles.halfInput]}
                 value={form.horasSueno}
                 onChangeText={(value) => handleChange('horasSueno', value)}
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 placeholder="Ej. 7.5"
                 keyboardType="decimal-pad"
               />
@@ -607,7 +611,7 @@ export function SaludMentalScreen() {
                 style={[styles.input, styles.halfInput]}
                 value={form.descansoHoras}
                 onChangeText={(value) => handleChange('descansoHoras', value)}
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 placeholder="Ej. 2"
                 keyboardType="decimal-pad"
               />
@@ -624,7 +628,7 @@ export function SaludMentalScreen() {
                 style={[styles.input, styles.halfInput]}
                 value={form.ejercicioMinutos}
                 onChangeText={(value) => handleChange('ejercicioMinutos', value)}
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 placeholder="Ej. 30"
                 keyboardType="numeric"
               />
@@ -635,7 +639,7 @@ export function SaludMentalScreen() {
                 style={[styles.input, styles.halfInput]}
                 value={form.tiempoSocialMinutos}
                 onChangeText={(value) => handleChange('tiempoSocialMinutos', value)}
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 placeholder="Ej. 45"
                 keyboardType="numeric"
               />
@@ -648,7 +652,7 @@ export function SaludMentalScreen() {
                 style={[styles.input, styles.halfInput]}
                 value={form.hidratacionLitros}
                 onChangeText={(value) => handleChange('hidratacionLitros', value)}
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 placeholder="Ej. 2"
                 keyboardType="decimal-pad"
               />
@@ -659,7 +663,7 @@ export function SaludMentalScreen() {
                 style={[styles.input, styles.halfInput]}
                 value={form.pausasDigitales}
                 onChangeText={(value) => handleChange('pausasDigitales', value)}
-                placeholderTextColor="#9FB3C8"
+                placeholderTextColor={colors.textMuted}
                 placeholder="Cantidad"
                 keyboardType="numeric"
               />
@@ -674,7 +678,7 @@ export function SaludMentalScreen() {
             style={[styles.input, styles.textArea]}
             value={form.notaPersonal}
             onChangeText={(value) => handleChange('notaPersonal', value)}
-            placeholderTextColor="#9FB3C8"
+            placeholderTextColor={colors.textMuted}
             placeholder="Escribe observaciones, detonantes o algo importante del día"
             multiline
             textAlignVertical="top"
@@ -687,7 +691,7 @@ export function SaludMentalScreen() {
           disabled={submitting || !form.pacienteId}
         >
           {submitting ? (
-            <ActivityIndicator color="#F4F8FF" />
+            <ActivityIndicator color={colors.text} />
           ) : (
             <AppText style={styles.primaryBtnText}>Guardar registro</AppText>
           )}
@@ -695,7 +699,7 @@ export function SaludMentalScreen() {
           </>
         ) : (
           <View style={styles.formCollapsedHint}>
-            <Ionicons name="information-circle-outline" size={17} color="#9FB3C8" />
+            <Ionicons name="information-circle-outline" size={17} color={colors.textMuted} />
             <AppText style={styles.formCollapsedText}>
               Abre esta sección cuando quieras registrar cómo se siente el paciente.
             </AppText>
@@ -716,7 +720,7 @@ export function SaludMentalScreen() {
         </View>
         {loadingData ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator color="#38E28E" />
+            <ActivityIndicator color={colors.success} />
             <AppText style={styles.loadingText}>Cargando estadísticas...</AppText>
           </View>
         ) : (
@@ -734,7 +738,7 @@ export function SaludMentalScreen() {
                   <MentalMetric label="Ánimo" value={latestRecord.estadoAnimo} color={getScoreColor(latestRecord.estadoAnimo)} />
                   <MentalMetric label="Estrés" value={latestRecord.estres} color={getScoreColor(latestRecord.estres, true)} />
                   <MentalMetric label="Ansiedad" value={latestRecord.ansiedad} color={getScoreColor(latestRecord.ansiedad, true)} />
-                  <MentalMetric label="Sueño" value={latestRecord.horasSueno ?? 'N/D'} suffix={latestRecord.horasSueno !== null ? ' h' : ''} color="#29B6FF" />
+                  <MentalMetric label="Sueño" value={latestRecord.horasSueno ?? 'N/D'} suffix={latestRecord.horasSueno !== null ? ' h' : ''} color={colors.info} />
                 </View>
               </View>
             ) : null}
@@ -746,14 +750,14 @@ export function SaludMentalScreen() {
                   <MentalMetric label="Ánimo" value={statsSummary.weekly.estadoAnimo ?? 'N/D'} color={getScoreColor(statsSummary.weekly.estadoAnimo)} />
                   <MentalMetric label="Estrés" value={statsSummary.weekly.estres ?? 'N/D'} color={getScoreColor(statsSummary.weekly.estres, true)} />
                   <MentalMetric label="Ansiedad" value={statsSummary.weekly.ansiedad ?? 'N/D'} color={getScoreColor(statsSummary.weekly.ansiedad, true)} />
-                  <MentalMetric label="Sueño" value={statsSummary.weekly.horasSueno ?? 'N/D'} suffix={statsSummary.weekly.horasSueno !== null ? ' h' : ''} color="#29B6FF" />
+                  <MentalMetric label="Sueño" value={statsSummary.weekly.horasSueno ?? 'N/D'} suffix={statsSummary.weekly.horasSueno !== null ? ' h' : ''} color={colors.info} />
                 </View>
               </>
             ) : null}
 
             {statsSummary.monthly ? (
               <View style={styles.monthlyBox}>
-                <Ionicons name="trending-up-outline" size={20} color="#38E28E" />
+                <Ionicons name="trending-up-outline" size={20} color={colors.success} />
                 <View style={styles.monthlyCopy}>
                   <AppText style={styles.monthlyTitle}>Tendencia de {statsSummary.monthly.mes}</AppText>
                   <AppText style={styles.monthlyText}>
@@ -786,7 +790,7 @@ export function SaludMentalScreen() {
                 <Ionicons
                   name="warning-outline"
                   size={20}
-                  color={item.severidad === 'alta' ? '#FF4D73' : '#F9A826'}
+                  color={item.severidad === 'alta' ? colors.accent : '#F9A826'}
                 />
               </View>
               <View style={styles.alertCopy}>
@@ -802,7 +806,7 @@ export function SaludMentalScreen() {
           ))
         ) : (
           <View style={styles.healthyState}>
-            <Ionicons name="checkmark-circle-outline" size={23} color="#38E28E" />
+            <Ionicons name="checkmark-circle-outline" size={23} color={colors.success} />
             <AppText style={styles.healthyText}>No hay alertas que requieran atención por ahora.</AppText>
           </View>
         )}
@@ -855,6 +859,9 @@ function MentalMetric({
   suffix?: string;
   color: string;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.mentalMetric}>
       <View style={[styles.mentalMetricAccent, { backgroundColor: color }]} />
@@ -865,6 +872,9 @@ function MentalMetric({
 }
 
 function HistoryScore({ label, value, color }: { label: string; value: number; color: string }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.historyScore, { borderColor: `${color}55`, backgroundColor: `${color}12` }]}>
       <AppText style={[styles.historyScoreValue, { color }]}>{value}</AppText>
@@ -873,15 +883,15 @@ function HistoryScore({ label, value, color }: { label: string; value: number; c
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   container: {
     padding: 20,
     paddingBottom: 42,
-    backgroundColor: '#0A1628',
+    backgroundColor: colors.surface,
     gap: 16,
     width: '100%',
     maxWidth: 1180,
@@ -889,14 +899,14 @@ const styles = StyleSheet.create({
     minHeight: '100%',
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderColor: '#132B48',
+    borderColor: colors.surfaceStrong,
   },
   hero: {
-    backgroundColor: '#182A44',
+    backgroundColor: colors.surfaceStrong,
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
@@ -924,13 +934,13 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   heroTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 24,
     lineHeight: 29,
     fontWeight: '900',
   },
   heroText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 3,
@@ -947,16 +957,16 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
   },
   heroActionText: {
-    color: '#071120',
+    color: colors.onAccent,
     fontSize: 12,
     fontWeight: '900',
   },
   patientSelectorCard: {
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -974,43 +984,43 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   fieldEyebrow: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 9,
     fontWeight: '900',
     letterSpacing: 1,
     marginBottom: 6,
   },
   card: {
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 16,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   sectionHeader: {
     gap: 4,
   },
   sectionTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '900',
   },
   sectionSubtitle: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
     lineHeight: 18,
   },
   formSection: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     padding: 14,
     gap: 10,
   },
   formSectionTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '800',
   },
@@ -1034,20 +1044,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#1B3355',
+    borderColor: colors.borderStrong,
     padding: 12,
   },
   formCollapsedText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 12,
     lineHeight: 17,
     flex: 1,
   },
   scaleHint: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 12,
     lineHeight: 18,
   },
@@ -1061,7 +1071,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fieldLabel: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -1077,7 +1087,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   scorePillText: {
-    color: '#071120',
+    color: colors.onAccent,
     fontSize: 11,
     fontWeight: '800',
   },
@@ -1085,25 +1095,25 @@ const styles = StyleSheet.create({
     minHeight: 48,
     borderRadius: 13,
     overflow: 'hidden',
-    backgroundColor: '#10213A',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#315579',
+    borderColor: colors.borderStrong,
     justifyContent: 'center',
   },
   picker: {
     height: 50,
-    color: '#F4F8FF',
-    backgroundColor: '#10213A',
+    color: colors.text,
+    backgroundColor: colors.surface,
   },
   input: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 13,
     borderWidth: 1,
-    borderColor: '#1B3355',
+    borderColor: colors.borderStrong,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#F4F8FF',
+    color: colors.text,
   },
   textArea: {
     minHeight: 110,
@@ -1130,7 +1140,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#071120',
+    color: colors.onAccent,
     fontSize: 15,
     fontWeight: '800',
   },
@@ -1142,22 +1152,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginTop: 8,
   },
   emptyText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 20,
   },
   errorText: {
-    color: '#FF4D73',
+    color: colors.accent,
     lineHeight: 20,
   },
   latestRecordBox: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     padding: 14,
     gap: 12,
   },
@@ -1173,7 +1183,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   latestRecordTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '900',
     marginTop: 2,
@@ -1187,27 +1197,27 @@ const styles = StyleSheet.create({
   recordBadge: {
     minWidth: 64,
     borderRadius: 14,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     paddingHorizontal: 10,
     paddingVertical: 7,
     alignItems: 'center',
   },
   recordBadgeValue: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 17,
     lineHeight: 20,
     fontWeight: '900',
   },
   recordBadgeLabel: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   subsectionTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 13,
     fontWeight: '800',
     marginTop: 2,
@@ -1222,10 +1232,10 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     flexBasis: 120,
     minHeight: 80,
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#1B3355',
+    borderColor: colors.borderStrong,
     padding: 11,
   },
   mentalMetricAccent: {
@@ -1235,13 +1245,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   mentalMetricValue: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 18,
     lineHeight: 21,
     fontWeight: '900',
   },
   mentalMetricLabel: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1251,9 +1261,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-    backgroundColor: '#38E28E0D',
+    backgroundColor: `${colors.success}0D`,
     borderWidth: 1,
-    borderColor: '#38E28E45',
+    borderColor: `${colors.success}45`,
     borderRadius: 15,
     padding: 13,
   },
@@ -1261,12 +1271,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   monthlyTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 13,
     fontWeight: '800',
   },
   monthlyText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 11,
     lineHeight: 17,
     marginTop: 3,
@@ -1280,8 +1290,8 @@ const styles = StyleSheet.create({
     padding: 13,
   },
   alertHigh: {
-    borderColor: '#FF4D7355',
-    backgroundColor: '#FF4D7312',
+    borderColor: `${colors.accent}55`,
+    backgroundColor: `${colors.accent}12`,
   },
   alertMedium: {
     borderColor: '#F9A82655',
@@ -1291,7 +1301,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1304,17 +1314,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   alertTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 12,
     fontWeight: '900',
     textTransform: 'capitalize',
   },
   alertDate: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 10,
   },
   alertText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 12,
     lineHeight: 18,
     marginTop: 3,
@@ -1323,24 +1333,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 9,
-    backgroundColor: '#38E28E0D',
+    backgroundColor: `${colors.success}0D`,
     borderWidth: 1,
-    borderColor: '#38E28E45',
+    borderColor: `${colors.success}45`,
     borderRadius: 14,
     padding: 13,
   },
   healthyText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 12,
     flex: 1,
   },
   listItem: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 12,
     gap: 6,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   historyScoreRow: {
     flexDirection: 'row',
@@ -1363,15 +1373,15 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   historyScoreLabel: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 10,
   },
   itemTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
   },
   itemText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 19,
   },
 });

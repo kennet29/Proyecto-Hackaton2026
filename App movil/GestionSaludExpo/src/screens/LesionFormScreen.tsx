@@ -29,6 +29,7 @@ import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate } from '../utils/localDate';
 import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type LesionRecord = {
   lesionId: number;
@@ -98,9 +99,12 @@ const normalizeText = (value: unknown) => {
 };
 
 export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isCreateMode = mode === 'create';
-  const pickerItemColor = Platform.OS === 'android' ? '#071120' : '#F4F8FF';
+  const pickerItemColor = Platform.OS === 'android' ? colors.background : colors.text;
   const { token, user } = useAuth();
   const [patientOptions, setPatientOptions] = useState<LinkedPatient[]>([]);
   const [records, setRecords] = useState<LesionRecord[]>([]);
@@ -390,7 +394,7 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
                 selectedValue={form.pacienteId}
                 onValueChange={(value) => handleChange('pacienteId', String(value))}
                 enabled={!loadingPatients}
-                dropdownIconColor="#F4F8FF"
+                dropdownIconColor={colors.text}
               >
                 <Picker.Item
                   label={loadingPatients ? 'Cargando pacientes...' : 'Selecciona un paciente'}
@@ -414,7 +418,7 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
             </TouchableOpacity>
             {Platform.OS === 'ios' && showIOSDatePicker ? (
               <View style={styles.iosPickerCard}>
-                <DateTimePicker
+                <DateTimePicker themeVariant={colors.mode}
                   value={parseDateForPicker(form.fecha)}
                   mode="date"
                   display="spinner"
@@ -435,28 +439,28 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
             <AppTextInput
               style={styles.input}
               placeholder="Tipo de lesion"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.tipo}
               onChangeText={(value) => handleChange('tipo', value)}
             />
             <AppTextInput
               style={styles.input}
               placeholder="Parte del cuerpo"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.parteCuerpo}
               onChangeText={(value) => handleChange('parteCuerpo', value)}
             />
             <AppTextInput
               style={styles.input}
               placeholder="Severidad"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.severidad}
               onChangeText={(value) => handleChange('severidad', value)}
             />
             <AppTextInput
               style={styles.input}
               placeholder="Tratamiento"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.tratamiento}
               onChangeText={(value) => handleChange('tratamiento', value)}
             />
@@ -472,7 +476,7 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
             <AppTextInput
               style={[styles.input, styles.multiline]}
               placeholder="Notas"
-              placeholderTextColor="#9FB3C8"
+              placeholderTextColor={colors.textMuted}
               value={form.notas}
               multiline
               onChangeText={(value) => handleChange('notas', value)}
@@ -503,7 +507,7 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
                   selectedValue={filterPatientId}
                   onValueChange={(value) => setFilterPatientId(String(value))}
                   enabled={!loadingPatients}
-                  dropdownIconColor="#F4F8FF"
+                  dropdownIconColor={colors.text}
                 >
                   <Picker.Item
                     label={loadingPatients ? 'Cargando pacientes...' : 'Todos los pacientes'}
@@ -532,7 +536,7 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
 
             {loadingRecords ? (
               <View style={styles.loadingCard}>
-                <ActivityIndicator color="#38E28E" />
+                <ActivityIndicator color={colors.success} />
                 <AppText style={styles.loadingText}>Cargando historial...</AppText>
               </View>
             ) : filteredRecords.length === 0 ? (
@@ -596,13 +600,13 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
                     {updatingStatusId === record.lesionId ? (
                       <ActivityIndicator
                         size="small"
-                        color={record.recuperado ? '#29B6FF' : '#38E28E'}
+                        color={record.recuperado ? colors.info : colors.success}
                       />
                     ) : (
                       <Ionicons
                         name={record.recuperado ? 'refresh-outline' : 'checkmark-circle-outline'}
                         size={19}
-                        color={record.recuperado ? '#29B6FF' : '#38E28E'}
+                        color={record.recuperado ? colors.info : colors.success}
                       />
                     )}
                     <AppText
@@ -635,26 +639,26 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   container: {
     padding: 24,
     paddingBottom: 120,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   heroCard: {
     borderRadius: 28,
     padding: 22,
     marginBottom: 18,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
   },
   eyebrow: {
-    color: '#38E28E',
+    color: colors.success,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
@@ -664,41 +668,41 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   subtitle: {
     marginTop: 10,
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontSize: 15,
     lineHeight: 22,
   },
   filterCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 22,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginBottom: 18,
   },
   label: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
     marginBottom: 8,
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   picker: {
-    color: '#F4F8FF',
+    color: colors.text,
   },
   filterHint: {
     marginTop: 10,
-    color: '#9FB3C8',
+    color: colors.textMuted,
     fontSize: 13,
   },
   sectionHeader: {
@@ -707,50 +711,50 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   sectionSubtitle: {
     marginTop: 4,
-    color: '#9FB3C8',
+    color: colors.textMuted,
   },
   loadingCard: {
     borderRadius: 20,
     padding: 22,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     alignItems: 'center',
     marginBottom: 16,
   },
   loadingText: {
     marginTop: 10,
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   emptyCard: {
     borderRadius: 22,
     padding: 20,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginBottom: 16,
   },
   emptyTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '800',
     fontSize: 16,
     marginBottom: 6,
   },
   emptyText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     lineHeight: 20,
   },
   recordCard: {
     borderRadius: 22,
     padding: 18,
     marginBottom: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
   },
   recordTopRow: {
     flexDirection: 'row',
@@ -762,10 +766,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 7,
     paddingHorizontal: 12,
-    backgroundColor: '#38E28E18',
+    backgroundColor: `${colors.success}18`,
   },
   datePillText: {
-    color: '#38E28E',
+    color: colors.success,
     fontWeight: '800',
     fontSize: 12,
   },
@@ -776,36 +780,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   statusPillSuccess: {
-    backgroundColor: '#38E28E18',
-    borderColor: '#38E28E',
+    backgroundColor: `${colors.success}18`,
+    borderColor: colors.success,
   },
   statusPillPending: {
-    backgroundColor: '#071120',
-    borderColor: '#29B6FF',
+    backgroundColor: colors.background,
+    borderColor: colors.info,
   },
   statusPillText: {
     fontWeight: '800',
     fontSize: 12,
   },
   statusTextSuccess: {
-    color: '#38E28E',
+    color: colors.success,
   },
   statusTextPending: {
-    color: '#29B6FF',
+    color: colors.info,
   },
   recordTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '900',
     marginBottom: 6,
   },
   recordPatient: {
-    color: '#38E28E',
+    color: colors.success,
     fontWeight: '700',
     marginBottom: 10,
   },
   recordText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 5,
     lineHeight: 20,
   },
@@ -820,12 +824,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   statusActionButtonSuccess: {
-    borderColor: '#38E28E55',
-    backgroundColor: '#38E28E12',
+    borderColor: `${colors.success}55`,
+    backgroundColor: `${colors.success}12`,
   },
   statusActionButtonPending: {
-    borderColor: '#29B6FF55',
-    backgroundColor: '#29B6FF12',
+    borderColor: `${colors.info}55`,
+    backgroundColor: `${colors.info}12`,
   },
   statusActionButtonDisabled: {
     opacity: 0.65,
@@ -835,46 +839,46 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   statusActionButtonTextSuccess: {
-    color: '#38E28E',
+    color: colors.success,
   },
   statusActionButtonTextPending: {
-    color: '#29B6FF',
+    color: colors.info,
   },
   formCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#132238',
+    borderColor: colors.surface,
     marginTop: 10,
   },
   formTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#F4F8FF',
+    color: colors.text,
     marginBottom: 12,
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     paddingVertical: 15,
     paddingHorizontal: 14,
     marginBottom: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   dateButtonText: {
-    color: '#F4F8FF',
+    color: colors.text,
     textAlign: 'center',
     fontSize: 15,
     fontWeight: '700',
   },
   iosPickerCard: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     marginBottom: 12,
   },
   secondaryButton: {
@@ -883,18 +887,18 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   secondaryButtonText: {
-    color: '#38E28E',
+    color: colors.success,
     fontWeight: '800',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
     fontSize: 15,
-    backgroundColor: '#071120',
-    color: '#F4F8FF',
+    backgroundColor: colors.background,
+    color: colors.text,
   },
   multiline: {
     minHeight: 96,
@@ -905,15 +909,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginBottom: 12,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   switchLabel: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontWeight: '700',
   },
   formActions: {
@@ -926,24 +930,24 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#9FB3C8',
-    backgroundColor: '#071120',
+    borderColor: colors.textMuted,
+    backgroundColor: colors.background,
     marginRight: 6,
   },
   cancelButtonText: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     fontWeight: '800',
   },
   primaryButton: {
     flex: 1,
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
     borderRadius: 14,
     paddingVertical: 15,
     alignItems: 'center',
     marginLeft: 6,
   },
   primaryButtonText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontWeight: '900',
     fontSize: 16,
   },
@@ -954,7 +958,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#38E28E',
+    backgroundColor: colors.success,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
@@ -964,7 +968,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   fabText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontSize: 30,
     lineHeight: 30,
     fontWeight: '800',

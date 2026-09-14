@@ -25,6 +25,7 @@ import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
 import { apiFetch, buildJsonHeaders, parseJsonResponse } from '../utils/apiClient';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MedicoRegistro'>;
 type Feedback = { type: 'success' | 'error'; message: string } | null;
@@ -61,6 +62,9 @@ const getErrorMessage = (body: ApiError | null, fallback: string) => {
 };
 
 export function MedicoRegistroScreen({ navigation }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 1050;
   const isTablet = width >= 700;
@@ -354,7 +358,7 @@ export function MedicoRegistroScreen({ navigation }: Props) {
   if (checking) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color={appColors.info} size="large" />
+        <ActivityIndicator color={colors.info} size="large" />
         <AppText style={styles.loadingText}>Consultando tu solicitud...</AppText>
       </View>
     );
@@ -363,10 +367,10 @@ export function MedicoRegistroScreen({ navigation }: Props) {
   if (existing) {
     const statusColor =
       existing.estado === 'aprobado'
-        ? appColors.success
+        ? colors.success
         : existing.estado === 'rechazado'
-          ? appColors.accent
-          : appColors.info;
+          ? colors.accent
+          : colors.info;
     return (
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.heroIcon}>
@@ -402,10 +406,10 @@ export function MedicoRegistroScreen({ navigation }: Props) {
       onPress={() => void submit()}
     >
       {saving ? (
-        <ActivityIndicator color={appColors.background} />
+        <ActivityIndicator color={colors.onAccent} />
       ) : (
         <>
-          <Ionicons name="send-outline" size={19} color={appColors.background} />
+          <Ionicons name="send-outline" size={19} color={colors.onAccent} />
           <AppText style={styles.primaryButtonText}>Crear cuenta médica</AppText>
         </>
       )}
@@ -420,7 +424,7 @@ export function MedicoRegistroScreen({ navigation }: Props) {
       <View style={styles.shell}>
         <View style={[styles.hero, isDesktop && styles.heroDesktop]}>
           <View style={[styles.heroIcon, isDesktop && styles.heroIconDesktop]}>
-            <Ionicons name="medkit-outline" size={32} color={appColors.info} />
+            <Ionicons name="medkit-outline" size={32} color={colors.info} />
           </View>
           <View style={styles.heroCopy}>
             <AppText style={styles.eyebrow}>SOLICITUD PROFESIONAL</AppText>
@@ -434,7 +438,7 @@ export function MedicoRegistroScreen({ navigation }: Props) {
           </View>
           {isDesktop ? (
             <View style={styles.heroTrust}>
-              <Ionicons name="shield-checkmark" size={20} color={appColors.success} />
+              <Ionicons name="shield-checkmark" size={20} color={colors.success} />
               <View>
                 <AppText style={styles.heroTrustTitle}>Proceso seguro</AppText>
                 <AppText style={styles.heroTrustText}>Información protegida</AppText>
@@ -555,7 +559,7 @@ export function MedicoRegistroScreen({ navigation }: Props) {
                 </AppText>
               </View>
               <View style={styles.privacyCard}>
-                <Ionicons name="lock-closed-outline" size={20} color={appColors.success} />
+                <Ionicons name="lock-closed-outline" size={20} color={colors.success} />
                 <View style={styles.privacyCopy}>
                   <AppText style={styles.privacyTitle}>Tus datos están protegidos</AppText>
                   <AppText style={styles.privacyText}>
@@ -572,12 +576,15 @@ export function MedicoRegistroScreen({ navigation }: Props) {
 }
 
 function FeedbackBanner({ feedback }: { feedback: Exclude<Feedback, null> }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.feedback, feedback.type === 'success' ? styles.success : styles.error]}>
       <Ionicons
         name={feedback.type === 'success' ? 'checkmark-circle-outline' : 'alert-circle-outline'}
         size={20}
-        color={feedback.type === 'success' ? appColors.success : appColors.accent}
+        color={feedback.type === 'success' ? colors.success : colors.accent}
       />
       <AppText style={styles.feedbackText}>{feedback.message}</AppText>
     </View>
@@ -590,13 +597,16 @@ function SectionHeader(props: {
   title: string;
   description: string;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.sectionHeader}>
       <View style={styles.stepBadge}>
         <AppText style={styles.stepBadgeText}>{props.step}</AppText>
       </View>
       <View style={styles.sectionIcon}>
-        <Ionicons name={props.icon} size={20} color={appColors.info} />
+        <Ionicons name={props.icon} size={20} color={colors.info} />
       </View>
       <View style={styles.sectionCopy}>
         <AppText style={styles.sectionTitle}>{props.title}</AppText>
@@ -607,6 +617,9 @@ function SectionHeader(props: {
 }
 
 function StepItem(props: { number: string; title: string; text: string; active?: boolean }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.stepItem}>
       <View style={[styles.stepNumber, props.active && styles.stepNumberActive]}>
@@ -630,6 +643,9 @@ function Field(props: {
   secureTextEntry?: boolean;
   wide?: boolean;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.field, props.wide && styles.fieldWide]}>
       <AppText style={styles.label}>{props.label}</AppText>
@@ -637,7 +653,7 @@ function Field(props: {
         style={styles.input}
         value={props.value}
         placeholder={props.placeholder}
-        placeholderTextColor={appColors.textMuted}
+        placeholderTextColor={colors.textMuted}
         onChangeText={props.onChangeText}
         secureTextEntry={props.secureTextEntry}
         autoCapitalize={props.label.includes('Usuario') || props.label.includes('Correo') ? 'none' : undefined}
@@ -653,6 +669,9 @@ function ImageSelector(props: {
   onRemove: () => void;
   wide?: boolean;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.imageBlock, props.wide && styles.imageBlockWide]}>
       <AppText style={styles.label}>{props.label}</AppText>
@@ -668,7 +687,7 @@ function ImageSelector(props: {
         </View>
       ) : (
         <TouchableOpacity style={styles.uploadButton} onPress={props.onPress}>
-          <Ionicons name="image-outline" size={20} color={appColors.info} />
+          <Ionicons name="image-outline" size={20} color={colors.info} />
           <AppText style={styles.uploadText}>Seleccionar fotografía</AppText>
         </TouchableOpacity>
       )}
@@ -683,6 +702,9 @@ function DocumentSelector(props: {
   onRemove: () => void;
   wide?: boolean;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.imageBlock, props.wide && styles.imageBlockWide]}>
       <AppText style={styles.label}>{props.label}</AppText>
@@ -692,7 +714,7 @@ function DocumentSelector(props: {
             <Image source={{ uri: props.document.base64 }} style={styles.preview} />
           ) : (
             <View style={styles.pdfPreview}>
-              <Ionicons name="document-text-outline" size={30} color={appColors.accent} />
+              <Ionicons name="document-text-outline" size={30} color={colors.accent} />
               <AppText style={styles.pdfPreviewText}>PDF</AppText>
             </View>
           )}
@@ -705,7 +727,7 @@ function DocumentSelector(props: {
         </View>
       ) : (
         <TouchableOpacity style={styles.uploadButton} onPress={props.onPress}>
-          <Ionicons name="document-attach-outline" size={22} color={appColors.info} />
+          <Ionicons name="document-attach-outline" size={22} color={colors.info} />
           <AppText style={styles.uploadText}>Seleccionar imagen o PDF</AppText>
           <AppText style={styles.uploadHint}>Máximo 3 MB</AppText>
         </TouchableOpacity>
@@ -715,6 +737,9 @@ function DocumentSelector(props: {
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.infoRow}>
       <AppText style={styles.infoLabel}>{label}</AppText>
@@ -723,7 +748,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   centered: {
     flex: 1,
     alignItems: 'center',
@@ -731,7 +756,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     padding: 24,
   },
-  loadingText: { color: appColors.textMuted, marginTop: 12 },
+  loadingText: { color: colors.textMuted, marginTop: 12 },
   container: {
     flexGrow: 1,
     backgroundColor: 'transparent',
@@ -750,9 +775,9 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   hero: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 22,
     padding: 18,
     marginBottom: 18,
@@ -770,24 +795,24 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colorAlpha(appColors.info, '18'),
+    backgroundColor: colorAlpha(colors.info, '18'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.info, '55'),
+    borderColor: colorAlpha(colors.info, '55'),
     marginBottom: 14,
   },
   heroIconDesktop: { marginBottom: 0, marginRight: 18 },
   heroCopy: { flex: 1 },
   eyebrow: {
-    color: appColors.info,
+    color: colors.info,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.4,
     marginBottom: 6,
   },
-  title: { color: appColors.text, fontSize: 27, fontWeight: '900', lineHeight: 34 },
+  title: { color: colors.text, fontSize: 27, fontWeight: '900', lineHeight: 34 },
   titleDesktop: { fontSize: 34, lineHeight: 41 },
   subtitle: {
-    color: appColors.textSoft,
+    color: colors.textSoft,
     fontSize: 14,
     lineHeight: 21,
     marginTop: 7,
@@ -797,16 +822,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: colorAlpha(appColors.success, '10'),
+    backgroundColor: colorAlpha(colors.success, '10'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '44'),
+    borderColor: colorAlpha(colors.success, '44'),
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginLeft: 24,
   },
-  heroTrustTitle: { color: appColors.text, fontSize: 12, fontWeight: '800' },
-  heroTrustText: { color: appColors.textMuted, fontSize: 10, marginTop: 2 },
+  heroTrustTitle: { color: colors.text, fontSize: 12, fontWeight: '800' },
+  heroTrustText: { color: colors.textMuted, fontSize: 10, marginTop: 2 },
   feedback: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -816,21 +841,21 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   success: {
-    backgroundColor: colorAlpha(appColors.success, '12'),
-    borderColor: colorAlpha(appColors.success, '66'),
+    backgroundColor: colorAlpha(colors.success, '12'),
+    borderColor: colorAlpha(colors.success, '66'),
   },
   error: {
-    backgroundColor: colorAlpha(appColors.accent, '12'),
-    borderColor: colorAlpha(appColors.accent, '66'),
+    backgroundColor: colorAlpha(colors.accent, '12'),
+    borderColor: colorAlpha(colors.accent, '66'),
   },
-  feedbackText: { color: appColors.textSoft, lineHeight: 19, marginLeft: 9, flex: 1 },
+  feedbackText: { color: colors.textSoft, lineHeight: 19, marginLeft: 9, flex: 1 },
   contentRow: { width: '100%' },
   contentRowDesktop: { flexDirection: 'row', alignItems: 'flex-start', gap: 22 },
   formColumn: { flex: 1, minWidth: 0 },
   card: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 20,
     padding: 16,
     marginBottom: 16,
@@ -839,7 +864,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: appColors.borderStrong,
+    borderBottomColor: colors.borderStrong,
     paddingBottom: 15,
     marginBottom: 16,
   },
@@ -847,24 +872,24 @@ const styles = StyleSheet.create({
     minWidth: 34,
     height: 26,
     borderRadius: 8,
-    backgroundColor: colorAlpha(appColors.info, '18'),
+    backgroundColor: colorAlpha(colors.info, '18'),
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 9,
   },
-  stepBadgeText: { color: appColors.info, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 },
+  stepBadgeText: { color: colors.info, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 },
   sectionIcon: {
     width: 38,
     height: 38,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     marginRight: 11,
   },
   sectionCopy: { flex: 1 },
-  sectionTitle: { color: appColors.text, fontSize: 17, fontWeight: '800' },
-  helper: { color: appColors.textMuted, fontSize: 11, lineHeight: 16, marginTop: 3 },
+  sectionTitle: { color: colors.text, fontSize: 17, fontWeight: '800' },
+  helper: { color: colors.textMuted, fontSize: 11, lineHeight: 16, marginTop: 3 },
   fieldGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -872,19 +897,19 @@ const styles = StyleSheet.create({
   },
   field: { marginBottom: 14 },
   fieldWide: { width: '50%', paddingHorizontal: 6 },
-  label: { color: appColors.textSoft, fontSize: 12, fontWeight: '700', marginBottom: 7 },
+  label: { color: colors.textSoft, fontSize: 12, fontWeight: '700', marginBottom: 7 },
   input: {
     minHeight: 48,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 12,
-    backgroundColor: appColors.backgroundMuted,
-    color: appColors.text,
+    backgroundColor: colors.backgroundMuted,
+    color: colors.text,
     paddingHorizontal: 13,
     fontSize: 14,
   },
   securityBlock: {
-    backgroundColor: colorAlpha(appColors.backgroundMuted, 'AA'),
+    backgroundColor: colorAlpha(colors.backgroundMuted, 'AA'),
     borderRadius: 14,
     padding: 13,
     marginTop: 2,
@@ -897,32 +922,32 @@ const styles = StyleSheet.create({
   questionOption: {
     minHeight: 43,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 10,
     paddingHorizontal: 11,
     marginBottom: 8,
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     flexDirection: 'row',
     alignItems: 'center',
   },
   questionOptionWide: { flex: 1, marginHorizontal: 4 },
   questionOptionActive: {
-    borderColor: appColors.info,
-    backgroundColor: colorAlpha(appColors.info, '18'),
+    borderColor: colors.info,
+    backgroundColor: colorAlpha(colors.info, '18'),
   },
   radioDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: appColors.textMuted,
+    borderColor: colors.textMuted,
     marginRight: 8,
   },
   radioDotActive: {
-    borderColor: appColors.info,
-    backgroundColor: appColors.info,
+    borderColor: colors.info,
+    backgroundColor: colors.info,
   },
-  questionOptionText: { color: appColors.textSoft, fontSize: 11, flexShrink: 1 },
+  questionOptionText: { color: colors.textSoft, fontSize: 11, flexShrink: 1 },
   uploadGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -934,47 +959,47 @@ const styles = StyleSheet.create({
     minHeight: 104,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: appColors.info,
+    borderColor: colors.info,
     borderRadius: 13,
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 7,
-    backgroundColor: colorAlpha(appColors.info, '0C'),
+    backgroundColor: colorAlpha(colors.info, '0C'),
   },
-  uploadText: { color: appColors.info, fontWeight: '700', fontSize: 12 },
-  uploadHint: { color: appColors.textMuted, fontSize: 9 },
+  uploadText: { color: colors.info, fontWeight: '700', fontSize: 12 },
+  uploadHint: { color: colors.textMuted, fontSize: 9 },
   previewRow: {
     minHeight: 104,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 13,
     padding: 9,
   },
-  preview: { width: 72, height: 72, borderRadius: 10, backgroundColor: appColors.backgroundMuted },
-  pdfPreview: { width: 72, height: 72, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(appColors.accent, '12') },
-  pdfPreviewText: { color: appColors.accent, fontSize: 9, fontWeight: '900', marginTop: 2 },
+  preview: { width: 72, height: 72, borderRadius: 10, backgroundColor: colors.backgroundMuted },
+  pdfPreview: { width: 72, height: 72, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(colors.accent, '12') },
+  pdfPreviewText: { color: colors.accent, fontSize: 9, fontWeight: '900', marginTop: 2 },
   previewInfo: { flex: 1, marginLeft: 12 },
-  fileName: { color: appColors.textSoft, fontSize: 12 },
-  removeText: { color: appColors.accent, fontSize: 11, fontWeight: '700', marginTop: 7 },
+  fileName: { color: colors.textSoft, fontSize: 12 },
+  removeText: { color: colors.accent, fontSize: 11, fontWeight: '700', marginTop: 7 },
   primaryButton: {
     minHeight: 52,
     width: '100%',
     borderRadius: 13,
-    backgroundColor: appColors.success,
+    backgroundColor: colors.success,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     paddingHorizontal: 18,
   },
-  primaryButtonText: { color: appColors.background, fontWeight: '900', fontSize: 14 },
+  primaryButtonText: { color: colors.onAccent, fontWeight: '900', fontSize: 14 },
   disabledButton: { opacity: 0.65 },
   mobileSubmit: { marginTop: 2 },
   legalText: {
-    color: appColors.textMuted,
+    color: colors.textMuted,
     fontSize: 10,
     lineHeight: 15,
     textAlign: 'center',
@@ -982,20 +1007,20 @@ const styles = StyleSheet.create({
   },
   aside: { width: 330 },
   asideCard: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 20,
     padding: 20,
   },
   asideEyebrow: {
-    color: appColors.success,
+    color: colors.success,
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 1.2,
     marginBottom: 7,
   },
-  asideTitle: { color: appColors.text, fontSize: 18, lineHeight: 24, fontWeight: '800', marginBottom: 20 },
+  asideTitle: { color: colors.text, fontSize: 18, lineHeight: 24, fontWeight: '800', marginBottom: 20 },
   stepItem: { flexDirection: 'row', marginBottom: 17 },
   stepNumber: {
     width: 30,
@@ -1003,32 +1028,32 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: appColors.backgroundMuted,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
   },
-  stepNumberActive: { backgroundColor: appColors.info, borderColor: appColors.info },
-  stepNumberText: { color: appColors.textMuted, fontSize: 11, fontWeight: '900' },
-  stepNumberTextActive: { color: appColors.background },
+  stepNumberActive: { backgroundColor: colors.info, borderColor: colors.info },
+  stepNumberText: { color: colors.textMuted, fontSize: 11, fontWeight: '900' },
+  stepNumberTextActive: { color: colors.onAccent },
   stepCopy: { flex: 1, marginLeft: 11 },
-  stepTitle: { color: appColors.text, fontSize: 12, fontWeight: '800' },
-  stepText: { color: appColors.textMuted, fontSize: 10, lineHeight: 15, marginTop: 2 },
-  asideDivider: { height: 1, backgroundColor: appColors.borderStrong, marginBottom: 17 },
+  stepTitle: { color: colors.text, fontSize: 12, fontWeight: '800' },
+  stepText: { color: colors.textMuted, fontSize: 10, lineHeight: 15, marginTop: 2 },
+  asideDivider: { height: 1, backgroundColor: colors.borderStrong, marginBottom: 17 },
   privacyCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: colorAlpha(appColors.success, '0E'),
+    backgroundColor: colorAlpha(colors.success, '0E'),
     borderWidth: 1,
-    borderColor: colorAlpha(appColors.success, '38'),
+    borderColor: colorAlpha(colors.success, '38'),
     borderRadius: 16,
     padding: 14,
     marginTop: 14,
   },
   privacyCopy: { flex: 1, marginLeft: 10 },
-  privacyTitle: { color: appColors.text, fontSize: 11, fontWeight: '800' },
-  privacyText: { color: appColors.textMuted, fontSize: 9, lineHeight: 14, marginTop: 3 },
+  privacyTitle: { color: colors.text, fontSize: 11, fontWeight: '800' },
+  privacyText: { color: colors.textMuted, fontSize: 9, lineHeight: 14, marginTop: 3 },
   statusCard: {
-    backgroundColor: appColors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderRadius: 18,
     padding: 17,
@@ -1036,18 +1061,18 @@ const styles = StyleSheet.create({
   },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 12 },
   statusText: { fontWeight: '900', letterSpacing: 0.8 },
-  infoRow: { borderTopWidth: 1, borderTopColor: appColors.borderStrong, paddingVertical: 11 },
-  infoLabel: { color: appColors.textMuted, fontSize: 12, marginBottom: 3 },
-  infoValue: { color: appColors.text, fontSize: 15, fontWeight: '600' },
+  infoRow: { borderTopWidth: 1, borderTopColor: colors.borderStrong, paddingVertical: 11 },
+  infoLabel: { color: colors.textMuted, fontSize: 12, marginBottom: 3 },
+  infoValue: { color: colors.text, fontSize: 15, fontWeight: '600' },
   secondaryButton: {
     minHeight: 48,
     maxWidth: 680,
     borderWidth: 1,
-    borderColor: appColors.border,
+    borderColor: colors.border,
     borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 16,
   },
-  secondaryButtonText: { color: appColors.textSoft, fontWeight: '700' },
+  secondaryButtonText: { color: colors.textSoft, fontWeight: '700' },
 });

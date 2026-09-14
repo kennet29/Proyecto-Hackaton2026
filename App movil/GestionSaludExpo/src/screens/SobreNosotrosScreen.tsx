@@ -6,8 +6,12 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { AppText } from '../components/AppText';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 export function SobreNosotrosScreen() {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <AppText style={styles.title}>Sobre Nosotros</AppText>
@@ -38,47 +42,47 @@ export function SobreNosotrosScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     padding: 24,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     gap: 14,
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
     marginBottom: 12,
-    color: '#F4F8FF',
+    color: colors.text,
   },
   subtitle: {
     fontSize: 20,
     fontWeight: '800',
     marginTop: 24,
     marginBottom: 8,
-    color: '#F4F8FF',
+    color: colors.text,
   },
   paragraph: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#C9D7E8',
+    color: colors.textSoft,
   },
   card: {
-    backgroundColor: '#132238',
+    backgroundColor: colors.surface,
     padding: 18,
     borderRadius: 18,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 4,
-    color: '#F4F8FF',
+    color: colors.text,
   },
   cardText: {
     fontSize: 15,
-    color: '#C9D7E8',
+    color: colors.textSoft,
     lineHeight: 22,
   },
 });

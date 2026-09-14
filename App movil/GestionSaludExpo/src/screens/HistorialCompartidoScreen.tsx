@@ -20,6 +20,7 @@ import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
 import { invalidateLinkedPatientsCache } from '../utils/linkedPatients';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'HistorialCompartido'>;
 
@@ -244,6 +245,9 @@ const formatRemaining = (milliseconds: number) => {
 };
 
 export function HistorialCompartidoScreen({ navigation, route }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const { width } = useWindowDimensions();
   const desktop = width >= 960;
   const { token, user } = useAuth();
@@ -375,7 +379,7 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
       <View style={styles.accessScreen}>
         <View style={styles.accessCard}>
           <View style={styles.accessIcon}>
-            <Ionicons name="medkit-outline" size={38} color={appColors.info} />
+            <Ionicons name="medkit-outline" size={38} color={colors.info} />
           </View>
           <AppText style={styles.accessTitle}>Acceso exclusivo para médicos</AppText>
           <AppText style={styles.accessText}>
@@ -406,7 +410,7 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
     >
       <View style={[styles.hero, desktop && styles.heroDesktop]}>
         <View style={styles.heroIcon}>
-          <Ionicons name="medical-outline" size={29} color={appColors.info} />
+          <Ionicons name="medical-outline" size={29} color={colors.info} />
         </View>
         <View style={styles.heroCopy}>
           <AppText style={styles.eyebrow}>PORTAL MÉDICO TEMPORAL</AppText>
@@ -417,7 +421,7 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
           </AppText>
         </View>
         <View style={styles.doctorBadge}>
-          <Ionicons name="shield-checkmark" size={16} color={appColors.success} />
+          <Ionicons name="shield-checkmark" size={16} color={colors.success} />
           <AppText style={styles.doctorBadgeText}>Médico verificado</AppText>
         </View>
       </View>
@@ -425,7 +429,7 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
       {!history ? (
         <View style={styles.codeCard}>
           <View style={styles.codeHeaderIcon}>
-            <Ionicons name="keypad-outline" size={31} color={appColors.info} />
+            <Ionicons name="keypad-outline" size={31} color={colors.info} />
           </View>
           <AppText style={styles.codeTitle}>Código de 6 números</AppText>
           <AppText style={styles.codeHelper}>
@@ -440,7 +444,7 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
             keyboardType="number-pad"
             maxLength={6}
             placeholder="000000"
-            placeholderTextColor={appColors.textMuted}
+            placeholderTextColor={colors.textMuted}
             style={styles.codeInput}
           />
           <View style={styles.digitGuide}>
@@ -463,17 +467,17 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
             onPress={() => void redeemCode()}
           >
             {loading ? (
-              <ActivityIndicator color={appColors.background} />
+              <ActivityIndicator color={colors.onAccent} />
             ) : (
               <>
-                <Ionicons name="lock-open-outline" size={19} color={appColors.background} />
+                <Ionicons name="lock-open-outline" size={19} color={colors.onAccent} />
                 <AppText style={styles.redeemButtonText}>Validar y abrir historial</AppText>
               </>
             )}
           </TouchableOpacity>
           {error ? (
             <View style={styles.errorBox}>
-              <Ionicons name="alert-circle-outline" size={17} color={appColors.accent} />
+              <Ionicons name="alert-circle-outline" size={17} color={colors.accent} />
               <AppText style={styles.errorText}>{error}</AppText>
             </View>
           ) : null}
@@ -497,7 +501,7 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
               <Ionicons
                 name={expired ? 'time-outline' : 'hourglass-outline'}
                 size={20}
-                color={expired ? appColors.accent : appColors.success}
+                color={expired ? colors.accent : colors.success}
               />
               <View>
                 <AppText style={styles.timerLabel}>Tiempo restante</AppText>
@@ -520,14 +524,14 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
                 })
               }
             >
-              <Ionicons name="create-outline" size={19} color={appColors.background} />
+              <Ionicons name="create-outline" size={19} color={colors.onAccent} />
               <AppText style={styles.editButtonText}>Abrir expediente editable</AppText>
             </TouchableOpacity>
           </View>
 
           {history.permiso.notas ? (
             <View style={styles.noteCard}>
-              <Ionicons name="chatbox-ellipses-outline" size={19} color={appColors.info} />
+              <Ionicons name="chatbox-ellipses-outline" size={19} color={colors.info} />
               <View style={styles.noteCopy}>
                 <AppText style={styles.noteLabel}>Nota del paciente</AppText>
                 <AppText style={styles.noteText}>{history.permiso.notas}</AppText>
@@ -567,20 +571,20 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
                 <AppText style={styles.patientName}>{patientName}</AppText>
                 <View style={styles.patientDetails}>
                   <View style={styles.patientDetail}>
-                    <Ionicons name="folder-outline" size={14} color={appColors.info} />
+                    <Ionicons name="folder-outline" size={14} color={colors.info} />
                     <AppText style={styles.patientDetailText}>
                       Expediente #{getText(patient.pacienteId) || history.permiso.pacienteId}
                     </AppText>
                   </View>
                   {getText(patient.sexo) ? (
                     <View style={styles.patientDetail}>
-                      <Ionicons name="person-outline" size={14} color={appColors.info} />
+                      <Ionicons name="person-outline" size={14} color={colors.info} />
                       <AppText style={styles.patientDetailText}>{getText(patient.sexo)}</AppText>
                     </View>
                   ) : null}
                   {getText(patient.fechaNacimiento) ? (
                     <View style={styles.patientDetail}>
-                      <Ionicons name="calendar-outline" size={14} color={appColors.info} />
+                      <Ionicons name="calendar-outline" size={14} color={colors.info} />
                       <AppText style={styles.patientDetailText}>
                         {formatDateTime(getText(patient.fechaNacimiento)).split(',')[0]}
                       </AppText>
@@ -639,24 +643,24 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
                 setActiveCategory('todos');
               }}
             >
-              <Ionicons name="key-outline" size={16} color={appColors.info} />
+              <Ionicons name="key-outline" size={16} color={colors.info} />
               <AppText style={styles.newCodeText}>Otro código</AppText>
             </TouchableOpacity>
           </View>
 
           <View style={styles.historyTools}>
             <View style={styles.searchBox}>
-              <Ionicons name="search-outline" size={18} color={appColors.textMuted} />
+              <Ionicons name="search-outline" size={18} color={colors.textMuted} />
               <AppTextInput
                 value={sectionQuery}
                 onChangeText={setSectionQuery}
                 placeholder="Buscar en el historial"
-                placeholderTextColor={appColors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 style={styles.searchInput}
               />
               {sectionQuery ? (
                 <TouchableOpacity onPress={() => setSectionQuery('')}>
-                  <Ionicons name="close-circle" size={18} color={appColors.textMuted} />
+                  <Ionicons name="close-circle" size={18} color={colors.textMuted} />
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -706,7 +710,7 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
             ))}
             {!filteredSections.length ? (
               <View style={styles.noResults}>
-                <Ionicons name="search-outline" size={27} color={appColors.textMuted} />
+                <Ionicons name="search-outline" size={27} color={colors.textMuted} />
                 <AppText style={styles.noResultsTitle}>No encontramos esa sección</AppText>
                 <AppText style={styles.noResultsText}>
                   Prueba otra búsqueda o selecciona la categoría Todo.
@@ -716,7 +720,7 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
           </View>
           <View style={styles.reportFooter}>
             <View style={styles.reportFooterLine} />
-            <Ionicons name="shield-checkmark-outline" size={14} color="#607085" />
+            <Ionicons name="shield-checkmark-outline" size={14} color={colors.textMuted} />
             <AppText style={styles.reportFooterText}>
               Información confidencial · Acceso autorizado por el paciente durante una hora
             </AppText>
@@ -739,13 +743,16 @@ function ClinicalMetric({
   value: unknown;
   alert?: boolean;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.metricCard}>
       <View style={[styles.metricIcon, alert && styles.metricIconAlert]}>
         <Ionicons
           name={icon}
           size={17}
-          color={alert ? appColors.accent : appColors.info}
+          color={alert ? colors.accent : colors.info}
         />
       </View>
       <View>
@@ -765,6 +772,9 @@ function HistorySection({
   title: string;
   value: unknown;
 }) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const [expanded, setExpanded] = useState(false);
   const count = getSectionCount(value);
   return (
@@ -777,7 +787,7 @@ function HistorySection({
           <Ionicons
             name={SECTION_ICONS[sectionKey] || 'folder-outline'}
             size={17}
-            color={appColors.info}
+            color={colors.info}
           />
         </View>
         <View style={styles.sectionHeaderCopy}>
@@ -789,15 +799,15 @@ function HistorySection({
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
           size={17}
-          color={appColors.textMuted}
+          color={colors.textMuted}
         />
       </TouchableOpacity>
-      {expanded ? <View style={styles.sectionBody}>{renderValue(value)}</View> : null}
+      {expanded ? <View style={styles.sectionBody}>{renderValue(value, styles)}</View> : null}
     </View>
   );
 }
 
-function renderValue(value: unknown, depth = 0, fieldKey = ''): React.ReactNode {
+function renderValue(value: unknown, styles: ReturnType<typeof createStyles>, depth = 0, fieldKey = ''): React.ReactNode {
   if (value === null || value === undefined || value === '') {
     return <AppText style={styles.emptyValue}>Sin información registrada</AppText>;
   }
@@ -825,7 +835,7 @@ function renderValue(value: unknown, depth = 0, fieldKey = ''): React.ReactNode 
         {value.map((item, index) => (
           <View key={index} style={styles.recordCard}>
             <AppText style={styles.recordNumber}>REGISTRO {index + 1}</AppText>
-            {renderValue(item, depth + 1, fieldKey)}
+            {renderValue(item, styles, depth + 1, fieldKey)}
           </View>
         ))}
       </View>
@@ -841,7 +851,7 @@ function renderValue(value: unknown, depth = 0, fieldKey = ''): React.ReactNode 
         {entries.map(([key, item]) => (
           <View key={key} style={styles.field}>
             <AppText style={styles.fieldLabel}>{humanizeKey(key)}</AppText>
-            {renderValue(item, depth + 1, key)}
+            {renderValue(item, styles, depth + 1, key)}
           </View>
         ))}
       </View>
@@ -850,128 +860,128 @@ function renderValue(value: unknown, depth = 0, fieldKey = ''): React.ReactNode 
   return <AppText style={styles.valueText}>{String(value)}</AppText>;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'transparent' },
   content: { width: '100%', maxWidth: 1240, alignSelf: 'center', padding: 16, paddingBottom: 50 },
-  hero: { padding: 22, borderRadius: 23, borderWidth: 1, borderColor: appColors.borderStrong, backgroundColor: appColors.surfaceStrong },
+  hero: { padding: 22, borderRadius: 23, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceStrong },
   heroDesktop: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 28 },
-  heroIcon: { width: 60, height: 60, alignItems: 'center', justifyContent: 'center', borderRadius: 19, marginRight: 16, backgroundColor: colorAlpha(appColors.info, '16') },
+  heroIcon: { width: 60, height: 60, alignItems: 'center', justifyContent: 'center', borderRadius: 19, marginRight: 16, backgroundColor: colorAlpha(colors.info, '16') },
   heroCopy: { flex: 1 },
-  eyebrow: { color: appColors.info, fontSize: 10, fontWeight: '900', letterSpacing: 1.2 },
-  title: { color: appColors.text, fontSize: 27, lineHeight: 34, fontWeight: '900', marginTop: 5 },
-  subtitle: { color: appColors.textSoft, fontSize: 12, lineHeight: 19, marginTop: 6, maxWidth: 720 },
-  doctorBadge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 12, paddingVertical: 9, marginTop: 14, borderRadius: 99, backgroundColor: colorAlpha(appColors.success, '12') },
-  doctorBadgeText: { color: appColors.success, fontSize: 10, fontWeight: '900' },
-  codeCard: { width: '100%', maxWidth: 560, alignSelf: 'center', alignItems: 'center', padding: 28, marginTop: 18, borderRadius: 23, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
-  codeHeaderIcon: { width: 66, height: 66, alignItems: 'center', justifyContent: 'center', borderRadius: 21, backgroundColor: colorAlpha(appColors.info, '14') },
-  codeTitle: { color: appColors.text, fontSize: 22, fontWeight: '900', marginTop: 15 },
-  codeHelper: { color: appColors.textMuted, fontSize: 11, textAlign: 'center', marginTop: 5 },
-  codeInput: { width: '100%', minHeight: 75, marginTop: 20, borderRadius: 16, borderWidth: 1, borderColor: colorAlpha(appColors.info, '65'), backgroundColor: appColors.backgroundMuted, color: appColors.text, fontSize: 35, fontWeight: '900', textAlign: 'center', letterSpacing: 13, outlineStyle: 'none' } as any,
+  eyebrow: { color: colors.info, fontSize: 10, fontWeight: '900', letterSpacing: 1.2 },
+  title: { color: colors.text, fontSize: 27, lineHeight: 34, fontWeight: '900', marginTop: 5 },
+  subtitle: { color: colors.textSoft, fontSize: 12, lineHeight: 19, marginTop: 6, maxWidth: 720 },
+  doctorBadge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 12, paddingVertical: 9, marginTop: 14, borderRadius: 99, backgroundColor: colorAlpha(colors.success, '12') },
+  doctorBadgeText: { color: colors.success, fontSize: 10, fontWeight: '900' },
+  codeCard: { width: '100%', maxWidth: 560, alignSelf: 'center', alignItems: 'center', padding: 28, marginTop: 18, borderRadius: 23, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  codeHeaderIcon: { width: 66, height: 66, alignItems: 'center', justifyContent: 'center', borderRadius: 21, backgroundColor: colorAlpha(colors.info, '14') },
+  codeTitle: { color: colors.text, fontSize: 22, fontWeight: '900', marginTop: 15 },
+  codeHelper: { color: colors.textMuted, fontSize: 11, textAlign: 'center', marginTop: 5 },
+  codeInput: { width: '100%', minHeight: 75, marginTop: 20, borderRadius: 16, borderWidth: 1, borderColor: colorAlpha(colors.info, '65'), backgroundColor: colors.backgroundMuted, color: colors.text, fontSize: 35, fontWeight: '900', textAlign: 'center', letterSpacing: 13, outlineStyle: 'none' } as any,
   digitGuide: { flexDirection: 'row', gap: 8, marginTop: 11 },
-  guideDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: appColors.borderStrong },
-  guideDotFilled: { backgroundColor: appColors.success },
-  redeemButton: { width: '100%', minHeight: 51, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 19, borderRadius: 14, backgroundColor: appColors.info },
-  redeemButtonText: { color: appColors.background, fontSize: 12, fontWeight: '900' },
+  guideDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.borderStrong },
+  guideDotFilled: { backgroundColor: colors.success },
+  redeemButton: { width: '100%', minHeight: 51, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 19, borderRadius: 14, backgroundColor: colors.info },
+  redeemButtonText: { color: colors.onAccent, fontSize: 12, fontWeight: '900' },
   buttonDisabled: { opacity: 0.45 },
-  errorBox: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 8, padding: 11, marginTop: 12, borderRadius: 11, backgroundColor: colorAlpha(appColors.accent, '10') },
-  errorText: { flex: 1, color: appColors.accent, fontSize: 10, lineHeight: 15 },
-  sessionCard: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 13, padding: 17, marginTop: 15, borderRadius: 18, borderWidth: 1, borderColor: colorAlpha(appColors.success, '55'), backgroundColor: colorAlpha(appColors.success, '0C') },
-  sessionExpired: { borderColor: colorAlpha(appColors.accent, '55'), backgroundColor: colorAlpha(appColors.accent, '0C') },
+  errorBox: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: 8, padding: 11, marginTop: 12, borderRadius: 11, backgroundColor: colorAlpha(colors.accent, '10') },
+  errorText: { flex: 1, color: colors.accent, fontSize: 10, lineHeight: 15 },
+  sessionCard: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 13, padding: 17, marginTop: 15, borderRadius: 18, borderWidth: 1, borderColor: colorAlpha(colors.success, '55'), backgroundColor: colorAlpha(colors.success, '0C') },
+  sessionExpired: { borderColor: colorAlpha(colors.accent, '55'), backgroundColor: colorAlpha(colors.accent, '0C') },
   sessionCopy: { flex: 1, minWidth: 220 },
-  sessionEyebrow: { color: appColors.success, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
-  sessionTitle: { color: appColors.text, fontSize: 19, fontWeight: '900', marginTop: 3 },
-  sessionMeta: { color: appColors.textMuted, fontSize: 9, marginTop: 4 },
-  timer: { flexDirection: 'row', alignItems: 'center', gap: 9, minWidth: 120, padding: 10, borderRadius: 12, backgroundColor: colorAlpha(appColors.success, '12') },
-  timerExpired: { backgroundColor: colorAlpha(appColors.accent, '12') },
-  timerLabel: { color: appColors.textMuted, fontSize: 8 },
-  timerValue: { color: appColors.success, fontSize: 17, fontWeight: '900', marginTop: 1 },
-  timerValueExpired: { color: appColors.accent },
-  editButton: { minHeight: 45, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 15, borderRadius: 12, backgroundColor: appColors.success },
-  editButtonText: { color: appColors.background, fontSize: 11, fontWeight: '900' },
-  noteCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 14, marginTop: 12, borderRadius: 14, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
+  sessionEyebrow: { color: colors.success, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  sessionTitle: { color: colors.text, fontSize: 19, fontWeight: '900', marginTop: 3 },
+  sessionMeta: { color: colors.textMuted, fontSize: 9, marginTop: 4 },
+  timer: { flexDirection: 'row', alignItems: 'center', gap: 9, minWidth: 120, padding: 10, borderRadius: 12, backgroundColor: colorAlpha(colors.success, '12') },
+  timerExpired: { backgroundColor: colorAlpha(colors.accent, '12') },
+  timerLabel: { color: colors.textMuted, fontSize: 8 },
+  timerValue: { color: colors.success, fontSize: 17, fontWeight: '900', marginTop: 1 },
+  timerValueExpired: { color: colors.accent },
+  editButton: { minHeight: 45, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 15, borderRadius: 12, backgroundColor: colors.success },
+  editButtonText: { color: colors.onAccent, fontSize: 11, fontWeight: '900' },
+  noteCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 14, marginTop: 12, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   noteCopy: { flex: 1 },
-  noteLabel: { color: appColors.info, fontSize: 9, fontWeight: '900' },
-  noteText: { color: appColors.textSoft, fontSize: 11, lineHeight: 17, marginTop: 3 },
-  reportPaper: { width: '100%', maxWidth: 980, alignSelf: 'center', padding: 18, marginTop: 18, borderRadius: 4, backgroundColor: '#FFFFFF', shadowColor: '#000000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 8 },
+  noteLabel: { color: colors.info, fontSize: 9, fontWeight: '900' },
+  noteText: { color: colors.textSoft, fontSize: 11, lineHeight: 17, marginTop: 3 },
+  reportPaper: { width: '100%', maxWidth: 980, alignSelf: 'center', padding: 18, marginTop: 18, borderRadius: 4, backgroundColor: colors.surface, shadowColor: '#000000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 8 },
   reportPaperDesktop: { paddingHorizontal: 42, paddingTop: 34, paddingBottom: 30 },
   reportHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 18 },
   reportBrand: { flex: 1, minWidth: 250, flexDirection: 'row', alignItems: 'center' },
   reportLogo: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center', marginRight: 13, borderRadius: 4, backgroundColor: '#1769AA' },
   reportBrandCopy: { flex: 1 },
   reportOrganization: { color: '#1769AA', fontSize: 9, fontWeight: '900', letterSpacing: 1.7 },
-  reportTitle: { color: '#172033', fontSize: 22, lineHeight: 27, fontWeight: '900', marginTop: 2 },
-  reportCaption: { color: '#607085', fontSize: 9, marginTop: 2 },
+  reportTitle: { color: colors.text, fontSize: 22, lineHeight: 27, fontWeight: '900', marginTop: 2 },
+  reportCaption: { color: colors.textMuted, fontSize: 9, marginTop: 2 },
   reportFolio: { alignItems: 'flex-end', minWidth: 165 },
-  reportFolioLabel: { color: '#7B8796', fontSize: 7, fontWeight: '900', letterSpacing: 1.1 },
-  reportFolioValue: { color: '#172033', fontSize: 11, fontWeight: '900', marginTop: 3 },
-  reportDate: { color: '#607085', fontSize: 8, marginTop: 3 },
+  reportFolioLabel: { color: colors.textMuted, fontSize: 7, fontWeight: '900', letterSpacing: 1.1 },
+  reportFolioValue: { color: colors.text, fontSize: 11, fontWeight: '900', marginTop: 3 },
+  reportDate: { color: colors.textMuted, fontSize: 8, marginTop: 3 },
   reportRule: { height: 2, marginTop: 20, backgroundColor: '#1769AA' },
-  patientCard: { paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: '#DCE2E8' },
+  patientCard: { paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: colors.border },
   patientMain: { flexDirection: 'row', alignItems: 'center' },
-  patientAvatar: { width: 58, height: 58, alignItems: 'center', justifyContent: 'center', borderRadius: 4, marginRight: 13, borderWidth: 1, borderColor: '#C9D9E8', backgroundColor: '#EDF5FB' },
+  patientAvatar: { width: 58, height: 58, alignItems: 'center', justifyContent: 'center', borderRadius: 4, marginRight: 13, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceStrong },
   patientInitials: { color: '#1769AA', fontSize: 20, fontWeight: '900' },
   patientIdentity: { flex: 1 },
   patientOverline: { color: '#1769AA', fontSize: 8, fontWeight: '900', letterSpacing: 1.1 },
-  patientName: { color: '#172033', fontSize: 20, fontWeight: '900', marginTop: 3 },
+  patientName: { color: colors.text, fontSize: 20, fontWeight: '900', marginTop: 3 },
   patientDetails: { flexDirection: 'row', flexWrap: 'wrap', gap: 11, marginTop: 7 },
   patientDetail: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  patientDetailText: { color: '#526174', fontSize: 10 },
+  patientDetailText: { color: colors.textMuted, fontSize: 10 },
   metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginTop: 17 },
-  metricCard: { flex: 1, minWidth: 145, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 11, borderLeftWidth: 3, borderLeftColor: '#1769AA', backgroundColor: '#F4F7FA' },
-  metricIcon: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 16, backgroundColor: '#E3F0F9' },
+  metricCard: { flex: 1, minWidth: 145, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 11, borderLeftWidth: 3, borderLeftColor: '#1769AA', backgroundColor: colors.backgroundMuted },
+  metricIcon: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 16, backgroundColor: colors.surfaceStrong },
   metricIconAlert: { backgroundColor: '#FCE8ED' },
-  metricValue: { color: '#172033', fontSize: 17, fontWeight: '900' },
-  metricLabel: { color: '#607085', fontSize: 8, marginTop: 1 },
-  clinicalNarrative: { marginTop: 17, paddingVertical: 14, paddingHorizontal: 15, borderLeftWidth: 3, borderLeftColor: '#1769AA', backgroundColor: '#F4F7FA' },
+  metricValue: { color: colors.text, fontSize: 17, fontWeight: '900' },
+  metricLabel: { color: colors.textMuted, fontSize: 8, marginTop: 1 },
+  clinicalNarrative: { marginTop: 17, paddingVertical: 14, paddingHorizontal: 15, borderLeftWidth: 3, borderLeftColor: '#1769AA', backgroundColor: colors.backgroundMuted },
   clinicalNarrativeHeading: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 8 },
   clinicalNarrativeTitle: { color: '#1769AA', fontSize: 10, fontWeight: '900', letterSpacing: 0.6, textTransform: 'uppercase' },
-  clinicalNarrativeText: { color: '#283548', fontSize: 11, lineHeight: 18, textAlign: 'justify' },
-  clinicalNarrativeNote: { color: '#7B8796', fontSize: 7, fontStyle: 'italic', marginTop: 8 },
+  clinicalNarrativeText: { color: colors.textSoft, fontSize: 11, lineHeight: 18, textAlign: 'justify' },
+  clinicalNarrativeNote: { color: colors.textMuted, fontSize: 7, fontStyle: 'italic', marginTop: 8 },
   historyHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 22, marginBottom: 12 },
-  historyTitle: { color: '#172033', fontSize: 19, fontWeight: '900' },
-  historySubtitle: { color: '#607085', fontSize: 9, marginTop: 3 },
-  newCodeButton: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36, paddingHorizontal: 11, borderRadius: 3, borderWidth: 1, borderColor: '#B9C9D8', backgroundColor: '#FFFFFF' },
+  historyTitle: { color: colors.text, fontSize: 19, fontWeight: '900' },
+  historySubtitle: { color: colors.textMuted, fontSize: 9, marginTop: 3 },
+  newCodeButton: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36, paddingHorizontal: 11, borderRadius: 3, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   newCodeText: { color: '#1769AA', fontSize: 9, fontWeight: '800' },
-  historyTools: { gap: 10, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: '#D7E0E8', backgroundColor: '#F4F7FA' },
-  searchBox: { minHeight: 41, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: '#D7E0E8', backgroundColor: '#FFFFFF' },
-  searchInput: { flex: 1, minHeight: 39, paddingHorizontal: 0, borderWidth: 0, color: '#172033', fontSize: 10, outlineStyle: 'none' } as any,
+  historyTools: { gap: 10, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted },
+  searchBox: { minHeight: 41, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  searchInput: { flex: 1, minHeight: 39, paddingHorizontal: 0, borderWidth: 0, color: colors.text, fontSize: 10, outlineStyle: 'none' } as any,
   categoryList: { gap: 7 },
-  categoryChip: { minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 10, borderWidth: 1, borderColor: '#CCD7E1', backgroundColor: '#FFFFFF' },
-  categoryChipActive: { borderColor: '#1769AA', backgroundColor: '#E8F2F9' },
-  categoryText: { color: '#607085', fontSize: 8, fontWeight: '800' },
+  categoryChip: { minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  categoryChipActive: { borderColor: '#1769AA', backgroundColor: colors.surfaceStrong },
+  categoryText: { color: colors.textMuted, fontSize: 8, fontWeight: '800' },
   categoryTextActive: { color: '#1769AA' },
-  categoryCount: { minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderRadius: 9, backgroundColor: '#E8EDF2' },
-  categoryCountActive: { backgroundColor: '#CFE3F2' },
-  categoryCountText: { color: '#3F5266', fontSize: 7, fontWeight: '900' },
+  categoryCount: { minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderRadius: 9, backgroundColor: colors.surfaceStrong },
+  categoryCountActive: { backgroundColor: colors.border },
+  categoryCountText: { color: colors.textSoft, fontSize: 7, fontWeight: '900' },
   sectionsGrid: { gap: 7 },
   sectionsGridDesktop: {},
-  sectionCard: { borderWidth: 1, borderColor: '#D7E0E8', overflow: 'hidden', backgroundColor: '#FFFFFF' },
-  sectionHeader: { minHeight: 44, flexDirection: 'row', alignItems: 'center', paddingVertical: 7, paddingHorizontal: 10, borderLeftWidth: 3, borderLeftColor: '#1769AA', backgroundColor: '#F7F9FB' },
-  sectionIcon: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', marginRight: 8, backgroundColor: '#E8F2F9' },
+  sectionCard: { borderWidth: 1, borderColor: colors.border, overflow: 'hidden', backgroundColor: colors.surface },
+  sectionHeader: { minHeight: 44, flexDirection: 'row', alignItems: 'center', paddingVertical: 7, paddingHorizontal: 10, borderLeftWidth: 3, borderLeftColor: '#1769AA', backgroundColor: colors.backgroundMuted },
+  sectionIcon: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', marginRight: 8, backgroundColor: colors.surfaceStrong },
   sectionHeaderCopy: { flex: 1 },
-  sectionTitle: { color: '#172033', fontSize: 11, fontWeight: '900' },
-  sectionCount: { color: '#718096', fontSize: 7, marginTop: 1 },
-  sectionBody: { padding: 13, borderTopWidth: 1, borderTopColor: '#D7E0E8', backgroundColor: '#FFFFFF' },
+  sectionTitle: { color: colors.text, fontSize: 11, fontWeight: '900' },
+  sectionCount: { color: colors.textMuted, fontSize: 7, marginTop: 1 },
+  sectionBody: { padding: 13, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surface },
   objectGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   nestedObject: { gap: 7, marginTop: 5 },
-  field: { flex: 1, minWidth: 220, maxWidth: '100%', paddingVertical: 9, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: '#E5E9ED', backgroundColor: '#FFFFFF' },
-  fieldLabel: { color: '#607085', fontSize: 7, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
-  valueText: { color: '#202B3C', fontSize: 10, lineHeight: 16 },
-  emptyValue: { color: '#8995A3', fontSize: 10, fontStyle: 'italic' },
+  field: { flex: 1, minWidth: 220, maxWidth: '100%', paddingVertical: 9, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface },
+  fieldLabel: { color: colors.textMuted, fontSize: 7, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
+  valueText: { color: colors.text, fontSize: 10, lineHeight: 16 },
+  emptyValue: { color: colors.textMuted, fontSize: 10, fontStyle: 'italic' },
   arrayList: { gap: 8 },
-  recordCard: { padding: 10, borderLeftWidth: 2, borderLeftColor: '#8FB8D8', backgroundColor: '#F7F9FB' },
+  recordCard: { padding: 10, borderLeftWidth: 2, borderLeftColor: '#8FB8D8', backgroundColor: colors.backgroundMuted },
   recordNumber: { color: '#1769AA', fontSize: 7, fontWeight: '900', letterSpacing: 0.8, marginBottom: 6 },
-  noResults: { alignItems: 'center', padding: 28, borderWidth: 1, borderColor: '#D7E0E8', backgroundColor: '#F7F9FB' },
-  noResultsTitle: { color: '#172033', fontSize: 14, fontWeight: '900', marginTop: 8 },
-  noResultsText: { color: '#607085', fontSize: 10, textAlign: 'center', marginTop: 4 },
+  noResults: { alignItems: 'center', padding: 28, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted },
+  noResultsTitle: { color: colors.text, fontSize: 14, fontWeight: '900', marginTop: 8 },
+  noResultsText: { color: colors.textMuted, fontSize: 10, textAlign: 'center', marginTop: 4 },
   reportFooter: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 24, paddingTop: 14 },
-  reportFooterLine: { width: '100%', height: 1, marginBottom: 7, backgroundColor: '#D7E0E8' },
-  reportFooterText: { color: '#607085', fontSize: 8, textAlign: 'center' },
+  reportFooterLine: { width: '100%', height: 1, marginBottom: 7, backgroundColor: colors.border },
+  reportFooterText: { color: colors.textMuted, fontSize: 8, textAlign: 'center' },
   accessScreen: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20, backgroundColor: 'transparent' },
-  accessCard: { width: '100%', maxWidth: 440, alignItems: 'center', padding: 28, borderRadius: 23, borderWidth: 1, borderColor: appColors.border, backgroundColor: appColors.surface },
-  accessIcon: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderRadius: 23, backgroundColor: colorAlpha(appColors.info, '15') },
-  accessTitle: { color: appColors.text, fontSize: 21, fontWeight: '900', textAlign: 'center', marginTop: 15 },
-  accessText: { color: appColors.textMuted, fontSize: 12, lineHeight: 19, textAlign: 'center', marginTop: 7 },
-  accessButton: { minHeight: 46, minWidth: 175, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 15, borderRadius: 12, marginTop: 18, backgroundColor: appColors.info },
-  accessButtonText: { color: appColors.background, fontWeight: '900' },
+  accessCard: { width: '100%', maxWidth: 440, alignItems: 'center', padding: 28, borderRadius: 23, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  accessIcon: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderRadius: 23, backgroundColor: colorAlpha(colors.info, '15') },
+  accessTitle: { color: colors.text, fontSize: 21, fontWeight: '900', textAlign: 'center', marginTop: 15 },
+  accessText: { color: colors.textMuted, fontSize: 12, lineHeight: 19, textAlign: 'center', marginTop: 7 },
+  accessButton: { minHeight: 46, minWidth: 175, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 15, borderRadius: 12, marginTop: 18, backgroundColor: colors.info },
+  accessButtonText: { color: colors.onAccent, fontWeight: '900' },
 });

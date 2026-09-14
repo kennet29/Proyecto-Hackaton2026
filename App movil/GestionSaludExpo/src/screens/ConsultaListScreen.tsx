@@ -23,6 +23,7 @@ import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { parseCalendarDate } from '../utils/localDate';
 import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
+import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Consulta = {
   consultaId: number;
@@ -106,6 +107,9 @@ const formatDateTime = (value?: string | null) => {
 };
 
 export function ConsultaListScreen({ navigation }: Props) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+
   const [data, setData] = useState<Consulta[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterPacienteId, setFilterPacienteId] = useState('');
@@ -232,7 +236,7 @@ export function ConsultaListScreen({ navigation }: Props) {
       marks[date] = {
         ...(marks[date] ?? {}),
         marked: true,
-        dotColor: '#29B6FF',
+        dotColor: colors.info,
       };
     });
 
@@ -240,15 +244,15 @@ export function ConsultaListScreen({ navigation }: Props) {
       marks[selectedDate] = {
         ...(marks[selectedDate] ?? {}),
         selected: true,
-        selectedColor: '#29B6FF',
-        selectedTextColor: '#F4F8FF',
-        dotColor: marks[selectedDate]?.dotColor ?? '#29B6FF',
+        selectedColor: colors.info,
+        selectedTextColor: colors.onAccent,
+        dotColor: marks[selectedDate]?.dotColor ?? colors.info,
         marked: marks[selectedDate]?.marked ?? false,
       };
     }
 
     return marks;
-  }, [data, selectedDate]);
+  }, [data, selectedDate, colors]);
 
   const consultasForSelectedDay = useMemo(() => {
     if (!selectedDate) {
@@ -320,7 +324,7 @@ export function ConsultaListScreen({ navigation }: Props) {
           <RefreshControl
             refreshing={loading}
             onRefresh={() => fetchData(filterPacienteId || undefined)}
-            tintColor="#F4F8FF"
+            tintColor={colors.text}
           />
         }
       >
@@ -341,15 +345,15 @@ export function ConsultaListScreen({ navigation }: Props) {
                 selectedValue={filterPacienteId}
                 onValueChange={(value) => handlePatientFilterChange(String(value))}
                 style={styles.picker}
-                dropdownIconColor="#F4F8FF"
+                dropdownIconColor={colors.text}
               >
-                <Picker.Item label="Todos los pacientes" value="" color="#F4F8FF" />
+                <Picker.Item label="Todos los pacientes" value="" color={colors.text} />
                 {patientOptions.map((patient) => (
                   <Picker.Item
                     key={patient.pacienteId}
                     label={patient.displayName}
                     value={String(patient.pacienteId)}
-                    color="#F4F8FF"
+                    color={colors.text}
                   />
                 ))}
               </Picker>
@@ -372,24 +376,24 @@ export function ConsultaListScreen({ navigation }: Props) {
 
           {loading && data.length === 0 ? (
             <View style={styles.loadingBox}>
-              <ActivityIndicator color="#29B6FF" />
+              <ActivityIndicator color={colors.info} />
               <AppText style={styles.loadingText}>Cargando agenda...</AppText>
             </View>
           ) : (
-            <Calendar
+            <Calendar key={colors.mode}
               markedDates={markedDates}
               onDayPress={handleDayPress}
               initialDate={selectedDate || undefined}
               enableSwipeMonths
               firstDay={1}
               theme={{
-                calendarBackground: '#F4F8FF',
-                todayTextColor: '#29B6FF',
-                arrowColor: '#29B6FF',
-                selectedDayBackgroundColor: '#29B6FF',
-                selectedDayTextColor: '#F4F8FF',
-                monthTextColor: '#071120',
-                textSectionTitleColor: '#9FB3C8',
+                calendarBackground: colors.surface, dayTextColor: colors.text,
+                todayTextColor: colors.info,
+                arrowColor: colors.info,
+                selectedDayBackgroundColor: colors.info,
+                selectedDayTextColor: colors.onAccent,
+                monthTextColor: colors.text,
+                textSectionTitleColor: colors.textMuted,
               }}
               style={styles.calendar}
             />
@@ -476,10 +480,10 @@ export function ConsultaListScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppColors) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 20,
@@ -487,14 +491,14 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   heroCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 28,
     padding: 22,
     borderWidth: 1,
-    borderColor: '#1B3355',
+    borderColor: colors.borderStrong,
   },
   kicker: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.2,
@@ -503,22 +507,22 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   subheader: {
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginTop: 8,
     lineHeight: 20,
   },
   filterCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 22,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   sectionTitle: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '800',
   },
@@ -529,45 +533,45 @@ const styles = StyleSheet.create({
   },
   pickerWrapper: {
     flex: 1,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 16,
     marginRight: 12,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   picker: {
-    color: '#F4F8FF',
+    color: colors.text,
   },
   filterBtn: {
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     paddingVertical: 14,
     paddingHorizontal: 18,
     borderRadius: 16,
   },
   btnText: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '700',
     textAlign: 'center',
   },
   filterSummary: {
-    color: '#29B6FF',
+    color: colors.info,
     marginTop: 12,
     fontSize: 13,
     fontWeight: '600',
   },
   filterHint: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     marginTop: 5,
     fontSize: 13,
   },
   errorText: {
-    color: '#FF4D73',
+    color: colors.accent,
     marginTop: 12,
   },
   calendarCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 24,
     padding: 16,
   },
@@ -575,7 +579,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   calendarCaption: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     marginTop: 6,
     fontSize: 13,
     textTransform: 'capitalize',
@@ -589,23 +593,23 @@ const styles = StyleSheet.create({
     paddingVertical: 28,
   },
   loadingText: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
     marginTop: 8,
   },
   dailySection: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 22,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
     marginBottom: 16,
   },
   historySection: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 22,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#27496D',
+    borderColor: colors.border,
   },
   historyToggle: {
     flexDirection: 'row',
@@ -620,7 +624,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   historyHelper: {
-    color: '#29B6FF',
+    color: colors.info,
     marginTop: 6,
     fontSize: 13,
   },
@@ -630,14 +634,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   historyToggleIcon: {
-    color: '#F4F8FF',
+    color: colors.text,
     fontSize: 24,
     fontWeight: '700',
     width: 20,
     textAlign: 'center',
   },
   historyToggleIconDisabled: {
-    color: '#9FB3C8',
+    color: colors.textMuted,
   },
   dailyHeader: {
     flexDirection: 'row',
@@ -650,24 +654,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     alignItems: 'center',
   },
   countBadgeText: {
-    color: '#29B6FF',
+    color: colors.info,
     fontWeight: '800',
     fontSize: 12,
   },
   card: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#1B3355',
+    borderColor: colors.borderStrong,
   },
   historyCard: {
-    backgroundColor: '#071120',
+    backgroundColor: colors.background,
   },
   cardTopRow: {
     flexDirection: 'row',
@@ -680,22 +684,22 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: '700',
-    color: '#F4F8FF',
+    color: colors.text,
   },
   dateBadge: {
-    color: '#29B6FF',
+    color: colors.info,
     fontSize: 12,
     fontWeight: '700',
   },
   text: {
     fontSize: 14,
-    color: '#C9D7E8',
+    color: colors.textSoft,
     marginBottom: 6,
     lineHeight: 19,
   },
   empty: {
     fontSize: 15,
-    color: '#9FB3C8',
+    color: colors.textMuted,
     textAlign: 'center',
     paddingVertical: 24,
   },
@@ -706,7 +710,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#29B6FF',
+    backgroundColor: colors.info,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
@@ -716,7 +720,7 @@ const styles = StyleSheet.create({
     elevation: 7,
   },
   fabText: {
-    color: '#F4F8FF',
+    color: colors.onAccent,
     fontSize: 30,
     lineHeight: 32,
     fontWeight: '700',
