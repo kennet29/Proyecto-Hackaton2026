@@ -196,8 +196,7 @@ create table usuariorol (
 );
 go
 -- ========================
--- catalogo
-s clinicos
+-- catalogos clinicos
 -- ========================
 if object_id('dbo.especialidad', 'U') is null
 create table especialidad (
