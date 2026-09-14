@@ -1,0 +1,161 @@
+name: gestionsalud
+
+services:
+  # -------------------------------------------------------------
+  # 0. Gateway / Reverse Proxy (Dominio Único: Puerto 80 / 443)
+  # -------------------------------------------------------------
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: gestionsalud-gateway
+    depends_on:
+      - backend
+      - landing
+      - app-web
+    ports:
+      - "${GATEWAY_HTTP_PORT:-80}:80"
+    restart: unless-stopped
+    networks:
+      - gestionsalud-net
+
+  # -------------------------------------------------------------
+  # 1. Base de datos SQL Server 2022
+  # -------------------------------------------------------------
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: gestionsalud-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-GestionSalud_2026!}"
+      MSSQL_PID: "${MSSQL_PID:-Developer}"
+    ports:
+      # Mapea a un puerto alternativo en el host (14333) para no chocar con tus otras instancias de SQL en 1433
+      - "${MSSQL_EXTERNAL_PORT:-14333}:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost,1433 -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - gestionsalud-net
+
+  # -------------------------------------------------------------
+  # 2. Inicializador de Esquema SQL
+  # -------------------------------------------------------------
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: gestionsalud-db-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      DB_HOST: sqlserver
+      DB_PORT: 1433
+      DB_USER: sa
+      DB_PASSWORD: "${MSSQL_SA_PASSWORD:-GestionSalud_2026!}"
+    volumes:
+      - ./Base de datos:/scripts:ro
+    entrypoint: ["/bin/bash", "/scripts/init-db.sh"]
+    restart: "no"
+    networks:
+      - gestionsalud-net
+
+  # -------------------------------------------------------------
+  # 3. Backend REST API (NestJS 11)
+  # -------------------------------------------------------------
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: gestionsalud-backend
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      PORT: 3000
+      DB_HOST: sqlserver
+      DB_PORT: 1433
+      DB_NAME: "${DB_NAME:-gestionsalud}"
+      DB_AUTH: sql
+      DB_USER: "${DB_USER:-sa}"
+      DB_PASSWORD: "${DB_PASSWORD:-GestionSalud_2026!}"
+      DB_ENCRYPT: "${DB_ENCRYPT:-false}"
+      DB_TRUST_SERVER_CERTIFICATE: "${DB_TRUST_SERVER_CERTIFICATE:-true}"
+      DB_CONNECTION_TIMEOUT_MS: "${DB_CONNECTION_TIMEOUT_MS:-30000}"
+      DB_REQUEST_TIMEOUT_MS: "${DB_REQUEST_TIMEOUT_MS:-30000}"
+      DB_RETRY_ATTEMPTS: "${DB_RETRY_ATTEMPTS:-5}"
+      DB_RETRY_DELAY_MS: "${DB_RETRY_DELAY_MS:-3000}"
+      REQUEST_BODY_LIMIT: "${REQUEST_BODY_LIMIT:-10mb}"
+      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost,http://localhost:80,http://localhost:4200,http://localhost:8081,http://localhost:3000}"
+      JWT_SECRET: "${JWT_SECRET:-super_secret_jwt_key_for_gestionsalud_2026_docker_at_least_32_chars}"
+      JWT_EXPIRES_IN: "${JWT_EXPIRES_IN:-24h}"
+      ALLOW_PUBLIC_USER_REGISTRATION: "${ALLOW_PUBLIC_USER_REGISTRATION:-true}"
+      ALTCHA_HMAC_SECRET: "${ALTCHA_HMAC_SECRET:-super_secret_altcha_hmac_key_for_gestionsalud_2026}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      OPENAI_VISION_MODEL: "${OPENAI_VISION_MODEL:-gpt-4.1-mini}"
+      NANO_UNLOCK_TIME_ZONE: "${NANO_UNLOCK_TIME_ZONE:-America/Managua}"
+      PUSH_NOTIFICATIONS_ENABLED: "${PUSH_NOTIFICATIONS_ENABLED:-false}"
+      MAIL_HOST: "${MAIL_HOST:-}"
+      MAIL_PORT: "${MAIL_PORT:-587}"
+      MAIL_USER: "${MAIL_USER:-}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD:-}"
+      MAIL_FROM: "${MAIL_FROM:-Gestion Salud <no-reply@gestionsalud.local>}"
+      SHARE_LINK_BASE: "${SHARE_LINK_BASE:-http://localhost/api/v1/permiso-acceso/compartido}"
+      SHARE_LINK_SECRET: "${SHARE_LINK_SECRET:-super_secret_share_link_key_2026}"
+    expose:
+      - "3000"
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    restart: unless-stopped
+    networks:
+      - gestionsalud-net
+
+  # -------------------------------------------------------------
+  # 4. Landing Page (Angular 16)
+  # -------------------------------------------------------------
+  landing:
+    build:
+      context: "./Landing page/landingpage"
+      dockerfile: Dockerfile
+    container_name: gestionsalud-landing
+    expose:
+      - "4200"
+    ports:
+      - "${LANDING_PORT:-4200}:4200"
+    restart: unless-stopped
+    networks:
+      - gestionsalud-net
+
+  # -------------------------------------------------------------
+  # 5. Aplicación Móvil / Web (Expo Web)
+  # -------------------------------------------------------------
+  app-web:
+    build:
+      context: "./App movil/GestionSaludExpo"
+      dockerfile: Dockerfile
+      args:
+        EXPO_PUBLIC_API_URL: "${EXPO_PUBLIC_API_URL:-http://localhost/api}"
+    container_name: gestionsalud-app-web
+    depends_on:
+      - backend
+    expose:
+      - "8081"
+    ports:
+      - "${APP_WEB_PORT:-8081}:8081"
+    restart: unless-stopped
+    networks:
+      - gestionsalud-net
+
+networks:
+  gestionsalud-net:
+    name: gestionsalud-net
+    driver: bridge
+
+volumes:
+  sqlserver_data:
+    name: gestionsalud-sqlserver-data

@@ -77,7 +77,20 @@ Proyecto-Hackaton2026/
 
 ## Inicio rápido
 
-### 1. Backend
+### Con Docker (Recomendado para levantar todo el proyecto)
+
+Puedes levantar SQL Server, el Backend, la Landing Page y la App Web con un solo comando:
+
+```powershell
+Copy-Item .env.docker.example .env
+docker compose up -d --build
+```
+
+Consulta la guía detallada en [DOCKER.md](DOCKER.md).
+
+### Sin Docker (Ejecución local individual)
+
+#### 1. Backend
 
 ```powershell
 cd Backend
