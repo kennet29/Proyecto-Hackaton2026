@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { appColors, colorAlpha } from '../theme/colors';
@@ -96,8 +96,25 @@ export const WebTimeInput = ({
       </Pressable>
 
       {isOpen ? (
-        <View style={styles.panel} accessibilityRole="menu">
-          <View style={styles.panelHeader}>
+        <Modal
+          transparent
+          visible
+          animationType="fade"
+          onRequestClose={() => setIsOpen(false)}
+        >
+          <View style={styles.modalBackdrop}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => setIsOpen(false)}
+              accessibilityLabel="Cerrar selector de hora"
+            />
+            <ScrollView
+              contentContainerStyle={styles.modalScrollContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.panel} accessibilityRole="menu">
+                <View style={styles.panelHeader}>
             <View>
               <AppText style={styles.panelEyebrow}>HORA SELECCIONADA</AppText>
               <AppText style={styles.panelTime}>{formatLabel(value)}</AppText>
@@ -110,10 +127,10 @@ export const WebTimeInput = ({
             >
               <Ionicons name="close" size={20} color={colors.textMuted} />
             </Pressable>
-          </View>
+                </View>
 
-          <AppText style={styles.sectionLabel}>Hora</AppText>
-          <View style={styles.optionsGrid}>
+                <AppText style={styles.sectionLabel}>Hora</AppText>
+                <View style={styles.optionsGrid}>
             {HOURS.map((hour) => {
               const selected = displayHour === hour;
               return (
@@ -134,10 +151,10 @@ export const WebTimeInput = ({
                 </Pressable>
               );
             })}
-          </View>
+                </View>
 
-          <AppText style={styles.sectionLabel}>Minutos</AppText>
-          <View style={styles.optionsGrid}>
+                <AppText style={styles.sectionLabel}>Minutos</AppText>
+                <View style={styles.optionsGrid}>
             {minuteOptions.map((minute) => {
               const selected = parsed.minute === minute;
               return (
@@ -158,9 +175,9 @@ export const WebTimeInput = ({
                 </Pressable>
               );
             })}
-          </View>
+                </View>
 
-          <View style={styles.panelFooter}>
+                <View style={styles.panelFooter}>
             <View style={styles.periodGroup}>
               {(['AM', 'PM'] as Period[]).map((item) => {
                 const selected = period === item;
@@ -191,8 +208,11 @@ export const WebTimeInput = ({
               <Ionicons name="checkmark" size={18} color={colors.onAccent} />
               <AppText style={styles.doneText}>Listo</AppText>
             </Pressable>
+                </View>
+              </View>
+            </ScrollView>
           </View>
-        </View>
+        </Modal>
       ) : null}
 
       {includeQuickTimes ? (
@@ -236,9 +256,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     gap: 8,
     position: 'relative',
   },
-  containerOpen: {
-    zIndex: 1000,
-  },
+  containerOpen: {},
   trigger: {
     minHeight: 52,
     paddingHorizontal: 14,
@@ -266,9 +284,6 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     fontWeight: '800',
   },
   panel: {
-    position: 'absolute',
-    top: 60,
-    right: 0,
     width: 420,
     maxWidth: '100%',
     padding: 16,
@@ -282,6 +297,20 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     shadowRadius: 28,
     elevation: 24,
     gap: 10,
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.58)',
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 16,
   },
   panelHeader: {
     flexDirection: 'row',

@@ -19,12 +19,12 @@ import { AppText, AppTextInput } from '../components/AppText';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
+import { readUriAsDataUrl } from '../utils/fileBase64';
 import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type TipoDocumento = {
@@ -327,9 +327,7 @@ export function DocumentoFormScreen() {
   };
 
   const readNativeFileAsDataUrl = async (uri: string, mimeType: string) => {
-    const file = new FileSystem.File(uri);
-    const base64 = await file.base64();
-    return `data:${mimeType};base64,${base64}`;
+    return readUriAsDataUrl(uri, mimeType);
   };
 
   const handleTakePhoto = async () => {

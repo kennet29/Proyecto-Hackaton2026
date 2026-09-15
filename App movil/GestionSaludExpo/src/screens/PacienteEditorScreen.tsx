@@ -3,7 +3,7 @@
  * @description TypeScript module implementation.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -94,6 +94,8 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
   const { token, user } = useAuth();
   const [loading, setLoading] = useState(Boolean(isEditing));
   const [submitting, setSubmitting] = useState(false);
+  // Evita que dos toques muy seguidos envien dos solicitudes antes de que React actualice el boton.
+  const submitInFlight = useRef(false);
   const [showIOSDatePicker, setShowIOSDatePicker] = useState(false);
   const [relationId, setRelationId] = useState<number | null>(null);
   const [form, setForm] = useState({
@@ -182,11 +184,14 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
   };
 
   const handleSubmit = async () => {
+    if (submitInFlight.current) return;
+
     if (!form.nombres.trim() || !form.apellidos.trim() || !form.sexo) {
       Alert.alert('Faltan Datos', 'Nombres, apellidos y genero son obligatorios');
       return;
     }
 
+    submitInFlight.current = true;
     setSubmitting(true);
     try {
       const response = await fetch(
@@ -250,13 +255,14 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         isEditing ? 'Paciente actualizado' : 'Paciente registrado',
         isEditing
           ? 'Los datos del paciente se actualizaron correctamente'
-          : 'El paciente se guardo y vinculo correctamente',
+          : 'Paciente creado y vinculado correctamente. No es necesario volver a presionar Guardar.',
         [{ text: 'OK', onPress: () => navigation.goBack() }],
       );
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo guardar');
     } finally {
       setSubmitting(false);
+      submitInFlight.current = false;
     }
   };
 
@@ -380,7 +386,12 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         />
       </View>
 
-      <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmit} disabled={submitting}>
+      <TouchableOpacity
+        style={[styles.primaryBtn, submitting && styles.primaryBtnDisabled]}
+        onPress={handleSubmit}
+        disabled={submitting}
+        accessibilityState={{ disabled: submitting }}
+      >
         <AppText style={styles.btnText}>
           {submitting ? 'Guardando...' : isEditing ? 'Actualizar Paciente' : 'Guardar Paciente'}
         </AppText>
@@ -473,6 +484,9 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 14,
     marginTop: 8,
+  },
+  primaryBtnDisabled: {
+    opacity: 0.65,
   },
   btnText: {
     color: colors.text,

@@ -19,7 +19,6 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
-import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -29,6 +28,7 @@ import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
 import { saveNanoHistoryEntry } from '../utils/nanoHistory';
+import { readUriAsBase64 } from '../utils/fileBase64';
 import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NanoConsejero'>;
@@ -625,8 +625,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
     setMicronutrients(null);
 
     try {
-      const file = new FileSystem.File(photo.uri);
-      const imageBase64 = await file.base64();
+      const imageBase64 = await readUriAsBase64(photo.uri);
       const trimmedMealNote = mealNote.trim();
 
       const response = await fetch(`${API_URL}/nano/analyze-meal`, {

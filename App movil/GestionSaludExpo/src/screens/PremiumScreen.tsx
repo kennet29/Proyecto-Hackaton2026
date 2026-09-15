@@ -7,13 +7,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Image, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppText } from '../components/AppText';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch, buildJsonHeaders, parseJsonResponse } from '../utils/apiClient';
+import { readUriAsDataUrl } from '../utils/fileBase64';
 import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Premium'>;
@@ -103,7 +103,7 @@ export function PremiumScreen({ navigation }: Props) {
     const webFile = asset.file;
     const base64 = Platform.OS === 'web' && webFile
       ? await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('No se pudo leer el archivo.')); reader.onerror = () => reject(new Error('No se pudo leer el archivo.')); reader.readAsDataURL(webFile); })
-      : `data:${mimeType};base64,${await new FileSystem.File(asset.uri).base64()}`;
+      : await readUriAsDataUrl(asset.uri, mimeType);
     setReceipt({ base64, name: asset.name || `recibo-${bank.name}.${mimeType === 'application/pdf' ? 'pdf' : 'jpg'}`, mimeType });
   };
 

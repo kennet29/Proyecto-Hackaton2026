@@ -16,7 +16,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -25,6 +24,7 @@ import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
 import { apiFetch, buildJsonHeaders, parseJsonResponse } from '../utils/apiClient';
+import { readUriAsDataUrl } from '../utils/fileBase64';
 import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MedicoRegistro'>;
@@ -200,8 +200,7 @@ export function MedicoRegistroScreen({ navigation }: Props) {
           reader.readAsDataURL(webFile);
         });
       } else {
-        const file = new FileSystem.File(asset.uri);
-        base64 = `data:${mimeType};base64,${await file.base64()}`;
+        base64 = await readUriAsDataUrl(asset.uri, mimeType);
       }
 
       setDocumentoCedula({

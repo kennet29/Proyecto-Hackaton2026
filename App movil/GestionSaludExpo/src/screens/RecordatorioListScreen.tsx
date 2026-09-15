@@ -19,7 +19,10 @@ import { AppText, AppTextInput } from '../components/AppText';
 import { Picker } from '@react-native-picker/picker';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
+import type { RootStackParamList } from '../navigation/types';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { appColors, colorAlpha } from '../theme/colors';
@@ -208,6 +211,30 @@ const SOURCE_DEFINITIONS: SourceDefinition[] = [
   },
 ];
 
+const CREATE_ROUTE_BY_SOURCE: Record<SourceTypeKey, keyof RootStackParamList> = {
+  citamedica: 'CitaForm',
+  vacuna: 'VacunaForm',
+  operacion: 'OperacionCreate',
+  medicacion: 'MedicacionCreate',
+  consultamedica: 'ConsultaCreate',
+  registrodental: 'RegistroDentalCreate',
+  lesion: 'LesionCreate',
+  examenclinico: 'ExamenClinico',
+  desparasitacion: 'DesparasitacionCreate',
+};
+
+const CREATE_LABEL_BY_SOURCE: Record<SourceTypeKey, string> = {
+  citamedica: 'Cita',
+  vacuna: 'Vacuna',
+  operacion: 'Operación',
+  medicacion: 'Medicamento',
+  consultamedica: 'Consulta',
+  registrodental: 'Registro dental',
+  lesion: 'Lesión',
+  examenclinico: 'Examen',
+  desparasitacion: 'Desparasitación',
+};
+
 const normalizeText = (value: unknown) => {
   if (value === null || value === undefined) return null;
   const text = String(value).trim();
@@ -369,6 +396,7 @@ const mapNotifications = (payload: any[]): ReminderRecord[] => {
 };
 
 export function RecordatorioListScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const colors = useAppColors();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
@@ -663,6 +691,10 @@ export function RecordatorioListScreen() {
     } finally {
       setUpdatingReminderKey(null);
     }
+  };
+
+  const handleCreateSource = () => {
+    navigation.navigate(CREATE_ROUTE_BY_SOURCE[sourceType] as never);
   };
 
   const handleDeleteReminder = (item: ReminderRecord) => {
@@ -1119,6 +1151,27 @@ export function RecordatorioListScreen() {
           </Picker>
         </View>
 
+        {!loading && availableSources.length === 0 ? (
+          <View style={styles.noSourceNotice}>
+            <View style={styles.noSourceCopy}>
+              <Ionicons name="information-circle-outline" size={18} color={colors.info} />
+              <AppText style={styles.noSourceText}>
+                No hay registros de {SOURCE_DEFINITIONS.find((item) => item.key === sourceType)?.label.toLowerCase()} para esta persona.
+              </AppText>
+            </View>
+            <TouchableOpacity
+              style={styles.createSourceButton}
+              onPress={handleCreateSource}
+              accessibilityLabel={`Crear ${SOURCE_DEFINITIONS.find((item) => item.key === sourceType)?.label}`}
+            >
+              <Ionicons name="add-circle-outline" size={17} color={colors.onAccent} />
+              <AppText style={styles.createSourceButtonText}>
+                Crear {CREATE_LABEL_BY_SOURCE[sourceType]}
+              </AppText>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
         {selectedSource ? (
           <View style={styles.selectedSourceCard}>
             <View style={[styles.personIcon, { backgroundColor: colorAlpha(selectedSource.accent, '18') }]}>
@@ -1328,6 +1381,41 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   picker: {
     color: colors.text,
+  },
+  noSourceNotice: {
+    marginTop: 10,
+    padding: 12,
+    gap: 10,
+    borderRadius: 14,
+    backgroundColor: colorAlpha(colors.info, '10'),
+    borderWidth: 1,
+    borderColor: colorAlpha(colors.info, '45'),
+  },
+  noSourceCopy: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  noSourceText: {
+    flex: 1,
+    color: colors.textSoft,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  createSourceButton: {
+    minHeight: 40,
+    borderRadius: 11,
+    paddingHorizontal: 13,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: colors.info,
+  },
+  createSourceButtonText: {
+    color: colors.onAccent,
+    fontSize: 13,
+    fontWeight: '900',
   },
   typeGrid: {
     flexDirection: 'row',

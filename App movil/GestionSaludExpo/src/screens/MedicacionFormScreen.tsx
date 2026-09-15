@@ -21,7 +21,6 @@ import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/d
 import { Picker } from '@react-native-picker/picker';
 import { Calendar, DateData } from 'react-native-calendars';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -36,6 +35,7 @@ import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate } from '../utils/localDate';
 import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 import { WebTimeInput } from '../components/WebTimeInput';
+import { readUriAsBase64 } from '../utils/fileBase64';
 import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type PickerField =
@@ -488,8 +488,7 @@ export function MedicacionFormScreen({
   }, [form.fechaFin, form.horaMedicacion, isPermanentMedication]);
 
   const readFileAsBase64 = useCallback(async (uri: string) => {
-    const file = new FileSystem.File(uri);
-    return file.base64();
+    return readUriAsBase64(uri);
   }, []);
 
   const setNewAttachment = useCallback((nextAttachment: MedicationAttachment) => {

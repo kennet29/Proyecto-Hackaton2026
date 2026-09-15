@@ -19,7 +19,6 @@ import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/d
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -30,6 +29,7 @@ import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients
 import { appColors, colorAlpha } from '../theme/colors';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate } from '../utils/localDate';
+import { readUriAsDataUrl } from '../utils/fileBase64';
 import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { AppColors, useAppColors } from '../theme/useAppColors';
@@ -452,9 +452,7 @@ export function CondicionCronicaFormScreen({
   };
 
   const readNativeFileAsDataUrl = async (uri: string, mimeType: string) => {
-    const file = new FileSystem.File(uri);
-    const base64 = await file.base64();
-    return `data:${mimeType};base64,${base64}`;
+    return readUriAsDataUrl(uri, mimeType);
   };
 
   const readWebFile = (file: File, kind: ConditionAttachment['kind']) =>
