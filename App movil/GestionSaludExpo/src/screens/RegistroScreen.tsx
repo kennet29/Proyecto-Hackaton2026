@@ -18,6 +18,7 @@ import { AppText, AppTextInput } from '../components/AppText';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { API_URL } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 import * as LocalAuthentication from 'expo-local-authentication';
 import {
   generateFingerprintTemplate,
@@ -27,6 +28,16 @@ import NanoDoctor from '../svg/Nano Doctor.svg';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Registro'>;
 type FeedbackState = { type: 'success' | 'error'; message: string } | null;
+type LoginApiResponse = {
+  accessToken: string;
+  user: {
+    id: number;
+    username: string;
+    role?: string;
+    pacienteId?: number | null;
+    pacienteIds?: number[];
+  };
+};
 const SECURITY_QUESTIONS = [
   { id: 'pet', label: '¿Cómo se llamaba tu primera mascota?' },
   { id: 'school', label: '¿Cuál fue el nombre de tu primera escuela?' },
@@ -68,6 +79,7 @@ const formatErrorMessage = (error: unknown): string => {
 };
 
 export function RegistroScreen({ navigation }: Props) {
+  const { login } = useAuth();
   const { width } = useWindowDimensions();
   const isWideLayout = width >= 760;
   const isWebWide = Platform.OS === 'web' && width >= 980;
@@ -208,6 +220,15 @@ export function RegistroScreen({ navigation }: Props) {
       if (!response.ok) {
         throw new Error(body?.message ?? 'No se pudo crear la cuenta');
       }
+      const loginResponse = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const loginBody = await loginResponse.json().catch(() => null);
+      if (!loginResponse.ok || !loginBody?.accessToken || !loginBody?.user) {
+        throw new Error(loginBody?.message ?? 'La cuenta fue creada, pero no se pudo iniciar sesion.');
+      }
       let successMessage =
         body?.message ?? 'Cuenta creada correctamente. Ya puedes iniciar sesión.';
       if (fingerprintTemplate) {
@@ -219,6 +240,8 @@ export function RegistroScreen({ navigation }: Props) {
             'Cuenta creada, pero no pudimos guardar la huella en este dispositivo. Podrás registrarla nuevamente desde este mismo teléfono.';
         }
       }
+      const session = loginBody as LoginApiResponse;
+      login({ token: session.accessToken, user: session.user });
       setFeedback({ type: 'success', message: successMessage });
       Alert.alert('Éxito', successMessage, [
         { text: 'Ir al login', onPress: () => navigation.replace('Login') },

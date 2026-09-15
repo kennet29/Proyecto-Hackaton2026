@@ -62,7 +62,7 @@
       "expo-asset"
     ],
     "extra": {
-      "apiUrl": "https://proyecto-hackaton2026.onrender.com",
+      "apiUrl": "https://nicaplus.takenjo.lat/api/v1",
       "eas": {
         "projectId": "c78f9d19-d60c-4719-bb2d-5af0ab631256"
       }

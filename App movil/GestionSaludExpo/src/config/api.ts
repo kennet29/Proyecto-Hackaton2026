@@ -7,7 +7,7 @@ import Constants from 'expo-constants';
 import { NativeModules, Platform } from 'react-native';
 
 const API_SUFFIX = '/api/v1';
-const DEFAULT_API_BASE = 'https://proyecto-hackaton2026.onrender.com';
+const DEFAULT_API_BASE = 'https://nicaplus.takenjo.lat/api/v1';
 
 const normalizeBaseUrl = (value: string): string => value.replace(/\/+$/, '');
 const ensureApiUrl = (value: string): string => {
