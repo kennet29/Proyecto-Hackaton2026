@@ -4,9 +4,9 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { parseScheduledDateTime } from './localDate';
+import { isExpoGoAndroid, loadNotifications, type NotificationsModule } from './notificationsRuntime';
 
 const STORAGE_KEY = '@gs_local_reminder_schedules_v1';
 const CHANNEL_ID = 'recordatorios-locales';
@@ -49,14 +49,14 @@ const readSchedules = async (): Promise<StoredSchedule[]> => {
 const writeSchedules = (items: StoredSchedule[]) =>
   AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
 
-const ensurePermissions = async () => {
+const ensurePermissions = async (Notifications: NotificationsModule) => {
   const current = await Notifications.getPermissionsAsync();
   if (current.status === 'granted') return true;
   const requested = await Notifications.requestPermissionsAsync();
   return requested.status === 'granted';
 };
 
-const ensureAndroidChannel = async () => {
+const ensureAndroidChannel = async (Notifications: NotificationsModule) => {
   if (Platform.OS !== 'android') return;
   await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
     name: 'Recordatorios sin conexión',
@@ -81,6 +81,7 @@ const extractResponseId = (kind: string, responseData: unknown) => {
 const cancelLogicalSchedule = async (
   ownerUserId: number,
   logicalKey: string,
+  Notifications: NotificationsModule,
 ): Promise<boolean> => {
   const schedules = await readSchedules();
   const matches = schedules.filter(
@@ -106,7 +107,7 @@ export async function syncLocalReminder(
 ): Promise<LocalReminderStatus> {
   const match = input.path.match(/^\/(notificacion|recordatoriocita)(?:\/(\d+))?$/);
   if (!match) return 'not-applicable';
-  if (Platform.OS === 'web') return 'unsupported';
+  if (Platform.OS === 'web' || isExpoGoAndroid()) return 'unsupported';
 
   const kind = match[1];
   const pathId = match[2] ? Number(match[2]) : null;
@@ -124,14 +125,15 @@ export async function syncLocalReminder(
     input.body?.campoprueba05 === 'realizada';
 
   try {
+    const Notifications = await loadNotifications();
     // Cuando una creación en cola obtiene su ID del servidor, sustituye la
     // clave temporal sin dejar dos avisos locales programados.
     if (responseId && logicalKey !== operationKey) {
-      await cancelLogicalSchedule(input.ownerUserId, operationKey);
+      await cancelLogicalSchedule(input.ownerUserId, operationKey, Notifications);
     }
 
     if (isCompleted || !scheduledValue) {
-      const cancelled = await cancelLogicalSchedule(input.ownerUserId, logicalKey);
+      const cancelled = await cancelLogicalSchedule(input.ownerUserId, logicalKey, Notifications);
       return cancelled ? 'cancelled' : 'not-applicable';
     }
 
@@ -140,10 +142,10 @@ export async function syncLocalReminder(
       return 'invalid-date';
     }
     if (!message) return 'not-applicable';
-    if (!(await ensurePermissions())) return 'permission-denied';
+    if (!(await ensurePermissions(Notifications))) return 'permission-denied';
 
-    await ensureAndroidChannel();
-    await cancelLogicalSchedule(input.ownerUserId, logicalKey);
+    await ensureAndroidChannel(Notifications);
+    await cancelLogicalSchedule(input.ownerUserId, logicalKey, Notifications);
 
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {

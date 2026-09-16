@@ -299,7 +299,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     gap: 10,
   },
   modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,

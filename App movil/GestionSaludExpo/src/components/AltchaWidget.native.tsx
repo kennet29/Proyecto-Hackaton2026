@@ -47,6 +47,6 @@ const styles = StyleSheet.create({
   title: { color: appColors.text, fontSize: 14, fontWeight: '800' }, subtitle: { color: appColors.textMuted, fontSize: 11, marginTop: 2 },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 999, backgroundColor: colorAlpha(appColors.success, '16') }, badgeText: { color: appColors.success, fontSize: 11, fontWeight: '800' },
   area: { height: 84, borderRadius: 10, overflow: 'hidden', position: 'relative' }, webViewContainer: { backgroundColor: 'transparent' }, webView: { flex: 1, backgroundColor: 'transparent' },
-  loading: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, backgroundColor: appColors.surface }, loadingText: { color: appColors.textMuted, fontSize: 12 }, error: { color: appColors.accent, fontSize: 12, lineHeight: 18 },
+  loading: { ...StyleSheet.absoluteFill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, backgroundColor: appColors.surface }, loadingText: { color: appColors.textMuted, fontSize: 12 }, error: { color: appColors.accent, fontSize: 12, lineHeight: 18 },
   errorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }, retryButton: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 9, backgroundColor: colorAlpha(appColors.info, '12') }, retryText: { color: appColors.info, fontSize: 12, fontWeight: '800' },
 });

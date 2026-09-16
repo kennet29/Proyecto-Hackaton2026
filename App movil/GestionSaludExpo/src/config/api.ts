@@ -21,7 +21,10 @@ const ensureApiUrl = (value: string): string => {
   return `${normalized}${API_SUFFIX}`;
 };
 
-const envBase = process.env.EXPO_PUBLIC_API_URL
+const isTemplateUrl = (value: string): boolean =>
+  value.toLowerCase().includes('cambiar_por_tu_dominio');
+
+const envBase = process.env.EXPO_PUBLIC_API_URL && !isTemplateUrl(process.env.EXPO_PUBLIC_API_URL)
   ? ensureApiUrl(process.env.EXPO_PUBLIC_API_URL)
   : null;
 
@@ -100,7 +103,8 @@ const getWebBaseUrl = (): string | null => {
 export const API_URL =
   getWebBaseUrl() ??
   envBase ??
-  (__DEV__ ? buildFallbackUrl() : configuredBase ?? ensureApiUrl(DEFAULT_API_BASE));
+  configuredBase ??
+  (__DEV__ ? buildFallbackUrl() : ensureApiUrl(DEFAULT_API_BASE));
 
 if (__DEV__) {
   console.log(`[api] base URL: ${API_URL}`);

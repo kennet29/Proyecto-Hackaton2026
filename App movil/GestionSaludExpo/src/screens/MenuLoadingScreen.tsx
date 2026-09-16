@@ -285,7 +285,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderColor: colors.border,
   },
   loaderGrid: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.42,
     backgroundColor: 'transparent',
     borderColor: 'rgba(148, 163, 184, 0.12)',

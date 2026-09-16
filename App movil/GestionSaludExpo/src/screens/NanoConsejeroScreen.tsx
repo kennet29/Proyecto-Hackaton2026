@@ -1267,12 +1267,12 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     height: SCAN_OVERLAY_HEIGHT,
   },
   scanOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'space-between',
     padding: 14,
   },
   scanFrame: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     margin: 14,
     borderRadius: 22,
     borderWidth: 1,

@@ -3,25 +3,16 @@
     "name": "GestionSaludExpo",
     "slug": "GestionSaludExpo",
     "scheme": "gestionsalud",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "notification": {
-      "icon": "./assets/icon.png",
-      "color": "#0f172a"
-    },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "package": "com.kennet29.gestionsaludexpo",
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -30,6 +21,8 @@
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
         "android.permission.SCHEDULE_EXACT_ALARM"
@@ -59,7 +52,15 @@
       "@react-native-community/datetimepicker",
       "expo-secure-store",
       "expo-font",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ]
     ],
     "extra": {
       "apiUrl": "https://nicaplus.takenjo.lat/api/v1",
