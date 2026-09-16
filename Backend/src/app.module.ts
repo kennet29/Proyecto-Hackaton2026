@@ -14,6 +14,7 @@ import { HealthModule } from "./health/health.module";
 import { NanoModule } from "./nano/nano.module";
 import { APP_INTERCEPTOR } from "@nestjs/core";
 import { IdempotencyInterceptor } from "./common/idempotency/idempotency.interceptor";
+import { ObservabilityModule } from "./observability/observability.module";
 
 /**
  * Agrupa controladores y proveedores del dominio app.
@@ -123,6 +124,7 @@ import { IdempotencyInterceptor } from "./common/idempotency/idempotency.interce
     NanoModule,
     VersionModule,
     HealthModule,
+    ObservabilityModule,
   ],
   providers: [
     {

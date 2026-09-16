@@ -158,7 +158,9 @@ export function VacunaFormScreen() {
 
   const { width } = useWindowDimensions();
   const isWideLayout = width >= 900;
-  const pickerItemColor = Platform.OS === 'android' ? colors.background : colors.text;
+  // Android renders the dropdown in a system surface. Using the page background
+  // as its text colour made options almost invisible in dark mode.
+  const pickerItemColor = colors.text;
   const [form, setForm] = useState({
     pacienteId: '',
     nombre: '',
@@ -1213,10 +1215,10 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: colors.background,
+    backgroundColor: colors.surfaceStrong,
   },
   picker: {
     color: colors.text,

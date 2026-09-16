@@ -85,6 +85,7 @@ import { AdminSolicitudDetalleScreen } from './src/screens/AdminSolicitudDetalle
 import { AdminClinicasScreen } from './src/screens/AdminClinicasScreen';
 import { AdminInstitucionesScreen } from './src/screens/AdminInstitucionesScreen';
 import { AdminPagosScreen } from './src/screens/AdminPagosScreen';
+import { AdminServerLogsScreen } from './src/screens/AdminServerLogsScreen';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 import { useOfflineWriteSync } from './src/hooks/useOfflineWriteSync';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
@@ -199,6 +200,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       AdminClinicas: 'admin/clinicas',
       AdminInstituciones: 'admin/instituciones',
       AdminPagos: 'admin/pagos',
+      AdminServerLogs: 'admin/logs',
       DocumentoForm: 'documentos',
       CompartirHistorial: 'compartir-historial',
       HistorialCompartido: 'medico/acceso-historial/:token?',
@@ -428,6 +430,7 @@ const PrivateNavigator = () => {
         options={{ title: 'Clínicas y servicios' }}
       />
       <Stack.Screen name="AdminPagos" component={AdminPagosScreen} options={{ title: 'Pagos Premium' }} />
+      <Stack.Screen name="AdminServerLogs" component={AdminServerLogsScreen} options={{ title: 'Registros del servidor' }} />
       <Stack.Screen
         name="DocumentoForm"
         component={DocumentoFormScreen}

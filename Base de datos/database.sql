@@ -25,3 +25,14 @@
 :r /scripts/usuario_apariencia_nano.sql
 :r /scripts/seed_admin_prueba.sql
 :r /scripts/medico_prueba.sql
+
+/*
+  Scripts con ejecucion deliberadamente manual desde init-db.sh:
+  - seed_admin_pruebas.sql: datos ficticios completos (SEED_FULL_DEMO_DATA=true).
+  - corregir_codificacion_utf8.sql: reescribe datos de texto existentes
+    (APPLY_UTF8_REPAIR=true).
+
+  Script2.sql y "Respaldo 1 de Julio.sql" son exportaciones completas de SQL
+  Server. Crean la base gestionsalud con configuracion de otro entorno y no son
+  migraciones; ejecutarlos junto a este inicializador causaria conflictos.
+*/

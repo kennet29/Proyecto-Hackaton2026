@@ -6,6 +6,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -105,6 +106,7 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
   const [patientFeedback, setPatientFeedback] = useState<FeedbackState>(null);
   const [showPersonForm, setShowPersonForm] = useState(false);
   const [submittingPerson, setSubmittingPerson] = useState(false);
+  const [deletingRelationId, setDeletingRelationId] = useState<number | null>(null);
 
   const emptyForm = useMemo(
     () => ({
@@ -284,6 +286,47 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
     }
   };
 
+  const handleRemovePerson = (person: LinkedPerson) => {
+    if (!token) {
+      setPatientFeedback({ type: 'error', message: 'Inicia sesion nuevamente para administrar personas.' });
+      return;
+    }
+
+    Alert.alert(
+      'Quitar persona de la cuenta',
+      `${person.nombreCompleto} se desvinculara de esta cuenta. Su historial clinico no sera eliminado.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Quitar',
+          style: 'destructive',
+          onPress: async () => {
+            setDeletingRelationId(person.relationId);
+            setPatientFeedback(null);
+            try {
+              const response = await fetch(`${API_URL}/usuario-paciente/${person.relationId}`, {
+                method: 'DELETE',
+                headers: authHeaders(),
+              });
+              const body = await response.json().catch(() => null);
+              if (!response.ok) {
+                throw new Error(body?.message ?? 'No se pudo quitar la persona de la cuenta.');
+              }
+              setLinkedPatients((current) => current.filter((item) => item.relationId !== person.relationId));
+              invalidateLinkedPatientsCache(authHeaders());
+              setPatientFeedback({ type: 'success', message: `${person.nombreCompleto} fue quitado de esta cuenta.` });
+              void fetchLinkedPatients();
+            } catch (error) {
+              setPatientFeedback({ type: 'error', message: formatErrorMessage(error) });
+            } finally {
+              setDeletingRelationId(null);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.heroCard}>
@@ -436,6 +479,19 @@ export function ExpedienteGestionScreen({ navigation }: Props) {
                     }
                   >
                     <Ionicons name="share-social-outline" size={18} color={colors.success} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.82}
+                    style={[styles.personActionIcon, styles.personActionDelete]}
+                    accessibilityLabel={`Quitar a ${person.nombreCompleto} de la cuenta`}
+                    disabled={deletingRelationId === person.relationId || person.relationId <= 0}
+                    onPress={() => handleRemovePerson(person)}
+                  >
+                    {deletingRelationId === person.relationId ? (
+                      <ActivityIndicator size="small" color={colors.accent} />
+                    ) : (
+                      <Ionicons name="trash-outline" size={18} color={colors.accent} />
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -923,6 +979,10 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderColor: colorAlpha(colors.success, '45'),
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  personActionDelete: {
+    backgroundColor: colorAlpha(colors.accent, '12'),
+    borderColor: colorAlpha(colors.accent, '58'),
   },
   formCard: {
     backgroundColor: colors.surfaceStrong,

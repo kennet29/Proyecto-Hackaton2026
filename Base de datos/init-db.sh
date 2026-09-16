@@ -20,6 +20,48 @@ done
 echo "Verificando existencia de la base de datos gestionsalud..."
 DB_COUNT=$($SQLCMD -S "$HOST,$PORT" -U "$USER" -P "$PASS" -C -h -1 -W -Q "SET NOCOUNT ON; SELECT count(*) FROM sys.databases WHERE name = 'gestionsalud'")
 
+# Orden unico de las migraciones que complementan el esquema base. Mantener esta
+# lista alineada con database.sql: asi una base ya creada recibe exactamente las
+# mismas actualizaciones que una base nueva.
+MIGRATION_SCRIPTS=(
+  "/scripts/renombrar_campos_seguridad_usuario.sql"
+  "/scripts/usuario_ciudad_pais.sql"
+  "/scripts/crear_passwordresettoken.sql"
+  "/scripts/create-push-devices-table.sql"
+  "/scripts/configuracion_pagos.sql"
+  "/scripts/directorio_salud.sql"
+  "/scripts/embarazo_datos_obstetricos.sql"
+  "/scripts/examenclinico.sql"
+  "/scripts/habitos_catalogo.sql"
+  "/scripts/nutricion_comida.sql"
+  "/scripts/suscripcion_premium.sql"
+  "/scripts/pagos_premium.sql"
+  "/scripts/periodo.sql"
+  "/scripts/recordatorios_origen_generico.sql"
+  "/scripts/saludmental.sql"
+  "/scripts/agregar_documento_cedula_medicoregistro.sql"
+  "/scripts/seguimiento_fisico.sql"
+  "/scripts/seguimiento_postevento.sql"
+  "/scripts/usuario_apariencia_nano.sql"
+  "/scripts/seed_admin_prueba.sql"
+  "/scripts/medico_prueba.sql"
+)
+
+apply_optional_scripts() {
+  # Carga de datos ficticios extensa. Requiere que exista admin.hckt.2026.
+  if [ "${SEED_FULL_DEMO_DATA:-false}" = "true" ]; then
+    echo "Cargando datos ficticios completos..."
+    $SQLCMD -S "$HOST,$PORT" -U "$USER" -P "$PASS" -d gestionsalud -C -b -i /scripts/seed_admin_pruebas.sql
+  fi
+
+  # Esta migracion reescribe datos de texto existentes; nunca debe aplicarse
+  # sin una decision explicita del administrador.
+  if [ "${APPLY_UTF8_REPAIR:-false}" = "true" ]; then
+    echo "Aplicando correccion de codificacion UTF-8..."
+    $SQLCMD -S "$HOST,$PORT" -U "$USER" -P "$PASS" -d gestionsalud -C -b -i /scripts/corregir_codificacion_utf8.sql
+  fi
+}
+
 if [ "$DB_COUNT" -eq "0" ]; then
   echo "Creando base de datos y aplicando database.sql..."
   $SQLCMD -S "$HOST,$PORT" -U "$USER" -P "$PASS" -C -b -i /scripts/database.sql
@@ -41,38 +83,17 @@ if [ "$DB_COUNT" -eq "0" ]; then
 else
   echo "La base de datos gestionsalud ya existe. Omitiendo creacion inicial."
 
-  # Aplica todas las migraciones y tablas modulares pendientes de forma segura e idempotente
-  SCRIPTS=(
-    "/scripts/GestionSalud.sql"
-    "/scripts/renombrar_campos_seguridad_usuario.sql"
-    "/scripts/usuario_ciudad_pais.sql"
-    "/scripts/usuario_apariencia_nano.sql"
-    "/scripts/crear_passwordresettoken.sql"
-    "/scripts/create-push-devices-table.sql"
-    "/scripts/configuracion_pagos.sql"
-    "/scripts/saludmental.sql"
-    "/scripts/agregar_documento_cedula_medicoregistro.sql"
-    "/scripts/directorio_salud.sql"
-    "/scripts/embarazo_datos_obstetricos.sql"
-    "/scripts/examenclinico.sql"
-    "/scripts/habitos_catalogo.sql"
-    "/scripts/nutricion_comida.sql"
-    "/scripts/suscripcion_premium.sql"
-    "/scripts/pagos_premium.sql"
-    "/scripts/periodo.sql"
-    "/scripts/recordatorios_origen_generico.sql"
-    "/scripts/seguimiento_fisico.sql"
-    "/scripts/seguimiento_postevento.sql"
-    "/scripts/seed_admin_prueba.sql"
-    "/scripts/medico_prueba.sql"
-  )
-
-  for SCRIPT in "${SCRIPTS[@]}"; do
+  # GestionSalud.sql crea las tablas base y solo se ejecuta con una base nueva.
+  # Las migraciones restantes deben ser idempotentes y fallar visiblemente si
+  # alguna requiere atencion, en vez de continuar con un esquema incompleto.
+  for SCRIPT in "${MIGRATION_SCRIPTS[@]}"; do
     if [ -f "$SCRIPT" ]; then
       echo "Aplicando verificacion/migracion: $(basename "$SCRIPT")..."
-      $SQLCMD -S "$HOST,$PORT" -U "$USER" -P "$PASS" -d gestionsalud -C -b -i "$SCRIPT" || true
+      $SQLCMD -S "$HOST,$PORT" -U "$USER" -P "$PASS" -d gestionsalud -C -b -i "$SCRIPT"
     fi
   done
 fi
+
+apply_optional_scripts
 
 echo "Inicializacion de base de datos finalizada correctamente."

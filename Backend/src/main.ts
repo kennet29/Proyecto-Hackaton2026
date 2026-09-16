@@ -11,6 +11,7 @@ import { AppModule } from "./app.module";
 import { ApiExceptionFilter } from "./common/filters/api-exception.filter";
 import { DataSource } from "typeorm";
 import { VersionService } from "./version/version.service";
+import { recordServerLog } from "./observability/server-log.store";
 
 const zodJsonSchemaProcessors = require(
   path.join(
@@ -45,7 +46,11 @@ async function bootstrap() {
   app.use(
     morgan(requestLogFormat, {
       stream: {
-        write: (message) => console.log(`[http] ${message.trim()}`),
+        write: (message) => {
+          const normalized = message.trim();
+          recordServerLog("info", `[http] ${normalized}`);
+          console.log(`[http] ${normalized}`);
+        },
       },
     }),
   );
@@ -115,6 +120,10 @@ async function bootstrap() {
   }
   console.log(
     `api usuarios ${backendVersion.version} escuchando en puerto ${port} con prefijo /api - ${dbStatus}`,
+  );
+  recordServerLog(
+    "info",
+    `API iniciada: version=${backendVersion.version} puerto=${port}; ${dbStatus}`,
   );
   console.log(`documentacion Swagger disponible en /api/docs`);
 }

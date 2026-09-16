@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { Request, Response } from "express";
 import { isDatabaseUnavailable } from "../database/database-error.util";
+import { recordServerLog } from "../../observability/server-log.store";
 
 type PayloadTooLargeLike = {
   type?: string;
@@ -32,6 +33,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     if (isDatabaseUnavailable(exception)) {
+      recordServerLog("error", `Base de datos no disponible: ${request.method} ${request.url}`);
       const dbException = new ServiceUnavailableException(
         "la base de datos no esta disponible temporalmente, intenta nuevamente en unos minutos",
       );
@@ -53,6 +55,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
       payloadTooLargeException?.status === HttpStatus.PAYLOAD_TOO_LARGE ||
       payloadTooLargeException?.statusCode === HttpStatus.PAYLOAD_TOO_LARGE
     ) {
+      recordServerLog("warn", `Solicitud demasiado grande: ${request.method} ${request.url}`);
       response.status(HttpStatus.PAYLOAD_TOO_LARGE).json({
         statusCode: HttpStatus.PAYLOAD_TOO_LARGE,
         error: "PayloadTooLarge",
@@ -71,6 +74,9 @@ export class ApiExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
+      if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+        recordServerLog("error", `Error HTTP ${status}: ${request.method} ${request.url} - ${exception.message}`);
+      }
       const responseBody = exception.getResponse();
       const message =
         typeof responseBody === "string"
@@ -90,6 +96,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
       return;
     }
 
+    recordServerLog("error", `Error no controlado: ${request.method} ${request.url} - ${exception instanceof Error ? exception.message : String(exception)}`);
     console.error("error no controlado", exception);
 
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({

@@ -98,6 +98,7 @@ export type RootStackParamList = {
   AdminClinicas: undefined;
   AdminInstituciones: undefined;
   AdminPagos: undefined;
+  AdminServerLogs: undefined;
   Educacion: undefined;
   EducacionNivel: { nivelId: NivelEducativoId };
   EducacionTema: { nivelId: NivelEducativoId; temaId: string };

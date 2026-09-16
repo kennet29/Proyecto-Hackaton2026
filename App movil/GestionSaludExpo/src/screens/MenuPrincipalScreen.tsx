@@ -600,6 +600,13 @@ export function MenuPrincipalScreen({ navigation }: Props) {
             icon: 'business-outline' as const,
             accent: colors.success,
             navigateTo: 'AdminInstituciones' as const,
+          }, {
+            key: 'admin-logs',
+            label: 'Registros del servidor',
+            description: 'Consulta solicitudes y errores recientes de la API.',
+            icon: 'terminal-outline' as const,
+            accent: '#A855F7',
+            navigateTo: 'AdminServerLogs' as const,
           }]
         : []),
       ...permittedOptions,
