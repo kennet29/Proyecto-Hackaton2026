@@ -4,7 +4,7 @@ FROM node:20-slim AS builder
 WORKDIR /app
 
 # Accept build-time API URL argument
-ARG EXPO_PUBLIC_API_URL=http://localhost:3000
+ARG EXPO_PUBLIC_API_URL=https://nicaplus.takenjo.lat/api/v1
 ENV EXPO_PUBLIC_API_URL=${EXPO_PUBLIC_API_URL}
 
 COPY package*.json ./

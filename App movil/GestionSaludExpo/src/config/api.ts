@@ -93,15 +93,7 @@ const buildFallbackUrl = (): string => {
   return `http://${host}:3000${API_SUFFIX}`;
 };
 
-const getWebBaseUrl = (): string | null => {
-  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.origin) {
-    return ensureApiUrl(window.location.origin);
-  }
-  return null;
-};
-
 export const API_URL =
-  getWebBaseUrl() ??
   envBase ??
   configuredBase ??
   (__DEV__ ? buildFallbackUrl() : ensureApiUrl(DEFAULT_API_BASE));
