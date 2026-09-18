@@ -20,10 +20,23 @@ done
 echo "Verificando existencia de la base de datos gestionsalud..."
 DB_COUNT=$($SQLCMD -S "$HOST,$PORT" -U "$USER" -P "$PASS" -C -h -1 -W -Q "SET NOCOUNT ON; SELECT count(*) FROM sys.databases WHERE name = 'gestionsalud'")
 
+if [ "$DB_COUNT" -ne "0" ]; then
+  echo "La base de datos gestionsalud ya existe. Esperando que termine su recuperacion y pase a ONLINE..."
+  for i in {1..30}; do
+    if $SQLCMD -S "$HOST,$PORT" -U "$USER" -P "$PASS" -d gestionsalud -C -Q "SELECT 1" &> /dev/null; then
+      echo "La base de datos gestionsalud esta ONLINE y lista para recibir consultas."
+      break
+    fi
+    echo "Esperando que gestionsalud este disponible ($i/30)..."
+    sleep 2
+  done
+fi
+
 # Orden unico de las migraciones que complementan el esquema base. Mantener esta
 # lista alineada con database.sql: asi una base ya creada recibe exactamente las
 # mismas actualizaciones que una base nueva.
 MIGRATION_SCRIPTS=(
+  "/scripts/GestionSalud.sql"
   "/scripts/renombrar_campos_seguridad_usuario.sql"
   "/scripts/usuario_ciudad_pais.sql"
   "/scripts/crear_passwordresettoken.sql"
@@ -81,11 +94,10 @@ if [ "$DB_COUNT" -eq "0" ]; then
   fi
   echo "Esquema y datos de prueba aplicados con exito."
 else
-  echo "La base de datos gestionsalud ya existe. Omitiendo creacion inicial."
+  echo "La base de datos gestionsalud ya existe. Verificando esquema y aplicando migraciones pendientes..."
 
-  # GestionSalud.sql crea las tablas base y solo se ejecuta con una base nueva.
-  # Las migraciones restantes deben ser idempotentes y fallar visiblemente si
-  # alguna requiere atencion, en vez de continuar con un esquema incompleto.
+  # GestionSalud.sql y las migraciones son 100% idempotentes (IF OBJECT_ID / IF COL_LENGTH):
+  # Crean tablas y columnas que falten y omiten de forma segura las ya existentes sin tocar datos.
   for SCRIPT in "${MIGRATION_SCRIPTS[@]}"; do
     if [ -f "$SCRIPT" ]; then
       echo "Aplicando verificacion/migracion: $(basename "$SCRIPT")..."

@@ -1,0 +1,70 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Server via Cloudflare Tunnel
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Descargar el código del repositorio
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Instalar cloudflared en el runner de GitHub
+      - name: Install Cloudflare Tunnel Client
+        run: |
+          curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared.deb
+          rm cloudflared.deb
+
+      # 3. Configurar la clave SSH y el comando ProxyCommand nativo de Linux
+      - name: Setup SSH Client and Cloudflare Proxy
+        env:
+          SSH_KEY: ${{ secrets.TAKENJO_DEPLOY || secrets.SSH_PRIVATE_KEY }}
+          TUNNEL_HOST: ${{ secrets.TAKENJO_SERVER || secrets.SSH_TUNNEL_HOST }}
+          SSH_USER: ${{ secrets.TAKENJO_USER || 'takenjo' }}
+        run: |
+          if [ -z "$SSH_KEY" ]; then
+            echo "::error::Secret TAKENJO_DEPLOY o SSH_PRIVATE_KEY no está configurado en el repositorio."
+            exit 1
+          fi
+          if [ -z "$TUNNEL_HOST" ]; then
+            echo "::error::Secret TAKENJO_SERVER o SSH_TUNNEL_HOST no está configurado en el repositorio."
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          
+          # Configurar SSH para que use cloudflared como ProxyCommand
+          cat <<EOF > ~/.ssh/config
+          Host server-tunnel
+              HostName $TUNNEL_HOST
+              User $SSH_USER
+              IdentityFile ~/.ssh/id_rsa
+              StrictHostKeyChecking no
+              ProxyCommand cloudflared access ssh --hostname %h
+          EOF
+          chmod 600 ~/.ssh/config
+
+      # 4. Conectarse y ejecutar el despliegue
+      - name: Execute Remote Commands via SSH
+        run: |
+          ssh server-tunnel << 'EOF'
+            set -e
+            echo "=== Actualizando repositorio en el VPS ==="
+            cd /opt/Proyecto-Hackaton2026
+            git pull origin main
+            echo "=== Construyendo y levantando contenedores ==="
+            docker compose up -d --build
+            echo "=== Limpiando imagenes antiguas ==="
+            docker image prune -f
+            echo "=== Despliegue completado con exito ==="
+          EOF

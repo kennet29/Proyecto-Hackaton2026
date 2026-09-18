@@ -121,7 +121,11 @@ create table permisoacceso (
 go
 SET QUOTED_IDENTIFIER ON;
 go
-create unique index ux_permisoacceso_activo on permisoacceso(pacienteid, medicoid, estado) where estado = 'activo';
+if not exists (select 1 from sys.indexes where name = 'ux_permisoacceso_activo' and object_id = object_id('dbo.permisoacceso'))
+begin
+    create unique index ux_permisoacceso_activo on permisoacceso(pacienteid, medicoid, estado) where estado = 'activo';
+end;
+go
 -- ========================
 -- seguridad y permisos
 -- ========================
@@ -145,8 +149,7 @@ go
 if object_id('dbo.permiso', 'U') is null
 create table permiso (
     permisoid int identity primary key,
-    codigo
-nvarchar(80) not null unique,
+    codigo nvarchar(80) not null unique,
     descripcion nvarchar(200) null,
     creadopor nvarchar(60) null,
     creadoen datetime2 not null default sysdatetime(),
@@ -285,8 +288,7 @@ create table tipocondicioncronica (
     tipocondicionid int identity primary key,
     nombre nvarchar(120) not null unique,
     descripcion nvarchar(200) null,
-    catego
-ria nvarchar(80) null,
+    categoria nvarchar(80) null,
     activo bit not null default 1,
     creadopor nvarchar(60) null,
     creadoen datetime2 not null default sysdatetime(),
@@ -303,8 +305,7 @@ if object_id('dbo.tipohabito', 'U') is null
 create table tipohabito (
     tipohabitoid int identity primary key,
     nombre nvarchar(120) not null unique,
-    catego
-ria nvarchar(80) null,
+    categoria nvarchar(80) null,
     descripcion nvarchar(200) null,
     activo bit not null default 1,
     creadopor nvarchar(60) null,
@@ -448,8 +449,7 @@ create table registrodental (
     fechaatencion datetime2 not null,
     procedimiento nvarchar(200) not null,
     diagnostico nvarchar(200) null,
-    odontologo
-nvarchar(120) null,
+    odontologo nvarchar(120) null,
     piezastratadas nvarchar(100) null,
     notas nvarchar(max) null,
     creadopor nvarchar(60) null,
@@ -541,8 +541,7 @@ create table embarazo (
     fechainicio date not null,
     fechaprobableparto date null,
     numerocontrol int null,
-    riesgo
-nvarchar(100) null,
+    riesgo nvarchar(100) null,
     estado nvarchar(40) not null default 'activo',
     notas nvarchar(max) null,
     creadopor nvarchar(60) null,
@@ -682,8 +681,7 @@ create table habitoespecifico (
     habitoid int identity primary key,
     pacienteid int not null,
     tipohabitoid int not null,
-    catego
-ria nvarchar(80) null,
+    categoria nvarchar(80) null,
     nivel nvarchar(80) null,
     frecuencia nvarchar(100) null,
     cantidad decimal(10,2) null,
@@ -732,20 +730,16 @@ create table seguimientofisico (
     constraint ck_seguimientofisico_intensidad check (intensidad is null or intensidad in ('leve','moderada','intensa'))
 );
 go
-if object_id('dbo.puntajeriesgo
-', 'U') is null
-create table puntajeriesgo
-(
-    puntajeriesgo
-id int identity primary key,
+if object_id('dbo.puntajeriesgo', 'U') is null
+create table puntajeriesgo (
+    puntajeriesgoid int identity primary key,
     pacienteid int not null,
     consultaid int null,
     tipo nvarchar(120) not null, -- imc, escala de dolor, etc.
     valordecimal decimal(10,2) null,
     valortexto nvarchar(100) null,
     unidad nvarchar(40) null,
-    rango
-referencia nvarchar(80) null,
+    rangoreferencia nvarchar(80) null,
     clasificacion nvarchar(80) null,
     fechamedicion datetime2 not null default sysdatetime(),
     observaciones nvarchar(max) null,
@@ -1029,8 +1023,7 @@ create table evaluacionsaludhabito (
     pacienteid int not null,
     fecha datetime2 not null default sysdatetime(),
     puntaje decimal(5,2) not null,
-    catego
-ria nvarchar(80) null,
+    categoria nvarchar(80) null,
     resumen nvarchar(200) null,
     detalle nvarchar(max) null,
     creadopor nvarchar(60) null,
@@ -1072,8 +1065,7 @@ create table indicehabito (
     pacienteid int not null,
     fecha datetime2 not null default sysdatetime(),
     puntaje decimal(5,2) not null,
-    catego
-ria nvarchar(80) null,
+    categoria nvarchar(80) null,
     descripcion nvarchar(200) null,
     detalle nvarchar(max) null,
     creadopor nvarchar(60) null,
