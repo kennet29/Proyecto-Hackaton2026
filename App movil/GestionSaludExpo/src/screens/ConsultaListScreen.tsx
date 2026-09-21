@@ -1,3 +1,4 @@
+import { RecordActions } from '../components/RecordActions';
 /**
  * @file App movil/GestionSaludExpo/src/screens/ConsultaListScreen.tsx
  * @description TypeScript module implementation.
@@ -294,10 +295,9 @@ export function ConsultaListScreen({ navigation }: Props) {
   };
 
   const renderConsultaCard = (item: Consulta, variant: 'default' | 'history' = 'default') => (
-    <TouchableOpacity
+    <View
       key={`${variant}-${item.consultaId}`}
       style={[styles.card, variant === 'history' && styles.historyCard]}
-      onPress={() => navigation.navigate('ConsultaForm', { consulta: item })}
     >
       <View style={styles.cardTopRow}>
         <AppText style={styles.title}>Consulta #{item.consultaId}</AppText>
@@ -313,7 +313,8 @@ export function ConsultaListScreen({ navigation }: Props) {
       {item.tratamiento ? (
         <AppText style={styles.text}>Tratamiento: {item.tratamiento}</AppText>
       ) : null}
-    </TouchableOpacity>
+      <RecordActions resource="consultamedica" recordId={item.consultaId} onChanged={() => fetchData(filterPacienteId || undefined)} title="Consulta" />
+    </View>
   );
 
   return (

@@ -3,6 +3,7 @@
  * @description TypeScript module implementation.
  */
 
+import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -851,7 +852,8 @@ export function SeguimientoPosteventoScreen() {
         <ActivityIndicator color={colors.info} style={styles.loader} />
       ) : recentEntries.length ? (
         recentEntries.map((entry) => (
-          <View key={entry.seguimientoPosteventoId} style={styles.entryCard}>
+<View key={entry.seguimientoPosteventoId} style={styles.entryCard}>
+<RecordActions resource="seguimientopostevento" recordId={entry.seguimientoPosteventoId} onChanged={() => fetchEntries()} />
             <View style={styles.entryTopRow}>
               <View style={styles.entryTopCopy}>
                 <AppText style={styles.entryTitle}>{entry.tituloEvento}</AppText>

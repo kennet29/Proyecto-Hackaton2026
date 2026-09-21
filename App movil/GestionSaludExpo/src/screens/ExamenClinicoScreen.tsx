@@ -3,6 +3,7 @@
  * @description TypeScript module implementation.
  */
 
+import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -917,7 +918,8 @@ export function ExamenClinicoScreen() {
           </View>
         ) : (
           recentExams.map((exam) => (
-            <View key={exam.examenclinicoId} style={styles.recordCard}>
+<View key={exam.examenclinicoId} style={styles.recordCard}>
+<RecordActions resource="examenclinico" recordId={exam.examenclinicoId} onChanged={() => fetchExams()} />
               <View style={styles.recordTopRow}>
                 <View style={styles.datePill}>
                   <AppText style={styles.datePillText}>{formatRecordDate(exam.fechaExamen)}</AppText>

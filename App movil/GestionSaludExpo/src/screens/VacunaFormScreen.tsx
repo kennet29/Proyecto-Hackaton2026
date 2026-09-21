@@ -3,6 +3,7 @@
  * @description TypeScript module implementation.
  */
 
+import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -753,7 +754,8 @@ export function VacunaFormScreen() {
               {recordsForSelectedDay.map((record) => {
                   const label = patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`;
                   return (
-                    <View key={`day-${record.vacunaId}-${record.dayType}`} style={styles.vaccineCard}>
+<View key={`day-${record.vacunaId}-${record.dayType}`} style={styles.vaccineCard}>
+<RecordActions resource="vacuna" recordId={record.vacunaId} onChanged={() => fetchVaccines()} />
                       <View style={styles.vaccineHeader}>
                         <View>
                           <AppText style={styles.vaccineName}>{record.nombre}</AppText>
@@ -825,7 +827,8 @@ export function VacunaFormScreen() {
               visibleRecords.map((record) => {
                 const label = patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`;
                 return (
-                  <View key={record.vacunaId} style={styles.vaccineCard}>
+<View key={record.vacunaId} style={styles.vaccineCard}>
+<RecordActions resource="vacuna" recordId={record.vacunaId} onChanged={() => fetchVaccines()} />
                     <View style={styles.vaccineHeader}>
                       <View>
                         <AppText style={styles.vaccineName}>{record.nombre}</AppText>

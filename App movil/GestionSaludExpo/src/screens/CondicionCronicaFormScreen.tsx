@@ -3,6 +3,7 @@
  * @description TypeScript module implementation.
  */
 
+import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -784,7 +785,8 @@ export function CondicionCronicaFormScreen({
                     <AppText style={styles.emptyInlineText}>Sin condiciones cronicas registradas.</AppText>
                   ) : (
                     conditions.map((record) => (
-                      <View key={record.condicioncronicaId} style={styles.conditionRow}>
+<View key={record.condicioncronicaId} style={styles.conditionRow}>
+<RecordActions resource="condicioncronica" recordId={record.condicioncronicaId} onChanged={() => fetchRecords()} />
                         <View style={styles.conditionHeader}>
                           <AppText style={styles.conditionName}>
                             {typeNameById[record.tipocondicionId] ?? `Condicion #${record.tipocondicionId}`}
@@ -839,7 +841,8 @@ export function CondicionCronicaFormScreen({
               <AppText style={styles.emptyText}>No hay condiciones registradas para este paciente.</AppText>
             ) : (
               filteredRecords.map((record) => (
-                <View key={record.condicioncronicaId} style={styles.card}>
+<View key={record.condicioncronicaId} style={styles.card}>
+<RecordActions resource="condicioncronica" recordId={record.condicioncronicaId} onChanged={() => fetchRecords()} />
                   <AppText style={styles.cardTitle}>
                     {typeNameById[record.tipocondicionId] ?? `Condicion #${record.tipocondicionId}`}
                   </AppText>

@@ -3,6 +3,7 @@
  * @description TypeScript module implementation.
  */
 
+import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -548,7 +549,8 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
               </View>
             ) : (
               filteredRecords.map((record) => (
-                <View key={record.lesionId} style={styles.recordCard}>
+<View key={record.lesionId} style={styles.recordCard}>
+<RecordActions resource="lesion" recordId={record.lesionId} onChanged={() => fetchRecords()} />
                   <View style={styles.recordTopRow}>
                     <View style={styles.datePill}>
                       <AppText style={styles.datePillText}>{formatRecordDate(record.fechalesion)}</AppText>

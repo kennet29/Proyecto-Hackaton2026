@@ -3,6 +3,7 @@
  * @description TypeScript module implementation.
  */
 
+import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -660,7 +661,8 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
             const statusColors = getStatusColors(record.estado);
             const severityColors = getSeverityColors(record.severidad);
             return (
-              <View key={record.alergiaId} style={styles.recordCard}>
+<View key={record.alergiaId} style={styles.recordCard}>
+<RecordActions resource="alergia" recordId={record.alergiaId} onChanged={() => fetchRecords()} />
                 <View style={styles.recordTopRow}>
                   <View style={styles.datePill}>
                     <AppText style={styles.datePillText}>{formatRecordDate(record.fechadiagnostico)}</AppText>

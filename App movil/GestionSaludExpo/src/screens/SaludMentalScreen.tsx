@@ -3,6 +3,7 @@
  * @description TypeScript module implementation.
  */
 
+import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -819,7 +820,8 @@ export function SaludMentalScreen() {
         </View>
         {historial?.historialPorFecha?.length ? (
           historial.historialPorFecha.slice(0, 6).map((item) => (
-            <View key={item.saludmentalId} style={styles.listItem}>
+<View key={item.saludmentalId} style={styles.listItem}>
+<RecordActions resource="salud-mental" recordId={item.saludmentalId} onChanged={() => loadData(selectedPatientId, true)} />
               <AppText style={styles.itemTitle}>{formatDate(item.fecha)}</AppText>
               <View style={styles.historyScoreRow}>
                 <HistoryScore label="Ánimo" value={item.estadoAnimo} color={getScoreColor(item.estadoAnimo)} />

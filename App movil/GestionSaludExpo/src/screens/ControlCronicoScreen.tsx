@@ -3,6 +3,7 @@
  * @description TypeScript module implementation.
  */
 
+import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -854,7 +855,8 @@ export function ControlCronicoScreen() {
         filteredRecords.map((record) => {
           const tipoNombre = record.condicion ? tiposMap[record.condicion.tipocondicionId] : null;
           return (
-            <View key={record.controlcronicoId} style={styles.card}>
+<View key={record.controlcronicoId} style={styles.card}>
+<RecordActions resource="controlcronico" recordId={record.controlcronicoId} onChanged={() => fetchRecords()} />
               <View style={styles.cardTopRow}>
                 <View style={styles.cardTopCopy}>
                   <AppText style={styles.cardTitle}>

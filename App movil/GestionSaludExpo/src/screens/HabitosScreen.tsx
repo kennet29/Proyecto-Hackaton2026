@@ -3,6 +3,7 @@
  * @description TypeScript module implementation.
  */
 
+import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -469,7 +470,8 @@ export function HabitosScreen(_: Props) {
             renderItem={({ item }) => {
               const accent = getImpactAccent(item.impactosalud);
               return (
-                <View style={styles.recordCard}>
+<View style={styles.recordCard}>
+<RecordActions resource="habitoespecifico" recordId={item.habitoId} onChanged={() => loadData()} />
                   <View style={styles.recordHeader}>
                     <View style={styles.recordHeaderText}>
                       <AppText style={styles.recordTitle}>{getTypeName(item.tipohabitoId)}</AppText>

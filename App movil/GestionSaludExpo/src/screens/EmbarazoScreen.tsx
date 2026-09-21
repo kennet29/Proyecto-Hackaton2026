@@ -3,6 +3,7 @@
  * @description TypeScript module implementation.
  */
 
+import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -441,7 +442,8 @@ export function EmbarazoScreen() {
         </View>
       ) : (
         filteredRecords.map((record) => (
-          <View key={record.embarazoId} style={styles.recordCard}>
+<View key={record.embarazoId} style={styles.recordCard}>
+<RecordActions resource="embarazo" recordId={record.embarazoId} onChanged={() => fetchRecords()} />
             <View style={styles.recordHeader}>
               <View>
                 <AppText style={styles.recordEyebrow}>FICHA OBSTÉTRICA</AppText>

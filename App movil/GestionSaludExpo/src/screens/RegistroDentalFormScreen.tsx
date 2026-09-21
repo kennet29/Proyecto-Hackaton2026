@@ -3,6 +3,7 @@
  * @description TypeScript module implementation.
  */
 
+import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -1237,7 +1238,8 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
           </View>
         ) : (
           filteredRecords.map((record) => (
-            <View key={record.registrodentalId} style={styles.recordCard}>
+<View key={record.registrodentalId} style={styles.recordCard}>
+<RecordActions resource="registrodental" recordId={record.registrodentalId} onChanged={() => fetchRecords()} />
               <View style={styles.recordTopRow}>
                 <View style={styles.datePill}>
                   <AppText style={styles.datePillText}>{formatDisplayDateTime(record.fechaatencion)}</AppText>

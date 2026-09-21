@@ -3,6 +3,7 @@
  * @description TypeScript module implementation.
  */
 
+import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -614,7 +615,8 @@ export function PeriodoScreen() {
         <AppText style={styles.sectionTitle}>Historial reciente</AppText>
         {historial?.registros?.length ? (
           historial.registros.slice(0, 6).map((item) => (
-            <View key={item.periodoId} style={styles.listItem}>
+<View key={item.periodoId} style={styles.listItem}>
+<RecordActions resource="periodo" recordId={item.periodoId} onChanged={() => loadData(selectedPatientId, true)} />
               <AppText style={styles.itemTitle}>
                 {formatDate(item.fechaInicio)} {item.fechaFin ? `- ${formatDate(item.fechaFin)}` : ''}
               </AppText>

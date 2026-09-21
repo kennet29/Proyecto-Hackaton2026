@@ -8,12 +8,14 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { AppText, AppTextInput } from '../components/AppText';
 
 import DateTimePicker, {
@@ -52,6 +54,8 @@ type Appointment = {
   date: string;
 
   timeLabel: string;
+
+  startsAt: string;
 
 };
 
@@ -276,6 +280,12 @@ export function CitaFormScreen() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+
+  const [deleteCandidate, setDeleteCandidate] = useState<Appointment | null>(null);
+
+  const [deletingAppointmentId, setDeletingAppointmentId] = useState<number | null>(null);
+
   const [showForm, setShowForm] = useState(false);
 
   const [patientOptions, setPatientOptions] = useState<LinkedPatient[]>([]);
@@ -387,6 +397,8 @@ export function CitaFormScreen() {
           date,
 
           timeLabel: formatHourLabel(rawDate),
+
+          startsAt: rawDate,
 
         } as Appointment;
 
@@ -736,15 +748,17 @@ export function CitaFormScreen() {
 
     try {
 
+      const isEditing = Boolean(editingAppointment);
+
       const offlineResult = await submitJsonWithOfflineFallback({
 
         token,
 
-        path: "/citamedica",
+        path: isEditing ? `/citamedica/${editingAppointment?.citaId}` : "/citamedica",
 
-        method: "POST",
+        method: isEditing ? "PATCH" : "POST",
 
-        description: "registrar cita",
+        description: isEditing ? "actualizar cita" : "registrar cita",
 
         body: {
 
@@ -756,7 +770,9 @@ export function CitaFormScreen() {
 
           motivo: form.motivo || undefined,
 
-          creadopor: user?.username ?? undefined,
+          ...(isEditing
+            ? { modificadopor: user?.username ?? undefined }
+            : { creadopor: user?.username ?? undefined }),
 
         },
 
@@ -768,13 +784,18 @@ export function CitaFormScreen() {
 
           "Cita en cola",
 
-          "No habia conexion. La cita quedo guardada en este dispositivo y se sincronizara cuando vuelva la red.",
+          isEditing
+            ? "No habia conexion. Los cambios se sincronizaran cuando vuelva la red."
+            : "No habia conexion. La cita quedo guardada en este dispositivo y se sincronizara cuando vuelva la red.",
 
         );
 
       } else {
 
-        Alert.alert("Cita creada", "La cita quedo registrada");
+        Alert.alert(
+          isEditing ? "Cita actualizada" : "Cita creada",
+          isEditing ? "Los cambios fueron guardados" : "La cita quedo registrada",
+        );
 
         fetchAppointments();
 
@@ -787,6 +808,8 @@ export function CitaFormScreen() {
       setFormTime("09:00");
 
       setShowForm(false);
+
+      setEditingAppointment(null);
 
       return;
 
@@ -845,6 +868,41 @@ export function CitaFormScreen() {
   };
 
 
+  const startEditing = (appointment: Appointment) => {
+    const time = appointment.startsAt.match(/T(\d{2}:\d{2})/)?.[1] ?? "09:00";
+    setEditingAppointment(appointment);
+    setSelectedDate(appointment.date);
+    setFormDate(appointment.date);
+    setFormTime(time);
+    setForm({
+      pacienteId: String(appointment.pacienteId),
+      fecha: `${appointment.date}T${time}`,
+      especialidad: appointment.especialidad ?? "",
+      motivo: appointment.motivo ?? "",
+    });
+    setShowForm(true);
+  };
+
+  const deleteAppointment = async (appointment: Appointment) => {
+    setDeletingAppointmentId(appointment.citaId);
+    try {
+      const response = await fetch(`${API_URL}/citamedica/${appointment.citaId}`, {
+        method: "DELETE",
+        headers,
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(body?.message ?? "No se pudo eliminar la cita");
+      setAppointments((current) => current.filter((item) => item.citaId !== appointment.citaId));
+      Alert.alert("Cita eliminada", "La cita fue eliminada correctamente.");
+    } catch (error) {
+      Alert.alert("No se pudo eliminar", error instanceof Error ? error.message : "Inténtalo nuevamente.");
+    } finally {
+      setDeletingAppointmentId(null);
+      setDeleteCandidate(null);
+    }
+  };
+
+
 
   const formattedTime = formTime || "09:00";
 
@@ -852,6 +910,7 @@ export function CitaFormScreen() {
 
   return (
 
+    <View style={styles.screen}>
     <ScrollView contentContainerStyle={styles.container}>
 
       <AppText style={styles.pageTitle}>Citas Programadas</AppText>
@@ -1029,6 +1088,29 @@ export function CitaFormScreen() {
 
                 ) : null}
 
+                <View style={styles.appointmentActions}>
+                  <TouchableOpacity
+                    style={styles.editAppointmentButton}
+                    onPress={() => startEditing(appointment)}
+                    disabled={isSubmitting || deletingAppointmentId === appointment.citaId}
+                  >
+                    <Ionicons name="create-outline" size={17} color={colors.info} />
+                    <AppText style={styles.editAppointmentText}>Editar</AppText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.deleteAppointmentButton}
+                    onPress={() => setDeleteCandidate(appointment)}
+                    disabled={isSubmitting || deletingAppointmentId === appointment.citaId}
+                  >
+                    {deletingAppointmentId === appointment.citaId ? (
+                      <ActivityIndicator size="small" color={colors.accent} />
+                    ) : (
+                      <Ionicons name="trash-outline" size={17} color={colors.accent} />
+                    )}
+                    <AppText style={styles.deleteAppointmentText}>Eliminar</AppText>
+                  </TouchableOpacity>
+                </View>
+
               </View>
 
             );
@@ -1045,7 +1127,7 @@ export function CitaFormScreen() {
 
         <View style={styles.formCard}>
 
-          <AppText style={styles.formTitle}>Registrar cita</AppText>
+          <AppText style={styles.formTitle}>{editingAppointment ? "Editar cita" : "Registrar cita"}</AppText>
 
           {loadingPatients ? (
 
@@ -1219,6 +1301,8 @@ export function CitaFormScreen() {
 
             placeholder="Especialidad"
 
+            placeholderTextColor={colors.textMuted}
+
             value={form.especialidad}
 
             onChangeText={(value) => handleChange("especialidad", value)}
@@ -1230,6 +1314,8 @@ export function CitaFormScreen() {
             style={styles.input}
 
             placeholder="Motivo"
+
+            placeholderTextColor={colors.textMuted}
 
             value={form.motivo}
 
@@ -1253,7 +1339,7 @@ export function CitaFormScreen() {
 
             ) : (
 
-              <AppText style={styles.btnText}>Guardar Cita</AppText>
+              <AppText style={styles.btnText}>{editingAppointment ? "Guardar cambios" : "Guardar cita"}</AppText>
 
             )}
 
@@ -1263,10 +1349,26 @@ export function CitaFormScreen() {
 
       )}
 
-      <TouchableOpacity style={styles.fab} onPress={() => setShowForm((prev) => !prev)}>
+      <TouchableOpacity style={styles.fab} onPress={() => { setEditingAppointment(null); setShowForm((prev) => !prev); }}>
         <AppText style={styles.fabText}>{showForm ? "×" : "+"}</AppText>
       </TouchableOpacity>
     </ScrollView>
+    <Modal visible={Boolean(deleteCandidate)} transparent animationType="fade" onRequestClose={() => setDeleteCandidate(null)}>
+      <View style={styles.modalBackdrop}>
+        <View style={styles.modalCard}>
+          <Ionicons name="trash-outline" size={28} color={colors.accent} />
+          <AppText style={styles.modalTitle}>¿Eliminar cita?</AppText>
+          <AppText style={styles.modalText}>La cita y sus datos asociados se eliminarán permanentemente.</AppText>
+          <View style={styles.modalActions}>
+            <TouchableOpacity style={styles.modalCancel} onPress={() => setDeleteCandidate(null)} disabled={Boolean(deletingAppointmentId)}><AppText style={styles.modalCancelText}>Cancelar</AppText></TouchableOpacity>
+            <TouchableOpacity style={styles.modalDelete} onPress={() => deleteCandidate && void deleteAppointment(deleteCandidate)} disabled={Boolean(deletingAppointmentId)}>
+              {deletingAppointmentId ? <ActivityIndicator color="#FFFFFF" /> : <AppText style={styles.modalDeleteText}>Eliminar</AppText>}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+    </View>
 
   );
 
@@ -1447,6 +1549,36 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     color: colors.textMuted,
 
   },
+
+  appointmentActions: { flexDirection: "row", justifyContent: "flex-end", gap: 8, marginTop: 8 },
+
+  editAppointmentButton: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 9, backgroundColor: `${colors.info}18` },
+
+  editAppointmentText: { color: colors.info, fontWeight: "700", fontSize: 12 },
+
+  deleteAppointmentButton: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 9, backgroundColor: `${colors.accent}18` },
+
+  deleteAppointmentText: { color: colors.accent, fontWeight: "700", fontSize: 12 },
+
+  screen: { flex: 1, backgroundColor: colors.background },
+
+  modalBackdrop: { flex: 1, backgroundColor: "rgba(2, 12, 27, 0.7)", alignItems: "center", justifyContent: "center", padding: 24 },
+
+  modalCard: { width: "100%", maxWidth: 420, padding: 24, borderRadius: 18, gap: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+
+  modalTitle: { color: colors.text, fontSize: 20, fontWeight: "900" },
+
+  modalText: { color: colors.textSoft, lineHeight: 20 },
+
+  modalActions: { flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 10 },
+
+  modalCancel: { minHeight: 42, paddingHorizontal: 15, borderRadius: 10, justifyContent: "center", backgroundColor: colors.backgroundMuted },
+
+  modalCancelText: { color: colors.text, fontWeight: "800" },
+
+  modalDelete: { minWidth: 100, minHeight: 42, paddingHorizontal: 15, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: colors.accent },
+
+  modalDeleteText: { color: "#FFFFFF", fontWeight: "900" },
 
   toggleBtn: {
 
@@ -1707,6 +1839,10 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     padding: 14,
 
     fontSize: 16,
+
+    color: colors.text,
+
+    backgroundColor: colors.backgroundMuted,
 
   },
 

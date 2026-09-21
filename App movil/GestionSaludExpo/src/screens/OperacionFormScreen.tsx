@@ -3,6 +3,7 @@
  * @description TypeScript module implementation.
  */
 
+import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -564,13 +565,14 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                 const typeLabel =
                   normalizeText(record.tipo) ?? typeNameById[record.tipooperacionId ?? 0] ?? 'Operacion';
                 return (
-                  <View
+<View
                     key={record.operacionId}
                     style={[
                       styles.recordCard,
                       normalizeText(record.complicaciones) ? styles.recordCardAlert : null,
                     ]}
                   >
+<RecordActions resource="operacion" recordId={record.operacionId} onChanged={() => fetchRecords()} />
                     <View style={styles.recordTopRow}>
                       <View style={styles.datePill}>
                         <AppText style={styles.datePillText}>{formatRecordDate(record.fechaoperacion)}</AppText>

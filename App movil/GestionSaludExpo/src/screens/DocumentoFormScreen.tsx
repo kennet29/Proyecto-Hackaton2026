@@ -4,6 +4,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { RecordActions } from '../components/RecordActions';
 import {
   ActivityIndicator,
   Alert,
@@ -74,6 +75,8 @@ export function DocumentoFormScreen() {
   });
   const [patientOptions, setPatientOptions] = useState<LinkedPatient[]>([]);
   const [documentTypes, setDocumentTypes] = useState<TipoDocumento[]>([]);
+  const [savedDocuments, setSavedDocuments] = useState<Array<{ documentoId: number; pacienteId: number; nombreArchivo?: string; notas?: string }>>([]);
+  const [documentsError, setDocumentsError] = useState('');
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [loadingOriginRecords, setLoadingOriginRecords] = useState(false);
   const [originRecords, setOriginRecords] = useState<OriginRecordOption[]>([]);
@@ -91,6 +94,18 @@ export function DocumentoFormScreen() {
     }
     return base;
   }, [token]);
+
+  const loadDocuments = useCallback(async () => {
+    if (!token) { setSavedDocuments([]); return; }
+    try {
+      setDocumentsError('');
+      const response = await fetch(`${API_URL}/documentoclinico`, { headers: authHeaders });
+      if (!response.ok) throw new Error('No se pudieron cargar los documentos.');
+      const body = await response.json();
+      setSavedDocuments(Array.isArray(body) ? body : []);
+    } catch (cause) { setDocumentsError(cause instanceof Error ? cause.message : 'No se pudieron cargar los documentos.'); }
+  }, [authHeaders, token]);
+  useEffect(() => { void loadDocuments(); }, [loadDocuments]);
 
   const jsonHeaders = useMemo<Record<string, string>>(
     () => ({ 'Content-Type': 'application/json', ...authHeaders }),
@@ -539,6 +554,7 @@ export function DocumentoFormScreen() {
         'El archivo quedó adjunto al expediente clínico.',
       );
       resetForm();
+      void loadDocuments();
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Falló la petición');
     } finally {
@@ -588,6 +604,15 @@ export function DocumentoFormScreen() {
         </View>
       </Modal>
       <ScrollView contentContainerStyle={styles.container}>
+        <View style={{ padding: 16, gap: 12, backgroundColor: colors.surface, borderRadius: 14 }}>
+          <AppText style={{ color: colors.text, fontSize: 18 }}>Documentos registrados</AppText>
+          <TouchableOpacity onPress={() => void loadDocuments()}><AppText style={{ color: colors.info }}>Actualizar documentos</AppText></TouchableOpacity>
+          {Boolean(documentsError) && <AppText style={{ color: colors.accent }}>{documentsError}</AppText>}
+          {savedDocuments.filter((item) => !form.pacienteId || item.pacienteId === Number(form.pacienteId)).map((item) => <View key={item.documentoId}>
+            <AppText style={{ color: colors.text }}>{item.nombreArchivo || `Documento #${item.documentoId}`} · Paciente #{item.pacienteId}</AppText>
+            <RecordActions resource="documentoclinico" recordId={item.documentoId} title="Documento" onChanged={loadDocuments} />
+          </View>)}
+        </View>
       <View style={styles.heroCard}>
         <View style={styles.heroTopRow}>
           <View style={styles.heroIcon}>

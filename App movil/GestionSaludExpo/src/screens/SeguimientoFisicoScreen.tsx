@@ -3,6 +3,7 @@
  * @description TypeScript module implementation.
  */
 
+import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -1152,7 +1153,8 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                 .reverse()
                 .slice(0, 6)
                 .map((item) => (
-                  <View key={item.seguimientoFisicoId} style={styles.listItem}>
+<View key={item.seguimientoFisicoId} style={styles.listItem}>
+<RecordActions resource="seguimientofisico" recordId={item.seguimientoFisicoId} onChanged={() => loadData(selectedPatientId, true)} />
                     <AppText style={styles.itemTitle}>{formatDate(item.fecha)}</AppText>
                     <AppText style={styles.itemText}>
                       Peso: {formatNumber(item.peso, ' kg')} - Ejercicio:{' '}

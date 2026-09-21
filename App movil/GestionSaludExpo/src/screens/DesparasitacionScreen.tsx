@@ -3,6 +3,7 @@
  * @description TypeScript module implementation.
  */
 
+import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -676,7 +677,8 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
               </View>
             ) : (
               dayEntries.map((entry) => (
-                <View key={`${entry.desparasitacionId}-${entry.dayType}`} style={styles.dayCard}>
+<View key={`${entry.desparasitacionId}-${entry.dayType}`} style={styles.dayCard}>
+<RecordActions resource="desparasitacion" recordId={entry.desparasitacionId} onChanged={() => fetchRecords()} />
                   <View style={styles.recordTopRow}>
                     <AppText style={styles.recordTitle}>
                       {entry.producto ?? 'Producto no definido'}
@@ -726,7 +728,8 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
               </View>
             ) : (
               visibleRecords.map((record) => (
-                <View key={record.desparasitacionId} style={styles.recordCard}>
+<View key={record.desparasitacionId} style={styles.recordCard}>
+<RecordActions resource="desparasitacion" recordId={record.desparasitacionId} onChanged={() => fetchRecords()} />
                   <AppText style={styles.recordTitle}>
                     {record.producto ?? 'Producto no definido'}
                   </AppText>
