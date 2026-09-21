@@ -484,9 +484,22 @@ export class PacienteService {
    */
   async remove(id: string): Promise<void> {
     const where = this.parseId(id);
-    const result = await this.pacienteRepository.delete(where);
-    if (!result.affected) {
-      throw new NotFoundException(`registro ${id} no encontrado en paciente`);
+    try {
+      await this.pacienteRepository.manager.transaction(async (manager) => {
+        // La relación del titular impide borrar incluso un paciente sin historial.
+        // Se elimina dentro de la misma transacción, por lo que no quedan vínculos
+        // huérfanos si el expediente tiene datos clínicos que bloquean el borrado.
+        await manager.query("DELETE FROM usuariopaciente WHERE pacienteid = @0", [where.pacienteId]);
+        const result = await manager.delete(Paciente, where);
+        if (!result.affected) {
+          throw new NotFoundException(`registro ${id} no encontrado en paciente`);
+        }
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new BadRequestException(
+        "No se puede eliminar este paciente porque tiene información clínica relacionada. Elimina primero esos registros o conserva el expediente.",
+      );
     }
   }
 
