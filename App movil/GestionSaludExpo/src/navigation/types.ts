@@ -17,7 +17,7 @@ export type RootStackParamList = {
   Configuracion: undefined;
   PacienteResumen: { pacienteId?: number } | undefined;
   ExpedienteGestion: undefined;
-  PacienteForm: undefined;
+  PacienteForm: { patientCreated?: boolean } | undefined;
   PacienteEditor: { pacienteId?: number } | undefined;
   ConsultaList: undefined;
   ConsultaCreate: undefined;

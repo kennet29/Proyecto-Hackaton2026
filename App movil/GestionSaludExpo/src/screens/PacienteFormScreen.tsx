@@ -33,7 +33,7 @@ type LinkedPatient = {
   parentesco?: string | null;
 };
 
-export function PacienteFormScreen({ navigation }: Props) {
+export function PacienteFormScreen({ navigation, route }: Props) {
   const colors = useAppColors();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
@@ -44,6 +44,12 @@ export function PacienteFormScreen({ navigation }: Props) {
   const [deletingPatientId, setDeletingPatientId] = useState<number | null>(null);
   const [deleteCandidate, setDeleteCandidate] = useState<LinkedPatient | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  React.useEffect(() => {
+    if (!route.params?.patientCreated) return;
+    setToast({ type: 'success', message: 'Paciente creado y vinculado correctamente.' });
+    navigation.setParams({ patientCreated: undefined });
+  }, [navigation, route.params?.patientCreated]);
 
   const authHeaders = useMemo<Record<string, string>>(() => {
     const base: Record<string, string> = {};

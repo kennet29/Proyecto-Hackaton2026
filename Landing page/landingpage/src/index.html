@@ -9,6 +9,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    // Respaldo para proxies que entregan la landing al recargar /app sin la barra final.
+    // Se ejecuta antes de Angular y conserva parámetros, hash y la sesión del navegador.
+    if (window.location.pathname === '/app') {
+      window.location.replace('/app/' + window.location.search + window.location.hash);
+    }
+  </script>
 </head>
 <body>
   <app-root></app-root>

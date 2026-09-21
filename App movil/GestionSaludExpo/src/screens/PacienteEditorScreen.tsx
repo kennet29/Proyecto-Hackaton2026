@@ -99,6 +99,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
   const [submitting, setSubmitting] = useState(false);
   // Evita que dos toques muy seguidos envien dos solicitudes antes de que React actualice el boton.
   const submitInFlight = useRef(false);
+  const submitCompleted = useRef(false);
   // Conservan la misma operacion si la red se corta y el usuario vuelve a tocar Guardar.
   // El backend devolverá la respuesta previa en lugar de crear otro paciente.
   const createRequestKey = useRef<string | null>(null);
@@ -192,7 +193,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
   };
 
   const handleSubmit = async () => {
-    if (submitInFlight.current) return;
+    if (submitInFlight.current || submitCompleted.current) return;
 
     if (!form.nombres.trim() || !form.apellidos.trim() || !form.sexo) {
       Alert.alert('Faltan Datos', 'Nombres, apellidos y genero son obligatorios');
@@ -279,14 +280,16 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
       }
 
       invalidateLinkedPatientsCache(headers);
-
-      Alert.alert(
-        isEditing ? 'Paciente actualizado' : 'Paciente registrado',
-        isEditing
-          ? 'Los datos del paciente se actualizaron correctamente'
-          : 'Paciente creado y vinculado correctamente. No es necesario volver a presionar Guardar.',
-        [{ text: 'OK', onPress: () => navigation.goBack() }],
-      );
+      submitCompleted.current = true;
+      if (isEditing) {
+        Alert.alert(
+          'Paciente actualizado',
+          'Los datos del paciente se actualizaron correctamente',
+          [{ text: 'OK', onPress: () => navigation.goBack() }],
+        );
+      } else {
+        navigation.popTo('PacienteForm', { patientCreated: true });
+      }
     } catch (error) {
       if (!isEditing && createdPacienteId.current) {
         Alert.alert(
