@@ -703,12 +703,10 @@ export function MenuPrincipalScreen({ navigation }: Props) {
       <View style={[styles.heroTopRow, isWebWide && styles.webHeroTopRow]}>
         <View style={[styles.heroBadge, isWebWide && styles.webHeroBadge]}>
           <Ionicons name={activeMeta.icon} size={16} color="#0B6FEA" />
-          <AppText style={styles.heroBadgeText}>{activeMeta.label}</AppText>
+          <AppText style={[styles.heroBadgeText, !isLightMode && styles.heroBadgeTextDark]}>{activeMeta.label}</AppText>
         </View>
         <View style={styles.heroActions}>
-          {activeMeta.nanoAppearance ? (
-            <NanoAppearancePreview appearance={activeMeta.nanoAppearance} size={58} />
-          ) : null}
+          <NanoAppearancePreview appearance={activeNanoAppearance} size={58} />
           <TouchableOpacity
             style={[styles.logoutButton, isWebWide && styles.webLogoutButton]}
             onPress={confirmLogout}
@@ -969,6 +967,9 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     color: '#0B6FEA',
     fontSize: 12,
     fontWeight: '700',
+  },
+  heroBadgeTextDark: {
+    color: '#FFFFFF',
   },
   logoutButton: {
     width: 40,

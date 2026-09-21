@@ -6,6 +6,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -17,13 +18,14 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
-import { fetchLinkedPatients as fetchLinkedPatientsList } from '../utils/linkedPatients';
+import { fetchLinkedPatients as fetchLinkedPatientsList, invalidateLinkedPatientsCache } from '../utils/linkedPatients';
+import { apiFetch } from '../utils/apiClient';
 import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PacienteForm'>;
 
 type LinkedPatient = {
-  relationId: number;
+  relationId?: number;
   pacienteId: number;
   nombreCompleto: string;
   sexo?: string | null;
@@ -39,6 +41,9 @@ export function PacienteFormScreen({ navigation }: Props) {
   const [linkedPatients, setLinkedPatients] = useState<LinkedPatient[]>([]);
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [patientLoadError, setPatientLoadError] = useState<string | null>(null);
+  const [deletingPatientId, setDeletingPatientId] = useState<number | null>(null);
+  const [deleteCandidate, setDeleteCandidate] = useState<LinkedPatient | null>(null);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const authHeaders = useMemo<Record<string, string>>(() => {
     const base: Record<string, string> = {};
@@ -62,7 +67,7 @@ export function PacienteFormScreen({ navigation }: Props) {
       const items = await fetchLinkedPatientsList(authHeaders, { forceRefresh: true });
       setLinkedPatients(
         items.map((item) => ({
-          relationId: item.pacienteId,
+          relationId: item.relationId,
           pacienteId: item.pacienteId,
           nombreCompleto: item.displayName,
           sexo: item.sexo ?? null,
@@ -79,6 +84,32 @@ export function PacienteFormScreen({ navigation }: Props) {
       setLoadingPatients(false);
     }
   }, [authHeaders, token]);
+
+  const requestDelete = useCallback((patient: LinkedPatient) => {
+    if (deletingPatientId === null) setDeleteCandidate(patient);
+  }, [deletingPatientId]);
+
+  const confirmDelete = useCallback(async () => {
+    if (!deleteCandidate || deletingPatientId !== null) return;
+    const patient = deleteCandidate;
+    setDeletingPatientId(patient.pacienteId);
+    try {
+      const response = await apiFetch(`/paciente/${patient.pacienteId}`, {
+        method: 'DELETE',
+        headers: authHeaders,
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(body?.message ?? 'No se pudo eliminar el paciente.');
+      invalidateLinkedPatientsCache(authHeaders);
+      setLinkedPatients((current) => current.filter((item) => item.pacienteId !== patient.pacienteId));
+      setToast({ type: 'success', message: 'Paciente eliminado de la base de datos.' });
+    } catch (error) {
+      setToast({ type: 'error', message: error instanceof Error ? error.message : 'No se pudo eliminar el paciente.' });
+    } finally {
+      setDeletingPatientId(null);
+      setDeleteCandidate(null);
+    }
+  }, [authHeaders, deletingPatientId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -127,10 +158,9 @@ export function PacienteFormScreen({ navigation }: Props) {
         ) : null}
 
         {linkedPatients.map((patient) => (
-          <TouchableOpacity
-            key={patient.relationId}
+          <View
+            key={patient.pacienteId}
             style={styles.patientCard}
-            onPress={() => navigation.navigate('PacienteEditor', { pacienteId: patient.pacienteId })}
           >
             <View style={styles.patientCardHeader}>
               <View style={styles.patientIcon}>
@@ -140,14 +170,50 @@ export function PacienteFormScreen({ navigation }: Props) {
                 <AppText style={styles.patientName}>{patient.nombreCompleto}</AppText>
                 <AppText style={styles.patientId}>ID #{patient.pacienteId}</AppText>
               </View>
-              <Ionicons name="create-outline" size={22} color={colors.info} />
+              <TouchableOpacity
+                style={styles.cardAction}
+                onPress={() => navigation.navigate('PacienteEditor', { pacienteId: patient.pacienteId })}
+                accessibilityLabel={`Editar ${patient.nombreCompleto}`}
+              >
+                <Ionicons name="create-outline" size={22} color={colors.info} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.cardAction, styles.deleteAction]}
+                onPress={() => requestDelete(patient)}
+                disabled={deletingPatientId === patient.pacienteId}
+                accessibilityLabel={`Eliminar ${patient.nombreCompleto}`}
+              >
+                {deletingPatientId === patient.pacienteId
+                  ? <ActivityIndicator size="small" color={colors.accent} />
+                  : <Ionicons name="trash-outline" size={21} color={colors.accent} />}
+              </TouchableOpacity>
             </View>
             {patient.sexo ? <AppText style={styles.patientMeta}>Genero: {patient.sexo}</AppText> : null}
             {patient.parentesco ? <AppText style={styles.patientMeta}>Parentesco: {patient.parentesco}</AppText> : null}
             {patient.contacto ? <AppText style={styles.patientMeta}>Contacto: {patient.contacto}</AppText> : null}
-          </TouchableOpacity>
+          </View>
         ))}
       </ScrollView>
+      <Modal visible={Boolean(deleteCandidate)} transparent animationType="fade" onRequestClose={() => !deletingPatientId && setDeleteCandidate(null)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalIcon}><Ionicons name="trash-outline" size={26} color="#DC2626" /></View>
+            <AppText style={styles.modalTitle}>¿Eliminar paciente?</AppText>
+            <AppText style={styles.modalText}>Se eliminará a {deleteCandidate?.nombreCompleto} de la base de datos. Esta acción no se puede deshacer.</AppText>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setDeleteCandidate(null)} disabled={Boolean(deletingPatientId)}><AppText style={styles.cancelButtonText}>Cancelar</AppText></TouchableOpacity>
+              <TouchableOpacity style={styles.confirmDeleteButton} onPress={() => void confirmDelete()} disabled={Boolean(deletingPatientId)}>
+                {deletingPatientId ? <ActivityIndicator color="#FFFFFF" /> : <AppText style={styles.confirmDeleteText}>Eliminar</AppText>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      {toast ? <TouchableOpacity style={[styles.toast, toast.type === 'success' ? styles.toastSuccess : styles.toastError]} onPress={() => setToast(null)} accessibilityRole="alert">
+        <Ionicons name={toast.type === 'success' ? 'checkmark-circle-outline' : 'alert-circle-outline'} size={22} color="#FFFFFF" />
+        <AppText style={styles.toastText}>{toast.message}</AppText>
+        <Ionicons name="close" size={18} color="#FFFFFF" />
+      </TouchableOpacity> : null}
     </View>
   );
 }
@@ -258,6 +324,52 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   patientMain: {
     flex: 1,
   },
+  cardAction: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+  },
+  deleteAction: {
+    marginLeft: 2,
+  },
+  modalBackdrop: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: 'rgba(2, 12, 27, 0.68)',
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 440,
+    padding: 24,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEE2E2',
+    marginBottom: 14,
+  },
+  modalTitle: { color: colors.text, fontSize: 20, fontWeight: '900', marginBottom: 8 },
+  modalText: { color: colors.textSoft, fontSize: 14, lineHeight: 21 },
+  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 24 },
+  cancelButton: { paddingHorizontal: 16, minHeight: 42, justifyContent: 'center', borderRadius: 11, backgroundColor: colors.backgroundMuted },
+  cancelButtonText: { color: colors.text, fontWeight: '800' },
+  confirmDeleteButton: { minWidth: 104, minHeight: 42, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: '#DC2626' },
+  confirmDeleteText: { color: '#FFFFFF', fontWeight: '900' },
+  toast: { position: 'absolute', right: 20, bottom: 20, maxWidth: 470, minHeight: 56, padding: 14, borderRadius: 14, flexDirection: 'row', alignItems: 'center', gap: 10, elevation: 8 },
+  toastSuccess: { backgroundColor: '#15803D' },
+  toastError: { backgroundColor: '#B91C1C' },
+  toastText: { flex: 1, color: '#FFFFFF', fontWeight: '700', fontSize: 13, lineHeight: 18 },
   patientName: {
     fontSize: 16,
     fontWeight: '800',

@@ -6,6 +6,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -319,6 +320,10 @@ export function HistorialCompartidoScreen({ navigation, route }: Props) {
       }
       invalidateLinkedPatientsCache(headers);
       await loadFullHistory(Number(claimPayload.pacienteId));
+      Alert.alert(
+        'Acceso concedido',
+        'El historial compartido fue vinculado correctamente a tu cuenta.',
+      );
     } catch (claimError) {
       setError(
         claimError instanceof Error

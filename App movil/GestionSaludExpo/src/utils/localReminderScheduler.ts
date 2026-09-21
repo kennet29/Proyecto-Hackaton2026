@@ -6,7 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { parseScheduledDateTime } from './localDate';
-import { isExpoGoAndroid, loadNotifications, type NotificationsModule } from './notificationsRuntime';
+import { loadNotifications, type NotificationsModule } from './notificationsRuntime';
 
 const STORAGE_KEY = '@gs_local_reminder_schedules_v1';
 const CHANNEL_ID = 'recordatorios-locales';
@@ -16,6 +16,7 @@ type StoredSchedule = {
   logicalKey: string;
   notificationId: string;
   scheduledAt: string;
+  message: string;
 };
 
 export type LocalReminderStatus =
@@ -102,12 +103,24 @@ const cancelLogicalSchedule = async (
   return matches.length > 0;
 };
 
+const findStoredSchedule = async (
+  ownerUserId: number,
+  logicalKey: string,
+): Promise<StoredSchedule | undefined> => {
+  const schedules = await readSchedules();
+  return schedules.find(
+    (item) => item.ownerUserId === ownerUserId && item.logicalKey === logicalKey,
+  );
+};
+
 export async function syncLocalReminder(
   input: SyncLocalReminderInput,
 ): Promise<LocalReminderStatus> {
   const match = input.path.match(/^\/(notificacion|recordatoriocita)(?:\/(\d+))?$/);
   if (!match) return 'not-applicable';
-  if (Platform.OS === 'web' || isExpoGoAndroid()) return 'unsupported';
+  // Las notificaciones locales las programa el sistema operativo y no usan la
+  // red. Expo Go en Android no admite push remoto, pero sí estos avisos locales.
+  if (Platform.OS === 'web') return 'unsupported';
 
   const kind = match[1];
   const pathId = match[2] ? Number(match[2]) : null;
@@ -116,7 +129,7 @@ export async function syncLocalReminder(
   const operationKey = `${kind}:${input.operationId}`;
   const scheduledValue =
     input.body?.fechaprogramada ?? input.body?.fecharecordatorio;
-  const message =
+  const suppliedMessage =
     typeof input.body?.mensaje === 'string' ? input.body.mensaje.trim() : '';
   const isCompleted =
     input.method === 'DELETE' ||
@@ -141,7 +154,14 @@ export async function syncLocalReminder(
     if (!scheduledAt || scheduledAt.getTime() <= Date.now()) {
       return 'invalid-date';
     }
-    if (!message) return 'not-applicable';
+    // Las actualizaciones de fecha normalmente no incluyen el mensaje. Lo
+    // recuperamos del aviso local anterior para cancelarlo y programarlo de
+    // nuevo sin necesidad de consultar al servidor.
+    const previousSchedule = await findStoredSchedule(input.ownerUserId, logicalKey);
+    const message =
+      suppliedMessage ||
+      previousSchedule?.message ||
+      'Tienes un recordatorio de salud pendiente.';
     if (!(await ensurePermissions(Notifications))) return 'permission-denied';
 
     await ensureAndroidChannel(Notifications);
@@ -171,6 +191,7 @@ export async function syncLocalReminder(
       logicalKey,
       notificationId,
       scheduledAt: scheduledAt.toISOString(),
+      message,
     });
     await writeSchedules(schedules);
     return 'scheduled';

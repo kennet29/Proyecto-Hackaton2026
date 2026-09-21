@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getTokenUserId } from './jwt';
 
 export type LinkedPatient = {
+  relationId?: number;
   pacienteId: number;
   displayName: string;
   esPrincipal?: boolean;
@@ -158,6 +159,9 @@ export async function fetchLinkedPatients(
         }
 
         return {
+          relationId: Number(
+            relation?.id ?? relation?.usuariopacienteid ?? relation?.usuarioPacienteId ?? pacienteId,
+          ),
           pacienteId,
           displayName: relation?.esPrincipal ? `${displayName} (Principal)` : displayName,
           esPrincipal: Boolean(relation?.esPrincipal),

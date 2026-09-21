@@ -63,6 +63,9 @@ const formatDisplayDate = (value?: string) => {
   ].join('/');
 };
 
+const createIdempotencyKey = (prefix: string) =>
+  `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+
 function FieldLabel({
   children,
   required = false,
@@ -96,6 +99,11 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
   const [submitting, setSubmitting] = useState(false);
   // Evita que dos toques muy seguidos envien dos solicitudes antes de que React actualice el boton.
   const submitInFlight = useRef(false);
+  // Conservan la misma operacion si la red se corta y el usuario vuelve a tocar Guardar.
+  // El backend devolverá la respuesta previa en lugar de crear otro paciente.
+  const createRequestKey = useRef<string | null>(null);
+  const linkRequestKey = useRef<string | null>(null);
+  const createdPacienteId = useRef<number | null>(null);
   const [showIOSDatePicker, setShowIOSDatePicker] = useState(false);
   const [relationId, setRelationId] = useState<number | null>(null);
   const [form, setForm] = useState({
@@ -194,36 +202,39 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
     submitInFlight.current = true;
     setSubmitting(true);
     try {
-      const response = await fetch(
-        isEditing ? `${API_URL}/paciente/${pacienteId}` : `${API_URL}/paciente`,
-        {
-          method: isEditing ? 'PATCH' : 'POST',
-          headers,
-          body: JSON.stringify({
-            nombres: form.nombres.trim(),
-            apellidos: form.apellidos.trim(),
-            sexo: form.sexo,
-            telefono: form.telefono.trim() || undefined,
-            email: form.email.trim() || undefined,
-            fechanacimiento: form.fechaNacimiento || undefined,
-            creadopor: user?.username ?? undefined,
-            modificadopor: isEditing ? user?.username ?? undefined : undefined,
-          }),
-        },
-      );
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(body?.message ?? `Error al ${isEditing ? 'actualizar' : 'crear'} paciente`);
-      }
+      let body: Record<string, unknown> = {};
 
       if (!isEditing) {
-        const newPacienteId = body?.pacienteId ?? body?.pacienteid ?? body?.id ?? body?.paciente?.pacienteId;
+        if (!createdPacienteId.current) {
+          createRequestKey.current ??= createIdempotencyKey('patient-create');
+          const response = await fetch(`${API_URL}/paciente`, {
+            method: 'POST',
+            headers: { ...headers, 'Idempotency-Key': createRequestKey.current },
+            body: JSON.stringify({
+              nombres: form.nombres.trim(),
+              apellidos: form.apellidos.trim(),
+              sexo: form.sexo,
+              telefono: form.telefono.trim() || undefined,
+              email: form.email.trim() || undefined,
+              fechanacimiento: form.fechaNacimiento || undefined,
+              creadopor: user?.username ?? undefined,
+            }),
+          });
+          body = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error((body as { message?: string })?.message ?? 'Error al crear paciente');
+          const newPacienteId = Number((body as any)?.pacienteId ?? (body as any)?.pacienteid ?? (body as any)?.id ?? (body as any)?.paciente?.pacienteId);
+          if (!newPacienteId) throw new Error('El backend no devolvio el identificador del paciente');
+          createdPacienteId.current = newPacienteId;
+        }
+
+        const newPacienteId = createdPacienteId.current;
         if (!newPacienteId) {
           throw new Error('El backend no devolvio el identificador del paciente');
         }
+        linkRequestKey.current ??= createIdempotencyKey('patient-link');
         const relationResponse = await fetch(`${API_URL}/usuario-paciente`, {
           method: 'POST',
-          headers,
+          headers: { ...headers, 'Idempotency-Key': linkRequestKey.current },
           body: JSON.stringify({
             pacienteId: newPacienteId,
             parentesco: form.parentesco.trim() || undefined,
@@ -234,7 +245,25 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         if (!relationResponse.ok) {
           throw new Error(relationBody?.message ?? 'No se pudo vincular el paciente al usuario');
         }
-      } else if (relationId) {
+      } else {
+        const response = await fetch(`${API_URL}/paciente/${pacienteId}`, {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify({
+            nombres: form.nombres.trim(),
+            apellidos: form.apellidos.trim(),
+            sexo: form.sexo,
+            telefono: form.telefono.trim() || undefined,
+            email: form.email.trim() || undefined,
+            fechanacimiento: form.fechaNacimiento || undefined,
+            modificadopor: user?.username ?? undefined,
+          }),
+        });
+        body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error((body as { message?: string })?.message ?? 'Error al actualizar paciente');
+      }
+
+      if (isEditing && relationId) {
         const relationResponse = await fetch(`${API_URL}/usuario-paciente/${relationId}`, {
           method: 'PATCH',
           headers,
@@ -259,7 +288,14 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         [{ text: 'OK', onPress: () => navigation.goBack() }],
       );
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo guardar');
+      if (!isEditing && createdPacienteId.current) {
+        Alert.alert(
+          'Paciente creado',
+          'El paciente ya fue creado. Solo falta vincularlo a tu cuenta; vuelve a presionar Guardar para reintentar el vínculo. No se creará un duplicado.',
+        );
+      } else {
+        Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo guardar');
+      }
     } finally {
       setSubmitting(false);
       submitInFlight.current = false;
