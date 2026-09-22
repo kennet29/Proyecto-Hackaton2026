@@ -456,14 +456,6 @@ const managementOptions: OptionItem[] = [
     navigateTo: 'RecordatorioList',
   },
   {
-    key: 'educacion',
-    label: 'Educacion Saludable',
-    description: 'Revisa guias, niveles y contenido educativo',
-    icon: 'book-outline',
-    accent: '#FF4D73',
-    navigateTo: 'Educacion',
-  },
-  {
     key: 'contacto',
     label: 'Contacto y Soporte',
     description: 'Canales de ayuda y soporte general',

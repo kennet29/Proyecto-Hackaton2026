@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useBackgroundMode } from '../context/BackgroundModeContext';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { getTokenPacienteId } from '../utils/jwt';
+import { getNanoAppearance, NanoAppearancePreview } from './NanoAppearancePreview';
 
 type PhysicalSummary = { peso?: { actual: number | null; cambio: number | null }; ejercicio?: { minutosTotales: number | null; pasosPromedio: number | null } };
 type MentalStats = { promedioSemanal?: { estadoAnimo?: number | null; estres?: number | null; horasSueno?: number | null }; weekly?: { estadoAnimo?: number | null; estres?: number | null; horasSueno?: number | null } };
@@ -103,6 +104,52 @@ export function DashboardBienestar({ navigation }: Props) {
     { title: 'Alimentación y peso', score: nutritionScore, icon: 'nutrition-outline' as const, color: '#F5B942', detail: nutritionScore === null ? 'Registra tu hidratación para calcularlo' : `Hidratación ${hydration} L · ${valueLabel(physical?.peso?.cambio, ' kg')}`, route: 'NanoConsejero' },
   ];
 
+  if (!loading && !error && patients.length === 0) {
+    return (
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, styles.emptyContent]}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} tintColor="#0B6FEA" />}
+      >
+        <View style={[styles.emptyCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <View style={styles.nanoHalo}>
+            <NanoAppearancePreview appearance={getNanoAppearance('base')} size={92} />
+          </View>
+          <View style={styles.emptyCopy}>
+            <AppText style={[styles.emptyEyebrow, { color: theme.muted }]}>NANO TE AYUDA</AppText>
+            <AppText style={[styles.emptyTitle, { color: theme.title }]}>Primero registra a una persona</AppText>
+            <AppText style={[styles.emptyText, { color: theme.text }]}>
+              Aún no tienes a ninguna persona registrada. Necesito esos datos para personalizar el panel y cuidar su información de salud.
+            </AppText>
+            <View style={styles.stepsRow}>
+              {[
+                ['1', 'Datos básicos'],
+                ['2', 'Contacto'],
+                ['3', 'Vínculo'],
+              ].map(([number, label]) => (
+                <View key={number} style={styles.stepItem}>
+                  <View style={styles.stepNumber}><AppText style={styles.stepNumberText}>{number}</AppText></View>
+                  <AppText style={[styles.stepLabel, { color: theme.text }]}>{label}</AppText>
+                </View>
+              ))}
+            </View>
+            <AppText style={[styles.emptyHelp, { color: theme.muted }]}>Te acompañaré paso a paso. Solo te pediré primero los datos indispensables.</AppText>
+            <TouchableOpacity
+              style={styles.emptyButton}
+              onPress={() => navigation.navigate('PacienteEditor')}
+              accessibilityRole="button"
+              accessibilityLabel="Registrar la primera persona con ayuda de Nano"
+            >
+              <Ionicons name="person-add-outline" size={20} color="#FFFFFF" />
+              <AppText style={styles.emptyButtonText}>Registrar persona</AppText>
+              <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    );
+  }
+
   return <ScrollView style={styles.scroll} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} tintColor="#0B6FEA" />}>
     <View style={[styles.hero, isWide && styles.heroWide, { backgroundColor: dashboardColor }]}><View style={styles.heroCopy}><AppText style={styles.heroTitle}>Bienestar Prime</AppText><AppText style={styles.heroText}>Promedio de salud física, emocional y alimentación.</AppText></View><View style={styles.scoreRing}><AppText style={styles.scoreValue}>{overallScore}</AppText><AppText style={styles.scoreUnit}>/100</AppText></View></View>
     {patients.length > 1 ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.patientRow}>{patients.map((patient) => <TouchableOpacity key={patient.pacienteId} onPress={() => { setSelectedId(patient.pacienteId); setPhysical(null); setMental(null); setHistory(null); }} style={[styles.patientChip, { backgroundColor: theme.chip, borderColor: theme.chipBorder }, patient.pacienteId === selectedId && styles.patientChipActive]}><AppText style={[styles.patientText, { color: theme.text }, patient.pacienteId === selectedId && styles.patientTextActive]}>{patient.displayName}</AppText></TouchableOpacity>)}</ScrollView> : null}
@@ -115,6 +162,21 @@ export function DashboardBienestar({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, width: '100%' }, content: { paddingBottom: 28, gap: 14 }, hero: { borderRadius: 20, borderWidth: 1, borderColor: '#FFFFFF66', padding: 20, flexDirection: 'row', alignItems: 'center', gap: 14 }, heroWide: { paddingHorizontal: 22, paddingVertical: 16 }, heroCopy: { flex: 1 }, badge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, backgroundColor: '#FFFFFF', paddingHorizontal: 10, paddingVertical: 6 }, badgeText: { fontSize: 11, fontWeight: '800' }, heroTitle: { color: '#FFFFFF', fontSize: 25, fontWeight: '900' }, heroText: { color: '#FFFFFFE6', fontSize: 13, lineHeight: 19, marginTop: 5, maxWidth: 650 }, scoreRing: { width: 76, height: 76, borderRadius: 38, borderWidth: 6, borderColor: '#FFFFFF99', backgroundColor: '#FFFFFF24', alignItems: 'center', justifyContent: 'center' }, scoreValue: { color: '#FFFFFF', fontSize: 23, fontWeight: '900', lineHeight: 25 }, scoreUnit: { color: '#FFFFFFD9', fontSize: 10 },
+  emptyContent: { flexGrow: 1, justifyContent: 'center', paddingVertical: 24 },
+  emptyCard: { width: '100%', maxWidth: 920, alignSelf: 'center', borderWidth: 1, borderRadius: 24, padding: 24, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 24 },
+  nanoHalo: { width: 132, height: 132, borderRadius: 66, backgroundColor: '#E8F3FF', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#BBD9FA' },
+  emptyCopy: { flex: 1, minWidth: 260, maxWidth: 620 },
+  emptyEyebrow: { fontSize: 11, fontWeight: '900', letterSpacing: 1.2, marginBottom: 5 },
+  emptyTitle: { fontSize: 24, fontWeight: '900', marginBottom: 8 },
+  emptyText: { fontSize: 14, lineHeight: 21 },
+  stepsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 18 },
+  stepItem: { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 999, backgroundColor: '#EAF4FF', paddingVertical: 7, paddingHorizontal: 10 },
+  stepNumber: { width: 23, height: 23, borderRadius: 12, backgroundColor: '#0B6FEA', alignItems: 'center', justifyContent: 'center' },
+  stepNumberText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
+  stepLabel: { fontSize: 12, fontWeight: '800' },
+  emptyHelp: { fontSize: 12, lineHeight: 18, marginTop: 14 },
+  emptyButton: { alignSelf: 'flex-start', minHeight: 48, marginTop: 18, borderRadius: 14, paddingHorizontal: 17, backgroundColor: '#0B6FEA', flexDirection: 'row', alignItems: 'center', gap: 9 },
+  emptyButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
   patientRow: { gap: 8 }, patientChip: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 }, patientChipActive: { backgroundColor: '#0B6FEA', borderColor: '#0B6FEA' }, patientText: { fontSize: 12, fontWeight: '700' }, patientTextActive: { color: '#FFFFFF' }, loader: { marginVertical: 8 }, error: { color: '#E64A66', textAlign: 'center' }, sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }, sectionTitle: { fontSize: 17, fontWeight: '900' }, sectionMeta: { fontSize: 12, fontWeight: '700' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 }, card: { flexGrow: 1, flexShrink: 1, flexBasis: 300, minHeight: 106, borderRadius: 16, borderWidth: 1, paddingHorizontal: 18, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 14 }, cardWide: { minHeight: 106 }, cardIcon: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' }, cardInfo: { flex: 1, minWidth: 0, gap: 4 }, cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 }, cardTitle: { fontSize: 14, fontWeight: '900', flex: 1 }, cardScore: { fontSize: 12, fontWeight: '900' }, cardDetail: { fontSize: 11, lineHeight: 16 },
   tipCard: { flexDirection: 'row', gap: 11, borderWidth: 1, borderRadius: 16, padding: 15 }, tipCopy: { flex: 1 }, tipTitle: { fontSize: 13, fontWeight: '900' }, tipText: { fontSize: 12, lineHeight: 17, marginTop: 3 },

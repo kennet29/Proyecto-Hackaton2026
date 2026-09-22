@@ -150,6 +150,24 @@ describe("NanoService", () => {
     });
   });
 
+  it("corrige una sustitucion para usar el arroz blanco indicado por el usuario", async () => {
+    gateway.generateText
+      .mockResolvedValueOnce({
+        text: JSON.stringify({ title: "Pollo con arroz", servings: "1 porcion", time: "25 minutos", ingredients: ["Pollo", "Arroz integral (puedes usar arroz blanco si no tienes)", "Zanahoria"], steps: ["Cocina el arroz integral.", "Sirve con el pollo."], nanoTip: "Acompana con verduras para sumar fibra." }),
+        model: "test-model",
+      })
+      .mockResolvedValueOnce({
+        text: JSON.stringify({ title: "Pollo con arroz blanco y zanahoria", servings: "1 porcion", time: "25 minutos", ingredients: ["Pollo", "Arroz blanco", "Zanahoria"], steps: ["Cocina el arroz blanco.", "Sirve con el pollo y la zanahoria."], nanoTip: "Acompana con verduras para sumar fibra." }),
+        model: "test-model",
+      });
+
+    const result = await service.createRecipe({ goalKey: "weight-loss", goalLabel: "Ligera y saciante", ingredients: "pollo, arroz blanco, zanahoria" } as CreateRecipeDto);
+
+    expect(gateway.generateText).toHaveBeenCalledTimes(2);
+    expect(gateway.generateText.mock.calls[1][0]).toContain("arroz blanco");
+    expect(result.recipe.ingredients).toContain("Arroz blanco");
+  });
+
   it("genera una rutina semanal estructurada con siete dias", async () => {
     const weeklyDays = [
       "Lunes",

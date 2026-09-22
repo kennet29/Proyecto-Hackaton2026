@@ -29,6 +29,7 @@ import type { RootStackParamList } from '../navigation/types';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { getJsonWithOfflineFallback } from '../utils/offlineReadCache';
+import { composeLocalDateTime } from '../utils/localDate';
 import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type RegistroDentalRecord = {
@@ -823,8 +824,10 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
   };
 
   const handleSubmit = async () => {
-    const fechaAtencion = `${dateValue}T${timeValue}`;
-    const fechaNotificacion = `${notificationDate}T${notificationTime}`;
+    // Enviamos el desfase horario explícito. Sin él, el servidor y el
+    // programador local pueden interpretar la hora elegida como UTC.
+    const fechaAtencion = composeLocalDateTime(dateValue, timeValue);
+    const fechaNotificacion = composeLocalDateTime(notificationDate, notificationTime);
     if (!form.pacienteId || !fechaAtencion || !form.procedimiento.trim()) {
       Alert.alert('Faltan datos', 'Paciente, fecha y procedimiento son obligatorios');
       return;

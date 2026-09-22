@@ -3,8 +3,6 @@
  * @description TypeScript module implementation.
  */
 
-import { NivelEducativoId } from '../data/educacion';
-
 export type RootStackParamList = {
   IniciarSesion: undefined;
   Login: { afterLogin?: 'MedicoRegistro' | 'AdminSolicitudes' | 'AdminClinicas' } | undefined;
@@ -99,8 +97,5 @@ export type RootStackParamList = {
   AdminInstituciones: undefined;
   AdminPagos: undefined;
   AdminServerLogs: undefined;
-  Educacion: undefined;
-  EducacionNivel: { nivelId: NivelEducativoId };
-  EducacionTema: { nivelId: NivelEducativoId; temaId: string };
   Registro: undefined;
 };

@@ -118,15 +118,32 @@ export class NanoService {
 
     let recipe: z.infer<typeof recipeSchema>;
     try {
-      const cleaned = providerResponse.text
-        .trim()
-        .replace(/^```(?:json)?\s*/i, "")
-        .replace(/\s*```$/, "");
-      recipe = recipeSchema.parse(JSON.parse(cleaned));
+      recipe = this.parseRecipe(providerResponse.text);
     } catch {
       throw new BadGatewayException(
         "Nano Chef devolvio una receta con formato invalido.",
       );
+    }
+
+    const requiredIngredients = this.parseRequiredIngredients(payload.ingredients);
+    if (requiredIngredients.length && !this.usesAllRequiredIngredients(recipe, requiredIngredients)) {
+      const correctionPrompt = [
+        prompt,
+        "CORRECCION OBLIGATORIA: La receta anterior no uso todos los ingredientes disponibles como ingredientes principales.",
+        `Debes incluir exactamente estos ingredientes del usuario en la lista, sin sustituirlos ni ponerlos como alternativa: ${requiredIngredients.join(", ")}.`,
+        "Devuelve de nuevo solo el JSON completo con el esquema solicitado.",
+        `Receta anterior a corregir: ${JSON.stringify(recipe)}.`,
+      ].join(" ");
+      const correctedResponse = await this.analysisGateway.generateText(correctionPrompt);
+      try {
+        recipe = this.parseRecipe(correctedResponse.text);
+      } catch {
+        throw new BadGatewayException("Nano Chef no pudo corregir la receta con los ingredientes disponibles.");
+      }
+
+      if (!this.usesAllRequiredIngredients(recipe, requiredIngredients)) {
+        throw new BadGatewayException("Nano Chef no pudo usar todos los ingredientes disponibles en la receta.");
+      }
     }
 
     return {
@@ -134,6 +151,48 @@ export class NanoService {
       goalLabel: payload.goalLabel,
       model: providerResponse.model,
     };
+  }
+
+  private parseRecipe(raw: string | null | undefined): z.infer<typeof recipeSchema> {
+    if (!raw) throw new Error("respuesta vacia");
+    const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    return recipeSchema.parse(JSON.parse(cleaned));
+  }
+
+  private parseRequiredIngredients(ingredients?: string): string[] {
+    if (!ingredients) return [];
+    return [...new Set(ingredients.split(/[,;\n]+/).map((item) => item.trim()).filter(Boolean))];
+  }
+
+  /** Verifica que cada ingrediente aportado aparezca como ingrediente real, no como una sugerencia. */
+  private usesAllRequiredIngredients(recipe: z.infer<typeof recipeSchema>, requiredIngredients: string[]): boolean {
+    return requiredIngredients.every((required) => {
+      const requiredTerms = this.ingredientTerms(required);
+      if (!requiredTerms.length) return true;
+      return recipe.ingredients.some((ingredient) => {
+        const normalizedIngredient = this.normalizeIngredient(ingredient);
+        const isMentioned = requiredTerms.every((term) => normalizedIngredient.includes(term));
+        const isAlternative = /\b(puedes usar|sustitu[yi]|reemplaz[ae]|alternativa|en lugar de)\b/i.test(ingredient);
+        return isMentioned && !isAlternative;
+      });
+    });
+  }
+
+  private ingredientTerms(value: string): string[] {
+    const ignored = new Set(["de", "del", "la", "el", "los", "las", "un", "una", "y", "g", "gr", "gramos", "kg", "taza", "tazas", "cucharada", "cucharadas"]);
+    return this.normalizeIngredient(value).split(" ").filter((term) => term.length > 1 && !ignored.has(term));
+  }
+
+  private normalizeIngredient(value: string): string {
+    return value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .split(" ")
+      .filter(Boolean)
+      .map((word) => word.endsWith("s") && word.length > 3 ? word.slice(0, -1) : word)
+      .join(" ");
   }
 
   async createTrainingPlan(payload: CreateTrainingPlanDto, pacienteId?: number) {

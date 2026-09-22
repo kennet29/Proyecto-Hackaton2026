@@ -59,9 +59,6 @@ import { RegistroDentalCreateScreen } from './src/screens/RegistroDentalCreateSc
 import { RecordatorioListScreen } from './src/screens/RecordatorioListScreen';
 import { PacienteResumenScreen } from './src/screens/PacienteResumenScreen';
 import { ExpedienteGestionScreen } from './src/screens/ExpedienteGestionScreen';
-import { EducacionScreen } from './src/screens/EducacionScreen';
-import { EducacionNivelScreen } from './src/screens/EducacionNivelScreen';
-import { EducacionTemaScreen } from './src/screens/EducacionTemaScreen';
 import { RegistroScreen } from './src/screens/RegistroScreen';
 import { AlergiaScreen } from './src/screens/AlergiaScreen';
 import { AlergiaCreateScreen } from './src/screens/AlergiaCreateScreen';
@@ -212,9 +209,6 @@ const linking: LinkingOptions<RootStackParamList> = {
       Habitos: 'habitos',
       SeguimientoFisico: 'seguimiento-fisico',
       SeguimientoFisicoForm: 'seguimiento-fisico/nuevo',
-      Educacion: 'educacion',
-      EducacionNivel: 'educacion/nivel',
-      EducacionTema: 'educacion/tema',
       RecordatorioList: 'recordatorios',
       SobreNosotros: 'sobre-nosotros',
       Contacto: 'contacto',
@@ -477,21 +471,6 @@ const PrivateNavigator = () => {
         name="SeguimientoFisicoForm"
         component={SeguimientoFisicoFormScreen}
         options={{ title: 'Nuevo Seguimiento Fisico' }}
-      />
-      <Stack.Screen
-        name="Educacion"
-        component={EducacionScreen}
-        options={{ title: 'Academia Saludable' }}
-      />
-      <Stack.Screen
-        name="EducacionNivel"
-        component={EducacionNivelScreen}
-        options={{ title: 'Detalle del Nivel' }}
-      />
-      <Stack.Screen
-        name="EducacionTema"
-        component={EducacionTemaScreen}
-        options={{ title: 'Detalle del Tema' }}
       />
       <Stack.Screen
         name="RecordatorioList"

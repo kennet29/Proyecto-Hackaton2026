@@ -49,8 +49,10 @@ export class NanoPromptBuilder {
       "Incluye entre 3 y 10 ingredientes y entre 3 y 7 pasos cortos de preparacion.",
       allowNanoRecommendations
         ? "El usuario no tiene ingredientes definidos. Elige ingredientes comunes, accesibles y adecuados al objetivo; incluyelos claramente en la receta."
-        : "Usa exclusivamente los ingredientes indicados y menciona sustitutos solo como alternativas.",
-      "Propón alternativas sencillas si falta un ingrediente esencial, sin inventar que el usuario tiene ingredientes que no mencionó.",
+        : "Usa cada ingrediente indicado como ingrediente principal de la receta. No lo reemplaces, no lo omitas ni lo presentes como sustituto de otro alimento. En la lista de ingredientes escribe el alimento que el usuario tiene; por ejemplo, si indica arroz blanco, escribe arroz blanco y nunca arroz integral con arroz blanco entre parentesis. Solo puedes anadir basicos de despensa indispensables, como agua, sal, pimienta o una pequena cantidad de aceite.",
+      allowNanoRecommendations
+        ? "Propón alternativas sencillas si falta un ingrediente esencial, sin inventar que el usuario tiene ingredientes que no mencionó."
+        : "No propongas sustitutos: utiliza los ingredientes escritos por el usuario.",
       `Objetivo del usuario: ${goalLabel}.`,
       allowNanoRecommendations
         ? "Importante: como no hay ingredientes disponibles, debes recomendar una receta completa con ingredientes propuestos por ti y alineados al objetivo."

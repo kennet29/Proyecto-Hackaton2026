@@ -106,6 +106,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
   const linkRequestKey = useRef<string | null>(null);
   const createdPacienteId = useRef<number | null>(null);
   const [showIOSDatePicker, setShowIOSDatePicker] = useState(false);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [relationId, setRelationId] = useState<number | null>(null);
   const [form, setForm] = useState({
     nombres: '',
@@ -305,6 +306,14 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
     }
   };
 
+  const continueRegistration = () => {
+    if (step === 1 && (!form.nombres.trim() || !form.apellidos.trim() || !form.sexo)) {
+      Alert.alert('Completa este paso', 'Escribe los nombres, apellidos y selecciona el género para continuar.');
+      return;
+    }
+    setStep((current) => Math.min(3, current + 1) as 1 | 2 | 3);
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingScreen}>
@@ -318,11 +327,37 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
     <ScrollView contentContainerStyle={styles.container}>
       <AppText style={styles.title}>{isEditing ? 'Editar Paciente' : 'Nuevo Paciente'}</AppText>
       <AppText style={styles.subtitle}>
-        {isEditing ? `Paciente #${pacienteId}` : 'Completa los datos para vincularlo a tu cuenta.'}
+        {isEditing ? `Paciente #${pacienteId}` : 'Nano te ayudará a completar los datos paso a paso.'}
       </AppText>
+
+      {!isEditing ? (
+        <View style={styles.wizardHeader}>
+          <View style={styles.wizardProgress}>
+            {[1, 2, 3].map((item) => (
+              <React.Fragment key={item}>
+                <View style={[styles.wizardDot, step >= item && styles.wizardDotActive]}>
+                  <AppText style={[styles.wizardDotText, step >= item && styles.wizardDotTextActive]}>{item}</AppText>
+                </View>
+                {item < 3 ? <View style={[styles.wizardLine, step > item && styles.wizardLineActive]} /> : null}
+              </React.Fragment>
+            ))}
+          </View>
+          <AppText style={styles.wizardTitle}>
+            {step === 1 ? 'Datos básicos' : step === 2 ? 'Contacto y nacimiento' : 'Relación con tu cuenta'}
+          </AppText>
+          <AppText style={styles.wizardHint}>
+            {step === 1
+              ? 'Comencemos por identificar a la persona.'
+              : step === 2
+                ? 'Estos datos son opcionales y puedes completarlos después.'
+                : 'Indica qué relación tiene contigo y confirma el registro.'}
+          </AppText>
+        </View>
+      ) : null}
 
       <AppText style={styles.requiredHint}>Los campos con * son obligatorios.</AppText>
 
+      {isEditing || step === 1 ? <>
       <FieldLabel required>Nombres</FieldLabel>
       <AppTextInput
         style={styles.input}
@@ -357,7 +392,9 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
           <Picker.Item label="Masculino" value="M" />
         </Picker>
       </View>
+      </> : null}
 
+      {isEditing || step === 2 ? <>
       <FieldLabel>Teléfono</FieldLabel>
       <AppTextInput
         style={styles.input}
@@ -405,7 +442,9 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
           }}
         />
       ) : null}
+      </> : null}
 
+      {isEditing || step === 3 ? <>
       <FieldLabel>Parentesco con el titular</FieldLabel>
       <AppTextInput
         style={styles.input}
@@ -424,17 +463,30 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
           thumbColor={form.esPrincipal ? colors.info : undefined}
         />
       </View>
+      </> : null}
 
-      <TouchableOpacity
-        style={[styles.primaryBtn, submitting && styles.primaryBtnDisabled]}
-        onPress={handleSubmit}
-        disabled={submitting}
-        accessibilityState={{ disabled: submitting }}
-      >
-        <AppText style={styles.btnText}>
-          {submitting ? 'Guardando...' : isEditing ? 'Actualizar Paciente' : 'Guardar Paciente'}
-        </AppText>
-      </TouchableOpacity>
+      {!isEditing && step > 1 ? (
+        <TouchableOpacity style={styles.backBtn} onPress={() => setStep((step - 1) as 1 | 2)} disabled={submitting}>
+          <AppText style={styles.backBtnText}>Volver al paso anterior</AppText>
+        </TouchableOpacity>
+      ) : null}
+
+      {!isEditing && step < 3 ? (
+        <TouchableOpacity style={styles.primaryBtn} onPress={continueRegistration}>
+          <AppText style={styles.btnText}>Continuar</AppText>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={[styles.primaryBtn, submitting && styles.primaryBtnDisabled]}
+          onPress={handleSubmit}
+          disabled={submitting}
+          accessibilityState={{ disabled: submitting }}
+        >
+          <AppText style={styles.btnText}>
+            {submitting ? 'Guardando...' : isEditing ? 'Actualizar Paciente' : 'Guardar y finalizar'}
+          </AppText>
+        </TouchableOpacity>
+      )}
     </ScrollView>
   );
 }
@@ -470,6 +522,63 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     marginBottom: 20,
+  },
+  wizardHeader: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    padding: 16,
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  wizardProgress: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  wizardDot: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.backgroundMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wizardDotActive: {
+    backgroundColor: colors.info,
+    borderColor: colors.info,
+  },
+  wizardDotText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  wizardDotTextActive: {
+    color: '#FFFFFF',
+  },
+  wizardLine: {
+    flex: 1,
+    height: 3,
+    backgroundColor: colors.border,
+    marginHorizontal: 7,
+    borderRadius: 2,
+  },
+  wizardLineActive: {
+    backgroundColor: colors.info,
+  },
+  wizardTitle: {
+    color: colors.text,
+    fontSize: 17,
+    fontWeight: '900',
+  },
+  wizardHint: {
+    color: colors.textSoft,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 4,
   },
   label: {
     fontSize: 14,
@@ -526,6 +635,16 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   primaryBtnDisabled: {
     opacity: 0.65,
+  },
+  backBtn: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  backBtnText: {
+    color: colors.info,
+    fontWeight: '800',
+    fontSize: 14,
   },
   btnText: {
     color: colors.text,
