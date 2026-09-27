@@ -8,6 +8,7 @@ Landing page
 scripts
 
 # Exclude generated output in every workspace package.
+node_modules
 .expo
 .expo-*
 dist
