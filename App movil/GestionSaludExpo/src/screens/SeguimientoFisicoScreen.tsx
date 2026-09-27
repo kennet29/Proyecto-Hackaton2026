@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import { AppText } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import { Calendar, DateData } from 'react-native-calendars';
@@ -670,7 +671,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
       >
         <View style={styles.hero}>
           <View style={styles.heroIcon}>
-            <Ionicons name="fitness-outline" size={26} color={colors.info} />
+            <NanoSectionIllustration section="seguimiento-fisico" size={62} />
           </View>
           <View style={styles.heroCopy}>
             <AppText style={styles.heroEyebrow}>BIENESTAR Y ACTIVIDAD</AppText>

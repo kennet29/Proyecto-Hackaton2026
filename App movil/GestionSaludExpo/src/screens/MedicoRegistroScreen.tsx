@@ -20,6 +20,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
@@ -373,7 +374,7 @@ export function MedicoRegistroScreen({ navigation }: Props) {
     return (
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.heroIcon}>
-          <Ionicons name="medkit-outline" size={36} color={statusColor} />
+          <NanoSectionIllustration section="solicitud-medica" size={72} />
         </View>
         <AppText style={styles.title}>Solicitud médica</AppText>
         <AppText style={styles.subtitle}>Ya tienes una solicitud registrada en el sistema.</AppText>
@@ -423,7 +424,7 @@ export function MedicoRegistroScreen({ navigation }: Props) {
       <View style={styles.shell}>
         <View style={[styles.hero, isDesktop && styles.heroDesktop]}>
           <View style={[styles.heroIcon, isDesktop && styles.heroIconDesktop]}>
-            <Ionicons name="medkit-outline" size={32} color={colors.info} />
+            <NanoSectionIllustration section="solicitud-medica" size={72} />
           </View>
           <View style={styles.heroCopy}>
             <AppText style={styles.eyebrow}>SOLICITUD PROFESIONAL</AppText>

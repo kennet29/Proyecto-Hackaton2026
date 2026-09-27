@@ -152,6 +152,22 @@ export function NanoHistorialScreen({}: Props) {
                   </View>
                 ) : null}
 
+                {item.glycemicAnalysis ? (
+                  <View style={styles.glycemicHistoryCard}>
+                    <View>
+                      <AppText style={styles.glycemicHistoryLabel}>Carga glucémica estimada</AppText>
+                      <AppText style={styles.glycemicHistoryValue}>{item.glycemicAnalysis.glycemicLoad}</AppText>
+                    </View>
+                    <View style={styles.glycemicHistoryMeta}>
+                      <AppText style={styles.glycemicHistoryMetaText}>IG {item.glycemicAnalysis.estimatedGlycemicIndex}</AppText>
+                      <AppText style={styles.glycemicHistoryMetaText}>{item.glycemicAnalysis.availableCarbohydratesGrams} g disponibles</AppText>
+                      <AppText style={styles.glycemicHistoryMetaText}>
+                        {item.glycemicAnalysis.level === 'low' ? 'Baja' : item.glycemicAnalysis.level === 'medium' ? 'Media' : 'Alta'}
+                      </AppText>
+                    </View>
+                  </View>
+                ) : null}
+
                 {item.micronutrients?.length ? (
                   <View style={styles.microWrap}>
                     {item.micronutrients.slice(0, 4).map((micro) => (
@@ -188,6 +204,11 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
+  glycemicHistoryCard: { marginTop: 12, padding: 13, borderRadius: 15, borderWidth: 1, borderColor: '#F59E0B66', backgroundColor: '#FFFBEB', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  glycemicHistoryLabel: { color: '#78530A', fontSize: 11, fontWeight: '800' },
+  glycemicHistoryValue: { color: '#B45309', fontSize: 24, fontWeight: '900' },
+  glycemicHistoryMeta: { alignItems: 'flex-end', gap: 2 },
+  glycemicHistoryMetaText: { color: '#78530A', fontSize: 10, fontWeight: '700' },
   scrollContent: {
     padding: 20,
     paddingBottom: 28,

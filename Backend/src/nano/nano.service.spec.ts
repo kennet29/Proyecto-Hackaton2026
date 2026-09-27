@@ -7,6 +7,7 @@ import { BadRequestException } from "@nestjs/common";
 import { AnalyzeMealDto } from "./dto/analyze-meal.dto";
 import { CreateRecipeDto } from "./dto/create-recipe.dto";
 import { CreateTrainingPlanDto } from "./dto/create-training-plan.dto";
+import { CreateCalmMissionsDto } from "./dto/create-calm-missions.dto";
 import { MealAnalysisGateway } from "./meal-analysis.gateway";
 import { NanoAnalysisParser } from "./nano-analysis.parser";
 import { optimizeNanoImage } from "./nano-image.optimizer";
@@ -220,6 +221,35 @@ describe("NanoService", () => {
       goalLabel: "Ponerse en forma",
     });
     expect(result.plan.weeklyDays).toHaveLength(7);
+  });
+
+  it("genera tres misiones breves de calma con una respuesta estructurada", async () => {
+    gateway.generateText.mockResolvedValue({
+      text: JSON.stringify({
+        intro: "Nano preparó tres pasos pequeños para este momento.",
+        missions: [
+          { title: "Respira despacio", instruction: "Inhala cuatro segundos y exhala seis, cinco veces.", durationMinutes: 2, category: "respiracion" },
+          { title: "Mira alrededor", instruction: "Nombra cinco objetos que puedas ver desde donde estás.", durationMinutes: 3, category: "entorno" },
+          { title: "Escribe a alguien", instruction: "Envía un saludo breve a una persona de confianza.", durationMinutes: 4, category: "conexion" },
+        ],
+        safetyNote: "Estas misiones no reemplazan la atención de un profesional de salud.",
+      }),
+      model: "test-model",
+    });
+
+    const result = await service.createCalmMissions({
+      emotion: "Ansioso",
+      stressLevel: 5,
+      anxietyLevel: 4,
+      context: "Tuve un día difícil",
+    } as CreateCalmMissionsDto);
+
+    expect(gateway.generateText).toHaveBeenCalledWith(
+      expect.stringContaining("Estrés: 5 de 5"),
+      900,
+    );
+    expect(result.missions).toHaveLength(3);
+    expect(result.missions[0]).toMatchObject({ category: "respiracion", durationMinutes: 2 });
   });
 
   it("acepta variantes frecuentes de los campos de una rutina generada", async () => {

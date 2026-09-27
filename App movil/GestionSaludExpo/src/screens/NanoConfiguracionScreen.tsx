@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { AppText } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -74,7 +75,7 @@ export function NanoConfiguracionScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.hero}>
         <View style={styles.heroIcon}>
-          <Ionicons name="color-palette-outline" size={27} color={colors.accent} />
+          <NanoSectionIllustration section="store" size={64} />
         </View>
         <View style={styles.heroCopy}>
           <AppText style={styles.eyebrow}>CONFIGURACIÓN</AppText>

@@ -24,6 +24,15 @@ export type NanoHistoryMicronutrient = {
   dailyValuePercent: number;
 };
 
+export type NanoHistoryGlycemicAnalysis = {
+  estimatedGlycemicIndex: number;
+  availableCarbohydratesGrams: number;
+  glycemicLoad: number;
+  level: 'low' | 'medium' | 'high';
+  explanation: string;
+  suggestions: string[];
+};
+
 export type NanoHistoryEntry = {
   id: string;
   createdAt: string;
@@ -33,6 +42,7 @@ export type NanoHistoryEntry = {
   userNote?: string | null;
   macronutrients: NanoHistoryMacronutrients | null;
   micronutrients: NanoHistoryMicronutrient[] | null;
+  glycemicAnalysis?: NanoHistoryGlycemicAnalysis | null;
 };
 
 export async function getNanoHistory() {

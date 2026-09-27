@@ -49,4 +49,35 @@ describe("NanoAnalysisParser", () => {
       BadGatewayException,
     );
   });
+
+  it("normaliza y expone la carga glucemica para el objetivo diabetes", () => {
+    const analysis = parser.parse(JSON.stringify({
+      is_food: true,
+      summary: "Plato con una carga glucémica media estimada que puede mejorarse aumentando la fibra.",
+      macronutrients: { calories: 420, carbohydrates_g: 45, protein_g: 22, fat_g: 14, fiber_g: 8, sugar_g: 7 },
+      micronutrients: [
+        { key: "hierro", label: "Hierro", amount: "4 mg", dailyValuePercent: 22 },
+        { key: "potasio", label: "Potasio", amount: "500 mg", dailyValuePercent: 12 },
+        { key: "magnesio", label: "Magnesio", amount: "80 mg", dailyValuePercent: 19 },
+      ],
+      glycemic_analysis: {
+        estimated_glycemic_index: 55,
+        available_carbohydrates_g: 37,
+        glycemic_load: 20.4,
+        level: "high",
+        explanation: "El arroz aporta la mayor parte de los carbohidratos disponibles del plato.",
+        suggestions: ["Reduce la porción de arroz.", "Agrega más vegetales y proteína."],
+      },
+    }));
+
+    if (!analysis.is_food) throw new Error("Se esperaba un análisis de comida");
+    const result = parser.toMealResult(analysis, { goalKey: "diabetes", goalLabel: "Diabetes", model: "test" });
+
+    expect(result.glycemicAnalysis).toMatchObject({
+      estimatedGlycemicIndex: 55,
+      availableCarbohydratesGrams: 37,
+      glycemicLoad: 20.4,
+      level: "high",
+    });
+  });
 });

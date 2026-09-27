@@ -16,6 +16,7 @@ import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system/legacy';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
 import { AppColors, useAppColors } from '../theme/useAppColors';
@@ -88,7 +89,7 @@ export function NanoBibliotecaScreen({ navigation }: Props) {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={[styles.container, isWebWide && styles.containerWeb]} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.headerIcon}><Ionicons name="library-outline" size={25} color={colors.onAccent} /></View>
+          <View style={styles.headerIcon}><NanoSectionIllustration section="biblioteca" size={54} /></View>
           <View style={styles.headerCopy}>
             <AppText style={styles.eyebrow}>Guías para cuidarte</AppText>
             <AppText style={styles.title}>Nano Biblioteca</AppText>
@@ -100,7 +101,7 @@ export function NanoBibliotecaScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.infoCard}>
-          <Ionicons name="book-outline" size={22} color={colors.info} />
+          <NanoSectionIllustration section="guias-medicas" size={52} />
           <AppText style={styles.infoText}>Explora las guías disponibles y abre cualquier documento para leerlo en tu dispositivo.</AppText>
         </View>
 

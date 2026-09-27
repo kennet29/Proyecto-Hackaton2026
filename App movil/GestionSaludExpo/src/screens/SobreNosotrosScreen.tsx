@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { AppText } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { AppColors, useAppColors } from '../theme/useAppColors';
 
 export function SobreNosotrosScreen() {
@@ -14,7 +15,10 @@ export function SobreNosotrosScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <AppText style={styles.title}>Sobre Nosotros</AppText>
+      <View style={styles.header}>
+        <NanoSectionIllustration section="sobre-nosotros" size={92} />
+        <AppText style={styles.title}>Sobre Nosotros</AppText>
+      </View>
       <AppText style={styles.paragraph}>
         Gestion Salud nace para centralizar tus historiales clinicos, recordatorios de medicamentos y
         seguimientos cronicos. Empoderamos al paciente con herramientas simples y seguras.
@@ -48,6 +52,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     backgroundColor: colors.background,
     gap: 14,
   },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   title: {
     fontSize: 28,
     fontWeight: '800',

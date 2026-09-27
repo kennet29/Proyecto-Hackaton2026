@@ -9,10 +9,14 @@ import { useBackgroundMode } from '../context/BackgroundModeContext';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { getTokenPacienteId } from '../utils/jwt';
 import { getNanoAppearance, NanoAppearancePreview } from './NanoAppearancePreview';
+import { NanoSectionIllustration, NanoSection } from './NanoSectionIllustration';
+import { toLocalDateOnlyString } from '../utils/localDate';
 
 type PhysicalSummary = { peso?: { actual: number | null; cambio: number | null }; ejercicio?: { minutosTotales: number | null; pasosPromedio: number | null } };
 type MentalStats = { promedioSemanal?: { estadoAnimo?: number | null; estres?: number | null; horasSueno?: number | null }; weekly?: { estadoAnimo?: number | null; estres?: number | null; horasSueno?: number | null } };
 type MentalHistory = { historialPorFecha?: Array<{ hidratacionLitros?: number | null }> };
+type HabitRecord = { pacienteId: number; tipohabitoId: number; cantidad?: number | null; unidad?: string | null; inicio?: string | null };
+type HabitType = { tipohabitoId: number; nombre: string; categoria?: string | null };
 type Props = { navigation: { navigate: (screen: string) => void } };
 const clamp = (value: number) => Math.max(0, Math.min(100, Math.round(value)));
 const valueLabel = (value?: number | null, suffix = '') => value == null ? 'Sin datos' : `${value}${suffix}`;
@@ -41,6 +45,8 @@ export function DashboardBienestar({ navigation }: Props) {
   const [physical, setPhysical] = useState<PhysicalSummary | null>(null);
   const [mental, setMental] = useState<MentalStats | null>(null);
   const [history, setHistory] = useState<MentalHistory | null>(null);
+  const [habits, setHabits] = useState<HabitRecord[]>([]);
+  const [habitTypes, setHabitTypes] = useState<HabitType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef(0);
@@ -73,16 +79,22 @@ export function DashboardBienestar({ navigation }: Props) {
         ? selectedId
         : linkedPrincipal?.pacienteId ?? preferredId ?? available[0]?.pacienteId ?? null;
       setSelectedId(patientId);
-      if (!patientId) { setPhysical(null); setMental(null); setHistory(null); return; }
-      const [physicalResponse, mentalResponse, historyResponse] = await Promise.all([
+      if (!patientId) { setPhysical(null); setMental(null); setHistory(null); setHabits([]); setHabitTypes([]); return; }
+      const [physicalResponse, mentalResponse, historyResponse, habitsResponse, habitTypesResponse] = await Promise.all([
         fetch(`${API_URL}/seguimientofisico/paciente/${patientId}/resumen`, { headers }),
         fetch(`${API_URL}/salud-mental/paciente/${patientId}/estadisticas`, { headers }),
         fetch(`${API_URL}/salud-mental/paciente/${patientId}/historial`, { headers }),
+        fetch(`${API_URL}/habitoespecifico`, { headers }),
+        fetch(`${API_URL}/tipohabito`, { headers }),
       ]);
       if (currentRequestId !== requestId.current) return;
       setPhysical(physicalResponse.ok ? await physicalResponse.json() : null);
       setMental(mentalResponse.ok ? await mentalResponse.json() : null);
       setHistory(historyResponse.ok ? await historyResponse.json() : null);
+      const habitRecords = habitsResponse.ok ? await habitsResponse.json() : [];
+      const typeRecords = habitTypesResponse.ok ? await habitTypesResponse.json() : [];
+      setHabits(Array.isArray(habitRecords) ? habitRecords : []);
+      setHabitTypes(Array.isArray(typeRecords) ? typeRecords : []);
     } catch {
       if (currentRequestId === requestId.current) setError('No se pudo actualizar el dashboard. Intenta nuevamente.');
     } finally {
@@ -94,14 +106,30 @@ export function DashboardBienestar({ navigation }: Props) {
   const weekly = mental?.promedioSemanal ?? mental?.weekly;
   const physicalScore = clamp(((physical?.ejercicio?.minutosTotales ?? 0) / 150) * 55 + ((physical?.ejercicio?.pasosPromedio ?? 0) / 8000) * 45);
   const mentalScore = clamp(((weekly?.estadoAnimo ?? 0) / 5) * 55 + (1 - Math.min((weekly?.estres ?? 5) / 5, 1)) * 25 + Math.min((weekly?.horasSueno ?? 0) / 8, 1) * 20);
-  const hydration = history?.historialPorFecha?.[0]?.hidratacionLitros ?? null;
-  const nutritionScore = hydration === null ? null : clamp((hydration / 2) * 100);
-  const overallScore = clamp((physicalScore + mentalScore + (nutritionScore ?? 50)) / 3);
+  const hydrationTypeIds = new Set(habitTypes
+    .filter((type) => /agua|hidrat/i.test(`${type.nombre} ${type.categoria ?? ''}`))
+    .map((type) => type.tipohabitoId));
+  const hydrationRecords = habits.filter((record) =>
+    record.pacienteId === selectedId && hydrationTypeIds.has(record.tipohabitoId));
+  const hydrationDate = hydrationRecords.some((record) => record.inicio === toLocalDateOnlyString())
+    ? toLocalDateOnlyString()
+    : hydrationRecords.map((record) => record.inicio ?? '').sort().at(-1) ?? '';
+  const hydrationFromHabits = hydrationRecords
+    .filter((record) => record.inicio === hydrationDate)
+    .reduce((total, record) => {
+      const amount = Number(record.cantidad ?? 0);
+      return total + ((record.unidad ?? '').toLowerCase().includes('ml') ? amount / 1000 : amount);
+    }, 0);
+  const legacyHydration = history?.historialPorFecha?.[0]?.hidratacionLitros ?? null;
+  const hydration = hydrationFromHabits > 0 ? hydrationFromHabits : legacyHydration;
+  const hydrationScore = hydration === null ? null : clamp((hydration / 2) * 100);
+  const overallScore = clamp((physicalScore + mentalScore + (hydrationScore ?? 50)) / 3);
   const dashboardColor = scoreColor(overallScore);
-  const cards = [
-    { title: 'Salud mental', score: mentalScore, icon: 'heart-outline' as const, color: '#A78BFA', detail: `Ánimo ${valueLabel(weekly?.estadoAnimo, '/5')} · Sueño ${valueLabel(weekly?.horasSueno, ' h')}`, route: 'SaludMental' },
-    { title: 'Actividad y ejercicio', score: physicalScore, icon: 'fitness-outline' as const, color: '#38D996', detail: `${valueLabel(physical?.ejercicio?.minutosTotales, ' min')} · ${valueLabel(physical?.ejercicio?.pasosPromedio, ' pasos')}`, route: 'SeguimientoFisico' },
-    { title: 'Alimentación y peso', score: nutritionScore, icon: 'nutrition-outline' as const, color: '#F5B942', detail: nutritionScore === null ? 'Registra tu hidratación para calcularlo' : `Hidratación ${hydration} L · ${valueLabel(physical?.peso?.cambio, ' kg')}`, route: 'NanoConsejero' },
+  const cards: Array<{ title: string; score: number | null; icon: keyof typeof Ionicons.glyphMap; nanoSection?: NanoSection; color: string; detail: string; route: string }> = [
+    { title: 'Salud mental', score: mentalScore, icon: 'heart-outline', nanoSection: 'salud-mental', color: '#A78BFA', detail: `Ánimo ${valueLabel(weekly?.estadoAnimo, '/5')} · Sueño ${valueLabel(weekly?.horasSueno, ' h')}`, route: 'SaludMental' },
+    { title: 'Actividad y ejercicio', score: physicalScore, icon: 'fitness-outline', nanoSection: 'seguimiento-fisico', color: '#38D996', detail: `${valueLabel(physical?.ejercicio?.minutosTotales, ' min')} · ${valueLabel(physical?.ejercicio?.pasosPromedio, ' pasos')}`, route: 'SeguimientoFisico' },
+    { title: 'Hidratación y hábitos', score: hydrationScore, icon: 'water-outline', color: '#29B6FF', detail: hydration === null ? 'Registra vasos de agua desde Hábitos' : `${Number(hydration).toFixed(2)} L en el último registro diario`, route: 'Habitos' },
+    { title: 'Alimentación y peso', score: null, icon: 'nutrition-outline', nanoSection: 'alimentacion', color: '#F5B942', detail: `Analiza tus comidas con Nano · Peso ${valueLabel(physical?.peso?.actual, ' kg')}`, route: 'NanoConsejero' },
   ];
 
   if (!loading && !error && patients.length === 0) {
@@ -151,17 +179,17 @@ export function DashboardBienestar({ navigation }: Props) {
   }
 
   return <ScrollView style={styles.scroll} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} tintColor="#0B6FEA" />}>
-    <View style={[styles.hero, isWide && styles.heroWide, { backgroundColor: dashboardColor }]}><View style={styles.heroCopy}><AppText style={styles.heroTitle}>Bienestar Prime</AppText><AppText style={styles.heroText}>Promedio de salud física, emocional y alimentación.</AppText></View><View style={styles.scoreRing}><AppText style={styles.scoreValue}>{overallScore}</AppText><AppText style={styles.scoreUnit}>/100</AppText></View></View>
+    <View style={[styles.hero, isWide ? styles.heroWide : styles.heroCompact, { backgroundColor: dashboardColor }]}><NanoSectionIllustration section="prime" size={isWide ? 76 : 60} /><View style={[styles.heroCopy, !isWide && styles.heroCopyCompact]}><AppText style={[styles.heroTitle, !isWide && styles.heroTitleCompact]}>Bienestar Prime</AppText><AppText style={styles.heroText}>Resumen de actividad física, bienestar emocional e hidratación.</AppText></View><View style={[styles.scoreRing, !isWide && styles.scoreRingCompact]}><AppText style={styles.scoreValue}>{overallScore}</AppText><AppText style={styles.scoreUnit}>/100</AppText></View></View>
     {patients.length > 1 ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.patientRow}>{patients.map((patient) => <TouchableOpacity key={patient.pacienteId} onPress={() => { setSelectedId(patient.pacienteId); setPhysical(null); setMental(null); setHistory(null); }} style={[styles.patientChip, { backgroundColor: theme.chip, borderColor: theme.chipBorder }, patient.pacienteId === selectedId && styles.patientChipActive]}><AppText style={[styles.patientText, { color: theme.text }, patient.pacienteId === selectedId && styles.patientTextActive]}>{patient.displayName}</AppText></TouchableOpacity>)}</ScrollView> : null}
     {loading ? <ActivityIndicator size="large" color="#0B6FEA" style={styles.loader} /> : null}{error ? <AppText style={styles.error}>{error}</AppText> : null}
-    <View style={styles.sectionHeader}><AppText style={[styles.sectionTitle, { color: theme.title }]}>Indicadores de bienestar</AppText><AppText style={[styles.sectionMeta, { color: theme.muted }]}>3 áreas disponibles</AppText></View>
-    <View style={styles.grid}>{cards.map((card) => <TouchableOpacity key={card.title} style={[styles.card, isWide && styles.cardWide, { backgroundColor: theme.card, borderColor: card.color }]} onPress={() => navigation.navigate(card.route)}><View style={[styles.cardIcon, { backgroundColor: `${card.color}20` }]}><Ionicons name={card.icon} size={23} color={card.color} /></View><View style={styles.cardInfo}><View style={styles.cardTitleRow}><AppText style={[styles.cardTitle, { color: theme.title }]}>{card.title}</AppText><AppText style={[styles.cardScore, { color: card.color }]}>{card.score == null ? '—' : `${card.score}%`}</AppText></View><AppText style={[styles.cardDetail, { color: theme.text }]} numberOfLines={2}>{card.detail}</AppText></View><Ionicons name="chevron-forward" size={20} color={theme.muted} /></TouchableOpacity>)}</View>
-    <View style={[styles.tipCard, { backgroundColor: theme.tip, borderColor: theme.tipBorder }]}><Ionicons name="sparkles-outline" size={22} color="#28B879" /><View style={styles.tipCopy}><AppText style={[styles.tipTitle, { color: theme.tipTitle }]}>Recomendación de hoy</AppText><AppText style={[styles.tipText, { color: theme.tipText }]}>{overallScore >= 70 ? 'Vas bien: mantén la constancia con tus registros diarios.' : 'Completa un registro de actividad, ánimo e hidratación para obtener una lectura más precisa.'}</AppText></View></View>
+    <View style={styles.sectionHeader}><NanoSectionIllustration section="dashboard-indicadores" size={isWide ? 52 : 44} /><View style={[styles.sectionHeaderCopy, !isWide && styles.sectionHeaderCopyCompact]}><AppText style={[styles.sectionTitle, { color: theme.title }]}>Indicadores de bienestar</AppText><AppText style={[styles.sectionMeta, { color: theme.muted }]}>4 áreas disponibles</AppText></View></View>
+    <View style={styles.grid}>{cards.map((card) => <TouchableOpacity key={card.title} style={[styles.card, isWide && styles.cardWide, { backgroundColor: theme.card, borderColor: card.color }]} onPress={() => navigation.navigate(card.route)}><View style={[styles.cardIcon, { backgroundColor: card.nanoSection ? '#FFFFFF' : `${card.color}20` }]}>{card.nanoSection ? <NanoSectionIllustration section={card.nanoSection} size={46} /> : <Ionicons name={card.icon} size={23} color={card.color} />}</View><View style={styles.cardInfo}><View style={styles.cardTitleRow}><AppText style={[styles.cardTitle, { color: theme.title }]}>{card.title}</AppText><AppText style={[styles.cardScore, { color: card.color }]}>{card.score == null ? '—' : `${card.score}%`}</AppText></View><AppText style={[styles.cardDetail, { color: theme.text }]} numberOfLines={2}>{card.detail}</AppText></View><Ionicons name="chevron-forward" size={20} color={theme.muted} /></TouchableOpacity>)}</View>
+    <View style={[styles.tipCard, { backgroundColor: theme.tip, borderColor: theme.tipBorder }]}><Ionicons name="sparkles-outline" size={22} color="#28B879" /><View style={styles.tipCopy}><AppText style={[styles.tipTitle, { color: theme.tipTitle }]}>Recomendación de hoy</AppText><AppText style={[styles.tipText, { color: theme.tipText }]}>{overallScore >= 70 ? 'Vas bien: mantén la constancia con tus registros diarios.' : 'Registra actividad, estado emocional y vasos de agua en sus secciones correspondientes.'}</AppText></View></View>
   </ScrollView>;
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, width: '100%' }, content: { paddingBottom: 28, gap: 14 }, hero: { borderRadius: 20, borderWidth: 1, borderColor: '#FFFFFF66', padding: 20, flexDirection: 'row', alignItems: 'center', gap: 14 }, heroWide: { paddingHorizontal: 22, paddingVertical: 16 }, heroCopy: { flex: 1 }, badge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, backgroundColor: '#FFFFFF', paddingHorizontal: 10, paddingVertical: 6 }, badgeText: { fontSize: 11, fontWeight: '800' }, heroTitle: { color: '#FFFFFF', fontSize: 25, fontWeight: '900' }, heroText: { color: '#FFFFFFE6', fontSize: 13, lineHeight: 19, marginTop: 5, maxWidth: 650 }, scoreRing: { width: 76, height: 76, borderRadius: 38, borderWidth: 6, borderColor: '#FFFFFF99', backgroundColor: '#FFFFFF24', alignItems: 'center', justifyContent: 'center' }, scoreValue: { color: '#FFFFFF', fontSize: 23, fontWeight: '900', lineHeight: 25 }, scoreUnit: { color: '#FFFFFFD9', fontSize: 10 },
+  scroll: { flex: 1, width: '100%' }, content: { paddingBottom: 28, gap: 14 }, hero: { borderRadius: 20, borderWidth: 1, borderColor: '#FFFFFF66', padding: 20, flexDirection: 'row', alignItems: 'center', gap: 14 }, heroWide: { paddingHorizontal: 22, paddingVertical: 16 }, heroCompact: { padding: 15, gap: 10 }, heroCopy: { flex: 1 }, heroCopyCompact: { minWidth: 105 }, badge: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, backgroundColor: '#FFFFFF', paddingHorizontal: 10, paddingVertical: 6 }, badgeText: { fontSize: 11, fontWeight: '800' }, heroTitle: { color: '#FFFFFF', fontSize: 25, fontWeight: '900' }, heroTitleCompact: { fontSize: 20, lineHeight: 23 }, heroText: { color: '#FFFFFFE6', fontSize: 13, lineHeight: 19, marginTop: 5, maxWidth: 650 }, scoreRing: { width: 76, height: 76, borderRadius: 38, borderWidth: 6, borderColor: '#FFFFFF99', backgroundColor: '#FFFFFF24', alignItems: 'center', justifyContent: 'center' }, scoreRingCompact: { width: 66, height: 66, borderRadius: 33, borderWidth: 5 }, scoreValue: { color: '#FFFFFF', fontSize: 23, fontWeight: '900', lineHeight: 25 }, scoreUnit: { color: '#FFFFFFD9', fontSize: 10 },
   emptyContent: { flexGrow: 1, justifyContent: 'center', paddingVertical: 24 },
   emptyCard: { width: '100%', maxWidth: 920, alignSelf: 'center', borderWidth: 1, borderRadius: 24, padding: 24, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 24 },
   nanoHalo: { width: 132, height: 132, borderRadius: 66, backgroundColor: '#E8F3FF', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#BBD9FA' },
@@ -177,7 +205,7 @@ const styles = StyleSheet.create({
   emptyHelp: { fontSize: 12, lineHeight: 18, marginTop: 14 },
   emptyButton: { alignSelf: 'flex-start', minHeight: 48, marginTop: 18, borderRadius: 14, paddingHorizontal: 17, backgroundColor: '#0B6FEA', flexDirection: 'row', alignItems: 'center', gap: 9 },
   emptyButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
-  patientRow: { gap: 8 }, patientChip: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 }, patientChipActive: { backgroundColor: '#0B6FEA', borderColor: '#0B6FEA' }, patientText: { fontSize: 12, fontWeight: '700' }, patientTextActive: { color: '#FFFFFF' }, loader: { marginVertical: 8 }, error: { color: '#E64A66', textAlign: 'center' }, sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }, sectionTitle: { fontSize: 17, fontWeight: '900' }, sectionMeta: { fontSize: 12, fontWeight: '700' },
+  patientRow: { gap: 8 }, patientChip: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 }, patientChipActive: { backgroundColor: '#0B6FEA', borderColor: '#0B6FEA' }, patientText: { fontSize: 12, fontWeight: '700' }, patientTextActive: { color: '#FFFFFF' }, loader: { marginVertical: 8 }, error: { color: '#E64A66', textAlign: 'center' }, sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 }, sectionHeaderCopy: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, sectionHeaderCopyCompact: { flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: 2 }, sectionTitle: { fontSize: 17, fontWeight: '900' }, sectionMeta: { fontSize: 12, fontWeight: '700' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 }, card: { flexGrow: 1, flexShrink: 1, flexBasis: 300, minHeight: 106, borderRadius: 16, borderWidth: 1, paddingHorizontal: 18, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 14 }, cardWide: { minHeight: 106 }, cardIcon: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' }, cardInfo: { flex: 1, minWidth: 0, gap: 4 }, cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 }, cardTitle: { fontSize: 14, fontWeight: '900', flex: 1 }, cardScore: { fontSize: 12, fontWeight: '900' }, cardDetail: { fontSize: 11, lineHeight: 16 },
   tipCard: { flexDirection: 'row', gap: 11, borderWidth: 1, borderRadius: 16, padding: 15 }, tipCopy: { flex: 1 }, tipTitle: { fontSize: 13, fontWeight: '900' }, tipText: { fontSize: 12, lineHeight: 17, marginTop: 3 },
 });

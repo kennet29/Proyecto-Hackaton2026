@@ -16,6 +16,7 @@ import { optimizeNanoImage } from "./nano-image.optimizer";
 import { NanoPromptBuilder } from "./nano-prompt.builder";
 import { CreateRecipeDto } from "./dto/create-recipe.dto";
 import { CreateTrainingPlanDto } from "./dto/create-training-plan.dto";
+import { CreateCalmMissionsDto } from "./dto/create-calm-missions.dto";
 import { NanoTrainingSafetyService } from "./nano-training-safety.service";
 
 const recipeSchema = z.object({
@@ -43,6 +44,17 @@ const trainingPlanSchema = z.object({
     })).max(12),
   })).length(7),
   nanoTip: z.string().trim().min(10).max(500),
+});
+
+const calmMissionsSchema = z.object({
+  intro: z.string().trim().min(5).max(300),
+  missions: z.array(z.object({
+    title: z.string().trim().min(2).max(80),
+    instruction: z.string().trim().min(8).max(350),
+    durationMinutes: z.coerce.number().int().min(1).max(10),
+    category: z.enum(["respiracion", "movimiento", "conexion", "descanso", "entorno"]),
+  })).length(3),
+  safetyNote: z.string().trim().min(8).max(350),
 });
 
 /**
@@ -228,6 +240,28 @@ export class NanoService {
       };
     } catch {
       throw new BadGatewayException("Nano Entrenador devolvio una rutina con formato invalido.");
+    }
+  }
+
+  async createCalmMissions(payload: CreateCalmMissionsDto) {
+    const prompt = this.promptBuilder.buildCalmMissions(
+      payload.emotion,
+      payload.stressLevel,
+      payload.anxietyLevel,
+      payload.context,
+    );
+    const providerResponse = await this.analysisGateway.generateText(prompt, 900);
+    if (!providerResponse.text) {
+      throw new BadGatewayException("Nano Calma no devolvió misiones útiles.");
+    }
+
+    try {
+      return {
+        ...calmMissionsSchema.parse(this.parseJsonCandidate(providerResponse.text)),
+        model: providerResponse.model,
+      };
+    } catch {
+      throw new BadGatewayException("Nano Calma devolvió misiones con formato inválido.");
     }
   }
 

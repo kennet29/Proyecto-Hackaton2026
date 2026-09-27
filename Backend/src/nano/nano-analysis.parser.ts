@@ -41,6 +41,14 @@ const nanoAnalysisSchema = z.discriminatedUnion("is_food", [
       )
       .min(3)
       .max(8),
+    glycemic_analysis: z.object({
+      estimated_glycemic_index: numericField(100),
+      available_carbohydrates_g: numericField(1000),
+      glycemic_load: numericField(200),
+      level: z.enum(["low", "medium", "high"]),
+      explanation: z.string().trim().min(10).max(500),
+      suggestions: z.array(z.string().trim().min(5).max(240)).min(1).max(4),
+    }).nullable().optional(),
   }),
   z.object({
     is_food: z.literal(false),
@@ -108,6 +116,16 @@ export class NanoAnalysisParser {
         amount: item.amount,
         dailyValuePercent: this.roundNumber(item.dailyValuePercent, 0),
       })),
+      glycemicAnalysis: context.goalKey === "diabetes" && analysis.glycemic_analysis
+        ? {
+            estimatedGlycemicIndex: this.roundNumber(analysis.glycemic_analysis.estimated_glycemic_index, 0),
+            availableCarbohydratesGrams: this.roundNumber(analysis.glycemic_analysis.available_carbohydrates_g, 1),
+            glycemicLoad: this.roundNumber(analysis.glycemic_analysis.glycemic_load, 1),
+            level: analysis.glycemic_analysis.level,
+            explanation: analysis.glycemic_analysis.explanation,
+            suggestions: analysis.glycemic_analysis.suggestions,
+          }
+        : null,
     };
   }
 
@@ -181,6 +199,15 @@ export class NanoAnalysisParser {
         "energy_kcal",
         "calorias",
       ]) ?? estimatedCalories;
+    const glycemicSource = this.pickRecord(source, [
+      "glycemic_analysis",
+      "glycemicAnalysis",
+      "glucose_analysis",
+      "analisis_glucemico",
+    ]);
+    const glycemicLoad = glycemicSource
+      ? this.pickNumber(glycemicSource, ["glycemic_load", "glycemicLoad", "carga_glucemica", "load"])
+      : null;
 
     return {
       is_food: true,
@@ -206,7 +233,30 @@ export class NanoAnalysisParser {
           source.vitamins ??
           source.minerals,
       ),
+      glycemic_analysis: glycemicSource && glycemicLoad !== null
+        ? {
+            estimated_glycemic_index: this.pickNumber(glycemicSource, ["estimated_glycemic_index", "estimatedGlycemicIndex", "glycemic_index", "indice_glucemico"]) ?? 0,
+            available_carbohydrates_g: this.pickNumber(glycemicSource, ["available_carbohydrates_g", "availableCarbohydratesGrams", "available_carbs_g", "carbohidratos_disponibles_g"]) ?? Math.max(carbohydrates - fiber, 0),
+            glycemic_load: glycemicLoad,
+            level: this.normalizeGlycemicLevel(this.pickString(glycemicSource, ["level", "classification", "nivel"]) ?? ""),
+            explanation: this.pickString(glycemicSource, ["explanation", "detail", "explicacion"]) ?? "Estimación de la respuesta glucémica probable del plato.",
+            suggestions: this.normalizeStringArray(glycemicSource.suggestions ?? glycemicSource.recommendations ?? glycemicSource.sugerencias),
+          }
+        : null,
     };
+  }
+
+  private normalizeGlycemicLevel(value: string): "low" | "medium" | "high" {
+    const normalized = value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    if (normalized.includes("low") || normalized.includes("baj")) return "low";
+    if (normalized.includes("high") || normalized.includes("alt")) return "high";
+    return "medium";
+  }
+
+  private normalizeStringArray(value: unknown): string[] {
+    if (!Array.isArray(value)) return ["Combina los carbohidratos con fibra y proteína y revisa el tamaño de la porción."];
+    const items = value.filter((item): item is string => typeof item === "string" && item.trim().length >= 5).map((item) => item.trim()).slice(0, 4);
+    return items.length ? items : ["Combina los carbohidratos con fibra y proteína y revisa el tamaño de la porción."];
   }
 
   private normalizeMicronutrients(value: unknown) {

@@ -19,6 +19,34 @@ import NanoMenu from '../svg/Nano Menu.svg';
 import NanoMedico from '../svg/Nano verde 75px.svg';
 import NanoBienestar from '../svg/Nano Bienestar.svg';
 import NanoGestion from '../svg/Nano Gestion.svg';
+import NanoDashboard from '../Nano Dashboards/Nano Dashboard.svg';
+import NanoSeguimientoFisico from '../Nano Dashboards/Nano segumiento Fisico.svg';
+import NanoSaludMental from '../Nano Dashboards/Nano Salud Mental.svg';
+import NanoChefIA from '../Nanos IA/Nano Chef Color.svg';
+import NanoEntrenadorIA from '../Nanos IA/Nano Entrenador Color.svg';
+import NanoPresupuesto from '../Nanos/NANO PRESUPUESTO.svg';
+import NanoSolicitudMedica from '../Nanos/nano enviar solicitud medica.svg';
+import NanoTamanoLetra from '../Nanos/nano tamaño de letra.svg';
+import NanoPremium from '../Nanos/nano premium.svg';
+import NanoCompartirHistorial from '../Nanos/nano compartir historial.svg';
+import NanoRecordatorios from '../Nanos/nano recordatorios.svg';
+import NanoSobreNosotros from '../Nanos/nano sobre nosotros.svg';
+import NanoModo from '../Nanos/nano modo claro y oscuro.svg';
+import NanoResumenPaciente from '../../Nanos Medica/Nano Resumen del Paciente.svg';
+import NanoConsultaMedica from '../../Nanos Medica/Nano Consulta Medica.svg';
+import NanoCitasProgramadas from '../../Nanos Medica/Nano Citas Programadas.svg';
+import NanoVacunas from '../../Nanos Medica/Nano Vacunas.svg';
+import NanoMedicacion from '../../Nanos Medica/Nano Medicacion.svg';
+import NanoControlClinico from '../../Nanos Medica/Nano Control Clinico.svg';
+import NanoSeguimientoCronico from '../../Nanos Medica/Nano Seguimiento Cronico.svg';
+import NanoOperaciones from '../../Nanos Medica/Nano Operaciones.svg';
+import NanoLesiones from '../../Nanos Medica/Nano Lesiones.svg';
+import NanoAlergias from '../../Nanos Medica/Nano Alergias.svg';
+import NanoRegistroDental from '../../Nanos Medica/Nano registro dental.svg';
+import NanoEmbarazo from '../../Nanos Medica/Nano Embarazo.svg';
+import NanoDesparasitaciones from '../../Nanos Medica/Nano Desparacitaciones.svg';
+import NanoExamenesClinicos from '../../Nanos Medica/Nano Examenes Clinicos.svg';
+import NanoSeguimientoCaso from '../../Nanos Medica/Nano Seguimiento de Caso.svg';
 import {
   getNanoAppearance,
   loadNanoAppearanceId,
@@ -67,7 +95,7 @@ const tabMeta: TabMeta[] = [
       label: 'Nano Menu',
       description: 'Nano del menú principal',
       format: 'svg',
-      svgComponent: NanoMenu,
+      svgComponent: NanoDashboard,
     },
   },
   {
@@ -160,6 +188,8 @@ const medicalOptions: OptionItem[] = [
     icon: 'person-circle-outline',
     accent: appColors.accent,
     navigateTo: 'PacienteResumen',
+    nano: true,
+    nanoAppearance: { id: 'resumen-paciente', label: 'Nano Resumen del Paciente', description: 'Nano del resumen del paciente', format: 'svg', svgComponent: NanoResumenPaciente },
   },
   {
     key: 'consulta',
@@ -168,6 +198,8 @@ const medicalOptions: OptionItem[] = [
     icon: 'medkit-outline',
     accent: appColors.info,
     navigateTo: 'ConsultaList',
+    nano: true,
+    nanoAppearance: { id: 'consulta-medica', label: 'Nano Consulta Médica', description: 'Nano de consultas médicas', format: 'svg', svgComponent: NanoConsultaMedica },
   },
   {
     key: 'citas',
@@ -176,6 +208,8 @@ const medicalOptions: OptionItem[] = [
     icon: 'calendar-outline',
     accent: appColors.accent,
     navigateTo: 'CitaForm',
+    nano: true,
+    nanoAppearance: { id: 'citas-programadas', label: 'Nano Citas Programadas', description: 'Nano de citas programadas', format: 'svg', svgComponent: NanoCitasProgramadas },
   },
   {
     key: 'vacunas',
@@ -184,6 +218,8 @@ const medicalOptions: OptionItem[] = [
     icon: 'shield-checkmark-outline',
     accent: appColors.info,
     navigateTo: 'VacunaForm',
+    nano: true,
+    nanoAppearance: { id: 'vacunas', label: 'Nano Vacunas', description: 'Nano de vacunas', format: 'svg', svgComponent: NanoVacunas },
   },
   {
     key: 'medicacion',
@@ -192,6 +228,8 @@ const medicalOptions: OptionItem[] = [
     icon: 'flask-outline',
     accent: appColors.accent,
     navigateTo: 'MedicacionForm',
+    nano: true,
+    nanoAppearance: { id: 'medicacion', label: 'Nano Medicación', description: 'Nano de medicación', format: 'svg', svgComponent: NanoMedicacion },
   },
   {
     key: 'condiciones-cronicas',
@@ -200,6 +238,8 @@ const medicalOptions: OptionItem[] = [
     icon: 'pulse-outline',
     accent: appColors.success,
     navigateTo: 'CondicionCronicaForm',
+    nano: true,
+    nanoAppearance: { id: 'control-clinico', label: 'Nano Control Clínico', description: 'Nano de enfermedades crónicas', format: 'svg', svgComponent: NanoControlClinico },
   },
   {
     key: 'control-cronico',
@@ -208,6 +248,8 @@ const medicalOptions: OptionItem[] = [
     icon: 'stats-chart-outline',
     accent: appColors.success,
     navigateTo: 'ControlCronico',
+    nano: true,
+    nanoAppearance: { id: 'seguimiento-cronico', label: 'Nano Seguimiento Crónico', description: 'Nano de control crónico', format: 'svg', svgComponent: NanoSeguimientoCronico },
   },
   {
     key: 'operaciones',
@@ -216,6 +258,8 @@ const medicalOptions: OptionItem[] = [
     icon: 'bandage-outline',
     accent: appColors.info,
     navigateTo: 'OperacionForm',
+    nano: true,
+    nanoAppearance: { id: 'operaciones', label: 'Nano Operaciones', description: 'Nano de operaciones', format: 'svg', svgComponent: NanoOperaciones },
   },
   {
     key: 'lesiones',
@@ -224,6 +268,8 @@ const medicalOptions: OptionItem[] = [
     icon: 'body-outline',
     accent: appColors.success,
     navigateTo: 'LesionForm',
+    nano: true,
+    nanoAppearance: { id: 'lesiones', label: 'Nano Lesiones', description: 'Nano de lesiones', format: 'svg', svgComponent: NanoLesiones },
   },
   {
     key: 'alergias',
@@ -232,6 +278,8 @@ const medicalOptions: OptionItem[] = [
     icon: 'warning-outline',
     accent: appColors.accent,
     navigateTo: 'Alergia',
+    nano: true,
+    nanoAppearance: { id: 'alergias', label: 'Nano Alergias', description: 'Nano de alergias', format: 'svg', svgComponent: NanoAlergias },
   },
   {
     key: 'registrodental',
@@ -240,6 +288,8 @@ const medicalOptions: OptionItem[] = [
     icon: 'color-wand-outline',
     accent: appColors.accent,
     navigateTo: 'RegistroDentalForm',
+    nano: true,
+    nanoAppearance: { id: 'registro-dental', label: 'Nano Registro Dental', description: 'Nano del registro dental', format: 'svg', svgComponent: NanoRegistroDental },
   },
   {
     key: 'embarazo',
@@ -248,6 +298,8 @@ const medicalOptions: OptionItem[] = [
     icon: 'flower-outline',
     accent: appColors.accent,
     navigateTo: 'Embarazo',
+    nano: true,
+    nanoAppearance: { id: 'embarazo', label: 'Nano Embarazo', description: 'Nano de embarazo', format: 'svg', svgComponent: NanoEmbarazo },
   },
   {
     key: 'desparasitacion',
@@ -256,6 +308,8 @@ const medicalOptions: OptionItem[] = [
     icon: 'leaf-outline',
     accent: appColors.info,
     navigateTo: 'Desparasitacion',
+    nano: true,
+    nanoAppearance: { id: 'desparasitaciones', label: 'Nano Desparasitaciones', description: 'Nano de desparasitación', format: 'svg', svgComponent: NanoDesparasitaciones },
   },
   {
     key: 'examenes',
@@ -264,6 +318,8 @@ const medicalOptions: OptionItem[] = [
     icon: 'document-text-outline',
     accent: appColors.info,
     navigateTo: 'ExamenClinico',
+    nano: true,
+    nanoAppearance: { id: 'examenes-clinicos', label: 'Nano Exámenes Clínicos', description: 'Nano de exámenes clínicos', format: 'svg', svgComponent: NanoExamenesClinicos },
   },
   {
     key: 'seguimiento-postevento',
@@ -272,6 +328,8 @@ const medicalOptions: OptionItem[] = [
     icon: 'clipboard-outline',
     accent: appColors.success,
     navigateTo: 'SeguimientoPostevento',
+    nano: true,
+    nanoAppearance: { id: 'seguimiento-caso', label: 'Nano Seguimiento de Caso', description: 'Nano del seguimiento de caso', format: 'svg', svgComponent: NanoSeguimientoCaso },
   },
 ];
 
@@ -305,7 +363,7 @@ const wellnessOptions: OptionItem[] = [
       label: 'Nano Chef',
       description: 'Nano Chef',
       format: 'svg',
-      svgComponent: NanoBienestar,
+      svgComponent: NanoChefIA,
     },
   },
   {
@@ -321,7 +379,7 @@ const wellnessOptions: OptionItem[] = [
       label: 'Nano Entrenador',
       description: 'Nano Entrenador',
       format: 'svg',
-      svgComponent: NanoBienestar,
+      svgComponent: NanoEntrenadorIA,
     },
   },
   {
@@ -331,6 +389,8 @@ const wellnessOptions: OptionItem[] = [
     icon: 'wallet-outline',
     accent: appColors.success,
     navigateTo: 'PresupuestoMedico',
+    nano: true,
+    nanoAppearance: { id: 'presupuesto', label: 'Nano Presupuesto', description: 'Nano de presupuesto médico', format: 'svg', svgComponent: NanoPresupuesto },
   },
   {
     key: 'seguimiento-fisico',
@@ -339,6 +399,8 @@ const wellnessOptions: OptionItem[] = [
     icon: 'barbell-outline',
     accent: appColors.info,
     navigateTo: 'SeguimientoFisico',
+    nano: true,
+    nanoAppearance: { id: 'seguimiento-fisico', label: 'Nano Seguimiento Físico', description: 'Nano de seguimiento físico', format: 'svg', svgComponent: NanoSeguimientoFisico },
   },
   {
     key: 'salud-mental',
@@ -347,6 +409,8 @@ const wellnessOptions: OptionItem[] = [
     icon: 'heart-outline',
     accent: appColors.success,
     navigateTo: 'SaludMental',
+    nano: true,
+    nanoAppearance: { id: 'salud-mental', label: 'Nano Salud Mental', description: 'Nano de salud mental', format: 'svg', svgComponent: NanoSaludMental },
   },
   {
     key: 'periodo',
@@ -382,6 +446,8 @@ const managementOptions: OptionItem[] = [
     icon: 'medkit-outline',
     accent: appColors.info,
     navigateTo: 'MedicoRegistro',
+    nano: true,
+    nanoAppearance: { id: 'solicitud-medica', label: 'Nano Solicitud Médica', description: 'Nano de solicitud médica', format: 'svg', svgComponent: NanoSolicitudMedica },
   },
   {
     key: 'configuracion',
@@ -390,6 +456,8 @@ const managementOptions: OptionItem[] = [
     icon: 'settings-outline',
     accent: '#0B6FEA',
     navigateTo: 'Configuracion',
+    nano: true,
+    nanoAppearance: { id: 'tamano-letra', label: 'Nano Tamaño de Letra', description: 'Nano de configuración de lectura', format: 'svg', svgComponent: NanoTamanoLetra },
   },
   {
     key: 'nano-gestion',
@@ -414,6 +482,8 @@ const managementOptions: OptionItem[] = [
     icon: 'diamond-outline',
     accent: '#F5B942',
     navigateTo: 'Premium',
+    nano: true,
+    nanoAppearance: { id: 'premium', label: 'Nano Premium', description: 'Nano de planes Premium', format: 'svg', svgComponent: NanoPremium },
   },
   {
     key: 'paciente',
@@ -438,6 +508,8 @@ const managementOptions: OptionItem[] = [
     icon: 'share-social-outline',
     accent: '#38E28E',
     navigateTo: 'CompartirHistorial',
+    nano: true,
+    nanoAppearance: { id: 'compartir-historial', label: 'Nano Compartir Historial', description: 'Nano para compartir el historial', format: 'svg', svgComponent: NanoCompartirHistorial },
   },
   {
     key: 'abrir-historial-compartido',
@@ -454,6 +526,8 @@ const managementOptions: OptionItem[] = [
     icon: 'notifications-outline',
     accent: '#FF4D73',
     navigateTo: 'RecordatorioList',
+    nano: true,
+    nanoAppearance: { id: 'recordatorios', label: 'Nano Recordatorios', description: 'Nano de recordatorios', format: 'svg', svgComponent: NanoRecordatorios },
   },
   {
     key: 'contacto',
@@ -470,6 +544,8 @@ const managementOptions: OptionItem[] = [
     icon: 'information-circle-outline',
     accent: '#9FB3C8',
     navigateTo: 'SobreNosotros',
+    nano: true,
+    nanoAppearance: { id: 'sobre-nosotros', label: 'Nano Sobre Nosotros', description: 'Nano de información del proyecto', format: 'svg', svgComponent: NanoSobreNosotros },
   },
 ];
 
@@ -576,6 +652,8 @@ export function MenuPrincipalScreen({ navigation }: Props) {
         icon: isLightMode ? 'moon-outline' : 'sunny-outline',
         accent: '#0B6FEA',
         action: 'toggle-background' as const,
+        nano: true,
+        nanoAppearance: { id: 'modo-claro-oscuro', label: 'Nano Modo Claro y Oscuro', description: 'Nano de apariencia visual', format: 'svg' as const, svgComponent: NanoModo },
       },
       ...(isAdmin
         ? [{
@@ -745,7 +823,9 @@ export function MenuPrincipalScreen({ navigation }: Props) {
                 >
                   <View style={[styles.iconCircle, styles.webIconCircle, isActive && styles.iconCircleActive]}>
                     {tab.nanoAppearance ? (
-                      <NanoAppearancePreview appearance={tab.nanoAppearance} size={38} />
+                      <View style={styles.nanoWhiteBackground}>
+                        <NanoAppearancePreview appearance={tab.nanoAppearance} size={38} />
+                      </View>
                     ) : (
                       <Ionicons name={tab.icon} size={27} color={isActive ? colors.info : theme.icon} />
                     )}
@@ -756,7 +836,7 @@ export function MenuPrincipalScreen({ navigation }: Props) {
             })}
           </View>
         ) : null}
-        {!isWebWide ? heroContent : null}
+        {!isWebWide && activeTab !== 'inicio' ? heroContent : null}
 
         {activeTab === 'inicio' ? (
           <DashboardBienestar navigation={navigation} />
@@ -792,7 +872,9 @@ export function MenuPrincipalScreen({ navigation }: Props) {
             >
               <View style={[styles.cardIcon, { backgroundColor: `${activeMeta.cardColor}22` }, item.action === 'toggle-background' && styles.themeIcon]}>
                 {item.nano ? (
-                  <NanoAppearancePreview appearance={item.nanoAppearance ?? activeNanoAppearance} size={54} />
+                  <View style={styles.nanoWhiteBackground}>
+                    <NanoAppearancePreview appearance={item.nanoAppearance ?? activeNanoAppearance} size={50} />
+                  </View>
                 ) : (
                   <Ionicons name={item.icon} size={26} color={activeMeta.cardColor} />
                 )}
@@ -832,7 +914,9 @@ export function MenuPrincipalScreen({ navigation }: Props) {
               >
                 <View style={[styles.iconCircle, isWebWide && styles.webIconCircle, isActive && styles.iconCircleActive]}>
                   {tab.nanoAppearance ? (
-                    <NanoAppearancePreview appearance={tab.nanoAppearance} size={46} />
+                    <View style={styles.nanoWhiteBackground}>
+                      <NanoAppearancePreview appearance={tab.nanoAppearance} size={46} />
+                    </View>
                   ) : (
                     <Ionicons name={tab.icon} size={29} color={isActive ? colors.info : theme.icon} />
                   )}
@@ -1173,6 +1257,12 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nanoWhiteBackground: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },

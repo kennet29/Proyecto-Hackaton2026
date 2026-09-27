@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { API_URL } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
@@ -201,7 +202,7 @@ export function PresupuestoMedicoScreen({ navigation }: Props) {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView contentContainerStyle={[styles.container, isWide && styles.containerWide]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <View style={styles.headerIcon}><Ionicons name="wallet-outline" size={25} color={colors.onAccent} /></View>
+          <View style={styles.headerIcon}><NanoSectionIllustration section="presupuesto" size={54} /></View>
           <View style={styles.headerCopy}>
             <AppText style={styles.eyebrow}>Planificación mensual</AppText>
             <AppText style={styles.title}>Presupuesto Médico</AppText>

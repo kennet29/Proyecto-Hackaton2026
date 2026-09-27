@@ -19,9 +19,14 @@ export class NanoPromptBuilder {
       "No uses markdown, texto adicional, comillas triples ni bloques de codigo.",
       "Haz estimaciones aproximadas y conservadoras a partir de lo visible en la imagen.",
       "No des diagnosticos clinicos ni afirmes precision absoluta.",
-      'Si si es comida, devuelve exactamente este esquema: {"is_food":true,"summary":"string","macronutrients":{"calories":0,"carbohydrates_g":0,"protein_g":0,"fat_g":0,"fiber_g":0,"sugar_g":0},"micronutrients":[{"key":"string","label":"string","amount":"string","dailyValuePercent":0}]}',
+      goalKey === "diabetes"
+        ? 'Si si es comida, devuelve exactamente este esquema: {"is_food":true,"summary":"string","macronutrients":{"calories":0,"carbohydrates_g":0,"protein_g":0,"fat_g":0,"fiber_g":0,"sugar_g":0},"micronutrients":[{"key":"string","label":"string","amount":"string","dailyValuePercent":0}],"glycemic_analysis":{"estimated_glycemic_index":0,"available_carbohydrates_g":0,"glycemic_load":0,"level":"medium","explanation":"string","suggestions":["string"]}}. En level usa solamente low, medium o high.'
+        : 'Si si es comida, devuelve exactamente este esquema: {"is_food":true,"summary":"string","macronutrients":{"calories":0,"carbohydrates_g":0,"protein_g":0,"fat_g":0,"fiber_g":0,"sugar_g":0},"micronutrients":[{"key":"string","label":"string","amount":"string","dailyValuePercent":0}]}',
       "En summary escribe entre 55 y 80 palabras, indicando si la comida va bien para el objetivo, las calorias aproximadas y los macronutrientes mas relevantes, ademas de una mejora concreta si aplica.",
       "En micronutrients incluye de 4 a 6 vitaminas o minerales probables presentes en el plato con cantidad estimada y porcentaje diario aproximado.",
+      goalKey === "diabetes"
+        ? "Para diabetes es obligatorio estimar el índice glucémico predominante del plato y los carbohidratos disponibles. Calcula la carga glucémica con la fórmula (índice glucémico x carbohidratos disponibles en gramos) / 100. Clasifica low si es 10 o menos, medium entre 11 y 19, y high si es 20 o más. Explica qué ingredientes elevan o reducen la carga y ofrece de 2 a 4 ajustes concretos de porción, fibra, proteína o sustitución. Aclara que es una estimación visual y no sustituye la medición de glucosa ni la indicación profesional."
+        : "No incluyas glycemic_analysis cuando el objetivo no sea diabetes.",
       `Objetivo del usuario: ${goalLabel}.`,
       `Contexto del objetivo: ${goalContext}.`,
       normalizedUserNote
@@ -87,6 +92,27 @@ export class NanoPromptBuilder {
       safetyFlags.some((flag) => flag === "injury" || flag === "pain")
         ? "Seguridad obligatoria: crea únicamente ejercicios de bajo impacto. No incluyas saltos, carrera, burpees, pliometría ni movimientos que aumenten el dolor."
         : "",
+    ].join(" ");
+  }
+
+  buildCalmMissions(
+    emotion: string | undefined,
+    stressLevel: number,
+    anxietyLevel: number,
+    context?: string,
+  ): string {
+    const normalizedContext = this.normalizeOptionalNote(context);
+    return [
+      "Eres Nano Calma, un acompañante de bienestar emocional responsable.",
+      "Genera exactamente 3 misiones pequeñas, sencillas y realizables ahora mismo para ayudar a reducir la tensión cotidiana.",
+      "Las misiones no son terapia, diagnóstico ni tratamiento. No sugieras medicamentos, alcohol, suplementos, ejercicio intenso, conducir ni actividades peligrosas.",
+      "Incluye respiración suave, conexión con el entorno, descanso breve, hidratación o contacto con una persona de confianza según el contexto.",
+      "Cada misión debe durar entre 1 y 10 minutos y tener una instrucción concreta de una o dos frases.",
+      "Si el contexto menciona autolesión, suicidio, peligro, violencia o una emergencia, no propongas un reto: indica buscar ayuda inmediata de emergencias y de una persona de confianza.",
+      'Responde solamente con JSON válido, sin markdown, usando exactamente este esquema: {"intro":"string","missions":[{"title":"string","instruction":"string","durationMinutes":1,"category":"respiracion|movimiento|conexion|descanso|entorno"}],"safetyNote":"string"}.',
+      `Emoción indicada: ${emotion ?? "no especificada"}.`,
+      `Estrés: ${stressLevel} de 5. Ansiedad: ${anxietyLevel} de 5.`,
+      `Contexto opcional: ${normalizedContext ?? "sin contexto adicional"}.`,
     ].join(" ");
   }
 

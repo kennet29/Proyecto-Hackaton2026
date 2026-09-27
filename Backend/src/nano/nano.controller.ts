@@ -5,6 +5,7 @@ import { NanoService } from "./nano.service";
 import { AnalyzeMealDto } from "./dto/analyze-meal.dto";
 import { CreateRecipeDto } from "./dto/create-recipe.dto";
 import { CreateTrainingPlanDto } from "./dto/create-training-plan.dto";
+import { CreateCalmMissionsDto } from "./dto/create-calm-missions.dto";
 import { SelectNanoAppearanceDto } from "./dto/select-nano-appearance.dto";
 import { NanoAppearanceService } from "./nano-appearance.service";
 
@@ -53,5 +54,11 @@ export class NanoController {
   createTrainingPlan(@Body() payload: CreateTrainingPlanDto, @Req() req: Request) {
     const user = req.user as AuthenticatedUser;
     return this.nanoService.createTrainingPlan(payload, user?.pacienteId ?? undefined);
+  }
+
+  /** Genera acciones breves de autocuidado para un momento de estrés. */
+  @Post("calm-missions")
+  createCalmMissions(@Body() payload: CreateCalmMissionsDto) {
+    return this.nanoService.createCalmMissions(payload);
   }
 }

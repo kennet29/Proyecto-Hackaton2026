@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, SafeAreaView, ScrollView, StyleSheet, Touchab
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { API_URL } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
@@ -77,7 +78,7 @@ export function NanoEntrenadorScreen({ navigation }: Props) {
   };
 
   return <SafeAreaView style={styles.safeArea}><ScrollView contentContainerStyle={[styles.container, isWebWide && styles.containerWeb]} showsVerticalScrollIndicator={false}>
-    <View style={styles.header}><View style={[styles.headerIcon, { backgroundColor: goal.color }]}><Ionicons name="barbell-outline" size={24} color={colors.onAccent} /></View><View style={styles.grow}><AppText style={styles.eyebrow}>Asistente IA</AppText><AppText style={styles.title}>Nano Entrenador</AppText><AppText style={styles.subtitle}>Rutinas personalizadas para toda la semana.</AppText></View><TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}><Ionicons name="close" size={20} color={colors.textSoft} /></TouchableOpacity></View>
+    <View style={styles.header}><View style={styles.headerIcon}><NanoSectionIllustration section="entrenador-color" size={54} /></View><View style={styles.grow}><AppText style={styles.eyebrow}>Asistente IA</AppText><AppText style={styles.title}>Nano Entrenador</AppText><AppText style={styles.subtitle}>Rutinas personalizadas para toda la semana.</AppText></View><TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}><Ionicons name="close" size={20} color={colors.textSoft} /></TouchableOpacity></View>
     <View style={[styles.grid, isWebWide && styles.gridWeb]}><View style={styles.formColumn}>
       <View style={styles.section}><AppText style={styles.sectionTitle}>1. Objetivo</AppText>{GOALS.map((item) => <TouchableOpacity key={item.key} onPress={() => setGoalKey(item.key)} style={[styles.option, item.key === goal.key && { borderColor: item.color, backgroundColor: colorAlpha(item.color, '18') }]}><Ionicons name={item.icon} size={19} color={item.color} /><AppText style={styles.optionText}>{item.label}</AppText><Ionicons name={item.key === goal.key ? 'radio-button-on' : 'radio-button-off'} size={18} color={item.key === goal.key ? item.color : colors.textMuted} /></TouchableOpacity>)}</View>
       <View style={styles.section}><AppText style={styles.sectionTitle}>2. Nivel</AppText><View style={styles.levelRow}>{LEVELS.map((item) => <TouchableOpacity key={item.key} onPress={() => setLevel(item.key)} style={[styles.levelButton, level === item.key && styles.levelButtonActive]}><AppText style={[styles.levelText, level === item.key && styles.levelTextActive]}>{item.label}</AppText></TouchableOpacity>)}</View></View>

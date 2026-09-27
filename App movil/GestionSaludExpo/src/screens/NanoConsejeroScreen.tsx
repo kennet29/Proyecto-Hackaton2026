@@ -19,6 +19,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -69,6 +70,14 @@ type AnalyzeMealResponse = {
     amount?: string;
     dailyValuePercent?: number;
   }>;
+  glycemicAnalysis?: {
+    estimatedGlycemicIndex?: number;
+    availableCarbohydratesGrams?: number;
+    glycemicLoad?: number;
+    level?: 'low' | 'medium' | 'high';
+    explanation?: string;
+    suggestions?: string[];
+  } | null;
 };
 
 type CompositionSlice = {
@@ -101,6 +110,15 @@ type MicronutrientMetric = {
   amount: string;
   dailyValuePercent: number;
   accent: string;
+};
+
+type GlycemicAnalysis = {
+  estimatedGlycemicIndex: number;
+  availableCarbohydratesGrams: number;
+  glycemicLoad: number;
+  level: 'low' | 'medium' | 'high';
+  explanation: string;
+  suggestions: string[];
 };
 
 type PieSlice = {
@@ -212,6 +230,30 @@ function sanitizeMicronutrients(
     .filter((item): item is MicronutrientMetric => item !== null);
 
   return items.length ? items : null;
+}
+
+function sanitizeGlycemicAnalysis(
+  payload: AnalyzeMealResponse['glycemicAnalysis'],
+): GlycemicAnalysis | null {
+  if (!payload) return null;
+  const estimatedGlycemicIndex = Number(payload.estimatedGlycemicIndex);
+  const availableCarbohydratesGrams = Number(payload.availableCarbohydratesGrams);
+  const glycemicLoad = Number(payload.glycemicLoad);
+  if (![estimatedGlycemicIndex, availableCarbohydratesGrams, glycemicLoad].every(Number.isFinite)) return null;
+  const level = ['low', 'medium', 'high'].includes(payload.level ?? '')
+    ? payload.level as GlycemicAnalysis['level']
+    : glycemicLoad <= 10 ? 'low' : glycemicLoad < 20 ? 'medium' : 'high';
+  const suggestions = Array.isArray(payload.suggestions)
+    ? payload.suggestions.filter((item): item is string => typeof item === 'string' && Boolean(item.trim())).slice(0, 4)
+    : [];
+  return {
+    estimatedGlycemicIndex,
+    availableCarbohydratesGrams,
+    glycemicLoad,
+    level,
+    explanation: payload.explanation?.trim() || 'Estimación de la respuesta glucémica probable de este plato.',
+    suggestions,
+  };
 }
 
 function sanitizeMacroDistribution(
@@ -428,6 +470,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
   const [macronutrients, setMacronutrients] = useState<MacronutrientBreakdown | null>(null);
   const [macroDistribution, setMacroDistribution] = useState<MacroDistribution | null>(null);
   const [micronutrients, setMicronutrients] = useState<MicronutrientMetric[] | null>(null);
+  const [glycemicAnalysis, setGlycemicAnalysis] = useState<GlycemicAnalysis | null>(null);
   const scanTranslate = useRef(new Animated.Value(0)).current;
 
   const selectedGoal = useMemo(
@@ -497,6 +540,13 @@ export function NanoConsejeroScreen({ navigation }: Props) {
   );
   const analysisPoints = useMemo(() => splitFeedbackIntoPoints(analysisText), [analysisText]);
   const micronutrientHighlights = useMemo(() => micronutrients?.slice(0, 4) ?? [], [micronutrients]);
+  const glycemicMeta = glycemicAnalysis
+    ? glycemicAnalysis.level === 'low'
+      ? { label: 'Baja', color: '#16A34A', background: '#F0FDF4' }
+      : glycemicAnalysis.level === 'medium'
+        ? { label: 'Media', color: '#D97706', background: '#FFFBEB' }
+        : { label: 'Alta', color: '#DC2626', background: '#FEF2F2' }
+    : null;
 
   useEffect(() => {
     if (!submitting || !photo) {
@@ -564,6 +614,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
       setMacronutrients(null);
       setMacroDistribution(null);
       setMicronutrients(null);
+      setGlycemicAnalysis(null);
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo abrir la camara.');
     } finally {
@@ -600,6 +651,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
       setMacronutrients(null);
       setMacroDistribution(null);
       setMicronutrients(null);
+      setGlycemicAnalysis(null);
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo abrir la galeria.');
     } finally {
@@ -623,6 +675,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
     setMacronutrients(null);
     setMacroDistribution(null);
     setMicronutrients(null);
+    setGlycemicAnalysis(null);
 
     try {
       const imageBase64 = await readUriAsBase64(photo.uri);
@@ -658,11 +711,13 @@ export function NanoConsejeroScreen({ navigation }: Props) {
       const sanitizedMacronutrients = sanitizeMacronutrients(payload.macronutrients);
       const sanitizedDistribution = sanitizeMacroDistribution(payload.macroDistribution);
       const sanitizedMicronutrients = sanitizeMicronutrients(payload.micronutrients);
+      const sanitizedGlycemicAnalysis = sanitizeGlycemicAnalysis(payload.glycemicAnalysis);
 
       setAnalysisText(payload.feedback);
       setMacronutrients(sanitizedMacronutrients);
       setMacroDistribution(sanitizedDistribution);
       setMicronutrients(sanitizedMicronutrients);
+      setGlycemicAnalysis(sanitizedGlycemicAnalysis);
       setActiveView('results');
 
       await saveNanoHistoryEntry({
@@ -674,6 +729,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
         userNote: trimmedMealNote || null,
         macronutrients: sanitizedMacronutrients,
         micronutrients: sanitizedMicronutrients,
+        glycemicAnalysis: sanitizedGlycemicAnalysis,
       });
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo analizar la comida.');
@@ -689,7 +745,8 @@ export function NanoConsejeroScreen({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerRow}>
-          <View>
+          <NanoSectionIllustration section="bienestar" size={68} />
+          <View style={styles.headerCopy}>
             <AppText style={styles.eyebrow}>Asistente IA</AppText>
             <AppText style={styles.title}>Nano</AppText>
           </View>
@@ -700,7 +757,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
 
         <View style={styles.speechBubble}>
           <View style={styles.speechHeader}>
-            <View style={styles.speechIndicator} />
+            <NanoSectionIllustration section="alimentacion" size={48} />
             <AppText style={styles.speechTitle}>Analisis de comida</AppText>
           </View>
           <AppText style={styles.speechText}>{DIALOG_TEXT}</AppText>
@@ -1009,6 +1066,55 @@ export function NanoConsejeroScreen({ navigation }: Props) {
           </View>
         ) : null}
 
+        {activeView === 'results' && selectedGoal.id === 'diabetes' && glycemicAnalysis && glycemicMeta ? (
+          <View style={[styles.glycemicCard, { borderColor: `${glycemicMeta.color}66`, backgroundColor: glycemicMeta.background }]}>
+            <View style={styles.glycemicHeader}>
+              <View style={[styles.glycemicIcon, { backgroundColor: `${glycemicMeta.color}18` }]}>
+                <Ionicons name="pulse-outline" size={24} color={glycemicMeta.color} />
+              </View>
+              <View style={styles.glycemicHeaderCopy}>
+                <AppText style={styles.glycemicEyebrow}>OBJETIVO DIABETES</AppText>
+                <AppText style={styles.glycemicTitle}>Carga glucémica estimada</AppText>
+              </View>
+              <View style={[styles.glycemicLevelPill, { backgroundColor: glycemicMeta.color }]}>
+                <AppText style={styles.glycemicLevelText}>{glycemicMeta.label}</AppText>
+              </View>
+            </View>
+
+            <View style={styles.glycemicStats}>
+              <View style={styles.glycemicPrimaryStat}>
+                <AppText style={[styles.glycemicLoadValue, { color: glycemicMeta.color }]}>{glycemicAnalysis.glycemicLoad}</AppText>
+                <AppText style={styles.glycemicLoadLabel}>Carga glucémica</AppText>
+              </View>
+              <View style={styles.glycemicSecondaryStat}>
+                <AppText style={styles.glycemicStatValue}>{glycemicAnalysis.estimatedGlycemicIndex}</AppText>
+                <AppText style={styles.glycemicStatLabel}>Índice glucémico estimado</AppText>
+              </View>
+              <View style={styles.glycemicSecondaryStat}>
+                <AppText style={styles.glycemicStatValue}>{glycemicAnalysis.availableCarbohydratesGrams} g</AppText>
+                <AppText style={styles.glycemicStatLabel}>Carbohidratos disponibles</AppText>
+              </View>
+            </View>
+
+            <AppText style={styles.glycemicExplanation}>{glycemicAnalysis.explanation}</AppText>
+            {glycemicAnalysis.suggestions.length ? (
+              <View style={styles.glycemicSuggestions}>
+                <AppText style={styles.glycemicSuggestionsTitle}>Cómo reducir el impacto</AppText>
+                {glycemicAnalysis.suggestions.map((suggestion, index) => (
+                  <View key={`${suggestion}-${index}`} style={styles.glycemicSuggestionRow}>
+                    <Ionicons name="checkmark-circle" size={18} color={glycemicMeta.color} />
+                    <AppText style={styles.glycemicSuggestionText}>{suggestion}</AppText>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            <View style={styles.glycemicDisclaimer}>
+              <Ionicons name="information-circle-outline" size={17} color={colors.info} />
+              <AppText style={styles.glycemicDisclaimerText}>Estimación visual: no sustituye una medición de glucosa ni la indicación de tu profesional de salud.</AppText>
+            </View>
+          </View>
+        ) : null}
+
         {activeView === 'results' && primaryHighlights.length ? (
           <View style={styles.quickStatsCard}>
             <View style={styles.analysisHeader}>
@@ -1113,6 +1219,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
+  headerCopy: { flex: 1 },
   eyebrow: {
     color: colors.info,
     fontSize: 13,
@@ -1618,6 +1725,34 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
   },
+  glycemicCard: {
+    marginTop: 18,
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 18,
+    gap: 14,
+  },
+  glycemicHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  glycemicIcon: { width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  glycemicHeaderCopy: { flex: 1 },
+  glycemicEyebrow: { color: '#64748B', fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  glycemicTitle: { color: '#172B4D', fontSize: 17, fontWeight: '900', marginTop: 2 },
+  glycemicLevelPill: { borderRadius: 999, paddingHorizontal: 11, paddingVertical: 7 },
+  glycemicLevelText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
+  glycemicStats: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
+  glycemicPrimaryStat: { minWidth: 110, flexGrow: 1, borderRadius: 16, padding: 13, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0' },
+  glycemicSecondaryStat: { minWidth: 110, flexGrow: 1, flexBasis: '30%', borderRadius: 16, padding: 13, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0' },
+  glycemicLoadValue: { fontSize: 28, lineHeight: 31, fontWeight: '900' },
+  glycemicLoadLabel: { color: '#475569', fontSize: 11, fontWeight: '800', marginTop: 3 },
+  glycemicStatValue: { color: '#172B4D', fontSize: 18, fontWeight: '900' },
+  glycemicStatLabel: { color: '#64748B', fontSize: 10, lineHeight: 14, marginTop: 4 },
+  glycemicExplanation: { color: '#334155', fontSize: 13, lineHeight: 20 },
+  glycemicSuggestions: { gap: 8 },
+  glycemicSuggestionsTitle: { color: '#172B4D', fontSize: 13, fontWeight: '900' },
+  glycemicSuggestionRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  glycemicSuggestionText: { flex: 1, color: '#334155', fontSize: 12, lineHeight: 18 },
+  glycemicDisclaimer: { flexDirection: 'row', alignItems: 'flex-start', gap: 7, borderRadius: 12, padding: 10, backgroundColor: '#EAF3FF' },
+  glycemicDisclaimerText: { flex: 1, color: '#315271', fontSize: 11, lineHeight: 16 },
   quickStatsCard: {
     marginTop: 18,
     borderRadius: 24,

@@ -17,6 +17,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { API_URL } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
@@ -161,7 +162,7 @@ export function CompartirHistorialScreen({ route }: Props) {
     >
       <View style={[styles.hero, desktop && styles.heroDesktop]}>
         <View style={styles.heroIcon}>
-          <Ionicons name="key-outline" size={30} color={colors.info} />
+          <NanoSectionIllustration section="compartir-historial" size={64} />
         </View>
         <View style={styles.heroCopy}>
           <AppText style={styles.eyebrow}>ACCESO MÉDICO TEMPORAL</AppText>

@@ -18,6 +18,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { API_URL } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
@@ -157,7 +158,7 @@ export function NanoChefScreen({ navigation }: Props) {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={[styles.container, isWebWide && styles.containerWeb]} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.headerIcon}><Ionicons name="restaurant-outline" size={24} color={colors.onAccent} /></View>
+          <View style={styles.headerIcon}><NanoSectionIllustration section="chef-color" size={52} /></View>
           <View style={styles.headerCopy}>
             <AppText style={styles.eyebrow}>Asistente IA</AppText>
             <AppText style={styles.title}>Nano Chef</AppText>

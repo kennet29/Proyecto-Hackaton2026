@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { FontSizePreference, useFontSize } from '../context/FontSizeContext';
 import { RootStackParamList } from '../navigation/types';
 import { appColors } from '../theme/colors';
@@ -27,7 +28,7 @@ export function ConfiguracionScreen({ navigation }: Props) {
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
-          <View style={styles.heroIcon}><Ionicons name="text-outline" size={28} color="#FFFFFF" /></View>
+          <View style={styles.heroIcon}><NanoSectionIllustration section="tamano-letra" size={58} /></View>
           <View style={styles.heroCopy}>
             <AppText style={styles.title}>Configuración</AppText>
             <AppText style={styles.subtitle}>Personaliza la lectura de la aplicación a tu medida.</AppText>

@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { Picker } from '@react-native-picker/picker';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
@@ -1083,6 +1084,13 @@ export function RecordatorioListScreen() {
       contentContainerStyle={[styles.container, isWide && styles.containerWide]}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor={colors.text} />}
     >
+      <View style={styles.nanoBanner}>
+        <NanoSectionIllustration section="recordatorios" size={76} />
+        <View style={styles.nanoBannerCopy}>
+          <AppText style={styles.nanoBannerTitle}>Recordatorios</AppText>
+          <AppText style={styles.nanoBannerText}>Nano te ayuda a mantener tus controles y tratamientos al día.</AppText>
+        </View>
+      </View>
       <View style={[styles.formPanel, isWide && styles.formPanelWide]}>
         <View style={styles.panelHeader}>
           <View>
@@ -1299,6 +1307,10 @@ export function RecordatorioListScreen() {
 }
 
 const createStyles = (colors: AppColors) => StyleSheet.create({
+  nanoBanner: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  nanoBannerCopy: { flex: 1 },
+  nanoBannerTitle: { color: colors.text, fontSize: 23, fontWeight: '900' },
+  nanoBannerText: { color: colors.textSoft, fontSize: 13, lineHeight: 19, marginTop: 3 },
   scroller: {
     flex: 1,
     backgroundColor: 'transparent',

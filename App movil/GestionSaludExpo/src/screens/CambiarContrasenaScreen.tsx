@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -139,7 +140,7 @@ export function CambiarContrasenaScreen({ navigation }: Props) {
       <View style={[styles.shell, isDesktop && styles.shellDesktop]}>
         <View style={[styles.hero, isDesktop && styles.heroDesktop]}>
           <View style={styles.heroIcon}>
-            <Ionicons name="key-outline" size={30} color={colors.info} />
+            <NanoSectionIllustration section="codigo-seguridad" size={72} />
           </View>
           <AppText style={styles.eyebrow}>SEGURIDAD DE LA CUENTA</AppText>
           <AppText style={styles.heroTitle}>Recupera el acceso de forma segura</AppText>

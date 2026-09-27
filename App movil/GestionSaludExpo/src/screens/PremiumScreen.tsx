@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppText } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { RootStackParamList } from '../navigation/types';
 import { appColors, colorAlpha } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
@@ -123,7 +124,7 @@ export function PremiumScreen({ navigation }: Props) {
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.hero}>
         <View style={styles.heroIcon}>
-          <Ionicons name="diamond-outline" size={30} color={colors.onAccent} />
+          <NanoSectionIllustration section="premium" size={68} />
         </View>
         <AppText style={styles.eyebrow}>GESTIÓN SALUD PREMIUM</AppText>
         <AppText style={styles.title}>Tu salud, con más herramientas.</AppText>
@@ -148,8 +149,11 @@ export function PremiumScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.plansHeader}>
-        <AppText style={styles.sectionTitle}>Elige tu plan</AppText>
-        <AppText style={styles.sectionHint}>Puedes cambiar o cancelar cuando lo necesites.</AppText>
+        <NanoSectionIllustration section="planes-pago" size={62} />
+        <View style={styles.plansHeaderCopy}>
+          <AppText style={styles.sectionTitle}>Elige tu plan</AppText>
+          <AppText style={styles.sectionHint}>Puedes cambiar o cancelar cuando lo necesites.</AppText>
+        </View>
       </View>
 
       {(Object.keys(plans) as PlanId[]).map((planId) => {
@@ -265,7 +269,8 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   benefitCopy: { flex: 1 },
   benefitTitle: { color: colors.text, fontSize: 15, fontWeight: '800' },
   benefitDetail: { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 2 },
-  plansHeader: { marginTop: 24, marginBottom: 12 },
+  plansHeader: { marginTop: 24, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  plansHeaderCopy: { flex: 1 },
   sectionHint: { color: colors.textMuted, fontSize: 13, marginTop: 3 },
   planCard: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: 18, padding: 16, marginBottom: 12 },
   planCardActive: { borderColor: colors.success, backgroundColor: colorAlpha(colors.success, '12') },
