@@ -1,4 +1,5 @@
 # EAS packages this monorepo from the Git root. Only the Expo app is needed.
+.git
 Backend
 Base de datos
 caddy
@@ -19,6 +20,7 @@ web-build
 .kotlin
 ios
 android
+*.apk
 *.orig.*
 *.jks
 *.p8
