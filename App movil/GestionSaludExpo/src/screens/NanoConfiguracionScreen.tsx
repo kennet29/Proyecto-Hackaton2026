@@ -23,7 +23,6 @@ import {
 } from '../components/NanoAppearancePreview';
 import { useAuth } from '../context/AuthContext';
 import { appColors, colorAlpha } from '../theme/colors';
-import { getNanoAppearanceUnlockRule } from '../utils/nanoAppearanceUnlocks';
 import { AppColors, useAppColors } from '../theme/useAppColors';
 
 export function NanoConfiguracionScreen() {
@@ -33,7 +32,6 @@ export function NanoConfiguracionScreen() {
   const { token, user } = useAuth();
   const { width } = useWindowDimensions();
   const [selectedId, setSelectedId] = useState('base');
-  const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set(['base']));
   const [savedMessage, setSavedMessage] = useState('');
   const useThreeColumns = width >= 760;
 
@@ -41,10 +39,9 @@ export function NanoConfiguracionScreen() {
     useCallback(() => {
       let active = true;
       loadNanoAppearanceState(user?.id, token)
-        .then(({ selectedId: appearanceId, unlockedIds: unlockedAppearanceIds }) => {
+        .then(({ selectedId: appearanceId }) => {
           if (active) {
             setSelectedId(appearanceId);
-            setUnlockedIds(unlockedAppearanceIds);
           }
         })
         .catch(() => undefined);
@@ -64,7 +61,6 @@ export function NanoConfiguracionScreen() {
         token,
       );
       setSelectedId(serverState.selectedId);
-      setUnlockedIds(serverState.unlockedIds);
       setSavedMessage(`${label} se aplicó correctamente.`);
     } catch {
       setSavedMessage('No se pudo guardar la selección en este dispositivo.');
@@ -96,8 +92,6 @@ export function NanoConfiguracionScreen() {
       <View style={styles.grid}>
         {NANO_APPEARANCES.map((appearance) => {
           const selected = appearance.id === selectedId;
-          const unlocked = unlockedIds.has(appearance.id);
-          const unlockRule = getNanoAppearanceUnlockRule(appearance.id);
           return (
             <TouchableOpacity
               key={appearance.id}
@@ -105,17 +99,11 @@ export function NanoConfiguracionScreen() {
                 styles.card,
                 useThreeColumns ? styles.cardThreeColumns : styles.cardTwoColumns,
                 selected && styles.cardSelected,
-                !unlocked && styles.cardLocked,
               ]}
               onPress={() => void selectAppearance(appearance.id, appearance.label)}
-              disabled={!unlocked}
               accessibilityRole="button"
-              accessibilityState={{ selected, disabled: !unlocked }}
-              accessibilityLabel={
-                unlocked
-                  ? `Seleccionar ${appearance.label}`
-                  : `${appearance.label}, bloqueado hasta iniciar sesión el ${unlockRule?.dateLabel}`
-              }
+              accessibilityState={{ selected }}
+              accessibilityLabel={`Seleccionar ${appearance.label}`}
               activeOpacity={0.85}
             >
               <View style={styles.previewWrap}>
@@ -125,20 +113,11 @@ export function NanoConfiguracionScreen() {
                     <Ionicons name="checkmark" size={16} color={colors.onAccent} />
                   </View>
                 ) : null}
-                {!unlocked ? (
-                  <View style={styles.lockedBadge}>
-                    <Ionicons name="lock-closed" size={15} color={colors.onAccent} />
-                  </View>
-                ) : null}
               </View>
               <AppText style={styles.cardTitle}>{appearance.label}</AppText>
               <AppText style={styles.cardDescription}>{appearance.description}</AppText>
               <AppText style={[styles.cardAction, selected && styles.cardActionSelected]}>
-                {!unlocked
-                  ? `Inicia sesión el ${unlockRule?.dateLabel}`
-                  : selected
-                    ? 'Seleccionado'
-                    : 'Elegir apariencia'}
+                {selected ? 'Seleccionado' : 'Elegir apariencia'}
               </AppText>
             </TouchableOpacity>
           );
@@ -208,7 +187,6 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderColor: colors.accent,
     backgroundColor: colorAlpha(colors.accent, '0F'),
   },
-  cardLocked: { opacity: 0.58 },
   previewWrap: { position: 'relative', marginBottom: 12 },
   selectedBadge: {
     position: 'absolute',
@@ -218,19 +196,6 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     height: 28,
     borderRadius: 14,
     backgroundColor: colors.success,
-    borderWidth: 2,
-    borderColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  lockedBadge: {
-    position: 'absolute',
-    right: -4,
-    bottom: -4,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.textMuted,
     borderWidth: 2,
     borderColor: colors.surface,
     alignItems: 'center',

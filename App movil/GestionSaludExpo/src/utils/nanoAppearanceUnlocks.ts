@@ -24,6 +24,16 @@ const unlockStorageKey = (userId: number) => `nano-appearance-unlocks-v1-${userI
 const validAppearanceIds = new Set([
   'base',
   ...Object.keys(NANO_APPEARANCE_UNLOCK_RULES),
+  'agregar',
+  'alimentacion-sana',
+  'bajar-peso',
+  'cerrar-sesion',
+  'control-glucemico',
+  'creativo',
+  'ganar-masa-muscular',
+  'hidratarse',
+  'horas-sueno',
+  'ponerse-en-forma',
 ]);
 
 export type NanoAppearanceState = {
@@ -35,7 +45,7 @@ export const getNanoAppearanceUnlockRule = (appearanceId: string) =>
   NANO_APPEARANCE_UNLOCK_RULES[appearanceId];
 
 export async function loadUnlockedNanoAppearanceIds(userId?: number | null) {
-  const unlockedIds = new Set<string>(['base']);
+  const unlockedIds = new Set<string>(validAppearanceIds);
   if (!userId) {
     return unlockedIds;
   }
@@ -63,7 +73,7 @@ export async function cacheUnlockedNanoAppearanceIds(
   appearanceIds: Iterable<string>,
 ) {
   const unlockedIds = new Set(
-    ['base', ...appearanceIds].filter((id) => validAppearanceIds.has(id)),
+    [...validAppearanceIds, ...appearanceIds].filter((id) => validAppearanceIds.has(id)),
   );
   await AsyncStorage.setItem(unlockStorageKey(userId), JSON.stringify([...unlockedIds]));
   return unlockedIds;
@@ -75,7 +85,7 @@ const parseServerState = (value: unknown): NanoAppearanceState => {
     throw new Error('El servidor devolvió una configuración de Nano inválida.');
   }
   const unlockedIds = new Set<string>(
-    ['base', ...payload.unlockedIds]
+    [...validAppearanceIds, ...payload.unlockedIds]
       .filter((id): id is string => typeof id === 'string')
       .filter((id) => validAppearanceIds.has(id)),
   );

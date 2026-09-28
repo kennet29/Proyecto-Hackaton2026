@@ -254,13 +254,13 @@ const PrivateNavigator = () => {
       <Stack.Screen
         name="PacienteForm"
         component={PacienteFormScreen}
-        options={{ title: 'Pacientes' }}
+        options={{ title: 'Personas' }}
       />
       <Stack.Screen
         name="PacienteEditor"
         component={PacienteEditorScreen}
         options={({ route }) => ({
-          title: route.params?.pacienteId ? 'Editar Paciente' : 'Nuevo Paciente',
+          title: route.params?.pacienteId ? 'Editar persona' : 'Nueva persona',
         })}
       />
       <Stack.Screen
@@ -461,7 +461,7 @@ const PrivateNavigator = () => {
         component={AlergiaCreateScreen}
         options={{ title: 'Nueva Alergia' }}
       />
-      <Stack.Screen name="Habitos" component={HabitosScreen} options={{ title: 'Habitos' }} />
+      <Stack.Screen name="Habitos" component={HabitosScreen} options={{ title: 'Hábitos saludables' }} />
       <Stack.Screen
         name="SeguimientoFisico"
         component={SeguimientoFisicoScreen}
@@ -480,7 +480,7 @@ const PrivateNavigator = () => {
       <Stack.Screen
         name="SobreNosotros"
         component={SobreNosotrosScreen}
-        options={{ title: 'Sobre Nosotros' }}
+        options={{ title: 'Nica Prime' }}
       />
       <Stack.Screen
         name="Premium"

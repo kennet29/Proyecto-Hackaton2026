@@ -487,7 +487,7 @@ const managementOptions: OptionItem[] = [
   },
   {
     key: 'paciente',
-    label: 'Pacientes',
+    label: 'Personas',
     description: 'Registra o actualiza perfiles',
     icon: 'people-outline',
     accent: '#38E28E',

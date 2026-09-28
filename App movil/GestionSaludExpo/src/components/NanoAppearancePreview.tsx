@@ -11,6 +11,16 @@ import NanoGladiador from '../svg/Nano Gladiador.svg';
 import NanoHalloween from '../svg/Nano Hallowen.svg';
 import NanoNavideno from '../svg/Nano Navideño.svg';
 import NanoPatriota from '../svg/Nano Patriota.svg';
+import NanoAgregar from '../Nanos Extra/Nano agregar.svg';
+import NanoAlimentacionSana from '../Nanos Extra/Nano alimentacion Sana.svg';
+import NanoBajarPeso from '../Nanos Extra/Nano Bajar de Peso.svg';
+import NanoCerrarSesion from '../Nanos Extra/Nano cerrar sesion.svg';
+import NanoControlGlucemico from '../Nanos Extra/Nano Control Glucemico.svg';
+import NanoCreativo from '../Nanos Extra/Nano Creativo.svg';
+import NanoGanarMasaMuscular from '../Nanos Extra/Nano ganar masa muscular.svg';
+import NanoHidratarse from '../Nanos Extra/Nano hidratarse.svg';
+import NanoHorasSueno from '../Nanos Extra/Nano horas de sueño.svg';
+import NanoPonerseEnForma from '../Nanos Extra/Nano ponerse en forma.svg';
 import {
   cacheUnlockedNanoAppearanceIds,
   fetchNanoAppearanceState,
@@ -89,6 +99,76 @@ export const NANO_APPEARANCES: NanoAppearance[] = [
     format: 'svg',
     svgComponent: NanoPatriota,
   },
+  {
+    id: 'agregar',
+    label: 'Agregar',
+    description: 'Nano listo para sumar algo nuevo',
+    format: 'svg',
+    svgComponent: NanoAgregar,
+  },
+  {
+    id: 'alimentacion-sana',
+    label: 'Alimentación sana',
+    description: 'Nano de hábitos alimenticios saludables',
+    format: 'svg',
+    svgComponent: NanoAlimentacionSana,
+  },
+  {
+    id: 'bajar-peso',
+    label: 'Bajar de peso',
+    description: 'Nano de objetivos de peso saludable',
+    format: 'svg',
+    svgComponent: NanoBajarPeso,
+  },
+  {
+    id: 'cerrar-sesion',
+    label: 'Cerrar sesión',
+    description: 'Nano de despedida',
+    format: 'svg',
+    svgComponent: NanoCerrarSesion,
+  },
+  {
+    id: 'control-glucemico',
+    label: 'Control glucémico',
+    description: 'Nano para el seguimiento de glucosa',
+    format: 'svg',
+    svgComponent: NanoControlGlucemico,
+  },
+  {
+    id: 'creativo',
+    label: 'Creativo',
+    description: 'Nano de ideas y creatividad',
+    format: 'svg',
+    svgComponent: NanoCreativo,
+  },
+  {
+    id: 'ganar-masa-muscular',
+    label: 'Ganar masa muscular',
+    description: 'Nano de entrenamiento y fuerza',
+    format: 'svg',
+    svgComponent: NanoGanarMasaMuscular,
+  },
+  {
+    id: 'hidratarse',
+    label: 'Hidratarse',
+    description: 'Nano de hidratación diaria',
+    format: 'svg',
+    svgComponent: NanoHidratarse,
+  },
+  {
+    id: 'horas-sueno',
+    label: 'Horas de sueño',
+    description: 'Nano de descanso saludable',
+    format: 'svg',
+    svgComponent: NanoHorasSueno,
+  },
+  {
+    id: 'ponerse-en-forma',
+    label: 'Ponerse en forma',
+    description: 'Nano de actividad física',
+    format: 'svg',
+    svgComponent: NanoPonerseEnForma,
+  },
 ];
 
 export const getNanoAppearance = (appearanceId?: string | null) =>
@@ -98,7 +178,12 @@ export const loadNanoAppearanceState = async (
   userId?: number | null,
   token?: string | null,
 ): Promise<NanoAppearanceState> => {
-  if (!userId) return { selectedId: 'base', unlockedIds: new Set(['base']) };
+  if (!userId) {
+    return {
+      selectedId: 'base',
+      unlockedIds: new Set(NANO_APPEARANCES.map((appearance) => appearance.id)),
+    };
+  }
 
   if (token) {
     try {

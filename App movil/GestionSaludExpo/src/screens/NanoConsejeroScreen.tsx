@@ -745,7 +745,9 @@ export function NanoConsejeroScreen({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerRow}>
-          <NanoSectionIllustration section="bienestar" size={68} />
+          <View style={styles.headerIcon}>
+            <NanoSectionIllustration section="bienestar" size={52} />
+          </View>
           <View style={styles.headerCopy}>
             <AppText style={styles.eyebrow}>Asistente IA</AppText>
             <AppText style={styles.title}>Nano</AppText>
@@ -1217,21 +1219,28 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerCopy: { flex: 1 },
   eyebrow: {
     color: colors.info,
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '900',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
   },
   title: {
     color: colors.text,
-    fontSize: 32,
-    fontWeight: '800',
-    marginTop: 6,
+    fontSize: 28,
+    fontWeight: '900',
   },
   closeButton: {
     width: 42,
@@ -1253,7 +1262,8 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   speechHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    gap: 10,
+    marginBottom: 18,
   },
   speechIndicator: {
     width: 8,

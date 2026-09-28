@@ -49,6 +49,8 @@ type Habito = {
   observaciones?: string | null;
 };
 
+const CUSTOM_HEALTHY_HABIT_NAME = 'Hábito saludable personalizado';
+
 const today = () => toLocalDateOnlyString();
 
 const formatDate = (value?: string | null) => {
@@ -76,7 +78,7 @@ export function HabitosScreen(_: Props) {
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   const { token, user } = useAuth();
-  const pickerItemColor = Platform.OS === 'android' ? colors.background : colors.text;
+  const pickerItemColor = Platform.OS === 'android' ? '#10233F' : colors.text;
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [types, setTypes] = useState<TipoHabito[]>([]);
   const [records, setRecords] = useState<Habito[]>([]);
@@ -86,15 +88,11 @@ export function HabitosScreen(_: Props) {
   const [hydrationMessage, setHydrationMessage] = useState('');
   const [form, setForm] = useState({
     pacienteId: '',
-    tipohabitoId: '',
-    categoria: '',
-    nivel: '',
+    nombreHabito: '',
     frecuencia: '',
     cantidad: '',
     unidad: '',
     inicio: today(),
-    impactosalud: '',
-    observaciones: '',
   });
 
   const headers = useMemo<Record<string, string>>(() => {
@@ -176,28 +174,58 @@ export function HabitosScreen(_: Props) {
 
   const handleSubmit = async () => {
     const pacienteId = Number(form.pacienteId);
-    const tipohabitoId = Number(form.tipohabitoId);
-    if (!pacienteId || !tipohabitoId) {
-      Alert.alert('Faltan datos', 'Selecciona un paciente y un tipo de habito');
+    const nombreHabito = form.nombreHabito.trim();
+    const frecuencia = form.frecuencia.trim();
+    if (!pacienteId) {
+      Alert.alert('Falta la persona', 'Selecciona quién registrará el hábito.');
+      return;
+    }
+    if (!nombreHabito) {
+      Alert.alert('Falta el hábito', 'Escribe el hábito saludable que quieres practicar.');
+      return;
+    }
+    if (!frecuencia) {
+      Alert.alert('Falta la frecuencia', 'Indica cada cuánto quieres realizar este hábito.');
       return;
     }
 
     setSubmitting(true);
     try {
+      let customType = types.find(
+        (type) => type.nombre.trim().toLocaleLowerCase('es') === CUSTOM_HEALTHY_HABIT_NAME.toLocaleLowerCase('es'),
+      );
+
+      if (!customType) {
+        const typeResponse = await fetch(`${API_URL}/tipohabito`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            nombre: CUSTOM_HEALTHY_HABIT_NAME,
+            categoria: 'bienestar',
+            descripcion: 'Hábitos saludables definidos por cada persona.',
+            activo: true,
+            creadopor: user?.username ?? undefined,
+          }),
+        });
+        const typeBody = await typeResponse.json().catch(() => ({}));
+        if (!typeResponse.ok || !typeBody?.tipohabitoId) {
+          throw new Error(typeBody?.message ?? 'No se pudo preparar el registro personalizado');
+        }
+        customType = typeBody as TipoHabito;
+        setTypes((current) => [...current, customType as TipoHabito]);
+      }
+
       const response = await fetch(`${API_URL}/habitoespecifico`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
           pacienteId,
-          tipohabitoId,
-          categoria: form.categoria.trim() || undefined,
-          nivel: form.nivel.trim() || undefined,
-          frecuencia: form.frecuencia.trim() || undefined,
+          tipohabitoId: customType.tipohabitoId,
+          categoria: nombreHabito,
+          frecuencia,
           cantidad: form.cantidad.trim() ? Number(form.cantidad) : undefined,
           unidad: form.unidad.trim() || undefined,
           inicio: form.inicio.trim() || undefined,
-          impactosalud: form.impactosalud.trim() || undefined,
-          observaciones: form.observaciones.trim() || undefined,
           creadopor: user?.username ?? undefined,
         }),
       });
@@ -208,14 +236,11 @@ export function HabitosScreen(_: Props) {
       Alert.alert('Habito registrado', 'El registro se guardo correctamente');
       setForm((prev) => ({
         ...prev,
-        categoria: '',
-        nivel: '',
+        nombreHabito: '',
         frecuencia: '',
         cantidad: '',
         unidad: '',
         inicio: today(),
-        impactosalud: '',
-        observaciones: '',
       }));
       loadData();
     } catch (error) {
@@ -268,25 +293,20 @@ export function HabitosScreen(_: Props) {
   const getTypeName = (id: number) =>
     types.find((type) => Number(type.tipohabitoId) === Number(id))?.nombre ?? `Tipo #${id}`;
 
+  const getRecordName = (record: Habito) => {
+    const typeName = getTypeName(record.tipohabitoId);
+    return typeName === CUSTOM_HEALTHY_HABIT_NAME && record.categoria
+      ? record.categoria
+      : typeName;
+  };
+
   const insights = useMemo(() => {
     const total = visibleRecords.length;
-    const riskCount = visibleRecords.filter((record) => {
-      const normalized = (record.impactosalud ?? '').toLowerCase();
-      return normalized.includes('alto') || normalized.includes('severo') || normalized.includes('riesgo');
-    }).length;
-    const healthyCount = visibleRecords.filter((record) => {
-      const normalized = (record.impactosalud ?? '').toLowerCase();
-      return normalized.includes('positivo') || normalized.includes('saludable') || normalized.includes('bajo');
-    }).length;
     const latest = visibleRecords[0] ?? null;
 
     const summaryText = total
-      ? healthyCount > riskCount
-        ? 'Predominan habitos con impacto percibido favorable.'
-        : riskCount > 0
-          ? 'Hay habitos que conviene vigilar por su posible impacto en salud.'
-          : 'Aun hace falta mas detalle para detectar patrones claros.'
-      : 'Aun no hay suficientes registros para construir una lectura util.';
+      ? `Tienes ${total} ${total === 1 ? 'registro' : 'registros'} para dar seguimiento a tu constancia.`
+      : 'Aún no tienes hábitos saludables registrados.';
 
     return {
       latest,
@@ -309,7 +329,7 @@ export function HabitosScreen(_: Props) {
         <NanoSectionIllustration section="alimentacion" size={76} />
         <View style={styles.headerCopy}>
           <AppText style={styles.headerBadgeText}>SEGUIMIENTO CONTINUO</AppText>
-          <AppText style={styles.title}>Hábitos</AppText>
+          <AppText style={styles.title}>Hábitos saludables</AppText>
           <AppText style={styles.subtitle}>
             Registra agua, descanso, alimentación y actividad sin repetir información.
           </AppText>
@@ -326,6 +346,8 @@ export function HabitosScreen(_: Props) {
             <Picker
               selectedValue={form.pacienteId}
               onValueChange={(value) => handleChange('pacienteId', String(value))}
+              style={styles.pickerText}
+              dropdownIconColor={colors.text}
             >
               <Picker.Item label="Selecciona una persona" value="" color={pickerItemColor} />
               {patients.map((patient) => (
@@ -373,60 +395,31 @@ export function HabitosScreen(_: Props) {
 
       <View style={styles.card}>
         <View style={styles.sectionHeader}>
-          <AppText style={styles.cardTitle}>Registrar otro hábito</AppText>
-          <AppText style={styles.cardSubtitle}>Elige una actividad y completa únicamente sus datos.</AppText>
+          <AppText style={styles.cardTitle}>Registrar un hábito saludable</AppText>
+          <AppText style={styles.cardSubtitle}>
+            Escribe el hábito que quieres incorporar y con qué frecuencia lo realizarás.
+          </AppText>
         </View>
-
-        <AppText style={styles.label}>Hábito o actividad</AppText>
-        <View style={styles.pickerShell}>
-          <Picker
-            selectedValue={form.tipohabitoId}
-            onValueChange={(value) => {
-              const nextType = types.find((type) => String(type.tipohabitoId) === String(value));
-              setForm((current) => ({
-                ...current,
-                tipohabitoId: String(value),
-                categoria: nextType?.categoria ?? '',
-              }));
-            }}
-          >
-            <Picker.Item label="Selecciona un hábito" value="" color={pickerItemColor} />
-            {types.map((type) => (
-              <Picker.Item
-                key={type.tipohabitoId}
-                label={type.nombre}
-                value={String(type.tipohabitoId)}
-                color={pickerItemColor}
-              />
-            ))}
-          </Picker>
-        </View>
-        {types.length === 0 ? <AppText style={styles.warningText}>No hay tipos de hábito configurados.</AppText> : null}
 
         <View style={styles.formSection}>
-          <AppText style={styles.formSectionTitle}>¿Cómo fue?</AppText>
-          <View style={styles.row}>
-            <View style={styles.fieldGroupHalf}>
-              <AppText style={styles.label}>Nivel</AppText>
-              <AppTextInput
-                style={styles.input}
-                placeholder="Ej. bajo, medio, alto"
-                placeholderTextColor={colors.textMuted}
-                value={form.nivel}
-                onChangeText={(value) => handleChange('nivel', value)}
-              />
-            </View>
-            <View style={styles.fieldGroupHalf}>
-              <AppText style={styles.label}>Frecuencia</AppText>
-              <AppTextInput
-                style={styles.input}
-                placeholder="Ej. diario, semanal"
-                placeholderTextColor={colors.textMuted}
-                value={form.frecuencia}
-                onChangeText={(value) => handleChange('frecuencia', value)}
-              />
-            </View>
-          </View>
+          <AppText style={styles.formSectionTitle}>Tu nuevo hábito</AppText>
+          <AppText style={styles.label}>¿Qué hábito saludable quieres practicar?</AppText>
+          <AppTextInput
+            style={styles.input}
+            placeholder="Ej. caminar después del almuerzo"
+            placeholderTextColor={colors.textMuted}
+            value={form.nombreHabito}
+            onChangeText={(value) => handleChange('nombreHabito', value)}
+          />
+
+          <AppText style={styles.label}>¿Con qué frecuencia?</AppText>
+          <AppTextInput
+            style={styles.input}
+            placeholder="Ej. todos los días, 3 veces por semana"
+            placeholderTextColor={colors.textMuted}
+            value={form.frecuencia}
+            onChangeText={(value) => handleChange('frecuencia', value)}
+          />
         </View>
 
         <View style={styles.formSection}>
@@ -465,33 +458,10 @@ export function HabitosScreen(_: Props) {
           />
         </View>
 
-        <View style={styles.formSection}>
-          <AppText style={styles.formSectionTitle}>Interpretacion clinica</AppText>
-          <AppText style={styles.label}>Impacto en salud</AppText>
-          <AppTextInput
-            style={styles.input}
-            placeholder="Ej. positivo, moderado, alto riesgo"
-            placeholderTextColor={colors.textMuted}
-            value={form.impactosalud}
-            onChangeText={(value) => handleChange('impactosalud', value)}
-          />
-
-          <AppText style={styles.label}>Observaciones</AppText>
-          <AppTextInput
-            style={[styles.input, styles.multiline]}
-            placeholder="Agrega contexto, detonantes, cambios o recomendaciones"
-            placeholderTextColor={colors.textMuted}
-            multiline
-            textAlignVertical="top"
-            value={form.observaciones}
-            onChangeText={(value) => handleChange('observaciones', value)}
-          />
-        </View>
-
         <TouchableOpacity
           style={[styles.primaryBtn, submitting && styles.disabledBtn]}
           onPress={handleSubmit}
-          disabled={submitting || types.length === 0}
+          disabled={submitting}
         >
           <AppText style={styles.primaryBtnText}>
             {submitting ? 'Guardando...' : 'Guardar habito'}
@@ -501,16 +471,16 @@ export function HabitosScreen(_: Props) {
 
       <View style={styles.card}>
         <View style={styles.sectionHeader}>
-          <AppText style={styles.cardTitle}>Lectura rapida</AppText>
-          <AppText style={styles.cardSubtitle}>Resumen util de la informacion capturada.</AppText>
+          <AppText style={styles.cardTitle}>Tu seguimiento</AppText>
+          <AppText style={styles.cardSubtitle}>Resumen de los hábitos que has registrado.</AppText>
         </View>
 
         <View style={styles.insightBox}>
-          <AppText style={styles.insightTitle}>Lo que ya podemos hacer con esta informacion</AppText>
+          <AppText style={styles.insightTitle}>Constancia registrada</AppText>
           <AppText style={styles.insightText}>{insights.summaryText}</AppText>
           {insights.latest ? (
             <AppText style={styles.insightText}>
-              Ultimo registro: {getTypeName(insights.latest.tipohabitoId)} ({formatDate(insights.latest.inicio)}).
+              Último registro: {getRecordName(insights.latest)} ({formatDate(insights.latest.inicio)}).
             </AppText>
           ) : null}
         </View>
@@ -536,7 +506,7 @@ export function HabitosScreen(_: Props) {
 <RecordActions resource="habitoespecifico" recordId={item.habitoId} onChanged={() => loadData()} />
                   <View style={styles.recordHeader}>
                     <View style={styles.recordHeaderText}>
-                      <AppText style={styles.recordTitle}>{getTypeName(item.tipohabitoId)}</AppText>
+                      <AppText style={styles.recordTitle}>{getRecordName(item)}</AppText>
                       <AppText style={styles.recordText}>
                         {formatDate(item.inicio)} {item.frecuencia ? `- ${item.frecuencia}` : ''}
                       </AppText>
@@ -551,7 +521,7 @@ export function HabitosScreen(_: Props) {
                   </View>
 
                   <View style={styles.recordMetaRow}>
-                    {item.categoria ? (
+                    {item.categoria && getTypeName(item.tipohabitoId) !== CUSTOM_HEALTHY_HABIT_NAME ? (
                       <View style={styles.metaChip}>
                         <AppText style={styles.metaChipText}>{item.categoria}</AppText>
                       </View>
@@ -635,6 +605,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   personSelectorCopy: { flex: 1, gap: 5 },
   personSelectorLabel: { color: colors.textSoft, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.7 },
   personPickerShell: { minHeight: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted, justifyContent: 'center' },
+  pickerText: { color: colors.text },
   hydrationCard: {
     backgroundColor: '#EAF7FF',
     borderRadius: 22,
@@ -681,20 +652,6 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     fontWeight: '700',
     fontSize: 13,
   },
-  pickerShell: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: colors.backgroundMuted,
-  },
-  warningText: {
-    color: colors.accent,
-    backgroundColor: `${colors.accent}18`,
-    borderRadius: 10,
-    padding: 10,
-    fontWeight: '600',
-  },
   formSection: {
     backgroundColor: colors.background,
     borderRadius: 16,
@@ -724,9 +681,6 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   fieldGroupHalf: {
     flex: 1,
     gap: 8,
-  },
-  multiline: {
-    minHeight: 92,
   },
   primaryBtn: {
     backgroundColor: colors.success,

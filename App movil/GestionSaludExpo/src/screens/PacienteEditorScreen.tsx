@@ -136,7 +136,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
       const response = await fetch(`${API_URL}/paciente/${pacienteId}`, { headers });
       const body = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(body?.message ?? 'No se pudo cargar el paciente');
+        throw new Error(body?.message ?? 'No se pudo cargar la persona');
       }
       setForm({
         nombres: body?.nombres ?? '',
@@ -162,7 +162,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         }));
       }
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo cargar el paciente');
+      Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo cargar la persona');
     } finally {
       setLoading(false);
     }
@@ -223,15 +223,15 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
             }),
           });
           body = await response.json().catch(() => ({}));
-          if (!response.ok) throw new Error((body as { message?: string })?.message ?? 'Error al crear paciente');
+          if (!response.ok) throw new Error((body as { message?: string })?.message ?? 'Error al crear la persona');
           const newPacienteId = Number((body as any)?.pacienteId ?? (body as any)?.pacienteid ?? (body as any)?.id ?? (body as any)?.paciente?.pacienteId);
-          if (!newPacienteId) throw new Error('El backend no devolvio el identificador del paciente');
+          if (!newPacienteId) throw new Error('No se recibió el identificador de la persona');
           createdPacienteId.current = newPacienteId;
         }
 
         const newPacienteId = createdPacienteId.current;
         if (!newPacienteId) {
-          throw new Error('El backend no devolvio el identificador del paciente');
+          throw new Error('No se recibió el identificador de la persona');
         }
         linkRequestKey.current ??= createIdempotencyKey('patient-link');
         const relationResponse = await fetch(`${API_URL}/usuario-paciente`, {
@@ -245,7 +245,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         });
         const relationBody = await relationResponse.json().catch(() => ({}));
         if (!relationResponse.ok) {
-          throw new Error(relationBody?.message ?? 'No se pudo vincular el paciente al usuario');
+          throw new Error(relationBody?.message ?? 'No se pudo vincular la persona a tu cuenta');
         }
       } else {
         const response = await fetch(`${API_URL}/paciente/${pacienteId}`, {
@@ -262,7 +262,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
           }),
         });
         body = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error((body as { message?: string })?.message ?? 'Error al actualizar paciente');
+        if (!response.ok) throw new Error((body as { message?: string })?.message ?? 'Error al actualizar la persona');
       }
 
       if (isEditing && relationId) {
@@ -284,8 +284,8 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
       submitCompleted.current = true;
       if (isEditing) {
         Alert.alert(
-          'Paciente actualizado',
-          'Los datos del paciente se actualizaron correctamente',
+          'Persona actualizada',
+          'Los datos de la persona se actualizaron correctamente',
           [{ text: 'OK', onPress: () => navigation.goBack() }],
         );
       } else {
@@ -294,8 +294,8 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
     } catch (error) {
       if (!isEditing && createdPacienteId.current) {
         Alert.alert(
-          'Paciente creado',
-          'El paciente ya fue creado. Solo falta vincularlo a tu cuenta; vuelve a presionar Guardar para reintentar el vínculo. No se creará un duplicado.',
+          'Persona creada',
+          'La persona ya fue creada. Solo falta vincularla a tu cuenta; vuelve a presionar Guardar para reintentar el vínculo. No se creará un duplicado.',
         );
       } else {
         Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo guardar');
@@ -318,16 +318,16 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
     return (
       <View style={styles.loadingScreen}>
         <ActivityIndicator size="large" color={colors.info} />
-        <AppText style={styles.loadingText}>Cargando paciente...</AppText>
+        <AppText style={styles.loadingText}>Cargando persona...</AppText>
       </View>
     );
   }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <AppText style={styles.title}>{isEditing ? 'Editar Paciente' : 'Nuevo Paciente'}</AppText>
+      <AppText style={styles.title}>{isEditing ? 'Editar persona' : 'Nueva persona'}</AppText>
       <AppText style={styles.subtitle}>
-        {isEditing ? `Paciente #${pacienteId}` : 'Nano te ayudará a completar los datos paso a paso.'}
+        {isEditing ? `Persona #${pacienteId}` : 'Nano te ayudará a completar los datos paso a paso.'}
       </AppText>
 
       {!isEditing ? (
@@ -366,7 +366,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         value={form.nombres}
         onChangeText={(value) => handleChange('nombres', value)}
         autoCapitalize="words"
-        accessibilityLabel="Nombres del paciente"
+        accessibilityLabel="Nombres de la persona"
       />
 
       <FieldLabel required>Apellidos</FieldLabel>
@@ -377,7 +377,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         value={form.apellidos}
         onChangeText={(value) => handleChange('apellidos', value)}
         autoCapitalize="words"
-        accessibilityLabel="Apellidos del paciente"
+        accessibilityLabel="Apellidos de la persona"
       />
 
       <FieldLabel required>Género</FieldLabel>
@@ -385,7 +385,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         <Picker
           selectedValue={form.sexo}
           onValueChange={(value) => handleChange('sexo', String(value))}
-          accessibilityLabel="Género del paciente"
+          accessibilityLabel="Género de la persona"
         >
           <Picker.Item label="Selecciona un género" value="" />
           <Picker.Item label="Femenino" value="F" />
@@ -403,7 +403,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         keyboardType="phone-pad"
         value={form.telefono}
         onChangeText={(value) => handleChange('telefono', value)}
-        accessibilityLabel="Teléfono del paciente"
+        accessibilityLabel="Teléfono de la persona"
       />
 
       <FieldLabel>Correo electrónico</FieldLabel>
@@ -416,7 +416,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         autoCorrect={false}
         value={form.email}
         onChangeText={(value) => handleChange('email', value)}
-        accessibilityLabel="Correo electrónico del paciente"
+        accessibilityLabel="Correo electrónico de la persona"
       />
 
       <FieldLabel>Fecha de nacimiento</FieldLabel>
@@ -456,7 +456,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
         accessibilityLabel="Parentesco con el titular de la cuenta"
       />
       <View style={styles.switchRow}>
-        <AppText style={styles.switchLabel}>Marcar como paciente principal</AppText>
+        <AppText style={styles.switchLabel}>Marcar como persona principal</AppText>
         <Switch
           value={form.esPrincipal}
           onValueChange={(value) => handleChange('esPrincipal', value)}
@@ -483,7 +483,7 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
           accessibilityState={{ disabled: submitting }}
         >
           <AppText style={styles.btnText}>
-            {submitting ? 'Guardando...' : isEditing ? 'Actualizar Paciente' : 'Guardar y finalizar'}
+            {submitting ? 'Guardando...' : isEditing ? 'Actualizar persona' : 'Guardar y finalizar'}
           </AppText>
         </TouchableOpacity>
       )}

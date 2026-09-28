@@ -47,7 +47,7 @@ export function PacienteFormScreen({ navigation, route }: Props) {
 
   React.useEffect(() => {
     if (!route.params?.patientCreated) return;
-    setToast({ type: 'success', message: 'Paciente creado y vinculado correctamente.' });
+    setToast({ type: 'success', message: 'Persona creada y vinculada correctamente.' });
     navigation.setParams({ patientCreated: undefined });
   }, [navigation, route.params?.patientCreated]);
 
@@ -105,12 +105,12 @@ export function PacienteFormScreen({ navigation, route }: Props) {
         headers: authHeaders,
       });
       const body = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(body?.message ?? 'No se pudo eliminar el paciente.');
+      if (!response.ok) throw new Error(body?.message ?? 'No se pudo eliminar la persona.');
       invalidateLinkedPatientsCache(authHeaders);
       setLinkedPatients((current) => current.filter((item) => item.pacienteId !== patient.pacienteId));
-      setToast({ type: 'success', message: 'Paciente eliminado de la base de datos.' });
+      setToast({ type: 'success', message: 'Persona eliminada de la base de datos.' });
     } catch (error) {
-      setToast({ type: 'error', message: error instanceof Error ? error.message : 'No se pudo eliminar el paciente.' });
+      setToast({ type: 'error', message: error instanceof Error ? error.message : 'No se pudo eliminar la persona.' });
     } finally {
       setDeletingPatientId(null);
       setDeleteCandidate(null);
@@ -128,20 +128,20 @@ export function PacienteFormScreen({ navigation, route }: Props) {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
           <View>
-            <AppText style={styles.title}>Pacientes</AppText>
+            <AppText style={styles.title}>Personas</AppText>
             <AppText style={styles.subtitle}>Administra las personas vinculadas a tu cuenta.</AppText>
           </View>
           <TouchableOpacity
             style={styles.addButton}
             onPress={() => navigation.navigate('PacienteEditor')}
-            accessibilityLabel="Crear paciente"
+            accessibilityLabel="Crear persona"
           >
             <Ionicons name="add" size={28} color={colors.text} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.sectionHeader}>
-          <AppText style={styles.sectionTitle}>Pacientes de este usuario</AppText>
+          <AppText style={styles.sectionTitle}>Personas de esta cuenta</AppText>
           <TouchableOpacity onPress={fetchLinkedPatients} disabled={loadingPatients}>
             <AppText style={styles.linkText}>{loadingPatients ? 'Cargando...' : 'Actualizar'}</AppText>
           </TouchableOpacity>
@@ -152,13 +152,13 @@ export function PacienteFormScreen({ navigation, route }: Props) {
         {loadingPatients ? (
           <View style={styles.loadingCard}>
             <ActivityIndicator size="large" color={colors.info} />
-            <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
+            <AppText style={styles.loadingText}>Cargando personas...</AppText>
           </View>
         ) : null}
 
         {!loadingPatients && linkedPatients.length === 0 ? (
           <View style={styles.emptyCard}>
-            <AppText style={styles.emptyTitle}>No hay pacientes vinculados</AppText>
+            <AppText style={styles.emptyTitle}>No hay personas vinculadas</AppText>
             <AppText style={styles.emptyText}>Usa el boton + para registrar el primero.</AppText>
           </View>
         ) : null}
@@ -204,7 +204,7 @@ export function PacienteFormScreen({ navigation, route }: Props) {
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
             <View style={styles.modalIcon}><Ionicons name="trash-outline" size={26} color="#DC2626" /></View>
-            <AppText style={styles.modalTitle}>¿Eliminar paciente?</AppText>
+            <AppText style={styles.modalTitle}>¿Eliminar persona?</AppText>
             <AppText style={styles.modalText}>Se eliminará a {deleteCandidate?.nombreCompleto} de la base de datos. Esta acción no se puede deshacer.</AppText>
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.cancelButton} onPress={() => setDeleteCandidate(null)} disabled={Boolean(deletingPatientId)}><AppText style={styles.cancelButtonText}>Cancelar</AppText></TouchableOpacity>

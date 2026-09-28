@@ -3,8 +3,8 @@
  * @description TypeScript module implementation.
  */
 
-import { BadRequestException } from "@nestjs/common";
 import { NanoAppearanceService } from "./nano-appearance.service";
+import { nanoAppearanceIds } from "./dto/select-nano-appearance.dto";
 
 describe("NanoAppearanceService", () => {
   const buildService = () => {
@@ -32,17 +32,14 @@ describe("NanoAppearanceService", () => {
       }),
       manager: { transaction: jest.fn() },
     };
-    const config = {
-      get: jest.fn().mockReturnValue("America/Managua"),
-    };
     return {
       rows,
       repository,
-      service: new NanoAppearanceService(repository as never, config as never),
+      service: new NanoAppearanceService(repository as never),
     };
   };
 
-  it("unlocks the dated appearance using Nicaragua time", async () => {
+  it("unlocks every appearance when the user logs in", async () => {
     const { rows, service } = buildService();
 
     await service.registerLoginUnlocks(
@@ -50,15 +47,12 @@ describe("NanoAppearanceService", () => {
       new Date("2026-02-14T12:00:00.000Z"),
     );
 
-    expect(rows).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ usuarioId: 7, appearanceId: "base" }),
-        expect.objectContaining({ usuarioId: 7, appearanceId: "valentin" }),
-      ]),
+    expect(rows.map((row) => row.appearanceId)).toEqual(
+      expect.arrayContaining([...nanoAppearanceIds]),
     );
   });
 
-  it("keeps only Nano Base unlocked on an ordinary date", async () => {
+  it("returns every appearance for existing accounts", async () => {
     const { service } = buildService();
 
     await service.registerLoginUnlocks(
@@ -68,15 +62,7 @@ describe("NanoAppearanceService", () => {
 
     await expect(service.getState(9)).resolves.toEqual({
       selectedId: "base",
-      unlockedIds: ["base"],
+      unlockedIds: [...nanoAppearanceIds],
     });
-  });
-
-  it("rejects selecting an appearance that has not been unlocked", async () => {
-    const { service } = buildService();
-
-    await expect(service.select(4, "halloween")).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
   });
 });

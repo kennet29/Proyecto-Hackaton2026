@@ -92,6 +92,14 @@ export function MedicoRegistroScreen({ navigation }: Props) {
   const [saving, setSaving] = useState(false);
   const [existing, setExisting] = useState<MedicoRegistro | null>(null);
 
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+    navigation.replace('MenuPrincipal');
+  };
+
   useFocusEffect(
     useCallback(() => {
       let active = true;
@@ -392,7 +400,7 @@ export function MedicoRegistroScreen({ navigation }: Props) {
           {existing.codigominsa ? <InfoRow label="Código MINSA" value={existing.codigominsa} /> : null}
           {existing.observaciones ? <InfoRow label="Observaciones" value={existing.observaciones} /> : null}
         </View>
-        <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.secondaryButton} onPress={handleBack}>
           <AppText style={styles.secondaryButtonText}>Volver</AppText>
         </TouchableOpacity>
       </ScrollView>

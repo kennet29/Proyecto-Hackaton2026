@@ -9,6 +9,24 @@ import { AppText } from '../components/AppText';
 import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { AppColors, useAppColors } from '../theme/useAppColors';
 
+const PILLARS = [
+  {
+    title: 'Seguridad',
+    description: 'Tus datos protegidos con acceso seguro.',
+    nano: 'codigo-seguridad' as const,
+  },
+  {
+    title: 'Acompañamiento',
+    description: 'Recordatorios y avances claros cuando los necesitas.',
+    nano: 'recordatorios' as const,
+  },
+  {
+    title: 'Integraciones',
+    description: 'Conecta tus servicios de salud y reduce el papeleo.',
+    nano: 'compartir-historial' as const,
+  },
+];
+
 export function SobreNosotrosScreen() {
   const colors = useAppColors();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
@@ -17,31 +35,22 @@ export function SobreNosotrosScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
         <NanoSectionIllustration section="sobre-nosotros" size={92} />
-        <AppText style={styles.title}>Sobre Nosotros</AppText>
+        <AppText style={styles.title}>Nica Prime</AppText>
       </View>
       <AppText style={styles.paragraph}>
-        Gestion Salud nace para centralizar tus historiales clinicos, recordatorios de medicamentos y
-        seguimientos cronicos. Empoderamos al paciente con herramientas simples y seguras.
+        Tu salud, organizada en un solo lugar. Consulta tu historial, medicamentos y seguimientos con
+        herramientas simples y seguras.
       </AppText>
       <AppText style={styles.subtitle}>Nuestros Pilares</AppText>
-      <View style={styles.card}>
-        <AppText style={styles.cardTitle}>Seguridad</AppText>
-        <AppText style={styles.cardText}>
-          Cifrado extremo a extremo y autenticacion moderna para proteger tus datos.
-        </AppText>
-      </View>
-      <View style={styles.card}>
-        <AppText style={styles.cardTitle}>Acompanamiento</AppText>
-        <AppText style={styles.cardText}>
-          Recordatorios inteligentes y tableros que muestran tus avances y controles pendientes.
-        </AppText>
-      </View>
-      <View style={styles.card}>
-        <AppText style={styles.cardTitle}>Integraciones</AppText>
-        <AppText style={styles.cardText}>
-          Conectamos con laboratorios, clinicas y aseguradoras para reducir el papeleo.
-        </AppText>
-      </View>
+      {PILLARS.map((pillar) => (
+        <View key={pillar.title} style={styles.card}>
+          <NanoSectionIllustration section={pillar.nano} size={58} />
+          <View style={styles.cardCopy}>
+            <AppText style={styles.cardTitle}>{pillar.title}</AppText>
+            <AppText style={styles.cardText}>{pillar.description}</AppText>
+          </View>
+        </View>
+      ))}
     </ScrollView>
   );
 }
@@ -73,21 +82,27 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   card: {
     backgroundColor: colors.surface,
-    padding: 18,
+    padding: 16,
     borderRadius: 18,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  cardCopy: {
+    flex: 1,
+    gap: 3,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
-    marginBottom: 4,
     color: colors.text,
   },
   cardText: {
-    fontSize: 15,
+    fontSize: 14,
     color: colors.textSoft,
-    lineHeight: 22,
+    lineHeight: 20,
   },
 });
