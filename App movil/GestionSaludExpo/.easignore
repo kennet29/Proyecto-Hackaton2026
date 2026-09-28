@@ -1,32 +1,33 @@
-# Dependencias y archivos generados que EAS no necesita para compilar.
+# Dependencies restored by EAS
 node_modules/
+
+# Expo and generated build output
 .expo/
 .expo-*/
-/.expo-budget-check
-/.expo-svg-check
-/.expo-web-svg-check
-/.expo-web-svg-check-2
-/.expo-web-svg-final-check
 dist/
 dist-*/
-/dist-android-check
 web-build/
+expo-env.d.ts
 
-# Artefactos y configuraciones locales.
+# Generated native projects and caches
+android/
+ios/
 .kotlin/
-*.orig.*
+.metro-health-check*
+
+# Local logs, credentials, and environment overrides
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.env*.local
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
-.metro-health-check*
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-.DS_Store
 *.pem
-.env*.local
 *.tsbuildinfo
-/ios
-/android
+.DS_Store
+
+# Source archive; the extracted SVG assets are included separately
+src/Nanos Extra/extra.rar
