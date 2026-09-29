@@ -2,6 +2,15 @@
   Directorio inicial de Carazo para la landing.
   Este script es idempotente: no duplica clinicas, servicios ni asignaciones.
 */
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
+SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET NUMERIC_ROUNDABORT OFF;
+GO
+
 SET NOCOUNT ON;
 
 IF OBJECT_ID('dbo.institucionsalud', 'U') IS NULL
