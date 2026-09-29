@@ -65,7 +65,11 @@ jobs:
             # cambios remotos como base, evitando el error por ramas divergentes.
             git pull --rebase --autostash origin main
             echo "=== Construyendo y levantando contenedores ==="
-            docker compose up -d --build
+            if ! docker compose up -d --build; then
+              echo "=== Diagnostico de inicializacion ==="
+              docker compose logs --no-color db-init backend || true
+              exit 1
+            fi
             echo "=== Limpiando imagenes antiguas ==="
             docker image prune -f
             echo "=== Despliegue completado con exito ==="

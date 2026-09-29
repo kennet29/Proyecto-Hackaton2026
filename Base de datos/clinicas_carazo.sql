@@ -94,3 +94,4 @@ WHERE asignacion.institucionId IS NOT NULL
       AND existente.catalogoservicioid = asignacion.servicioId
   );
 
+GO
