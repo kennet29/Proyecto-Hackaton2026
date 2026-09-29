@@ -3,8 +3,10 @@
  * @description TypeScript module implementation.
  */
 
-import { AfterViewInit, Component, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { finalize } from 'rxjs';
 import * as L from 'leaflet';
 
 type NavSection = {
@@ -30,9 +32,40 @@ type FooterSection = {
 type MapPoint = {
   id: number;
   name: string;
-  lat: number;
-  lng: number;
+  type: string;
+  description: string | null;
+  address: string;
+  phone: string | null;
+  hours: string | null;
+  lat: number | null;
+  lng: number | null;
   status: string;
+  services: PublicService[];
+};
+
+type PublicService = {
+  id: number;
+  nombre: string;
+  categoria: string | null;
+  descripcion: string | null;
+  precioReferencia: number | null;
+  moneda: string | null;
+  tiempoEntrega: string | null;
+};
+
+type PublicInstitutionResponse = {
+  id: number;
+  nombre: string;
+  tipo: string;
+  descripcion: string | null;
+  telefono: string | null;
+  direccion: string | null;
+  ciudad: string | null;
+  departamento: string | null;
+  horarioAtencion: string | null;
+  latitud: number | null;
+  longitud: number | null;
+  servicios: PublicService[];
 };
 
 type ViewTransition = {
@@ -50,7 +83,7 @@ type DocumentWithViewTransition = Document & {
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements AfterViewInit, OnDestroy {
+export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly title = 'NICAPRIME';
   isDarkMode = this.getInitialTheme();
   isMobileMenuOpen = false;
@@ -60,6 +93,11 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   private clockTimer?: ReturnType<typeof setInterval>;
   currentNicaraguaTime = '';
   currentNicaraguaDate = '';
+  directoryLoading = true;
+  directoryError = '';
+  mapPoints: MapPoint[] = [];
+
+  constructor(private readonly http: HttpClient) {}
 
   readonly navSections: NavSection[] = [
     { id: 'sobre-nosotros', label: 'Sobre nosotros' },
@@ -105,8 +143,6 @@ export class AppComponent implements AfterViewInit, OnDestroy {
       description: 'Encuentra clínicas, hospitales, farmacias y otros servicios de salud a través de un mapa interactivo.'
     }
   ];
-
-  readonly mapPoints: MapPoint[] = this.generateMapPoints();
 
   readonly pricing = [
     {
@@ -178,6 +214,10 @@ export class AppComponent implements AfterViewInit, OnDestroy {
       links: ['Preguntas frecuentes', 'Demo', 'Roadmap', 'Contacto']
     }
   ];
+
+  ngOnInit(): void {
+    this.loadPublicDirectory();
+  }
 
   ngAfterViewInit(): void {
     this.updateNicaraguaClock();
@@ -256,7 +296,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   focusMapPoint(point: MapPoint): void {
-    if (!this.map) {
+    if (!this.map || point.lat === null || point.lng === null) {
       return;
     }
 
@@ -276,36 +316,6 @@ export class AppComponent implements AfterViewInit, OnDestroy {
       && window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
 
-  private generateMapPoints(): MapPoint[] {
-    const pointStatuses = ['Activo', 'Revision', 'Proximamente'];
-    const pointNames = [
-      'Managua Central',
-      'Leon Norte',
-      'Esteli Red',
-      'Matagalpa Clinico',
-      'Jinotega Comunitario',
-      'Chinandega Integral',
-      'Masaya Preventivo',
-      'Granada Familiar'
-    ];
-    const points: MapPoint[] = [];
-
-    for (let index = 0; index < 8; index += 1) {
-      const latSeed = this.seededValue(index + 1);
-      const lngSeed = this.seededValue(index + 21);
-
-      points.push({
-        id: index + 1,
-        name: pointNames[index],
-        lat: 11.15 + (latSeed * 2.2),
-        lng: -87.35 + (lngSeed * 3.25),
-        status: pointStatuses[index % pointStatuses.length]
-      });
-    }
-
-    return points;
-  }
-
   private initMap(): void {
     if (typeof window === 'undefined' || this.map) {
       return;
@@ -323,7 +333,22 @@ export class AppComponent implements AfterViewInit, OnDestroy {
 
     this.pointMarkers = L.layerGroup().addTo(this.map);
 
-    this.mapPoints.forEach((point) => {
+    this.renderDirectoryMarkers();
+  }
+
+  private renderDirectoryMarkers(): void {
+    if (!this.map || !this.pointMarkers) {
+      return;
+    }
+
+    this.pointMarkers.clearLayers();
+    this.markersById.clear();
+    const pointsWithLocation = this.mapPoints.filter(
+      (point): point is MapPoint & { lat: number; lng: number } =>
+        point.lat !== null && point.lng !== null
+    );
+
+    pointsWithLocation.forEach((point) => {
       const marker = L.circleMarker([point.lat, point.lng], {
         radius: 8,
         weight: 2,
@@ -332,10 +357,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
         fillOpacity: 0.95
       });
 
-      marker.bindPopup(`
-        <strong>${point.name}</strong><br />
-        Estado: ${point.status}
-      `);
+      marker.bindPopup(this.createPopupContent(point));
 
       marker.on('click', () => {
         this.map?.flyTo([point.lat, point.lng], 10, {
@@ -347,6 +369,13 @@ export class AppComponent implements AfterViewInit, OnDestroy {
       this.markersById.set(point.id, marker);
       marker.addTo(this.pointMarkers!);
     });
+
+    if (pointsWithLocation.length > 0) {
+      const bounds = L.latLngBounds(
+        pointsWithLocation.map((point) => [point.lat, point.lng])
+      );
+      this.map.fitBounds(bounds, { padding: [36, 36], maxZoom: 12 });
+    }
   }
 
   private getPointColor(status: string): string {
@@ -362,9 +391,81 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private seededValue(seed: number): number {
-    const value = Math.sin(seed * 999) * 10000;
-    return value - Math.floor(value);
+  private loadPublicDirectory(): void {
+    this.directoryLoading = true;
+    this.directoryError = '';
+
+    this.http.get<PublicInstitutionResponse[]>(
+      `${this.getApiBaseUrl()}/institucionsalud/directorio/publico`
+    ).pipe(
+      finalize(() => {
+        this.directoryLoading = false;
+      })
+    ).subscribe({
+      next: (institutions) => {
+        this.mapPoints = institutions.map((institution) => ({
+          id: institution.id,
+          name: institution.nombre,
+          type: institution.tipo,
+          description: institution.descripcion,
+          address: [institution.direccion, institution.ciudad, institution.departamento]
+            .filter(Boolean)
+            .join(', '),
+          phone: institution.telefono,
+          hours: institution.horarioAtencion,
+          lat: this.toFiniteNumber(institution.latitud),
+          lng: this.toFiniteNumber(institution.longitud),
+          status: 'Activo',
+          services: institution.servicios ?? []
+        }));
+        this.renderDirectoryMarkers();
+      },
+      error: () => {
+        this.directoryError = 'No pudimos cargar el directorio en este momento.';
+        this.mapPoints = [];
+        this.renderDirectoryMarkers();
+      }
+    });
+  }
+
+  private getApiBaseUrl(): string {
+    if (typeof document === 'undefined') {
+      return '/api/v1';
+    }
+
+    const configuredUrl = document
+      .querySelector<HTMLMetaElement>('meta[name="nica-api-base-url"]')
+      ?.content.trim();
+    return (configuredUrl || '/api/v1').replace(/\/$/, '');
+  }
+
+  private toFiniteNumber(value: number | null): number | null {
+    if (value === null) {
+      return null;
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private createPopupContent(point: MapPoint): HTMLElement {
+    const content = document.createElement('div');
+    const title = document.createElement('strong');
+    title.textContent = point.name;
+    content.append(title);
+
+    const detail = document.createElement('p');
+    detail.textContent = point.address || point.type;
+    detail.style.margin = '0.35rem 0 0';
+    content.append(detail);
+
+    if (point.services.length > 0) {
+      const services = document.createElement('p');
+      services.textContent = point.services.map((service) => service.nombre).join(' · ');
+      services.style.margin = '0.35rem 0 0';
+      content.append(services);
+    }
+
+    return content;
   }
 
   private updateNicaraguaClock(): void {

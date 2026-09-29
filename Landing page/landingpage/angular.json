@@ -87,7 +87,8 @@
               "browserTarget": "landingpage:build:production"
             },
             "development": {
-              "browserTarget": "landingpage:build:development"
+              "browserTarget": "landingpage:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

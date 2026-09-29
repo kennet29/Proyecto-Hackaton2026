@@ -1635,6 +1635,43 @@ button {
   background: rgba(11, 27, 34, 0.46);
 }
 
+.map-legend {
+  max-height: 31rem;
+  padding-right: 0.25rem;
+  overflow-y: auto;
+}
+
+.legend-item:disabled {
+  cursor: default;
+  opacity: 0.78;
+}
+
+.directory-status {
+  margin: 1.2rem 0 0;
+  padding: 0.9rem;
+  border: 1px solid rgba(77, 175, 228, 0.18);
+  border-radius: 1rem;
+  background: rgba(77, 175, 228, 0.08);
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.service-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+}
+
+.service-list span {
+  padding: 0.28rem 0.48rem;
+  border-radius: 999px;
+  background: rgba(77, 175, 81, 0.11);
+  color: var(--brand-green);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
 .price-card {
   display: flex;
   flex-direction: column;

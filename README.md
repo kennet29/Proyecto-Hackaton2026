@@ -128,6 +128,13 @@ npm run android
 
 `EXPO_PUBLIC_API_URL` acepta la raíz del servidor o una URL que ya incluya `/api/v1`; la aplicación normaliza ambas formas. Si no se define en producción, se usa la URL configurada en `app.json`.
 
+La landing consulta el directorio público en
+`/api/v1/institucionsalud/directorio/publico`. La URL base se configura en la
+metaetiqueta `nica-api-base-url` de `Landing page/landingpage/src/index.html`;
+puede ser relativa (`/api/v1`) o absoluta (`https://api.ejemplo.com/api/v1`).
+Durante `npm start`, Angular redirige `/api` a `http://localhost:3000` mediante
+`proxy.conf.json`.
+
 ### 3. Landing page
 
 ```powershell

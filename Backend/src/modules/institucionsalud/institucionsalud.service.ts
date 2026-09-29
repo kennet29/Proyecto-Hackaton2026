@@ -8,6 +8,35 @@ import {
 import { CreateInstitucionsaludDto } from "./dto/create-institucionsalud.dto";
 import { UpdateInstitucionsaludDto } from "./dto/update-institucionsalud.dto";
 import { Institucionsalud } from "./institucionsalud.entity";
+import { Institucionservicio } from "../institucionservicio/institucionservicio.entity";
+import { Catalogoservicio } from "../catalogoservicio/catalogoservicio.entity";
+
+export type PublicServicio = {
+  id: number;
+  nombre: string;
+  categoria: string | null;
+  descripcion: string | null;
+  precioReferencia: number | null;
+  moneda: string | null;
+  tiempoEntrega: string | null;
+};
+
+export type PublicInstitucion = {
+  id: number;
+  nombre: string;
+  tipo: string;
+  descripcion: string | null;
+  telefono: string | null;
+  correo: string | null;
+  sitioWeb: string | null;
+  direccion: string | null;
+  ciudad: string | null;
+  departamento: string | null;
+  horarioAtencion: string | null;
+  latitud: number | null;
+  longitud: number | null;
+  servicios: PublicServicio[];
+};
 
 /**
  * Define el tipo institucion filters utilizado por el backend.
@@ -110,6 +139,116 @@ export class InstitucionsaludService {
     @InjectRepository(Institucionsalud)
     private readonly institucionRepository: Repository<Institucionsalud>,
   ) {}
+
+  /**
+   * Devuelve el directorio que puede mostrarse sin autenticacion en la landing.
+   * Solo incluye instituciones activas, servicios disponibles y campos publicos.
+   */
+  async findPublicDirectory(): Promise<PublicInstitucion[]> {
+    type DirectoryRow = {
+      institucionId: number;
+      institucionNombre: string;
+      institucionTipo: string;
+      institucionDescripcion: string | null;
+      telefono: string | null;
+      correo: string | null;
+      sitioWeb: string | null;
+      direccion: string | null;
+      ciudad: string | null;
+      departamento: string | null;
+      horarioAtencion: string | null;
+      latitud: number | string | null;
+      longitud: number | string | null;
+      servicioId: number | null;
+      servicioNombre: string | null;
+      servicioCategoria: string | null;
+      servicioDescripcion: string | null;
+      precioReferencia: number | string | null;
+      moneda: string | null;
+      tiempoEntrega: string | null;
+    };
+
+    const rows = await this.institucionRepository
+      .createQueryBuilder("institucion")
+      .leftJoin(
+        Institucionservicio,
+        "vinculo",
+        "vinculo.institucionsaludid = institucion.institucionsaludid AND vinculo.disponible = 1",
+      )
+      .leftJoin(
+        Catalogoservicio,
+        "servicio",
+        "servicio.catalogoservicioid = vinculo.catalogoservicioid AND servicio.activo = 1",
+      )
+      .select("institucion.institucionsaludid", "institucionId")
+      .addSelect("institucion.nombre", "institucionNombre")
+      .addSelect("institucion.tipo", "institucionTipo")
+      .addSelect("institucion.descripcion", "institucionDescripcion")
+      .addSelect("institucion.telefono", "telefono")
+      .addSelect("institucion.correo", "correo")
+      .addSelect("institucion.sitioweb", "sitioWeb")
+      .addSelect("institucion.direccion", "direccion")
+      .addSelect("institucion.ciudad", "ciudad")
+      .addSelect("institucion.departamento", "departamento")
+      .addSelect("institucion.horarioatencion", "horarioAtencion")
+      .addSelect("institucion.latitud", "latitud")
+      .addSelect("institucion.longitud", "longitud")
+      .addSelect("servicio.catalogoservicioid", "servicioId")
+      .addSelect("servicio.nombre", "servicioNombre")
+      .addSelect("servicio.categoria", "servicioCategoria")
+      .addSelect("servicio.descripcion", "servicioDescripcion")
+      .addSelect("vinculo.precioreferencia", "precioReferencia")
+      .addSelect("vinculo.moneda", "moneda")
+      .addSelect("vinculo.tiempoentrega", "tiempoEntrega")
+      .where("institucion.activo = 1")
+      .orderBy("institucion.nombre", "ASC")
+      .addOrderBy("servicio.nombre", "ASC")
+      .getRawMany<DirectoryRow>();
+
+    const directory = new Map<number, PublicInstitucion>();
+
+    for (const row of rows) {
+      const institutionId = Number(row.institucionId);
+      let institution = directory.get(institutionId);
+
+      if (!institution) {
+        institution = {
+          id: institutionId,
+          nombre: row.institucionNombre,
+          tipo: row.institucionTipo,
+          descripcion: row.institucionDescripcion,
+          telefono: row.telefono,
+          correo: row.correo,
+          sitioWeb: row.sitioWeb,
+          direccion: row.direccion,
+          ciudad: row.ciudad,
+          departamento: row.departamento,
+          horarioAtencion: row.horarioAtencion,
+          latitud: row.latitud === null ? null : Number(row.latitud),
+          longitud: row.longitud === null ? null : Number(row.longitud),
+          servicios: [],
+        };
+        directory.set(institutionId, institution);
+      }
+
+      if (row.servicioId !== null && row.servicioNombre) {
+        institution.servicios.push({
+          id: Number(row.servicioId),
+          nombre: row.servicioNombre,
+          categoria: row.servicioCategoria,
+          descripcion: row.servicioDescripcion,
+          precioReferencia:
+            row.precioReferencia === null
+              ? null
+              : Number(row.precioReferencia),
+          moneda: row.moneda,
+          tiempoEntrega: row.tiempoEntrega,
+        });
+      }
+    }
+
+    return [...directory.values()];
+  }
 
   /**
    * Create.

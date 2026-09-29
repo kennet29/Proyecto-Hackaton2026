@@ -319,33 +319,50 @@
 
   <section class="content-section map-section" id="mapa">
     <div class="section-heading">
-      <p class="eyebrow">Mapa de salud</p>
-      <h2>Ubica puntos de atencion y visualiza el estado de cada referencia en segundos.</h2>
+      <p class="eyebrow">Directorio de salud</p>
+      <h2>Encuentra clínicas y conoce los servicios disponibles en cada centro.</h2>
     </div>
     <div class="map-layout">
       <article class="map-card map-frame">
         <div class="map-toolbar">
-          <span class="map-pill">Servicios activos</span>
-          <span class="map-pill muted">Cobertura referencial</span>
+          <span class="map-pill">{{ mapPoints.length }} centros activos</span>
+          <span class="map-pill muted">Datos del sistema</span>
         </div>
 
-        <div id="demo-map" class="live-map" aria-label="Mapa interactivo de demostracion"></div>
+        <div id="demo-map" class="live-map" aria-label="Mapa interactivo de clínicas y centros de salud"></div>
       </article>
 
       <aside class="map-card map-sidebar">
-        <p class="card-kicker">Cobertura</p>
-        <h3>Explora nodos de atencion para orientar mejor cada caso.</h3>
+        <p class="card-kicker">Clínicas y servicios</p>
+        <h3>Información actualizada desde NICAPRIME.</h3>
         <p>
-          Este mapa demuestra como NICAPRIME puede conectar informacion de ubicacion, estado
-          operativo y referencias para decisiones mas rapidas.
+          Selecciona un centro para ubicarlo en el mapa y revisar los servicios que ofrece.
         </p>
 
-        <div class="map-legend">
-          <button class="legend-item" type="button" *ngFor="let point of mapPoints" (click)="focusMapPoint(point)">
+        <p class="directory-status" *ngIf="directoryLoading" role="status">Cargando directorio...</p>
+        <p class="directory-status directory-error" *ngIf="directoryError" role="alert">{{ directoryError }}</p>
+        <p class="directory-status" *ngIf="!directoryLoading && !directoryError && mapPoints.length === 0">
+          Aún no hay clínicas activas para mostrar.
+        </p>
+
+        <div class="map-legend" *ngIf="mapPoints.length > 0">
+          <button
+            class="legend-item"
+            type="button"
+            *ngFor="let point of mapPoints"
+            (click)="focusMapPoint(point)"
+            [disabled]="point.lat === null || point.lng === null"
+            [attr.title]="point.lat === null || point.lng === null ? 'Este centro no tiene ubicación registrada' : 'Ver en el mapa'">
             <span class="legend-dot"></span>
             <div>
               <strong>{{ point.name }}</strong>
-              <p>{{ point.status }}</p>
+              <p class="institution-meta">{{ point.type | titlecase }}<ng-container *ngIf="point.address"> · {{ point.address }}</ng-container></p>
+              <div class="service-list" *ngIf="point.services.length > 0; else noServices">
+                <span *ngFor="let service of point.services">{{ service.nombre }}</span>
+              </div>
+              <ng-template #noServices>
+                <p class="no-services">Sin servicios publicados</p>
+              </ng-template>
             </div>
           </button>
         </div>

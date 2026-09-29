@@ -13,6 +13,7 @@ import {
 import { CreateInstitucionsaludDto } from "./dto/create-institucionsalud.dto";
 import { UpdateInstitucionsaludDto } from "./dto/update-institucionsalud.dto";
 import { InstitucionsaludService } from "./institucionsalud.service";
+import { Public } from "../../auth/decorators/public.decorator";
 
 /**
  * Expone los endpoints HTTP del dominio institucionsalud.
@@ -120,6 +121,13 @@ export class InstitucionsaludController {
         "especialidadId",
       ),
     });
+  }
+
+  /** Directorio publico consumido por la landing page. */
+  @Public()
+  @Get("directorio/publico")
+  findPublicDirectory() {
+    return this.institucionService.findPublicDirectory();
   }
 
   /**
