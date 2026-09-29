@@ -25,6 +25,7 @@ export type PublicInstitucion = {
   id: number;
   nombre: string;
   tipo: string;
+  activo: boolean;
   descripcion: string | null;
   telefono: string | null;
   correo: string | null;
@@ -142,13 +143,14 @@ export class InstitucionsaludService {
 
   /**
    * Devuelve el directorio que puede mostrarse sin autenticacion en la landing.
-   * Solo incluye instituciones activas, servicios disponibles y campos publicos.
+   * Incluye todas las instituciones y solo expone campos publicos.
    */
   async findPublicDirectory(): Promise<PublicInstitucion[]> {
     type DirectoryRow = {
       institucionId: number;
       institucionNombre: string;
       institucionTipo: string;
+      institucionActiva: boolean;
       institucionDescripcion: string | null;
       telefono: string | null;
       correo: string | null;
@@ -183,6 +185,7 @@ export class InstitucionsaludService {
       .select("institucion.institucionsaludid", "institucionId")
       .addSelect("institucion.nombre", "institucionNombre")
       .addSelect("institucion.tipo", "institucionTipo")
+      .addSelect("institucion.activo", "institucionActiva")
       .addSelect("institucion.descripcion", "institucionDescripcion")
       .addSelect("institucion.telefono", "telefono")
       .addSelect("institucion.correo", "correo")
@@ -200,7 +203,6 @@ export class InstitucionsaludService {
       .addSelect("vinculo.precioreferencia", "precioReferencia")
       .addSelect("vinculo.moneda", "moneda")
       .addSelect("vinculo.tiempoentrega", "tiempoEntrega")
-      .where("institucion.activo = 1")
       .orderBy("institucion.nombre", "ASC")
       .addOrderBy("servicio.nombre", "ASC")
       .getRawMany<DirectoryRow>();
@@ -216,6 +218,9 @@ export class InstitucionsaludService {
           id: institutionId,
           nombre: row.institucionNombre,
           tipo: row.institucionTipo,
+          activo:
+            row.institucionActiva === true ||
+            Number(row.institucionActiva) === 1,
           descripcion: row.institucionDescripcion,
           telefono: row.telefono,
           correo: row.correo,

@@ -270,7 +270,6 @@ export function AdminClinicasScreen({ navigation }: Props) {
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<ClinicForm>(EMPTY_FORM);
-  const [usingDemo, setUsingDemo] = useState(false);
 
   const loadClinicas = useCallback(async () => {
     if (!token || !isAdminRole(user?.role)) {
@@ -288,10 +287,7 @@ export function AdminClinicasScreen({ navigation }: Props) {
         throw new Error(getErrorMessage(body, 'No se pudieron cargar las clínicas.'));
       }
       const apiClinicas = Array.isArray(body) ? body : [];
-      setUsingDemo(apiClinicas.length === 0);
-      setClinicas(
-        apiClinicas.length ? apiClinicas : DEMO_CLINICAS.map((clinic) => ({ ...clinic })),
-      );
+      setClinicas(apiClinicas);
     } catch (loadError) {
       setError(
         loadError instanceof Error
@@ -340,7 +336,7 @@ export function AdminClinicasScreen({ navigation }: Props) {
 
   const openCreate = () => {
     setEditingId(null);
-    setForm(EMPTY_FORM);
+    setForm({ ...EMPTY_FORM, activo: true });
     setError(null);
     setSuccess(null);
     setEditorVisible(true);
@@ -381,33 +377,6 @@ export function AdminClinicasScreen({ navigation }: Props) {
       return;
     }
 
-    if (editingId && usingDemo) {
-      setClinicas((current) =>
-        current.map((clinic) =>
-          clinic.institucionSaludId === editingId
-            ? {
-                ...clinic,
-                nombre: form.nombre.trim(),
-                descripcion: nullableText(form.descripcion),
-                telefono: nullableText(form.telefono),
-                correo: nullableText(form.correo),
-                sitioWeb: nullableText(form.sitioWeb),
-                direccion: nullableText(form.direccion),
-                ciudad: nullableText(form.ciudad),
-                departamento: nullableText(form.departamento),
-                horarioAtencion: nullableText(form.horarioAtencion),
-                latitud,
-                longitud,
-                activo: form.activo,
-              }
-            : clinic,
-        ),
-      );
-      setEditorVisible(false);
-      setSuccess('Ejemplo de clínica actualizado localmente.');
-      return;
-    }
-
     setSaving(true);
     try {
       const response = await apiFetch(
@@ -428,7 +397,7 @@ export function AdminClinicasScreen({ navigation }: Props) {
             horarioAtencion: nullableText(form.horarioAtencion),
             latitud,
             longitud,
-            activo: form.activo,
+            activo: editingId ? form.activo : true,
             ...(editingId
               ? { modificadoPor: user?.username || null }
               : { creadoPor: user?.username || null }),
@@ -521,18 +490,6 @@ export function AdminClinicasScreen({ navigation }: Props) {
           <StatCard label="Inactivas" value={counts.inactivas} color={colors.accent} />
           <StatCard label="Con ubicación" value={counts.ubicadas} color="#C084FC" />
         </View>
-
-        {usingDemo ? (
-          <View style={styles.demoBanner}>
-            <Ionicons name="flask-outline" size={17} color="#F5B942" />
-            <View style={styles.demoBannerCopy}>
-              <AppText style={styles.demoBannerTitle}>Datos de demostración</AppText>
-              <AppText style={styles.demoBannerText}>
-                Estas clínicas son ficticias. Puedes editarlas para probar la interfaz, pero los cambios no se guardan en la base de datos.
-              </AppText>
-            </View>
-          </View>
-        ) : null}
 
         {success ? (
           <View style={styles.successBanner}>
@@ -667,7 +624,7 @@ export function AdminClinicasScreen({ navigation }: Props) {
         visible={editorVisible}
         editing={editingId != null}
         clinicId={editingId}
-        demo={usingDemo}
+        demo={false}
         token={token}
         userName={user?.username || null}
         form={form}

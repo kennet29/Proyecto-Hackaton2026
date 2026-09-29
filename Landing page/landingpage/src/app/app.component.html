@@ -325,7 +325,7 @@
     <div class="map-layout">
       <article class="map-card map-frame">
         <div class="map-toolbar">
-          <span class="map-pill">{{ mapPoints.length }} centros activos</span>
+          <span class="map-pill">{{ mapPoints.length }} centros registrados</span>
           <span class="map-pill muted">Datos del sistema</span>
         </div>
 
@@ -357,6 +357,7 @@
             <div>
               <strong>{{ point.name }}</strong>
               <p class="institution-meta">{{ point.type | titlecase }}<ng-container *ngIf="point.address"> · {{ point.address }}</ng-container></p>
+              <p>{{ point.status }}</p>
               <div class="service-list" *ngIf="point.services.length > 0; else noServices">
                 <span *ngFor="let service of point.services">{{ service.nombre }}</span>
               </div>

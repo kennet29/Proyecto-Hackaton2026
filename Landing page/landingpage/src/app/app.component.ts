@@ -57,6 +57,7 @@ type PublicInstitutionResponse = {
   id: number;
   nombre: string;
   tipo: string;
+  activo: boolean;
   descripcion: string | null;
   telefono: string | null;
   direccion: string | null;
@@ -382,6 +383,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     switch (status) {
       case 'Activo':
         return '#4DAF51';
+      case 'Inactivo':
+        return '#EA5074';
       case 'Revision':
         return '#EA5074';
       case 'Proximamente':
@@ -415,7 +418,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
           hours: institution.horarioAtencion,
           lat: this.toFiniteNumber(institution.latitud),
           lng: this.toFiniteNumber(institution.longitud),
-          status: 'Activo',
+          status: institution.activo ? 'Activo' : 'Inactivo',
           services: institution.servicios ?? []
         }));
         this.renderDirectoryMarkers();
