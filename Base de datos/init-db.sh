@@ -43,6 +43,7 @@ MIGRATION_SCRIPTS=(
   "/scripts/create-push-devices-table.sql"
   "/scripts/configuracion_pagos.sql"
   "/scripts/directorio_salud.sql"
+  "/scripts/clinicas_carazo.sql"
   "/scripts/embarazo_datos_obstetricos.sql"
   "/scripts/examenclinico.sql"
   "/scripts/habitos_catalogo.sql"

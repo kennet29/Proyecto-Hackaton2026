@@ -342,7 +342,7 @@
         <p class="directory-status" *ngIf="directoryLoading" role="status">Cargando directorio...</p>
         <p class="directory-status directory-error" *ngIf="directoryError" role="alert">{{ directoryError }}</p>
         <p class="directory-status" *ngIf="!directoryLoading && !directoryError && mapPoints.length === 0">
-          Aún no hay clínicas activas para mostrar.
+          Aún no hay clínicas registradas para mostrar.
         </p>
 
         <div class="map-legend" *ngIf="mapPoints.length > 0">

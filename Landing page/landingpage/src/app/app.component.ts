@@ -36,6 +36,8 @@ type MapPoint = {
   description: string | null;
   address: string;
   phone: string | null;
+  email: string | null;
+  website: string | null;
   hours: string | null;
   lat: number | null;
   lng: number | null;
@@ -60,6 +62,8 @@ type PublicInstitutionResponse = {
   activo: boolean;
   descripcion: string | null;
   telefono: string | null;
+  correo: string | null;
+  sitioWeb: string | null;
   direccion: string | null;
   ciudad: string | null;
   departamento: string | null;
@@ -358,7 +362,10 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
         fillOpacity: 0.95
       });
 
-      marker.bindPopup(this.createPopupContent(point));
+      marker.bindPopup(this.createPopupContent(point), {
+        minWidth: 260,
+        maxWidth: 340
+      });
 
       marker.on('click', () => {
         this.map?.flyTo([point.lat, point.lng], 10, {
@@ -415,6 +422,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
             .filter(Boolean)
             .join(', '),
           phone: institution.telefono,
+          email: institution.correo,
+          website: institution.sitioWeb,
           hours: institution.horarioAtencion,
           lat: this.toFiniteNumber(institution.latitud),
           lng: this.toFiniteNumber(institution.longitud),
@@ -452,20 +461,75 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private createPopupContent(point: MapPoint): HTMLElement {
     const content = document.createElement('div');
+    content.className = 'clinic-popup';
+
+    const heading = document.createElement('div');
+    heading.className = 'clinic-popup-heading';
     const title = document.createElement('strong');
+    title.className = 'clinic-popup-title';
     title.textContent = point.name;
-    content.append(title);
+    const status = document.createElement('span');
+    status.className = `clinic-popup-status ${point.status === 'Activo' ? 'is-active' : 'is-inactive'}`;
+    status.textContent = point.status;
+    heading.append(title, status);
+    content.append(heading);
 
     const detail = document.createElement('p');
+    detail.className = 'clinic-popup-address';
     detail.textContent = point.address || point.type;
-    detail.style.margin = '0.35rem 0 0';
     content.append(detail);
 
+    if (point.description) {
+      const description = document.createElement('p');
+      description.className = 'clinic-popup-description';
+      description.textContent = point.description;
+      content.append(description);
+    }
+
+    const contactDetails = [
+      point.phone ? `Teléfono: ${point.phone}` : null,
+      point.email ? `Correo: ${point.email}` : null,
+      point.hours ? `Horario: ${point.hours}` : null
+    ].filter((item): item is string => Boolean(item));
+
+    if (contactDetails.length > 0) {
+      const contactList = document.createElement('ul');
+      contactList.className = 'clinic-popup-contact';
+      contactDetails.forEach((item) => {
+        const listItem = document.createElement('li');
+        listItem.textContent = item;
+        contactList.append(listItem);
+      });
+      content.append(contactList);
+    }
+
     if (point.services.length > 0) {
-      const services = document.createElement('p');
-      services.textContent = point.services.map((service) => service.nombre).join(' · ');
-      services.style.margin = '0.35rem 0 0';
-      content.append(services);
+      const serviceTitle = document.createElement('strong');
+      serviceTitle.className = 'clinic-popup-subtitle';
+      serviceTitle.textContent = 'Servicios disponibles';
+      const services = document.createElement('ul');
+      services.className = 'clinic-popup-services';
+      point.services.forEach((service) => {
+        const item = document.createElement('li');
+        const serviceName = document.createElement('strong');
+        serviceName.textContent = service.nombre;
+        item.append(serviceName);
+
+        const metadata = [
+          service.categoria,
+          service.tiempoEntrega,
+          service.precioReferencia !== null
+            ? `${service.moneda || 'NIO'} ${service.precioReferencia.toLocaleString('es-NI')}`
+            : null
+        ].filter(Boolean).join(' · ');
+        if (metadata) {
+          const serviceMeta = document.createElement('span');
+          serviceMeta.textContent = metadata;
+          item.append(serviceMeta);
+        }
+        services.append(item);
+      });
+      content.append(serviceTitle, services);
     }
 
     return content;

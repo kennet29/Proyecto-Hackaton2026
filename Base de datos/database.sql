@@ -10,6 +10,7 @@
 :r /scripts/create-push-devices-table.sql
 :r /scripts/configuracion_pagos.sql
 :r /scripts/directorio_salud.sql
+:r /scripts/clinicas_carazo.sql
 :r /scripts/embarazo_datos_obstetricos.sql
 :r /scripts/examenclinico.sql
 :r /scripts/habitos_catalogo.sql

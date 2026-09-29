@@ -20,3 +20,94 @@ body {
 .leaflet-popup-tip {
   box-shadow: 0 14px 30px rgba(18, 50, 58, 0.16);
 }
+
+.clinic-popup {
+  color: #18323a;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.clinic-popup-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.clinic-popup-title {
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.clinic-popup-status {
+  flex: 0 0 auto;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.clinic-popup-status.is-active {
+  background: rgba(77, 175, 81, 0.14);
+  color: #277c2b;
+}
+
+.clinic-popup-status.is-inactive {
+  background: rgba(234, 80, 116, 0.12);
+  color: #b52e4e;
+}
+
+.clinic-popup-address,
+.clinic-popup-description {
+  margin: 0.45rem 0 0;
+  line-height: 1.45;
+}
+
+.clinic-popup-address {
+  color: #42606a;
+  font-size: 0.78rem;
+}
+
+.clinic-popup-description {
+  font-size: 0.8rem;
+}
+
+.clinic-popup-contact,
+.clinic-popup-services {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.clinic-popup-contact {
+  color: #42606a;
+  font-size: 0.73rem;
+}
+
+.clinic-popup-subtitle {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 0.78rem;
+}
+
+.clinic-popup-services li {
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.6rem;
+  background: #f1f8f3;
+}
+
+.clinic-popup-services strong,
+.clinic-popup-services span {
+  display: block;
+}
+
+.clinic-popup-services strong {
+  font-size: 0.74rem;
+}
+
+.clinic-popup-services span {
+  margin-top: 0.15rem;
+  color: #58717a;
+  font-size: 0.66rem;
+}
