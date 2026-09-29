@@ -13,16 +13,6 @@ export const nanoAppearanceIds = [
   "patriota",
   "halloween",
   "navideno",
-  "agregar",
-  "alimentacion-sana",
-  "bajar-peso",
-  "cerrar-sesion",
-  "control-glucemico",
-  "creativo",
-  "ganar-masa-muscular",
-  "hidratarse",
-  "horas-sueno",
-  "ponerse-en-forma",
 ] as const;
 
 export const selectNanoAppearanceSchema = z.object({
