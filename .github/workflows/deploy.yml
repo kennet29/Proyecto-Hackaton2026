@@ -61,7 +61,9 @@ jobs:
             set -e
             echo "=== Actualizando repositorio en el VPS ==="
             cd /opt/Proyecto-Hackaton2026
-            git pull origin main
+            # Conserva cualquier commit o cambio local del VPS y coloca los
+            # cambios remotos como base, evitando el error por ramas divergentes.
+            git pull --rebase --autostash origin main
             echo "=== Construyendo y levantando contenedores ==="
             docker compose up -d --build
             echo "=== Limpiando imagenes antiguas ==="
