@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -375,6 +376,7 @@ export function LesionFormScreen({ mode = 'list' }: LesionFormScreenProps) {
         }
       >
         <View style={styles.heroCard}>
+          <NanoSectionIllustration section="lesiones" size={62} />
           <AppText style={styles.eyebrow}>SEGUIMIENTO FISICO</AppText>
           <AppText style={styles.title}>{isCreateMode ? 'Nueva lesion' : 'Lesiones'}</AppText>
           <AppText style={styles.subtitle}>

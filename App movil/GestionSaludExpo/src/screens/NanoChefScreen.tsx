@@ -264,10 +264,10 @@ export function NanoChefScreen({ navigation }: Props) {
 
 const createStyles = (colors: AppColors) => StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
-  container: { padding: 20, paddingBottom: 40, gap: 16, width: '100%' },
+  container: { padding: 20, paddingTop: 28, paddingBottom: 40, gap: 16, width: '100%' },
   containerWeb: { maxWidth: 1180, alignSelf: 'center', paddingHorizontal: 32, paddingTop: 32 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  headerIcon: { width: 52, height: 52, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.success },
+  headerIcon: { width: 52, height: 52, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   headerCopy: { flex: 1 }, eyebrow: { color: colors.success, fontSize: 12, fontWeight: '900', textTransform: 'uppercase' },
   title: { color: colors.text, fontSize: 28, fontWeight: '900' }, subtitle: { color: colors.textMuted, fontSize: 13 },
   closeButton: { padding: 10, borderRadius: 12, backgroundColor: colors.surface },

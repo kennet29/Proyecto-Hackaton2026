@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
@@ -760,6 +761,7 @@ export function ControlCronicoScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void fetchRecords()} />}
     >
       <View style={styles.heroCard}>
+        <NanoSectionIllustration section="seguimiento-cronico" size={62} />
         <AppText style={styles.kicker}>SEGUIMIENTO CRONICO</AppText>
         <View style={styles.header}>
           <AppText style={styles.title}>Control cronico</AppText>

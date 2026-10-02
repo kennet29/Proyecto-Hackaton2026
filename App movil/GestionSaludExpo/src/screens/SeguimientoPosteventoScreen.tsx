@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -561,7 +562,7 @@ export function SeguimientoPosteventoScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.heroCard}>
         <View style={styles.heroIcon}>
-          <Ionicons name="pulse-outline" size={28} color={colors.info} />
+          <NanoSectionIllustration section="seguimiento-caso" size={58} />
         </View>
         <View style={styles.heroCopy}>
           <AppText style={styles.kicker}>EVOLUCIÓN CLÍNICA</AppText>

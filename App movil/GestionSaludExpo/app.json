@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "GestionSaludExpo",
+    "name": "Nica Prime",
     "slug": "GestionSaludExpo",
     "scheme": "gestionsalud",
     "version": "1.0.4",
     "orientation": "default",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/nica-prime-icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true
@@ -14,10 +14,9 @@
       "package": "com.kennet29.gestionsaludexpo",
       "versionCode": 5,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/nica-prime-foreground.png",
+        "monochromeImage": "./assets/nica-prime-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
@@ -46,7 +45,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon.png",
+          "icon": "./assets/nica-prime-monochrome.png",
           "color": "#0f172a"
         }
       ],

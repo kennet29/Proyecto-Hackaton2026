@@ -38,7 +38,9 @@ zodJsonSchemaProcessors.allProcessors.date = openApiDateProcessor;
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.getHttpAdapter().getInstance().set("trust proxy", 1);
-  const requestBodyLimit = process.env.REQUEST_BODY_LIMIT ?? "5mb";
+  // Los archivos se envian en Base64, que agrega cerca de un 33 % al tamano
+  // original. Este margen permite adjuntos de hasta 10 MB mas el resto del JSON.
+  const requestBodyLimit = process.env.REQUEST_BODY_LIMIT ?? "15mb";
   const requestLogFormat =
     ":method :url :status :res[content-length] - :response-time ms";
   app.use(json({ limit: requestBodyLimit }));

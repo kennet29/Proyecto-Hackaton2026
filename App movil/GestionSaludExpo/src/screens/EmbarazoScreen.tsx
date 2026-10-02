@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
@@ -390,7 +391,7 @@ export function EmbarazoScreen() {
     >
       <View style={styles.header}>
         <View style={styles.headerIcon}>
-          <Ionicons name="heart-circle-outline" size={27} color="#FB7185" />
+          <NanoSectionIllustration section="embarazo" size={58} />
         </View>
         <View style={styles.headerCopy}>
           <AppText style={styles.title}>Embarazo</AppText>

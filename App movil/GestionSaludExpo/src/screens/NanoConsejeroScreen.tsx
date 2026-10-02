@@ -746,7 +746,7 @@ export function NanoConsejeroScreen({ navigation }: Props) {
       >
         <View style={styles.headerRow}>
           <View style={styles.headerIcon}>
-            <NanoSectionIllustration section="bienestar" size={52} />
+            <Ionicons name="camera-outline" size={26} color={colors.info} />
           </View>
           <View style={styles.headerCopy}>
             <AppText style={styles.eyebrow}>Asistente IA</AppText>
@@ -1212,7 +1212,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 18,
+    paddingTop: 26,
     paddingBottom: 28,
     backgroundColor: 'transparent',
   },
@@ -1226,8 +1226,11 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 17,
+    backgroundColor: colors.surfaceStrong,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   headerCopy: { flex: 1 },
   eyebrow: {

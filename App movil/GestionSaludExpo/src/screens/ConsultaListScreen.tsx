@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { AppText } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { Picker } from '@react-native-picker/picker';
 import { Calendar, DateData } from 'react-native-calendars';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -330,6 +331,7 @@ export function ConsultaListScreen({ navigation }: Props) {
         }
       >
         <View style={styles.heroCard}>
+          <NanoSectionIllustration section="consulta-medica" size={62} />
           <AppText style={styles.kicker}>CONSULTAS MEDICAS</AppText>
           <AppText style={styles.header}>Agenda clinica</AppText>
           <AppText style={styles.subheader}>

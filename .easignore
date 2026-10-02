@@ -1,4 +1,6 @@
 # EAS packages this monorepo from the Git root. Only the Expo app is needed.
+.git
+.git/**
 Backend
 Base de datos
 caddy
@@ -33,3 +35,5 @@ yarn-error.*
 *.pem
 .env*.local
 *.tsbuildinfo
+**/*.apk
+**/*.log

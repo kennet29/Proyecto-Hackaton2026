@@ -26,85 +26,145 @@ import NanoPremium from '../Nanos/nano premium.svg';
 import NanoRecordatorios from '../Nanos/nano recordatorios.svg';
 import NanoSobreNosotros from '../Nanos/nano sobre nosotros.svg';
 import NanoTamanoLetra from '../Nanos/nano tamaño de letra.svg';
+import NanoAlergias from '../../Nanos Medica/Nano Alergias.svg';
+import NanoVacunas from '../../Nanos Medica/Nano Vacunas.svg';
+import NanoMedicacion from '../../Nanos Medica/Nano Medicacion.svg';
+import NanoResumenPaciente from '../../Nanos Medica/Nano Resumen del Paciente.svg';
+import NanoConsultaMedica from '../../Nanos Medica/Nano Consulta Medica.svg';
+import NanoCitasProgramadas from '../../Nanos Medica/Nano Citas Programadas.svg';
+import NanoControlClinico from '../../Nanos Medica/Nano Control Clinico.svg';
+import NanoSeguimientoCronico from '../../Nanos Medica/Nano Seguimiento Cronico.svg';
+import NanoOperaciones from '../../Nanos Medica/Nano Operaciones.svg';
+import NanoLesiones from '../../Nanos Medica/Nano Lesiones.svg';
+import NanoRegistroDental from '../../Nanos Medica/Nano registro dental.svg';
+import NanoEmbarazo from '../../Nanos Medica/Nano Embarazo.svg';
+import NanoDesparasitaciones from '../../Nanos Medica/Nano Desparacitaciones.svg';
+import NanoExamenesClinicos from '../../Nanos Medica/Nano Examenes Clinicos.svg';
+import NanoSeguimientoCaso from '../../Nanos Medica/Nano Seguimiento de Caso.svg';
 
 export type NanoSection =
   | 'alimentacion'
+  | 'alergias'
   | 'biblioteca'
   | 'bienestar'
   | 'chef'
   | 'chef-color'
   | 'codigo-seguridad'
+  | 'citas-programadas'
+  | 'consulta-medica'
+  | 'control-clinico'
   | 'compartir-historial'
   | 'dashboard'
   | 'dashboard-indicadores'
   | 'entrenador'
   | 'entrenador-color'
+  | 'embarazo'
+  | 'examenes-clinicos'
   | 'guias-medicas'
   | 'modo-claro-oscuro'
+  | 'medicacion'
+  | 'operaciones'
   | 'planes-pago'
   | 'premium'
   | 'presupuesto'
   | 'prime'
   | 'recordatorios'
+  | 'registro-dental'
+  | 'resumen-paciente'
   | 'salud-mental'
   | 'seguimiento-fisico'
+  | 'seguimiento-caso'
+  | 'seguimiento-cronico'
   | 'sobre-nosotros'
   | 'solicitud-medica'
   | 'store'
-  | 'tamano-letra';
+  | 'tamano-letra'
+  | 'vacunas'
+  | 'desparasitaciones'
+  | 'lesiones';
 
 const illustrations: Record<NanoSection, React.ComponentType<SvgProps>> = {
   alimentacion: NanoAlimentacion,
+  alergias: NanoAlergias,
   biblioteca: NanoBiblioteca,
   bienestar: NanoBienestar,
   chef: NanoChef,
   'chef-color': NanoChefColor,
   'codigo-seguridad': NanoCodigoSeguridad,
+  'citas-programadas': NanoCitasProgramadas,
+  'consulta-medica': NanoConsultaMedica,
+  'control-clinico': NanoControlClinico,
   'compartir-historial': NanoCompartirHistorial,
   dashboard: NanoDashboard,
   'dashboard-indicadores': NanoDashboardIndicadores,
   entrenador: NanoEntrenador,
   'entrenador-color': NanoEntrenadorColor,
+  embarazo: NanoEmbarazo,
+  'examenes-clinicos': NanoExamenesClinicos,
   'guias-medicas': NanoGuiasMedicas,
   'modo-claro-oscuro': NanoModo,
+  medicacion: NanoMedicacion,
+  operaciones: NanoOperaciones,
   'planes-pago': NanoPlanesPago,
   premium: NanoPremium,
   presupuesto: NanoPresupuesto,
   prime: NanoPrime,
   recordatorios: NanoRecordatorios,
+  'registro-dental': NanoRegistroDental,
+  'resumen-paciente': NanoResumenPaciente,
   'salud-mental': NanoSaludMental,
   'seguimiento-fisico': NanoSeguimientoFisico,
+  'seguimiento-caso': NanoSeguimientoCaso,
+  'seguimiento-cronico': NanoSeguimientoCronico,
   'sobre-nosotros': NanoSobreNosotros,
   'solicitud-medica': NanoSolicitudMedica,
   store: NanoStore,
   'tamano-letra': NanoTamanoLetra,
+  vacunas: NanoVacunas,
+  desparasitaciones: NanoDesparasitaciones,
+  lesiones: NanoLesiones,
 };
 
 const labels: Record<NanoSection, string> = {
   alimentacion: 'Nano Alimentación',
+  alergias: 'Nano Alergias',
   biblioteca: 'Nano Biblioteca',
   bienestar: 'Nano Bienestar',
   chef: 'Nano Chef',
   'chef-color': 'Nano Chef Color',
   'codigo-seguridad': 'Nano Código de Seguridad',
+  'citas-programadas': 'Nano Citas Programadas',
+  'consulta-medica': 'Nano Consulta Médica',
+  'control-clinico': 'Nano Control Clínico',
   'compartir-historial': 'Nano Compartir Historial',
   dashboard: 'Nano Dashboard',
   'dashboard-indicadores': 'Nano Dashboard Indicadores',
   entrenador: 'Nano Entrenador',
   'entrenador-color': 'Nano Entrenador Color',
+  embarazo: 'Nano Embarazo',
+  'examenes-clinicos': 'Nano Exámenes Clínicos',
   'guias-medicas': 'Nano Guías Médicas',
   'modo-claro-oscuro': 'Nano Modo Claro y Oscuro',
+  medicacion: 'Nano Medicación',
+  operaciones: 'Nano Operaciones',
   'planes-pago': 'Nano Planes de Pago',
   premium: 'Nano Premium',
   presupuesto: 'Nano Presupuesto',
   prime: 'Nano Prime',
   recordatorios: 'Nano Recordatorios',
+  'registro-dental': 'Nano Registro Dental',
+  'resumen-paciente': 'Nano Resumen del Paciente',
   'salud-mental': 'Nano Salud Mental',
   'seguimiento-fisico': 'Nano Seguimiento Físico',
+  'seguimiento-caso': 'Nano Seguimiento de Caso',
+  'seguimiento-cronico': 'Nano Seguimiento Crónico',
   'sobre-nosotros': 'Nano Sobre Nosotros',
   'solicitud-medica': 'Nano Solicitud Médica',
   store: 'Nano Store',
   'tamano-letra': 'Nano Tamaño de Letra',
+  vacunas: 'Nano Vacunas',
+  desparasitaciones: 'Nano Desparasitaciones',
+  lesiones: 'Nano Lesiones',
 };
 
 type Props = Omit<SvgProps, 'width' | 'height'> & {

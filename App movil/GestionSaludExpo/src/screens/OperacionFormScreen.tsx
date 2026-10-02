@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import DateTimePicker, {
   DateTimePickerAndroid,
 } from '@react-native-community/datetimepicker';
@@ -424,6 +425,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.heroCard}>
+          <NanoSectionIllustration section="operaciones" size={62} />
           <AppText style={styles.eyebrow}>Seguimiento quirurgico</AppText>
             <AppText style={styles.title}>Operaciones</AppText>
             <AppText style={styles.subtitle}>

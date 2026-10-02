@@ -17,7 +17,7 @@ import { useBackgroundMode } from '../context/BackgroundModeContext';
 import { DashboardBienestar } from '../components/DashboardBienestar';
 import NanoMenu from '../svg/Nano Menu.svg';
 import NanoMedico from '../svg/Nano verde 75px.svg';
-import NanoBienestar from '../svg/Nano Bienestar.svg';
+import NanoBienestar from '../Nanos IA/Nano Bienestar.svg';
 import NanoGestion from '../svg/Nano Gestion.svg';
 import NanoDashboard from '../Nano Dashboards/Nano Dashboard.svg';
 import NanoSeguimientoFisico from '../Nano Dashboards/Nano segumiento Fisico.svg';
@@ -28,6 +28,8 @@ import NanoPresupuesto from '../Nanos/NANO PRESUPUESTO.svg';
 import NanoSolicitudMedica from '../Nanos/nano enviar solicitud medica.svg';
 import NanoTamanoLetra from '../Nanos/nano tamaño de letra.svg';
 import NanoPremium from '../Nanos/nano premium.svg';
+import NanoPlanesPago from '../Nanos/nano planes de pago.svg';
+import NanoCodigoSeguridad from '../Nanos/nano codigo de seguridad.svg';
 import NanoCompartirHistorial from '../Nanos/nano compartir historial.svg';
 import NanoRecordatorios from '../Nanos/nano recordatorios.svg';
 import NanoSobreNosotros from '../Nanos/nano sobre nosotros.svg';
@@ -47,6 +49,11 @@ import NanoEmbarazo from '../../Nanos Medica/Nano Embarazo.svg';
 import NanoDesparasitaciones from '../../Nanos Medica/Nano Desparacitaciones.svg';
 import NanoExamenesClinicos from '../../Nanos Medica/Nano Examenes Clinicos.svg';
 import NanoSeguimientoCaso from '../../Nanos Medica/Nano Seguimiento de Caso.svg';
+import NanoFormulario from '../../Nanos Medica/Nano Formulario.svg';
+import NanoExpedienteClinico from '../../Nanos Medica/Nano Expediente Clinico.svg';
+import NanoUsuario from '../../Nanos Medica/Nano Usuario 2.svg';
+import NanoUsuarioMedico from '../../Nanos Medica/Nano Usuario Medico.svg';
+import NanoConsultaMedicaAlterna from '../../Nanos Medica/Nano Consulta Medica 2.svg';
 import {
   getNanoAppearance,
   loadNanoAppearanceId,
@@ -430,6 +437,8 @@ const managementOptions: OptionItem[] = [
     icon: 'shield-checkmark-outline',
     accent: '#F5B942',
     navigateTo: 'AdminSolicitudes',
+    nano: true,
+    nanoAppearance: { id: 'revision-solicitudes', label: 'Nano Formulario', description: 'Nano para revisar solicitudes médicas', format: 'svg', svgComponent: NanoFormulario },
   },
   {
     key: 'admin-clinicas',
@@ -438,6 +447,8 @@ const managementOptions: OptionItem[] = [
     icon: 'business-outline',
     accent: '#29B6FF',
     navigateTo: 'AdminClinicas',
+    nano: true,
+    nanoAppearance: { id: 'administrar-clinicas', label: 'Nano Usuario Médico', description: 'Nano para administrar clínicas', format: 'svg', svgComponent: NanoUsuarioMedico },
   },
   {
     key: 'registro-medico',
@@ -492,6 +503,8 @@ const managementOptions: OptionItem[] = [
     icon: 'people-outline',
     accent: '#38E28E',
     navigateTo: 'PacienteForm',
+    nano: true,
+    nanoAppearance: { id: 'personas', label: 'Nano Usuario', description: 'Nano de perfiles de personas', format: 'svg', svgComponent: NanoUsuario },
   },
   {
     key: 'documentos',
@@ -500,6 +513,8 @@ const managementOptions: OptionItem[] = [
     icon: 'documents-outline',
     accent: '#29B6FF',
     navigateTo: 'DocumentoForm',
+    nano: true,
+    nanoAppearance: { id: 'documentos-clinicos', label: 'Nano Expediente Clínico', description: 'Nano de documentos clínicos', format: 'svg', svgComponent: NanoExpedienteClinico },
   },
   {
     key: 'compartir-historial',
@@ -518,6 +533,8 @@ const managementOptions: OptionItem[] = [
     icon: 'keypad-outline',
     accent: '#29B6FF',
     navigateTo: 'HistorialCompartido',
+    nano: true,
+    nanoAppearance: { id: 'codigo-seguridad', label: 'Nano Código de Seguridad', description: 'Nano de acceso médico por código', format: 'svg', svgComponent: NanoCodigoSeguridad },
   },
   {
     key: 'recordatorios',
@@ -663,6 +680,8 @@ export function MenuPrincipalScreen({ navigation }: Props) {
             icon: 'card-outline' as const,
             accent: '#F5B942',
             navigateTo: 'AdminPagos' as const,
+            nano: true,
+            nanoAppearance: { id: 'planes-pago', label: 'Nano Planes de Pago', description: 'Nano de pagos Premium', format: 'svg' as const, svgComponent: NanoPlanesPago },
           }, {
             key: 'administrar-clinicas',
             label: 'Clínicas y Servicios',
@@ -670,6 +689,8 @@ export function MenuPrincipalScreen({ navigation }: Props) {
             icon: 'business-outline' as const,
             accent: colors.success,
             navigateTo: 'AdminInstituciones' as const,
+            nano: true,
+            nanoAppearance: { id: 'clinicas-servicios', label: 'Nano Consulta Médica', description: 'Nano de clínicas y servicios', format: 'svg' as const, svgComponent: NanoConsultaMedicaAlterna },
           }, {
             key: 'admin-logs',
             label: 'Registros del servidor',
@@ -677,6 +698,8 @@ export function MenuPrincipalScreen({ navigation }: Props) {
             icon: 'terminal-outline' as const,
             accent: '#A855F7',
             navigateTo: 'AdminServerLogs' as const,
+            nano: true,
+            nanoAppearance: { id: 'registros-servidor', label: 'Nano Operaciones', description: 'Nano de registros del servidor', format: 'svg' as const, svgComponent: NanoOperaciones },
           }]
         : []),
       ...permittedOptions,
@@ -772,7 +795,11 @@ export function MenuPrincipalScreen({ navigation }: Props) {
     <View style={[styles.heroCard, isWebWide && styles.webHeroCard]}>
       <View style={[styles.heroTopRow, isWebWide && styles.webHeroTopRow]}>
         <View style={[styles.heroBadge, isWebWide && styles.webHeroBadge]}>
-          <Ionicons name={activeMeta.icon} size={16} color="#0B6FEA" />
+          {activeMeta.nanoAppearance ? (
+            <NanoAppearancePreview appearance={activeMeta.nanoAppearance} size={22} />
+          ) : (
+            <Ionicons name={activeMeta.icon} size={16} color="#0B6FEA" />
+          )}
           <AppText style={[styles.heroBadgeText, !isLightMode && styles.heroBadgeTextDark]}>{activeMeta.label}</AppText>
         </View>
         <View style={styles.heroActions}>

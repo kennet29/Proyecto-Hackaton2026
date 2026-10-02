@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
@@ -647,6 +648,7 @@ export function ExamenClinicoScreen() {
         }
       >
         <View style={styles.heroCard}>
+          <NanoSectionIllustration section="examenes-clinicos" size={62} />
           <AppText style={styles.eyebrow}>EXPEDIENTE CLINICO</AppText>
           <AppText style={styles.title}>Examenes clinicos</AppText>
           <AppText style={styles.subtitle}>

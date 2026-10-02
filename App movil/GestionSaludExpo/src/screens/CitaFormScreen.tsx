@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 
 import DateTimePicker, {
 
@@ -913,6 +914,7 @@ export function CitaFormScreen() {
     <View style={styles.screen}>
     <ScrollView contentContainerStyle={styles.container}>
 
+      <NanoSectionIllustration section="citas-programadas" size={62} />
       <AppText style={styles.pageTitle}>Citas Programadas</AppText>
 
       <View style={styles.calendarCard}>

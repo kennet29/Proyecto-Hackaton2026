@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -55,7 +56,7 @@ type ConditionAttachment = {
   size?: number;
 };
 
-const MAX_ATTACHMENT_BYTES = 3 * 1024 * 1024;
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 
 type CondicionRecord = {
   condicioncronicaId: number;
@@ -446,7 +447,7 @@ export function CondicionCronicaFormScreen({
 
   const validateAttachmentSize = (size?: number | null) => {
     if (size && size > MAX_ATTACHMENT_BYTES) {
-      Alert.alert('Archivo muy grande', 'Cada imagen o PDF puede pesar hasta 3 MB.');
+      Alert.alert('Archivo muy grande', 'Cada imagen o PDF puede pesar hasta 10 MB.');
       return false;
     }
     return true;
@@ -734,6 +735,7 @@ export function CondicionCronicaFormScreen({
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.heroCard}>
+          <NanoSectionIllustration section="control-clinico" size={62} />
           <AppText style={styles.kicker}>ENFERMEDADES CRONICAS</AppText>
           <AppText style={styles.title}>
             {isCreateMode ? 'Nueva enfermedad cronica' : 'Personas y condiciones'}
@@ -989,7 +991,7 @@ export function CondicionCronicaFormScreen({
                 <View style={styles.attachmentsHeaderCopy}>
                   <AppText style={styles.attachmentsTitle}>Resultados y diagnósticos</AppText>
                   <AppText style={styles.attachmentsHint}>
-                    Adjunta imágenes o PDF de hasta 3 MB por archivo.
+                    Adjunta imágenes o PDF de hasta 10 MB por archivo.
                   </AppText>
                 </View>
                 {attachments.length > 0 ? (

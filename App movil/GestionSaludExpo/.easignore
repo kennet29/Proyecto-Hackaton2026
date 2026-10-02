@@ -31,3 +31,7 @@ yarn-error.*
 
 # Source archive; the extracted SVG assets are included separately
 src/Nanos Extra/extra.rar
+
+# APKs and logs from previous local/remote builds
+*.apk
+eas-build.log

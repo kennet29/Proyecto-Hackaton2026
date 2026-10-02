@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import DateTimePicker, {
   DateTimePickerAndroid,
 } from '@react-native-community/datetimepicker';
@@ -517,6 +518,7 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
     return (
       <ScrollView contentContainerStyle={styles.container} style={styles.screen}>
         <View style={styles.heroCard}>
+          <NanoSectionIllustration section="alergias" size={62} />
           <AppText style={styles.eyebrow}>Riesgos y reacciones</AppText>
           <AppText style={styles.title}>Nueva alergia</AppText>
           <AppText style={styles.subtitle}>
@@ -532,6 +534,7 @@ export function AlergiaScreen({ mode = 'list' }: AlergiaScreenProps) {
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.heroCard}>
+          <NanoSectionIllustration section="alergias" size={62} />
           <AppText style={styles.eyebrow}>Riesgos y reacciones</AppText>
           <AppText style={styles.title}>Alergias</AppText>
           <AppText style={styles.subtitle}>

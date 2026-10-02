@@ -18,6 +18,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Calendar, DateData } from 'react-native-calendars';
@@ -1068,7 +1069,7 @@ export function MedicacionFormScreen({
         <View style={styles.heroCard}>
           <View style={styles.heroTopRow}>
             <View style={styles.heroIconBadge}>
-              <Ionicons name="medkit-outline" size={28} color={colors.text} />
+              <NanoSectionIllustration section="medicacion" size={58} />
             </View>
             <View style={styles.heroStatusPill}>
               <Ionicons name={isCreateMode ? 'create-outline' : 'calendar-outline'} size={14} color={colors.info} />

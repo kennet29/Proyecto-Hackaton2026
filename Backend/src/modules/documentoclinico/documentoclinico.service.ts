@@ -20,7 +20,7 @@ const PRIMARY_KEY_TYPES: Record<
   documentoId: "number",
 };
 
-const MAX_ATTACHMENT_BYTES = 3 * 1024 * 1024;
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 const ALLOWED_ATTACHMENT_MIME_TYPES = new Set([
   "application/pdf",
   "image/jpeg",
@@ -341,7 +341,7 @@ export class DocumentoclinicoService {
     }
     if (buffer.length > MAX_ATTACHMENT_BYTES) {
       throw new BadRequestException(
-        "el archivo adjunto no puede superar 3 MB",
+        "el archivo adjunto no puede superar 10 MB",
       );
     }
 

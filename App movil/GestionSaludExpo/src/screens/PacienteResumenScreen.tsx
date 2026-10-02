@@ -16,6 +16,12 @@ import {
   View,
 } from 'react-native';
 import { AppText } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
+import {
+  getNanoAppearance,
+  loadNanoAppearanceId,
+  NanoAppearancePreview,
+} from '../components/NanoAppearancePreview';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackParamList } from '../navigation/types';
@@ -381,6 +387,19 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<'server' | 'cache' | null>(null);
+  const [nanoAppearanceId, setNanoAppearanceId] = useState('base');
+
+  useEffect(() => {
+    let active = true;
+    loadNanoAppearanceId(user?.id, token)
+      .then((appearanceId) => {
+        if (active) setNanoAppearanceId(appearanceId);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [token, user?.id]);
 
   const authHeaders = useMemo<Record<string, string>>(() => {
     const headers: Record<string, string> = {};
@@ -515,7 +534,7 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
     >
       <View style={styles.pageHeader}>
         <View style={styles.headerIcon}>
-          <MaterialCommunityIcons name="clipboard-pulse-outline" size={25} color={colors.info} />
+          <NanoSectionIllustration section="resumen-paciente" size={48} />
         </View>
         <View style={styles.headerCopy}>
           <AppText style={styles.eyebrow}>EXPEDIENTE CLÍNICO</AppText>
@@ -590,7 +609,7 @@ export function PacienteResumenScreen({ navigation, route }: Props) {
           <View style={styles.patientCard}>
             <View style={styles.patientTop}>
               <View style={styles.avatar}>
-                <AppText style={styles.avatarText}>{getInitials(patientName)}</AppText>
+                <NanoAppearancePreview appearance={getNanoAppearance(nanoAppearanceId)} size={58} />
               </View>
               <View style={styles.patientIdentity}>
                 <AppText style={styles.patientName}>{patientName}</AppText>
@@ -1100,10 +1119,11 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 19,
-    backgroundColor: colors.info,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    overflow: 'hidden',
   },
   avatarText: { color: colors.onAccent, fontSize: 20, fontWeight: '900' },
   patientIdentity: { flex: 1, minWidth: 0 },

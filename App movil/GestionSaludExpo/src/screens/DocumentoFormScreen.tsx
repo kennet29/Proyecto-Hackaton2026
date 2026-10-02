@@ -47,7 +47,7 @@ type OriginRecordOption = {
   label: string;
 };
 
-const MAX_ATTACHMENT_BYTES = 3 * 1024 * 1024;
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 
 const originOptions = [
   { value: 'general', label: 'General', icon: 'folder-open-outline', endpoint: null, idKeys: [], titleKeys: [], dateKeys: [] },
@@ -292,7 +292,7 @@ export function DocumentoFormScreen() {
 
   const validateFileSize = (size?: number | null) => {
     if (size && size > MAX_ATTACHMENT_BYTES) {
-      Alert.alert('Archivo muy grande', 'La imagen o PDF no puede superar 3 MB.');
+      Alert.alert('Archivo muy grande', 'La imagen o PDF no puede superar 10 MB.');
       return false;
     }
     return true;
@@ -635,7 +635,7 @@ export function DocumentoFormScreen() {
         <View style={styles.infoCopy}>
           <AppText style={styles.infoTitle}>Adjunta el documento</AppText>
           <AppText style={styles.infoText}>
-            Puedes elegir una imagen, usar la cámara o subir un PDF de hasta 3 MB.
+            Puedes elegir una imagen, usar la cámara o subir un PDF de hasta 10 MB.
           </AppText>
         </View>
       </View>

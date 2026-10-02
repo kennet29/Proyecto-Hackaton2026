@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { Calendar, DateData } from 'react-native-calendars';
@@ -635,6 +636,7 @@ export function VacunaFormScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
       >
         <View style={styles.heroCard}>
+          <NanoSectionIllustration section="vacunas" size={62} />
           <AppText style={styles.kicker}>VACUNAS</AppText>
           <AppText style={styles.title}>Control de dosis y refuerzos</AppText>
           <AppText style={styles.subtitle}>

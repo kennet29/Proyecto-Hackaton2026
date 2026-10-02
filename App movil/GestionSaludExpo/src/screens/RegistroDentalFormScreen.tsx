@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import DateTimePicker, {
   DateTimePickerAndroid,
 } from '@react-native-community/datetimepicker';
@@ -1111,6 +1112,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
   if (isCreateMode) {
     return (
       <ScrollView contentContainerStyle={styles.container} style={styles.screen}>
+        <NanoSectionIllustration section="registro-dental" size={62} />
         {renderForm()}
       </ScrollView>
     );
@@ -1120,6 +1122,7 @@ export function RegistroDentalFormScreen({ mode = 'list' }: RegistroDentalFormSc
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.heroCard}>
+          <NanoSectionIllustration section="registro-dental" size={62} />
           <AppText style={styles.eyebrow}>Atencion odontologica</AppText>
           <AppText style={styles.title}>Registro dental</AppText>
           <AppText style={styles.subtitle}>

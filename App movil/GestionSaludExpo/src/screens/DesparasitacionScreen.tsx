@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Calendar, type DateData } from 'react-native-calendars';
@@ -445,6 +446,7 @@ export function DesparasitacionScreen({ mode = 'list' }: DesparasitacionScreenPr
         }
       >
         <View style={styles.heroCard}>
+          <NanoSectionIllustration section="desparasitaciones" size={62} />
           <AppText style={styles.eyebrow}>CONTROL PREVENTIVO</AppText>
           <AppText style={styles.title}>
             {isCreateMode ? 'Nuevo control de desparasitacion' : 'Desparasitacion'}
