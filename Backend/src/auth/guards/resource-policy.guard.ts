@@ -38,6 +38,13 @@ const ADMIN_MUTATION_RESOURCES = new Set([
   "tipovacuna",
 ]);
 
+const normalizePolicyValue = (value: unknown) =>
+  String(value ?? "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
 @Injectable()
 export class ResourcePolicyGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
@@ -56,9 +63,24 @@ export class ResourcePolicyGuard implements CanActivate {
       user.role?.trim().toLowerCase() ?? "",
     );
 
+    const isHealthyHabitTypeCreation =
+      resource === "tipohabito" &&
+      method === "POST" &&
+      normalizePolicyValue(request.body?.nombre) ===
+        "habito saludable personalizado" &&
+      normalizePolicyValue(request.body?.categoria) === "bienestar";
+
+    const isUserDefinedConditionTypeCreation =
+      resource === "tipocondicioncronica" &&
+      method === "POST" &&
+      request.path?.endsWith("/user-defined");
+
     const requiresAdmin =
       ADMIN_ONLY_RESOURCES.has(resource) ||
-      (ADMIN_MUTATION_RESOURCES.has(resource) && method !== "GET");
+      (ADMIN_MUTATION_RESOURCES.has(resource) &&
+        method !== "GET" &&
+        !isHealthyHabitTypeCreation &&
+        !isUserDefinedConditionTypeCreation);
     if (requiresAdmin && !privileged) {
       throw new ForbiddenException(
         "esta operación está reservada para administradores",

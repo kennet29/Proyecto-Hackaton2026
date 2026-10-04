@@ -31,6 +31,18 @@ export class TipocondicioncronicaController {
   }
 
   /**
+   * Crea o reutiliza una condición escrita por el usuario sin exponer la
+   * administración completa del catálogo.
+   */
+  @Post("user-defined")
+  createUserDefined(@Body() payload: CreateTipocondicioncronicaDto) {
+    return this.tipocondicioncronicaservice.createUserDefined(
+      payload.nombre,
+      payload.creadopor,
+    );
+  }
+
+  /**
    * Find all.
    * @returns Colección de registros encontrados.
    */

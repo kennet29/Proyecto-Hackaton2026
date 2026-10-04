@@ -249,6 +249,8 @@ export class NanoService {
       payload.stressLevel,
       payload.anxietyLevel,
       payload.context,
+      payload.previousMissions,
+      payload.variationSeed,
     );
     const providerResponse = await this.analysisGateway.generateText(prompt, 900);
     if (!providerResponse.text) {

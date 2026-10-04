@@ -481,7 +481,7 @@ export function VacunaFormScreen() {
 
   const handleSubmit = async () => {
     if (!form.pacienteId || !form.nombre || !form.fecha) {
-      Alert.alert('Faltan Datos', 'Paciente, nombre y fecha son requeridos');
+      Alert.alert('Faltan Datos', 'Usuario, nombre y fecha son requeridos');
       return;
     }
 
@@ -524,7 +524,7 @@ export function VacunaFormScreen() {
     const scheduledAt = composeDateTime(notificationDate, notificationTime);
 
     if (!form.pacienteId || !scheduledAt || !notificationForm.mensaje.trim()) {
-      Alert.alert('Faltan datos', 'Paciente, fecha, hora y mensaje son obligatorios para la notificacion.');
+      Alert.alert('Faltan datos', 'Usuario, fecha, hora y mensaje son obligatorios para la notificacion.');
       return;
     }
 
@@ -754,14 +754,19 @@ export function VacunaFormScreen() {
             <>
               <AppText style={styles.dayLabel}>{formatDisplayDate(selectedDate, selectedDate)}</AppText>
               {recordsForSelectedDay.map((record) => {
-                  const label = patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`;
+                  const label = patientNameById[record.pacienteId] ?? `Usuario #${record.pacienteId}`;
                   return (
 <View key={`day-${record.vacunaId}-${record.dayType}`} style={styles.vaccineCard}>
 <RecordActions resource="vacuna" recordId={record.vacunaId} onChanged={() => fetchVaccines()} />
                       <View style={styles.vaccineHeader}>
-                        <View>
-                          <AppText style={styles.vaccineName}>{record.nombre}</AppText>
-                          <AppText style={styles.vaccineMeta}>{label}</AppText>
+                        <View style={styles.vaccineHeaderLead}>
+                          <View style={styles.recordEmoji} accessibilityElementsHidden>
+                            <AppText style={styles.recordEmojiText}>💉</AppText>
+                          </View>
+                          <View style={styles.vaccineHeaderCopy}>
+                            <AppText style={styles.vaccineName}>{record.nombre}</AppText>
+                            <AppText style={styles.vaccineMeta}>{label}</AppText>
+                          </View>
                         </View>
                         <View
                           style={[
@@ -769,7 +774,7 @@ export function VacunaFormScreen() {
                             record.dayType === 'proxima' ? styles.dayTypeNext : styles.dayTypeApplied,
                           ]}
                         >
-                          <AppText style={styles.dayTypeBadgeText}>
+                          <AppText style={[styles.dayTypeBadgeText, record.dayType === 'proxima' ? styles.dayTypeNextText : styles.dayTypeAppliedText]}>
                             {record.dayType === 'proxima' ? 'Proxima dosis' : 'Aplicada'}
                           </AppText>
                         </View>
@@ -802,7 +807,7 @@ export function VacunaFormScreen() {
               <AppText style={styles.sectionHelper}>
                 {!hasHistoryRecords
                   ? activePatientId
-                    ? 'Este paciente no tiene vacunas para mostrar'
+                    ? 'Este usuario no tiene vacunas para mostrar'
                     : 'No hay vacunas registradas para mostrar'
                   : showHistorySection
                     ? 'Ocultar vacunas anteriores'
@@ -827,16 +832,21 @@ export function VacunaFormScreen() {
               </View>
             ) : (
               visibleRecords.map((record) => {
-                const label = patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`;
+                const label = patientNameById[record.pacienteId] ?? `Usuario #${record.pacienteId}`;
                 return (
 <View key={record.vacunaId} style={styles.vaccineCard}>
 <RecordActions resource="vacuna" recordId={record.vacunaId} onChanged={() => fetchVaccines()} />
                     <View style={styles.vaccineHeader}>
-                      <View>
-                        <AppText style={styles.vaccineName}>{record.nombre}</AppText>
-                        <AppText style={styles.vaccineMeta}>
-                          {label} · Aplicada {formatRecordDate(record.fechaaplicacion)}
-                        </AppText>
+                      <View style={styles.vaccineHeaderLead}>
+                        <View style={styles.recordEmoji} accessibilityElementsHidden>
+                          <AppText style={styles.recordEmojiText}>💉</AppText>
+                        </View>
+                        <View style={styles.vaccineHeaderCopy}>
+                          <AppText style={styles.vaccineName}>{record.nombre}</AppText>
+                          <AppText style={styles.vaccineMeta}>
+                            {label} · Aplicada {formatRecordDate(record.fechaaplicacion)}
+                          </AppText>
+                        </View>
                       </View>
                     </View>
                     {record.lote ? <AppText style={styles.vaccineDetail}>Lote: {record.lote}</AppText> : null}
@@ -855,7 +865,7 @@ export function VacunaFormScreen() {
           <View style={styles.formCard}>
             <AppText style={styles.formTitle}>Registrar vacuna</AppText>
 
-            <AppText style={styles.label}>Paciente</AppText>
+            <AppText style={styles.label}>Usuario</AppText>
             {loadingPatients ? (
               <View style={styles.loadingRow}>
                 <ActivityIndicator color={colors.info} />
@@ -1076,7 +1086,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     paddingTop: 26,
   },
   heroCard: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 20,
     borderWidth: 1,
@@ -1104,7 +1114,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     marginTop: 8,
   },
   filterCard: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     gap: 10,
@@ -1112,7 +1122,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderColor: colors.border,
   },
   calendarCard: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 18,
     gap: 12,
@@ -1120,7 +1130,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderColor: colors.border,
   },
   daySection: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 18,
     gap: 12,
@@ -1128,7 +1138,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderColor: colors.border,
   },
   recordsSection: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 18,
     gap: 12,
@@ -1136,7 +1146,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderColor: colors.border,
   },
   formCard: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 22,
     gap: 14,
@@ -1145,7 +1155,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   notificationCard: {
     marginTop: 8,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderRadius: 18,
     padding: 16,
     gap: 12,
@@ -1193,7 +1203,9 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundMuted,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
   },
   countBadgeText: {
@@ -1234,7 +1246,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 16,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundMuted,
   },
   fixedChannelText: {
     color: colors.text,
@@ -1247,7 +1259,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 16,
     padding: 14,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundMuted,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1287,7 +1299,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderRadius: 14,
     padding: 14,
     fontSize: 16,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundMuted,
     color: colors.text,
   },
   webDateInput: {
@@ -1307,7 +1319,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderRadius: 14,
     minHeight: 52,
     paddingHorizontal: 14,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundMuted,
     justifyContent: 'center',
   },
   dateButtonText: {
@@ -1328,7 +1340,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     justifyContent: 'center',
   },
   btnText: {
-    color: colors.text,
+    color: colors.onAccent,
     textAlign: 'center',
     fontWeight: '700',
     fontSize: 16,
@@ -1357,7 +1369,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     color: colors.textSoft,
   },
   stateBox: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundMuted,
     borderRadius: 18,
     padding: 18,
     alignItems: 'center',
@@ -1377,7 +1389,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   emptyBox: {
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundMuted,
     borderRadius: 14,
     padding: 14,
     gap: 8,
@@ -1421,21 +1433,42 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   dayTypeBadgeText: {
     fontSize: 11,
     fontWeight: '800',
-    color: colors.onAccent,
   },
+  dayTypeAppliedText: { color: colors.success },
+  dayTypeNextText: { color: colors.accent },
   vaccineCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.backgroundMuted,
     borderRadius: 16,
     padding: 16,
     gap: 6,
     borderWidth: 1,
-    borderColor: colors.text,
+    borderColor: colors.border,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.info,
   },
   vaccineHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
   },
+  vaccineHeaderLead: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+  },
+  vaccineHeaderCopy: { flex: 1 },
+  recordEmoji: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: `${colors.info}18`,
+    borderWidth: 1,
+    borderColor: `${colors.info}55`,
+  },
+  recordEmojiText: { fontSize: 17, lineHeight: 22 },
   vaccineName: {
     fontSize: 17,
     fontWeight: '700',
@@ -1457,7 +1490,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundMuted,
   },
   iosPickerDoneBtn: {
     borderTopWidth: 1,

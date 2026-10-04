@@ -682,6 +682,8 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
           </View>
           <TouchableOpacity
             style={styles.heroAddButton}
+            accessibilityRole="button"
+            accessibilityLabel="Nuevo registro de seguimiento físico"
             onPress={() =>
               navigation.navigate('SeguimientoFisicoForm', {
                 patientId: selectedPatientId ? Number(selectedPatientId) : undefined,
@@ -1184,7 +1186,20 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.card}>
-          <AppText style={styles.sectionTitle}>Logros</AppText>
+          <View style={styles.achievementSectionHeader}>
+            <View style={styles.achievementNanoIcon}>
+              <NanoSectionIllustration section="seguimiento-fisico" size={48} />
+              <View style={styles.achievementTrophyBadge}>
+                <Ionicons name="trophy" size={15} color="#5B3A00" />
+              </View>
+            </View>
+            <View style={styles.achievementSectionCopy}>
+              <AppText style={styles.sectionTitle}>Logros</AppText>
+              <AppText style={styles.sectionSubtitle}>
+                Tus avances, rachas y próximos objetivos.
+              </AppText>
+            </View>
+          </View>
           {loadingData ? (
             <View style={styles.loadingBox}>
               <ActivityIndicator color={colors.info} />
@@ -1277,13 +1292,16 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
 
       <TouchableOpacity
         style={styles.fab}
+        accessibilityRole="button"
+        accessibilityLabel="Nuevo registro de seguimiento físico"
         onPress={() =>
           navigation.navigate('SeguimientoFisicoForm', {
             patientId: selectedPatientId ? Number(selectedPatientId) : undefined,
           })
         }
       >
-        <Ionicons name="add" size={25} color={colors.onAccent} />
+        <Ionicons name="add" size={22} color={colors.onAccent} />
+        <AppText style={styles.fabText}>Nuevo registro</AppText>
       </TouchableOpacity>
     </View>
   );
@@ -1660,6 +1678,40 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 9,
+  },
+  achievementSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 2,
+  },
+  achievementNanoIcon: {
+    width: 54,
+    height: 54,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    backgroundColor: '#F5B94218',
+    borderWidth: 1,
+    borderColor: '#F5B94255',
+  },
+  achievementTrophyBadge: {
+    position: 'absolute',
+    right: -5,
+    bottom: -4,
+    width: 27,
+    height: 27,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F5B942',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  achievementSectionCopy: {
+    flex: 1,
+    minWidth: 0,
   },
   achievementStat: {
     flexGrow: 1,
@@ -2158,18 +2210,25 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    right: 24,
-    bottom: 24,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    right: 20,
+    bottom: 20,
+    minHeight: 56,
+    borderRadius: 28,
     backgroundColor: colors.success,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 18,
     shadowColor: '#000000',
     shadowOpacity: 0.18,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
     elevation: 7,
+  },
+  fabText: {
+    color: colors.onAccent,
+    fontSize: 13,
+    fontWeight: '900',
   },
 });

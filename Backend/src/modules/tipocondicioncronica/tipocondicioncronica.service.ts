@@ -42,6 +42,40 @@ export class TipocondicioncronicaService {
   }
 
   /**
+   * Crea un tipo mínimo para una condición escrita desde el formulario.
+   * Reutiliza una coincidencia existente para evitar duplicados comunes.
+   */
+  async createUserDefined(
+    name: string,
+    createdBy?: string | null,
+  ): Promise<Tipocondicioncronica> {
+    const normalizedName = name?.trim().replace(/\s+/g, " ");
+    if (!normalizedName) {
+      throw new BadRequestException("el nombre de la condicion es obligatorio");
+    }
+    if (normalizedName.length > 120) {
+      throw new BadRequestException(
+        "el nombre de la condicion permite hasta 120 caracteres",
+      );
+    }
+
+    const existing = await this.tipocondicioncronicaRepository.findOne({
+      where: { nombre: normalizedName },
+    });
+    if (existing) {
+      return existing;
+    }
+
+    const entity = this.tipocondicioncronicaRepository.create({
+      nombre: normalizedName,
+      activo: true,
+      creadopor: createdBy?.trim() || undefined,
+      creadoen: new Date(),
+    });
+    return this.tipocondicioncronicaRepository.save(entity);
+  }
+
+  /**
    * Find all.
    * @returns Colección de registros encontrados.
    */

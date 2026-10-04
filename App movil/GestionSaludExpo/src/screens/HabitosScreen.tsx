@@ -360,7 +360,7 @@ export function HabitosScreen(_: Props) {
 
       <View style={styles.hydrationCard}>
         <View style={styles.hydrationHeader}>
-          <NanoSectionIllustration section="alimentacion" size={72} />
+          <NanoSectionIllustration section="hidratarse" size={72} />
           <View style={styles.hydrationCopy}>
             <AppText style={styles.hydrationEyebrow}>HIDRATACIÓN DIARIA</AppText>
             <AppText style={styles.hydrationTitle}>Agua registrada hoy</AppText>

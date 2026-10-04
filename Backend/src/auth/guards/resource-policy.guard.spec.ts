@@ -12,6 +12,8 @@ describe("ResourcePolicyGuard", () => {
     controllerName: string,
     method: string,
     role: string,
+    body: Record<string, unknown> = {},
+    path = "",
   ) =>
     ({
       getType: () => "http",
@@ -19,6 +21,8 @@ describe("ResourcePolicyGuard", () => {
       switchToHttp: () => ({
         getRequest: () => ({
           method,
+          body,
+          path,
           user: { userId: 1, username: "test", role },
         }),
       }),
@@ -42,6 +46,52 @@ describe("ResourcePolicyGuard", () => {
     expect(() =>
       guard.canActivate(
         context("TipovacunaController", "PATCH", "medico"),
+      ),
+    ).toThrow(ForbiddenException);
+  });
+
+  it("allows users to create the controlled healthy-habit type", () => {
+    expect(
+      guard.canActivate(
+        context("TipohabitoController", "POST", "paciente", {
+          nombre: "Hábito saludable personalizado",
+          categoria: "bienestar",
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps other habit-type mutations restricted to administrators", () => {
+    expect(() =>
+      guard.canActivate(
+        context("TipohabitoController", "POST", "paciente", {
+          nombre: "Tipo no autorizado",
+          categoria: "bienestar",
+        }),
+      ),
+    ).toThrow(ForbiddenException);
+  });
+
+  it("allows users to create a condition through the controlled route", () => {
+    expect(
+      guard.canActivate(
+        context(
+          "TipocondicioncronicaController",
+          "POST",
+          "paciente",
+          { nombre: "Hipertensión" },
+          "/api/v1/tipocondicioncronica/user-defined",
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps direct condition catalog creation restricted", () => {
+    expect(() =>
+      guard.canActivate(
+        context("TipocondicioncronicaController", "POST", "paciente", {
+          nombre: "Tipo no autorizado",
+        }),
       ),
     ).toThrow(ForbiddenException);
   });

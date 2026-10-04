@@ -944,7 +944,7 @@ export function MedicacionFormScreen({
                 frecuencia: isPermanentMedication ? 'diaria' : null,
                 generarecordatorio: isPermanentMedication,
                 proximaalarma: isPermanentMedication ? scheduleDateTime : null,
-                estadorecordatorio: isPermanentMedication ? 'activo' : 'pendiente',
+                estadorecordatorio: isPermanentMedication ? 'programado' : 'pendiente',
                 observaciones: isPermanentMedication
                   ? 'Medicamento permanente con recordatorio diario.'
                   : null,

@@ -111,14 +111,14 @@ const normalizeText = (value: unknown) => {
   return text ? text : null;
 };
 
-const getStatusColors = (status?: string | null) => {
+const getStatusColors = (status: string | null | undefined, colors: AppColors) => {
   const normalized = normalizeText(status)?.toLowerCase() ?? '';
   if (
     normalized.includes('complic') ||
     normalized.includes('pendient') ||
     normalized.includes('riesgo')
   ) {
-    return { backgroundColor: '#FF4D7318', color: '#FF4D73', borderColor: '#FF4D73' };
+    return { backgroundColor: `${colors.accent}18`, color: colors.accent, borderColor: colors.accent };
   }
   if (
     normalized.includes('alta') ||
@@ -126,9 +126,9 @@ const getStatusColors = (status?: string | null) => {
     normalized.includes('estable') ||
     normalized.includes('exit')
   ) {
-    return { backgroundColor: '#38E28E18', color: '#38E28E', borderColor: '#38E28E' };
+    return { backgroundColor: `${colors.success}18`, color: colors.success, borderColor: colors.success };
   }
-  return { backgroundColor: '#071120', color: '#29B6FF', borderColor: '#29B6FF' };
+  return { backgroundColor: `${colors.info}18`, color: colors.info, borderColor: colors.info };
 };
 
 type OperacionFormScreenProps = {
@@ -197,7 +197,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
         normalized = [
           {
             pacienteId: Number(user.pacienteId),
-            displayName: user?.username?.split('@')[0] || `Paciente #${user.pacienteId}`,
+            displayName: user?.username?.split('@')[0] || `Usuario #${user.pacienteId}`,
           },
         ];
       }
@@ -208,7 +208,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
           : { ...prev, pacienteId: String(normalized[0].pacienteId) },
       );
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Fallo al cargar pacientes');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Fallo al cargar usuarios');
     } finally {
       setLoadingPatients(false);
     }
@@ -326,7 +326,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
         );
         return {
           pacienteId,
-          patientName: patientNameById[pacienteId] ?? `Paciente #${pacienteId}`,
+          patientName: patientNameById[pacienteId] ?? `Usuario #${pacienteId}`,
           total: items.length,
           latestDate: items[0]?.fechaoperacion ?? null,
           latestType:
@@ -378,7 +378,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
 
   const handleSubmit = async () => {
     if (!form.pacienteId || !form.fecha || !form.tipo.trim()) {
-      Alert.alert('Faltan datos', 'Paciente, fecha y tipo de operacion son obligatorios');
+      Alert.alert('Faltan datos', 'Usuario, fecha y tipo de operacion son obligatorios');
       return;
     }
 
@@ -438,7 +438,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
         {!isCreateMode ? (
           <>
             <View style={styles.filterCard}>
-              <AppText style={styles.label}>Filtrar por paciente</AppText>
+              <AppText style={styles.label}>Filtrar por usuario</AppText>
               <View style={styles.pickerWrapper}>
                 <Picker
                   selectedValue={selectedPatientId}
@@ -448,7 +448,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                   style={styles.picker}
                 >
                   <Picker.Item
-                    label={loadingPatients ? 'Cargando pacientes...' : 'Todos los pacientes'}
+                    label={loadingPatients ? 'Cargando usuarios...' : 'Todos los usuarios'}
                     value=""
                     color={pickerItemColor}
                   />
@@ -464,7 +464,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
               </View>
               <AppText style={styles.filterHint}>
                 {selectedPatientId
-                  ? `Mostrando historial de ${patientNameById[Number(selectedPatientId)] ?? 'paciente'}`
+                  ? `Mostrando historial de ${patientNameById[Number(selectedPatientId)] ?? 'usuario'}`
                   : 'Mostrando el historial completo de tu grupo familiar'}
               </AppText>
             </View>
@@ -483,7 +483,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
               <View style={styles.emptyCard}>
                 <AppText style={styles.emptyTitle}>Todavia no hay operaciones registradas</AppText>
                 <AppText style={styles.emptyText}>
-                  Usa el boton flotante para registrar la primera operacion de un paciente.
+                  Usa el boton flotante para registrar la primera operacion de un usuario.
                 </AppText>
               </View>
             ) : (
@@ -558,12 +558,12 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
               <View style={styles.emptyCard}>
                 <AppText style={styles.emptyTitle}>No hay operaciones para este filtro</AppText>
                 <AppText style={styles.emptyText}>
-                  Cambia el paciente seleccionado o registra una nueva operacion.
+                  Cambia el usuario seleccionado o registra una nueva operacion.
                 </AppText>
               </View>
             ) : (
               filteredRecords.map((record) => {
-                const statusColors = getStatusColors(record.estado);
+                const statusColors = getStatusColors(record.estado, colors);
                 const typeLabel =
                   normalizeText(record.tipo) ?? typeNameById[record.tipooperacionId ?? 0] ?? 'Operacion';
                 return (
@@ -574,10 +574,15 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                       normalizeText(record.complicaciones) ? styles.recordCardAlert : null,
                     ]}
                   >
-<RecordActions resource="operacion" recordId={record.operacionId} onChanged={() => fetchRecords()} />
+                    <RecordActions resource="operacion" recordId={record.operacionId} onChanged={() => fetchRecords()} />
                     <View style={styles.recordTopRow}>
-                      <View style={styles.datePill}>
-                        <AppText style={styles.datePillText}>{formatRecordDate(record.fechaoperacion)}</AppText>
+                      <View style={styles.recordIdentity}>
+                        <View style={styles.recordEmoji} accessibilityElementsHidden>
+                          <AppText style={styles.recordEmojiText}>🏥</AppText>
+                        </View>
+                        <View style={styles.datePill}>
+                          <AppText style={styles.datePillText}>{formatRecordDate(record.fechaoperacion)}</AppText>
+                        </View>
                       </View>
                       <View
                         style={[
@@ -597,7 +602,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                     <AppText style={styles.recordTitle}>{typeLabel}</AppText>
                     {!selectedPatientId ? (
                       <AppText style={styles.recordPatient}>
-                        {patientNameById[record.pacienteId] ?? `Paciente #${record.pacienteId}`}
+                        {patientNameById[record.pacienteId] ?? `Usuario #${record.pacienteId}`}
                       </AppText>
                     ) : null}
 
@@ -629,10 +634,10 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
             <AppText style={styles.formTitle}>Nueva operacion</AppText>
             <AppText style={styles.formSubtitle}>
               Completa los datos del procedimiento para dejarlo visible en el historial del
-              paciente.
+              usuario.
             </AppText>
 
-            <AppText style={styles.label}>Paciente</AppText>
+            <AppText style={styles.label}>Usuario</AppText>
             <View style={styles.pickerWrapper}>
               <Picker
                 selectedValue={form.pacienteId}
@@ -642,7 +647,7 @@ export function OperacionFormScreen({ mode = 'list' }: OperacionFormScreenProps)
                 style={styles.picker}
               >
                 <Picker.Item
-                  label={loadingPatients ? 'Cargando pacientes...' : 'Selecciona un paciente'}
+                  label={loadingPatients ? 'Cargando usuarios...' : 'Selecciona un usuario'}
                   value=""
                   color={pickerItemColor}
                 />
@@ -805,9 +810,9 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderRadius: 28,
     padding: 22,
     marginBottom: 18,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.surface,
+    borderColor: colors.border,
   },
   eyebrow: {
     color: colors.info,
@@ -829,11 +834,11 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     lineHeight: 22,
   },
   filterCard: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderRadius: 22,
     padding: 18,
     borderWidth: 1,
-    borderColor: colors.surface,
+    borderColor: colors.border,
     marginBottom: 18,
   },
   label: {
@@ -847,7 +852,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundMuted,
   },
   picker: {
     color: colors.text,
@@ -872,9 +877,9 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   loadingCard: {
     borderRadius: 20,
     padding: 22,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.surface,
+    borderColor: colors.border,
     alignItems: 'center',
     marginBottom: 16,
   },
@@ -885,9 +890,9 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   emptyCard: {
     borderRadius: 22,
     padding: 20,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.surface,
+    borderColor: colors.border,
     marginBottom: 16,
   },
   emptyTitle: {
@@ -903,9 +908,9 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   summaryCard: {
     borderRadius: 22,
     padding: 18,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.surface,
+    borderColor: colors.border,
     marginBottom: 12,
   },
   summaryCardActive: {
@@ -971,7 +976,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 7,
     paddingHorizontal: 10,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundMuted,
     borderWidth: 1,
     borderColor: colors.border,
     marginRight: 8,
@@ -992,13 +997,15 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderRadius: 22,
     padding: 18,
     marginBottom: 12,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.surface,
+    borderColor: colors.border,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.info,
   },
   recordCardAlert: {
     borderColor: colors.accent,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
   },
   recordTopRow: {
     flexDirection: 'row',
@@ -1006,6 +1013,23 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  recordIdentity: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  recordEmoji: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: `${colors.info}18`,
+    borderWidth: 1,
+    borderColor: `${colors.info}55`,
+  },
+  recordEmojiText: { fontSize: 17, lineHeight: 22 },
   datePill: {
     borderRadius: 999,
     paddingVertical: 7,
@@ -1050,11 +1074,11 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     fontWeight: '700',
   },
   formCard: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
-    borderColor: colors.surface,
+    borderColor: colors.border,
     marginTop: 10,
   },
   formTitle: {
@@ -1075,7 +1099,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 14,
     marginBottom: 12,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundMuted,
   },
   dateButtonText: {
     color: colors.text,
@@ -1088,7 +1112,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundMuted,
     marginBottom: 12,
   },
   secondaryButton: {
@@ -1107,7 +1131,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     padding: 14,
     marginBottom: 12,
     fontSize: 15,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundMuted,
     color: colors.text,
   },
   multiline: {

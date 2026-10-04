@@ -29,6 +29,7 @@ import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { AppColors, useAppColors } from '../theme/useAppColors';
+import NanoSaludFemenina from '../svg/Nano salud femenina.svg';
 
 type PeriodoRecord = {
   periodoId: number;
@@ -536,11 +537,11 @@ export function PeriodoScreen({ navigation }: Props) {
       <View style={styles.hero}>
         <View style={styles.heroHeader}>
           <View style={styles.heroIcon}>
-            <Ionicons name="moon-outline" size={24} color={colors.text} />
+            <NanoSaludFemenina width={44} height={44} />
           </View>
           <View style={styles.heroCopy}>
             <AppText style={styles.heroEyebrow}>Bienestar femenino</AppText>
-            <AppText style={styles.heroTitle}>Módulo de Periodo</AppText>
+            <AppText style={styles.heroTitle}>Salud Femenina</AppText>
           </View>
         </View>
         <AppText style={styles.heroText}>
@@ -948,7 +949,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colorAlpha(colors.accent, '28'),
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: colorAlpha(colors.accent, '65'),
   },

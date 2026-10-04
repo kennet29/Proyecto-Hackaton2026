@@ -19,8 +19,10 @@ import { AppText, AppTextInput } from '../components/AppText';
 import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
+import { RootStackParamList } from '../navigation/types';
 import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
@@ -114,6 +116,8 @@ const getScoreColor = (value?: string | number | null, inverse = false) => {
   return '#38E28E';
 };
 
+type Props = NativeStackScreenProps<RootStackParamList, 'SaludMental'>;
+
 type CalmMission = {
   title: string;
   instruction: string;
@@ -121,11 +125,40 @@ type CalmMission = {
   category: 'respiracion' | 'movimiento' | 'conexion' | 'descanso' | 'entorno';
 };
 
-const fallbackCalmMissions: CalmMission[] = [
-  { title: 'Respira con Nano', instruction: 'Inhala suavemente durante 4 segundos y exhala durante 6. Repite cinco veces sin forzar la respiración.', durationMinutes: 2, category: 'respiracion' },
-  { title: 'Encuentra cinco cosas', instruction: 'Mira a tu alrededor y nombra cinco cosas que ves, cuatro que puedes tocar y tres que puedes escuchar.', durationMinutes: 4, category: 'entorno' },
-  { title: 'Conecta con alguien', instruction: 'Envía un mensaje breve a una persona de confianza para contarle cómo te sientes o simplemente saludar.', durationMinutes: 5, category: 'conexion' },
+const fallbackCalmMissionPool: CalmMission[] = [
+  { title: 'Exhala más lento', instruction: 'Inhala con suavidad contando hasta 3 y exhala contando hasta 5. Repite seis veces sin forzar el aire.', durationMinutes: 2, category: 'respiracion' },
+  { title: 'Respiración cuadrada', instruction: 'Inhala, sostén, exhala y descansa durante 3 segundos en cada paso. Completa cuatro ciclos cómodos.', durationMinutes: 2, category: 'respiracion' },
+  { title: 'Suelta los hombros', instruction: 'Sube los hombros al inhalar y déjalos caer al exhalar. Hazlo lentamente ocho veces.', durationMinutes: 2, category: 'respiracion' },
+  { title: 'Camina sin prisa', instruction: 'Da una caminata suave por un lugar seguro y presta atención al contacto de tus pies con el suelo.', durationMinutes: 5, category: 'movimiento' },
+  { title: 'Estira cuello y manos', instruction: 'Mueve el cuello suavemente hacia cada lado y abre y cierra las manos diez veces, sin llegar al dolor.', durationMinutes: 3, category: 'movimiento' },
+  { title: 'Sacude la tensión', instruction: 'De pie o sentado, sacude con suavidad manos y brazos; después relaja las piernas y vuelve a una postura cómoda.', durationMinutes: 2, category: 'movimiento' },
+  { title: 'Envía un saludo', instruction: 'Escribe un mensaje breve a una persona de confianza para saludarla o contarle que te vendría bien conversar.', durationMinutes: 4, category: 'conexion' },
+  { title: 'Recuerda un apoyo', instruction: 'Piensa en alguien que te haga sentir acompañado y anota una forma concreta de contactarlo hoy.', durationMinutes: 3, category: 'conexion' },
+  { title: 'Comparte algo amable', instruction: 'Envía a alguien una foto, recuerdo o frase amable que pueda abrir una conversación tranquila.', durationMinutes: 5, category: 'conexion' },
+  { title: 'Pausa sin pantalla', instruction: 'Deja el teléfono boca abajo, cierra los ojos si te resulta cómodo y permite que tu mente descanse un momento.', durationMinutes: 3, category: 'descanso' },
+  { title: 'Un vaso con calma', instruction: 'Toma agua lentamente y haz una pausa breve entre cada sorbo, notando su temperatura.', durationMinutes: 3, category: 'descanso' },
+  { title: 'Vacía tu mente', instruction: 'Escribe durante tres minutos todo lo que te preocupa, sin corregirlo ni buscar soluciones todavía.', durationMinutes: 3, category: 'descanso' },
+  { title: 'Busca un color', instruction: 'Elige un color y encuentra cinco objetos cercanos que lo contengan; observa sus diferencias.', durationMinutes: 3, category: 'entorno' },
+  { title: 'Escucha tres sonidos', instruction: 'Haz una pausa e identifica un sonido cercano, uno lejano y el más suave que puedas percibir.', durationMinutes: 2, category: 'entorno' },
+  { title: 'Ordena un rincón', instruction: 'Elige una superficie pequeña y guarda solamente cinco objetos, sin intentar ordenar todo el espacio.', durationMinutes: 5, category: 'entorno' },
 ];
+
+const shuffled = <T,>(items: T[]): T[] => [...items].sort(() => Math.random() - 0.5);
+
+const createFallbackCalmMissions = (previous: CalmMission[]): CalmMission[] => {
+  const previousTitles = new Set(previous.map((mission) => mission.title));
+  const categories = shuffled(Object.keys(calmMissionIcons) as CalmMission['category'][]);
+
+  return categories.slice(0, 3).map((category) => {
+    const categoryMissions = fallbackCalmMissionPool.filter((mission) =>
+      mission.category === category && !previousTitles.has(mission.title),
+    );
+    const candidates = categoryMissions.length
+      ? categoryMissions
+      : fallbackCalmMissionPool.filter((mission) => mission.category === category);
+    return shuffled(candidates)[0];
+  });
+};
 
 const calmMissionIcons: Record<CalmMission['category'], keyof typeof Ionicons.glyphMap> = {
   respiracion: 'leaf-outline',
@@ -164,20 +197,20 @@ const numericFieldRules: Array<{
 ];
 
 const emotionOptions = [
-  { id: 'triste', label: 'Triste', emoji: '😢', score: '1', color: '#60A5FA' },
-  { id: 'agotado', label: 'Agotado', emoji: '😫', score: '1', color: '#94A3B8' },
-  { id: 'preocupado', label: 'Preocupado', emoji: '😟', score: '2', color: '#F59E0B' },
-  { id: 'ansioso', label: 'Ansioso', emoji: '😰', score: '2', color: '#FB7185' },
-  { id: 'neutral', label: 'Neutral', emoji: '😐', score: '3', color: '#A78BFA' },
-  { id: 'calmado', label: 'Calmado', emoji: '😌', score: '4', color: '#2DD4BF' },
-  { id: 'esperanzado', label: 'Esperanzado', emoji: '🌤️', score: '4', color: '#38BDF8' },
-  { id: 'feliz', label: 'Feliz', emoji: '😊', score: '5', color: '#38E28E' },
-  { id: 'motivado', label: 'Motivado', emoji: '💪', score: '5', color: '#22C55E' },
-  { id: 'agradecido', label: 'Agradecido', emoji: '💚', score: '5', color: '#10B981' },
+  { id: 'triste', label: 'Triste', icon: 'rainy-outline', score: '1', color: '#60A5FA' },
+  { id: 'agotado', label: 'Agotado', icon: 'battery-dead-outline', score: '1', color: '#94A3B8' },
+  { id: 'preocupado', label: 'Preocupado', icon: 'help-outline', score: '2', color: '#F59E0B' },
+  { id: 'ansioso', label: 'Ansioso', icon: 'pulse-outline', score: '2', color: '#FB7185' },
+  { id: 'neutral', label: 'Neutral', icon: 'remove-outline', score: '3', color: '#A78BFA' },
+  { id: 'calmado', label: 'Calmado', icon: 'leaf-outline', score: '4', color: '#2DD4BF' },
+  { id: 'esperanzado', label: 'Esperanzado', icon: 'sunny-outline', score: '4', color: '#38BDF8' },
+  { id: 'feliz', label: 'Feliz', icon: 'happy-outline', score: '5', color: '#38E28E' },
+  { id: 'motivado', label: 'Motivado', icon: 'flash-outline', score: '5', color: '#22C55E' },
+  { id: 'agradecido', label: 'Agradecido', icon: 'heart-outline', score: '5', color: '#10B981' },
 ] as const;
 
 const validateForm = (form: FormValues) => {
-  if (!form.pacienteId) return 'Selecciona un paciente.';
+  if (!form.pacienteId) return 'Selecciona un usuario.';
   if (!/^\d{4}-\d{2}-\d{2}$/.test(form.fecha) || !parseCalendarDate(form.fecha)) {
     return 'Fecha: usa el formato AAAA-MM-DD e indica una fecha válida.';
   }
@@ -205,7 +238,7 @@ const formatValidationDetails = (body: any) => {
       : [];
   if (!details.length) return body?.message ?? 'No se pudo guardar el registro.';
   const labels: Record<string, string> = {
-    pacienteId: 'Paciente', fecha: 'Fecha', estadoAnimo: 'Ánimo', estres: 'Estrés', ansiedad: 'Ansiedad',
+    pacienteId: 'Usuario', fecha: 'Fecha', estadoAnimo: 'Ánimo', estres: 'Estrés', ansiedad: 'Ansiedad',
     horasSueno: 'Horas de sueño', descansoHoras: 'Horas de descanso', ejercicioMinutos: 'Ejercicio en minutos',
     tiempoSocialMinutos: 'Tiempo social en minutos',
     pausasDigitales: 'Pausas digitales', notaPersonal: 'Nota personal',
@@ -225,7 +258,7 @@ const formatAlertTitle = (value: string) => {
   return labels[value] ?? value.replace(/_/g, ' ');
 };
 
-export function SaludMentalScreen() {
+export function SaludMentalScreen({ navigation }: Props) {
   const colors = useAppColors();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
@@ -301,7 +334,7 @@ export function SaludMentalScreen() {
     try {
       const items = await fetchLinkedPatients(authHeaders);
       setPatients(items);
-      // El paciente debe elegirse de forma explícita; evita registrar datos en otra persona por error.
+      // El usuario debe elegirse de forma explícita; evita registrar datos en otra persona por error.
       setSelectedPatientId((prev) => items.some((item) => String(item.pacienteId) === prev) ? prev : '');
       setForm((prev) => ({
         ...prev,
@@ -311,7 +344,7 @@ export function SaludMentalScreen() {
       }));
     } catch (error) {
       setPatientError(
-        error instanceof Error ? error.message : 'No se pudieron cargar los pacientes',
+        error instanceof Error ? error.message : 'No se pudieron cargar los usuarios',
       );
     } finally {
       setLoadingPatients(false);
@@ -463,6 +496,8 @@ export function SaludMentalScreen() {
           stressLevel: Number(form.estres),
           anxietyLevel: Number(form.ansiedad),
           context: form.notaPersonal.trim() || undefined,
+          previousMissions: calmMissions.map((mission) => `${mission.title}: ${mission.instruction}`),
+          variationSeed: Math.floor(Math.random() * 1_000_000),
         }),
       });
       const payload = await response.json().catch(() => null) as {
@@ -485,7 +520,7 @@ export function SaludMentalScreen() {
       setCalmIntro(payload?.intro || 'Nano preparó tres pasos pequeños para acompañarte.');
       setCalmSafetyNote(payload?.safetyNote || 'Estas misiones apoyan tu bienestar, pero no reemplazan atención profesional.');
     } catch (error) {
-      setCalmMissions(fallbackCalmMissions);
+      setCalmMissions(createFallbackCalmMissions(calmMissions));
       setCalmIntro('Mientras recuperamos la conexión con Nano, prueba estas tres misiones seguras.');
       setCalmSafetyNote('Si sientes que estás en peligro o podrías hacerte daño, busca ayuda de emergencia y contacta ahora a una persona de confianza.');
       Alert.alert('Misiones locales de Nano', error instanceof Error ? error.message : 'Se mostrarán actividades disponibles sin conexión.');
@@ -563,6 +598,23 @@ export function SaludMentalScreen() {
         />
       }
     >
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+            return;
+          }
+          navigation.navigate('MenuPrincipal');
+        }}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Volver a la pantalla anterior"
+      >
+        <Ionicons name="arrow-back" size={19} color={colors.text} />
+        <AppText style={styles.backButtonText}>Volver</AppText>
+      </TouchableOpacity>
+
       <View style={styles.hero}>
         <View style={styles.heroIcon}>
           <NanoSectionIllustration section="salud-mental" size={62} />
@@ -585,14 +637,14 @@ export function SaludMentalScreen() {
           <Ionicons name="person-outline" size={20} color="#A78BFA" />
         </View>
         <View style={styles.patientSelectorCopy}>
-          <AppText style={styles.fieldEyebrow}>PACIENTE</AppText>
+          <AppText style={styles.fieldEyebrow}>USUARIO</AppText>
         {loadingPatients ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color={colors.success} />
-            <AppText style={styles.loadingText}>Cargando pacientes...</AppText>
+            <AppText style={styles.loadingText}>Cargando usuarios...</AppText>
           </View>
         ) : patients.length === 0 ? (
-          <AppText style={styles.emptyText}>No hay pacientes vinculados en esta cuenta.</AppText>
+          <AppText style={styles.emptyText}>No hay usuarios vinculados en esta cuenta.</AppText>
         ) : (
           <View style={styles.pickerWrapper}>
             <Picker
@@ -601,7 +653,7 @@ export function SaludMentalScreen() {
               style={styles.picker}
               dropdownIconColor={colors.text}
             >
-              <Picker.Item label="Selecciona un paciente" value="" color={colors.textSoft} />
+              <Picker.Item label="Selecciona un usuario" value="" color={colors.textSoft} />
               {patients.map((patient) => (
                 <Picker.Item
                   key={patient.pacienteId}
@@ -687,7 +739,7 @@ export function SaludMentalScreen() {
                   <View style={styles.emotionNano}>
                     <NanoSectionIllustration section="salud-mental" size={48} />
                     <View style={[styles.emotionBadge, { backgroundColor: emotion.color }]}>
-                      <AppText style={styles.emotionEmoji}>{emotion.emoji}</AppText>
+                      <Ionicons name={emotion.icon} size={14} color="#FFFFFF" />
                     </View>
                   </View>
                   <AppText style={[styles.emotionLabel, selected && { color: emotion.color }]}>
@@ -709,7 +761,7 @@ export function SaludMentalScreen() {
         <View style={styles.formSection}>
           <AppText style={styles.formSectionTitle}>Estado emocional</AppText>
           <AppText style={styles.scaleHint}>
-            Usa la escala del 1 al 5 para registrar cómo se sintió la persona hoy.
+            Usa la escala del 1 al 5 para registrar cómo se sintió el usuario hoy.
           </AppText>
           <View style={[styles.row, isCompact && styles.compactRow]}>
             <View style={[styles.fieldGroupHalf, isCompact && styles.compactField]}>
@@ -903,7 +955,7 @@ export function SaludMentalScreen() {
           <View style={styles.formCollapsedHint}>
             <Ionicons name="information-circle-outline" size={17} color={colors.textMuted} />
             <AppText style={styles.formCollapsedText}>
-              Abre esta sección cuando quieras registrar cómo se siente el paciente.
+              Abre esta sección cuando quieras registrar cómo se siente el usuario.
             </AppText>
           </View>
         )}
@@ -1017,13 +1069,21 @@ export function SaludMentalScreen() {
       <View style={styles.card}>
         <View style={styles.sectionHeader}>
           <AppText style={styles.sectionTitle}>Historial reciente</AppText>
-          <AppText style={styles.sectionSubtitle}>Últimas entradas registradas para este paciente.</AppText>
+          <AppText style={styles.sectionSubtitle}>Últimas entradas registradas para este usuario.</AppText>
         </View>
         {historial?.historialPorFecha?.length ? (
           historial.historialPorFecha.slice(0, 6).map((item) => (
 <View key={item.saludmentalId} style={styles.listItem}>
 <RecordActions resource="salud-mental" recordId={item.saludmentalId} onChanged={() => loadData(selectedPatientId, true)} />
-              <AppText style={styles.itemTitle}>{formatDate(item.fecha)}</AppText>
+              <View style={styles.historyItemHeading}>
+                <View style={styles.historyRecordIcon}>
+                  <NanoSectionIllustration section="salud-mental" size={27} />
+                  <View style={styles.historyRecordBadge}>
+                    <Ionicons name="journal-outline" size={9} color="#FFFFFF" />
+                  </View>
+                </View>
+                <AppText style={styles.itemTitle}>{formatDate(item.fecha)}</AppText>
+              </View>
               <View style={styles.historyScoreRow}>
                 <HistoryScore label="Ánimo" value={item.estadoAnimo} color={getScoreColor(item.estadoAnimo)} />
                 <HistoryScore label="Estrés" value={item.estres} color={getScoreColor(item.estres, true)} />
@@ -1042,7 +1102,7 @@ export function SaludMentalScreen() {
             </View>
           ))
         ) : (
-          <AppText style={styles.emptyText}>Todavía no hay registros para este paciente.</AppText>
+          <AppText style={styles.emptyText}>Todavía no hay registros para este usuario.</AppText>
         )}
       </View>
     </ScrollView>
@@ -1101,6 +1161,23 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderLeftWidth: 1,
     borderRightWidth: 1,
     borderColor: colors.surfaceStrong,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    minHeight: 42,
+    paddingHorizontal: 13,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceStrong,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  backButtonText: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '800',
   },
   hero: {
     backgroundColor: colors.surfaceStrong,
@@ -1253,10 +1330,6 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#FFFFFF',
-  },
-  emotionEmoji: {
-    fontSize: 13,
-    lineHeight: 17,
   },
   emotionLabel: {
     color: colors.text,
@@ -1779,6 +1852,36 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     padding: 12,
     gap: 6,
     backgroundColor: colors.background,
+  },
+  historyItemHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 112,
+  },
+  historyRecordIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#A78BFA18',
+    borderWidth: 1,
+    borderColor: '#A78BFA45',
+    position: 'relative',
+  },
+  historyRecordBadge: {
+    position: 'absolute',
+    right: -4,
+    bottom: -3,
+    width: 15,
+    height: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#A78BFA',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
   },
   historyScoreRow: {
     flexDirection: 'row',

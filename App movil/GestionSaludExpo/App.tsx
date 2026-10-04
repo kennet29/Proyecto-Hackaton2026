@@ -342,7 +342,7 @@ const PrivateNavigator = () => {
         component={DesparasitacionCreateScreen}
         options={{ title: 'Nueva Desparasitacion' }}
       />
-      <Stack.Screen name="Periodo" component={PeriodoScreen} options={{ title: 'Periodo' }} />
+      <Stack.Screen name="Periodo" component={PeriodoScreen} options={{ title: 'Salud Femenina' }} />
       <Stack.Screen
         name="Embarazo"
         component={EmbarazoScreen}

@@ -327,7 +327,7 @@ export function EmbarazoScreen() {
     try {
       const pacienteId = Number(form.pacienteId);
       if (pacienteId <= 0 || !form.fechainicio || !form.fechaprobableparto) {
-        throw new Error('Paciente, FUM y FPP son obligatorios.');
+        throw new Error('Usuario, FUM y FPP son obligatorios.');
       }
       if (form.fechaprobableparto <= form.fechainicio) {
         throw new Error('La FPP debe ser posterior a la FUM.');
@@ -411,7 +411,7 @@ export function EmbarazoScreen() {
       ) : null}
 
       <View style={styles.patientCard}>
-        <AppText style={styles.label}>Paciente</AppText>
+        <AppText style={styles.label}>Usuario</AppText>
         {loadingPatients ? (
           <ActivityIndicator color={colors.info} />
         ) : (
@@ -439,16 +439,21 @@ export function EmbarazoScreen() {
         <View style={styles.emptyCard}>
           <Ionicons name="document-text-outline" size={29} color={colors.info} />
           <AppText style={styles.emptyTitle}>Sin registros de embarazo</AppText>
-          <AppText style={styles.emptyText}>Agrega la primera ficha obstétrica para este paciente.</AppText>
+          <AppText style={styles.emptyText}>Agrega la primera ficha obstétrica para este usuario.</AppText>
         </View>
       ) : (
         filteredRecords.map((record) => (
 <View key={record.embarazoId} style={styles.recordCard}>
 <RecordActions resource="embarazo" recordId={record.embarazoId} onChanged={() => fetchRecords()} />
             <View style={styles.recordHeader}>
-              <View>
-                <AppText style={styles.recordEyebrow}>FICHA OBSTÉTRICA</AppText>
-                <AppText style={styles.recordTitle}>FPP: {formatDate(record.fechaprobableparto)}</AppText>
+              <View style={styles.recordHeaderLead}>
+                <View style={styles.recordEmoji} accessibilityElementsHidden>
+                  <AppText style={styles.recordEmojiText}>🤰</AppText>
+                </View>
+                <View style={styles.recordHeaderCopy}>
+                  <AppText style={styles.recordEyebrow}>FICHA OBSTÉTRICA</AppText>
+                  <AppText style={styles.recordTitle}>FPP: {formatDate(record.fechaprobableparto)}</AppText>
+                </View>
               </View>
               <View style={styles.statusChip}>
                 <AppText style={styles.statusText}>{record.estado || 'Sin estado'}</AppText>
@@ -838,13 +843,28 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: colors.border,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.accent,
     marginBottom: 14,
   },
   recordHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
-  recordEyebrow: { color: '#FB7185', fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  recordHeaderLead: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 9 },
+  recordHeaderCopy: { flex: 1 },
+  recordEmoji: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colorAlpha(colors.accent, '18'),
+    borderWidth: 1,
+    borderColor: colorAlpha(colors.accent, '55'),
+  },
+  recordEmojiText: { fontSize: 17, lineHeight: 22 },
+  recordEyebrow: { color: colors.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
   recordTitle: { color: colors.text, fontSize: 17, fontWeight: '900', marginTop: 3 },
-  statusChip: { backgroundColor: colorAlpha('#FB7185', '18'), borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5 },
-  statusText: { color: '#FB7185', fontSize: 10, fontWeight: '800', textTransform: 'capitalize' },
+  statusChip: { backgroundColor: colorAlpha(colors.accent, '18'), borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5, borderWidth: 1, borderColor: colorAlpha(colors.accent, '55') },
+  statusText: { color: colors.accent, fontSize: 10, fontWeight: '800', textTransform: 'capitalize' },
   infoGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5, marginTop: 15 },
   recordItem: { width: '50%', paddingHorizontal: 5, marginBottom: 13 },
   recordLabel: { color: colors.textMuted, fontSize: 9, fontWeight: '800', textTransform: 'uppercase' },
@@ -869,7 +889,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     paddingTop: 15,
     marginTop: 15,
   },
-  formSectionTitle: { color: '#FB7185', fontSize: 12, fontWeight: '900', marginBottom: 12 },
+  formSectionTitle: { color: colors.accent, fontSize: 12, fontWeight: '900', marginBottom: 12 },
   field: { flex: 1, marginBottom: 12 },
   halfField: { width: '48%' },
   row: { flexDirection: 'row', gap: 10 },
@@ -909,8 +929,8 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   iosPicker: { backgroundColor: colors.surface, borderRadius: 15, overflow: 'hidden', marginBottom: 14 },
   iosDone: { alignItems: 'center', padding: 11, borderTopWidth: 1, borderTopColor: colors.textMuted },
   iosDoneText: { color: colors.onAccent, fontWeight: '800' },
-  saveButton: { backgroundColor: '#FB7185', borderRadius: 13, paddingVertical: 15, alignItems: 'center', marginTop: 5 },
-  saveButtonText: { color: colors.text, fontSize: 14, fontWeight: '900' },
+  saveButton: { backgroundColor: colors.accent, borderRadius: 13, paddingVertical: 15, alignItems: 'center', marginTop: 5 },
+  saveButtonText: { color: colors.onAccent, fontSize: 14, fontWeight: '900' },
   disabled: { opacity: 0.65 },
   toggleButton: {
     flexDirection: 'row',

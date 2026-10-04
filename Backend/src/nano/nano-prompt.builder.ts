@@ -49,14 +49,20 @@ export class NanoPromptBuilder {
     return [
       "Eres Nano Chef, un asistente de recetas saludables.",
       "Crea una receta practica en espanol usando solamente texto; no tienes imagenes ni debes pedirlas.",
+      "Adapta la receta a la alimentacion cotidiana de Nicaragua y usa nombres de alimentos conocidos localmente.",
+      "Prioriza ingredientes economicos y faciles de encontrar en mercados, pulperias y supermercados nicaraguenses, como arroz, frijoles rojos, tortilla de maiz, huevo, pollo, queso fresco, cuajada, tomate, cebolla, chiltoma, repollo, ayote, yuca, platano, banano, papaya o pitahaya.",
+      "Cuando sea apropiado, crea una version equilibrada de una comida nicaraguense conocida, conservando su sabor y explicando porciones realistas. Prefiere preparaciones cocidas, asadas o salteadas con poco aceite antes que frituras.",
+      "No propongas quinoa, kale, salmon, frutos rojos importados, suplementos ni productos especiales, salvo que el usuario los escriba o los solicite expresamente.",
+      "Usa medidas caseras claras (taza, unidad, cucharada o porcion) y cantidades coherentes con el numero de porciones.",
+      "Procura equilibrar el plato con una fuente de proteina, una porcion moderada de carbohidrato y vegetales o fruta, sin convertir una comida tradicional en una receta extranjera.",
       "No des diagnosticos clinicos. Si el objetivo es diabetes o embarazo, incluye una nota breve de precaucion razonable.",
       "Responde solamente con JSON valido, sin markdown ni texto adicional, usando exactamente este esquema: {\"title\":\"string\",\"servings\":\"string\",\"time\":\"string\",\"ingredients\":[\"string\"],\"steps\":[\"string\"],\"nanoTip\":\"string\"}.",
       "Incluye entre 3 y 10 ingredientes y entre 3 y 7 pasos cortos de preparacion.",
       allowNanoRecommendations
-        ? "El usuario no tiene ingredientes definidos. Elige ingredientes comunes, accesibles y adecuados al objetivo; incluyelos claramente en la receta."
+        ? "El usuario no tiene ingredientes definidos. Recomienda una comida nicaraguense sencilla, accesible y adecuada al objetivo; incluye claramente todos los ingredientes y evita opciones ajenas al consumo cotidiano local."
         : "Usa cada ingrediente indicado como ingrediente principal de la receta. No lo reemplaces, no lo omitas ni lo presentes como sustituto de otro alimento. En la lista de ingredientes escribe el alimento que el usuario tiene; por ejemplo, si indica arroz blanco, escribe arroz blanco y nunca arroz integral con arroz blanco entre parentesis. Solo puedes anadir basicos de despensa indispensables, como agua, sal, pimienta o una pequena cantidad de aceite.",
       allowNanoRecommendations
-        ? "Propón alternativas sencillas si falta un ingrediente esencial, sin inventar que el usuario tiene ingredientes que no mencionó."
+        ? "Si incluyes una alternativa, debe ser otro ingrediente comun en Nicaragua y debe aparecer solamente en nanoTip, no como parte ambigua de la lista principal."
         : "No propongas sustitutos: utiliza los ingredientes escritos por el usuario.",
       `Objetivo del usuario: ${goalLabel}.`,
       allowNanoRecommendations
@@ -100,14 +106,32 @@ export class NanoPromptBuilder {
     stressLevel: number,
     anxietyLevel: number,
     context?: string,
+    previousMissions: string[] = [],
+    variationSeed = 0,
   ): string {
     const normalizedContext = this.normalizeOptionalNote(context);
+    const normalizedPreviousMissions = previousMissions
+      .map((mission) => this.normalizeOptionalNote(mission))
+      .filter((mission): mission is string => Boolean(mission));
+    const approaches = [
+      "atencion a los sentidos y al espacio cercano",
+      "movimiento corporal muy suave y liberacion de tension",
+      "descanso de pantallas y pausa consciente",
+      "conexion amable con otra persona",
+      "escritura breve, orden mental y autocompasion",
+    ];
+    const approach = approaches[Math.abs(variationSeed) % approaches.length];
     return [
       "Eres Nano Calma, un acompañante de bienestar emocional responsable.",
       "Genera exactamente 3 misiones pequeñas, sencillas y realizables ahora mismo para ayudar a reducir la tensión cotidiana.",
       "Las misiones no son terapia, diagnóstico ni tratamiento. No sugieras medicamentos, alcohol, suplementos, ejercicio intenso, conducir ni actividades peligrosas.",
-      "Incluye respiración suave, conexión con el entorno, descanso breve, hidratación o contacto con una persona de confianza según el contexto.",
+      "Usa exactamente 3 categorias diferentes. No repitas la misma accion con palabras distintas y no incluyas respiracion por defecto en todas las respuestas.",
+      "Puedes elegir entre respiracion suave, estiramiento o caminata muy suave, conexion con el entorno, descanso de pantallas, hidratacion, escritura breve, musica tranquila, orden de un espacio pequeno o contacto con una persona de confianza.",
+      `Para esta solicitud da prioridad creativa a: ${approach}. Aun asi, las otras dos misiones deben pertenecer a categorias diferentes.`,
       "Cada misión debe durar entre 1 y 10 minutos y tener una instrucción concreta de una o dos frases.",
+      normalizedPreviousMissions.length
+        ? `No repitas ni reformules estas misiones mostradas recientemente: ${normalizedPreviousMissions.join(" | ")}. Crea acciones claramente distintas.`
+        : "Crea titulos especificos y evita el trio generico de respirar, observar y beber agua.",
       "Si el contexto menciona autolesión, suicidio, peligro, violencia o una emergencia, no propongas un reto: indica buscar ayuda inmediata de emergencias y de una persona de confianza.",
       'Responde solamente con JSON válido, sin markdown, usando exactamente este esquema: {"intro":"string","missions":[{"title":"string","instruction":"string","durationMinutes":1,"category":"respiracion|movimiento|conexion|descanso|entorno"}],"safetyNote":"string"}.',
       `Emoción indicada: ${emotion ?? "no especificada"}.`,

@@ -412,7 +412,7 @@ export function CondicionCronicaFormScreen({
       return existingType.tipocondicionId;
     }
 
-    const response = await fetch(`${API_URL}/tipocondicioncronica`, {
+    const response = await fetch(`${API_URL}/tipocondicioncronica/user-defined`, {
       method: 'POST',
       headers,
       body: JSON.stringify({

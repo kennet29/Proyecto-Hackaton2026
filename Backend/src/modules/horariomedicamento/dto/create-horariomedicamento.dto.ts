@@ -1,6 +1,14 @@
 import { createZodDto } from "nestjs-zod";
 import { z } from "zod";
 
+const reminderStatusSchema = z.enum([
+  "pendiente",
+  "programado",
+  "enviado",
+  "snoozed",
+  "cancelado",
+]);
+
 /**
  * Esquema Zod para validar la creación de horariomedicamento.
  */
@@ -11,7 +19,7 @@ export const createHorariomedicamentoSchema = z.object({
   diasemana: z.number().int().nullable().optional(),
   generarecordatorio: z.boolean().optional(),
   proximaalarma: z.coerce.date().nullable().optional(),
-  estadorecordatorio: z.string().optional(),
+  estadorecordatorio: reminderStatusSchema.optional(),
   ultimoenvio: z.coerce.date().nullable().optional(),
   observaciones: z.string().nullable().optional(),
   creadopor: z.string().nullable().optional(),
@@ -42,7 +50,7 @@ export const updateHorariomedicamentoSchema = z
     diasemana: z.number().int().nullable().optional(),
     generarecordatorio: z.boolean().optional(),
     proximaalarma: z.coerce.date().nullable().optional(),
-    estadorecordatorio: z.string().optional(),
+    estadorecordatorio: reminderStatusSchema.optional(),
     ultimoenvio: z.coerce.date().nullable().optional(),
     observaciones: z.string().nullable().optional(),
     creadopor: z.string().nullable().optional(),

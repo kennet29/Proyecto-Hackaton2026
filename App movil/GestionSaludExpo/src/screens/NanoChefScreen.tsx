@@ -62,12 +62,12 @@ const isRecipeContent = (value: unknown): value is RecipeContent => {
 
 const RECIPE_GOALS: RecipeGoal[] = [
   { id: 'weight-loss', label: 'Ligera y saciante', icon: 'leaf-outline', accent: appColors.success },
-  { id: 'diabetes', label: 'Control de azucar', icon: 'water-outline', accent: appColors.accent },
-  { id: 'muscle-gain', label: 'Alta en proteina', icon: 'barbell-outline', accent: appColors.info },
+  { id: 'diabetes', label: 'Control de azúcar', icon: 'water-outline', accent: appColors.accent },
+  { id: 'muscle-gain', label: 'Alta en proteína', icon: 'barbell-outline', accent: appColors.info },
   { id: 'pregnancy', label: 'Embarazo', icon: 'flower-outline', accent: '#FDBA74' },
 ];
 
-const QUICK_INGREDIENTS = ['pollo', 'huevo', 'arroz', 'frijoles', 'avena', 'tomate'];
+const QUICK_INGREDIENTS = ['arroz', 'frijoles rojos', 'tortilla', 'huevo', 'pollo', 'queso', 'chiltoma', 'tomate'];
 const MAX_INGREDIENTS_LENGTH = 1_000;
 const MAX_PREFERENCES_LENGTH = 500;
 
@@ -196,27 +196,28 @@ export function NanoChefScreen({ navigation }: Props) {
           <AppText style={styles.sectionTitle}>2. Ingredientes disponibles</AppText>
           <View style={[styles.recommendationToggle, allowNanoRecommendations && styles.recommendationToggleActive]}>
             <View style={styles.recommendationCopy}>
-              <AppText style={styles.recommendationTitle}>No tengo ingredientes</AppText>
-              <AppText style={styles.recommendationHint}>Nano Chef elegirá una receta adecuada a tu objetivo.</AppText>
+              <AppText style={styles.recommendationTitle}>Recomiéndame una comida</AppText>
+              <AppText style={styles.recommendationHint}>Nano Chef elegirá una opción nicaragüense, accesible y adecuada a tu objetivo.</AppText>
             </View>
             <Switch value={allowNanoRecommendations} onValueChange={setAllowNanoRecommendations} trackColor={{ false: colors.border, true: colorAlpha(colors.success, '88') }} thumbColor={allowNanoRecommendations ? colors.success : colors.textMuted} />
           </View>
-          {allowNanoRecommendations ? <View style={styles.recommendationNotice}><Ionicons name="bulb-outline" size={19} color={colors.success} /><AppText style={styles.recommendationNoticeText}>Nano Chef recomendará los ingredientes y mantendrá el objetivo “{selectedGoal.label}”.</AppText></View> : null}
-          <AppText style={styles.sectionSubtitle}>Sepáralos por comas. Puedes incluir cantidades si las sabes.</AppText>
-          <AppTextInput
-            style={[styles.input, allowNanoRecommendations && styles.ingredientsDisabled]}
-            value={ingredients}
-            onChangeText={(value) => setIngredients(value.slice(0, MAX_INGREDIENTS_LENGTH))}
-            placeholder="Ej.: pollo, tomate, arroz, cebolla"
-            placeholderTextColor={colors.textMuted}
-            multiline
-            textAlignVertical="top"
-            maxLength={MAX_INGREDIENTS_LENGTH}
-            editable={!allowNanoRecommendations}
-          />
-          <View style={styles.chips}>
-            {QUICK_INGREDIENTS.map((ingredient) => <TouchableOpacity key={ingredient} style={styles.chip} onPress={() => addIngredient(ingredient)}><AppText style={styles.chipText}>+ {ingredient}</AppText></TouchableOpacity>)}
-          </View>
+          {allowNanoRecommendations ? <View style={styles.recommendationNotice}><Ionicons name="bulb-outline" size={19} color={colors.success} /><AppText style={styles.recommendationNoticeText}>Recibirás una receta con ingredientes comunes en Nicaragua, porciones claras y el objetivo “{selectedGoal.label}”.</AppText></View> : null}
+          {!allowNanoRecommendations ? <>
+            <AppText style={styles.sectionSubtitle}>Sepáralos por comas. Puedes incluir cantidades si las sabes.</AppText>
+            <AppTextInput
+              style={styles.input}
+              value={ingredients}
+              onChangeText={(value) => setIngredients(value.slice(0, MAX_INGREDIENTS_LENGTH))}
+              placeholder="Ej.: arroz, frijoles rojos, huevo, chiltoma"
+              placeholderTextColor={colors.textMuted}
+              multiline
+              textAlignVertical="top"
+              maxLength={MAX_INGREDIENTS_LENGTH}
+            />
+            <View style={styles.chips}>
+              {QUICK_INGREDIENTS.map((ingredient) => <TouchableOpacity key={ingredient} style={styles.chip} onPress={() => addIngredient(ingredient)}><AppText style={styles.chipText}>+ {ingredient}</AppText></TouchableOpacity>)}
+            </View>
+          </> : null}
         </View>
 
         <View style={styles.section}>
@@ -225,7 +226,7 @@ export function NanoChefScreen({ navigation }: Props) {
             style={styles.input}
             value={preferences}
             onChangeText={(value) => setPreferences(value.slice(0, MAX_PREFERENCES_LENGTH))}
-            placeholder="Ej.: sin lactosa, para 2 personas, pocos ingredientes"
+            placeholder="Ej.: para 2 personas, sin lactosa, bajo presupuesto, para la cena"
             placeholderTextColor={colors.textMuted}
             multiline
             textAlignVertical="top"
@@ -278,7 +279,6 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   goalGrid: { gap: 9 }, goalCard: { minHeight: 54, paddingHorizontal: 13, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, flexDirection: 'row', alignItems: 'center', gap: 11 },
   goalLabel: { flex: 1, color: colors.text, fontSize: 14, fontWeight: '800' },
   input: { minHeight: 88, padding: 13, borderWidth: 1, borderColor: colors.border, borderRadius: 14, backgroundColor: colors.surface, color: colors.text, fontSize: 14 },
-  ingredientsDisabled: { opacity: 0.35 },
   recommendationToggle: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 13, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   recommendationToggleActive: { borderColor: colorAlpha(colors.success, '99'), backgroundColor: colorAlpha(colors.success, '12') },
   recommendationCopy: { flex: 1 }, recommendationTitle: { color: colors.text, fontSize: 14, fontWeight: '900' }, recommendationHint: { color: colors.textMuted, fontSize: 12, lineHeight: 17, marginTop: 2 },

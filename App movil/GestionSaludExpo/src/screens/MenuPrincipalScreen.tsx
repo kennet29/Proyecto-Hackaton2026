@@ -3,7 +3,7 @@
  * @description Implementa los elementos TypeScript de este módulo.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Modal, Platform, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Alert, FlatList, Linking, Modal, Platform, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { AppText } from '../components/AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -17,8 +17,9 @@ import { useBackgroundMode } from '../context/BackgroundModeContext';
 import { DashboardBienestar } from '../components/DashboardBienestar';
 import NanoMenu from '../svg/Nano Menu.svg';
 import NanoMedico from '../svg/Nano verde 75px.svg';
-import NanoBienestar from '../Nanos IA/Nano Bienestar.svg';
+import NanoBienestar from '../svg/Nano Bienestar.svg';
 import NanoGestion from '../svg/Nano Gestion.svg';
+import NanoUrl from '../svg/Nano URL.svg';
 import NanoDashboard from '../Nano Dashboards/Nano Dashboard.svg';
 import NanoSeguimientoFisico from '../Nano Dashboards/Nano segumiento Fisico.svg';
 import NanoSaludMental from '../Nano Dashboards/Nano Salud Mental.svg';
@@ -54,6 +55,7 @@ import NanoExpedienteClinico from '../../Nanos Medica/Nano Expediente Clinico.sv
 import NanoUsuario from '../../Nanos Medica/Nano Usuario 2.svg';
 import NanoUsuarioMedico from '../../Nanos Medica/Nano Usuario Medico.svg';
 import NanoConsultaMedicaAlterna from '../../Nanos Medica/Nano Consulta Medica 2.svg';
+import NanoSaludFemenina from '../svg/Nano salud femenina.svg';
 import {
   getNanoAppearance,
   loadNanoAppearanceId,
@@ -71,6 +73,7 @@ type OptionItem = {
   icon: keyof typeof Ionicons.glyphMap;
   accent: string;
   navigateTo?: keyof RootStackParamList;
+  externalUrl?: string;
   actionTab?: MenuTabKey;
   action?: 'toggle-background';
   nano?: boolean;
@@ -421,11 +424,19 @@ const wellnessOptions: OptionItem[] = [
   },
   {
     key: 'periodo',
-    label: 'Periodo',
+    label: 'Salud Femenina',
     description: 'Control de ciclo, sintomas y prediccion',
     icon: 'moon-outline',
     accent: appColors.accent,
     navigateTo: 'Periodo',
+    nano: true,
+    nanoAppearance: {
+      id: 'salud-femenina',
+      label: 'Nano Salud Femenina',
+      description: 'Nano de salud femenina',
+      format: 'svg',
+      svgComponent: NanoSaludFemenina,
+    },
   },
 ];
 
@@ -484,6 +495,22 @@ const managementOptions: OptionItem[] = [
       description: 'Nano de gestión',
       format: 'svg',
       svgComponent: NanoGestion,
+    },
+  },
+  {
+    key: 'nano-url',
+    label: 'Visita nuestra página web',
+    description: 'Abre Nano en el navegador.',
+    icon: 'open-outline',
+    accent: '#29B6FF',
+    externalUrl: 'https://nicaplus.takenjo.lat/',
+    nano: true,
+    nanoAppearance: {
+      id: 'nano-url',
+      label: 'Nano URL',
+      description: 'Acceso web a Nano',
+      format: 'svg',
+      svgComponent: NanoUrl,
     },
   },
   {
@@ -783,6 +810,12 @@ export function MenuPrincipalScreen({ navigation }: Props) {
     }
     if (item.actionTab) {
       setActiveTab(item.actionTab);
+      return;
+    }
+    if (item.externalUrl) {
+      void Linking.openURL(item.externalUrl).catch(() => {
+        Alert.alert('No se pudo abrir el enlace', 'Intenta nuevamente en unos momentos.');
+      });
       return;
     }
     if (!item.navigateTo) {

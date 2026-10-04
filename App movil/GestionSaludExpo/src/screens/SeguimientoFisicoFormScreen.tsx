@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
+import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { Picker } from '@react-native-picker/picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -301,10 +302,13 @@ export function SeguimientoFisicoFormScreen({ navigation, route }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.hero}>
-        <AppText style={styles.heroTitle}>Nuevo Seguimiento</AppText>
-        <AppText style={styles.heroText}>
-          Crea el registro en una vista separada y, si quieres, usa un registro anterior como base.
-        </AppText>
+        <NanoSectionIllustration section="seguimiento-caso" size={62} />
+        <View style={styles.heroCopy}>
+          <AppText style={styles.heroTitle}>Nuevo Seguimiento</AppText>
+          <AppText style={styles.heroText}>
+            Crea el registro en una vista separada y, si quieres, usa un registro anterior como base.
+          </AppText>
+        </View>
       </View>
 
       <View style={styles.card}>
@@ -526,6 +530,12 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: colors.info,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  heroCopy: {
+    flex: 1,
   },
   heroTitle: {
     color: colors.text,

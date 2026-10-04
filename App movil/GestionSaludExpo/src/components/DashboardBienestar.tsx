@@ -134,7 +134,7 @@ export function DashboardBienestar({ navigation }: Props) {
   const cards: Array<{ title: string; score: number | null; icon: keyof typeof Ionicons.glyphMap; nanoSection?: NanoSection; color: string; detail: string; route: string }> = [
     { title: 'Salud mental', score: mentalScore, icon: 'heart-outline', nanoSection: 'salud-mental', color: '#A78BFA', detail: `Ánimo ${valueLabel(weekly?.estadoAnimo, '/5')} · Estrés ${valueLabel(weekly?.estres, '/5')}`, route: 'SaludMental' },
     { title: 'Actividad y ejercicio', score: physicalScore, icon: 'fitness-outline', nanoSection: 'seguimiento-fisico', color: '#38D996', detail: `${valueLabel(physical?.ejercicio?.minutosTotales, ' min')} · ${valueLabel(physical?.ejercicio?.pasosPromedio, ' pasos')}`, route: 'SeguimientoFisico' },
-    { title: 'Hábitos saludables', score: healthyHabitsScore, icon: 'leaf-outline', nanoSection: 'bienestar', color: '#29B6FF', detail: `Sueño ${valueLabel(sleepHours, ' h')} · Agua ${hydration === null ? 'Sin datos' : `${Number(hydration).toFixed(2)} L`}`, route: 'Habitos' },
+    { title: 'Hábitos saludables', score: healthyHabitsScore, icon: 'leaf-outline', nanoSection: 'alimentacion', color: '#29B6FF', detail: `Sueño ${valueLabel(sleepHours, ' h')} · Agua ${hydration === null ? 'Sin datos' : `${Number(hydration).toFixed(2)} L`}`, route: 'Habitos' },
   ];
 
   if (!loading && !error && patients.length === 0) {

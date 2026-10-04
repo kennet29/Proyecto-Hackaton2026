@@ -8,6 +8,7 @@ import NanoDashboardIndicadores from '../Nano Dashboards/Nano Dashboard Indicado
 import NanoPrime from '../Nano Dashboards/Nano Prime.svg';
 import NanoSaludMental from '../Nano Dashboards/Nano Salud Mental.svg';
 import NanoSeguimientoFisico from '../Nano Dashboards/Nano segumiento Fisico.svg';
+import NanoHidratarse from '../Nanos Extra/Nano hidratarse.svg';
 import NanoBienestar from '../Nanos IA/Nano Bienestar.svg';
 import NanoChef from '../Nanos IA/Nano Chef.svg';
 import NanoChefColor from '../Nanos IA/Nano Chef Color.svg';
@@ -61,6 +62,7 @@ export type NanoSection =
   | 'embarazo'
   | 'examenes-clinicos'
   | 'guias-medicas'
+  | 'hidratarse'
   | 'modo-claro-oscuro'
   | 'medicacion'
   | 'operaciones'
@@ -102,6 +104,7 @@ const illustrations: Record<NanoSection, React.ComponentType<SvgProps>> = {
   embarazo: NanoEmbarazo,
   'examenes-clinicos': NanoExamenesClinicos,
   'guias-medicas': NanoGuiasMedicas,
+  hidratarse: NanoHidratarse,
   'modo-claro-oscuro': NanoModo,
   medicacion: NanoMedicacion,
   operaciones: NanoOperaciones,
@@ -144,6 +147,7 @@ const labels: Record<NanoSection, string> = {
   embarazo: 'Nano Embarazo',
   'examenes-clinicos': 'Nano Exámenes Clínicos',
   'guias-medicas': 'Nano Guías Médicas',
+  hidratarse: 'Nano hidratándose',
   'modo-claro-oscuro': 'Nano Modo Claro y Oscuro',
   medicacion: 'Nano Medicación',
   operaciones: 'Nano Operaciones',

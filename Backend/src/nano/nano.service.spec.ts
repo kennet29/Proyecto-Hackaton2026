@@ -145,10 +145,38 @@ describe("NanoService", () => {
     expect(gateway.generateText).toHaveBeenCalledWith(
       expect.stringContaining("Ingredientes disponibles: avena, banano"),
     );
+    expect(gateway.generateText).toHaveBeenCalledWith(
+      expect.stringContaining("alimentacion cotidiana de Nicaragua"),
+    );
     expect(result).toMatchObject({
       recipe: { title: "Avena con fruta" },
       goalLabel: "Ligera y saciante",
     });
+  });
+
+  it("prioriza una recomendacion nicaraguense cuando el usuario no indica ingredientes", async () => {
+    gateway.generateText.mockResolvedValue({
+      text: JSON.stringify({
+        title: "Gallo pinto con huevo y ensalada de repollo",
+        servings: "1 porcion",
+        time: "20 minutos",
+        ingredients: ["3/4 taza de gallo pinto", "1 huevo", "1 taza de repollo", "1 tomate"],
+        steps: ["Calienta el gallo pinto con poco aceite.", "Cocina el huevo y sirve con la ensalada."],
+        nanoTip: "Mantener moderada la porcion de gallo pinto ayuda a equilibrar el plato.",
+      }),
+      model: "test-model",
+    });
+
+    await service.createRecipe({
+      goalKey: "weight-loss",
+      goalLabel: "Ligera y saciante",
+      allowNanoRecommendations: true,
+    } as CreateRecipeDto);
+
+    const prompt = gateway.generateText.mock.calls[0][0];
+    expect(prompt).toContain("comida nicaraguense sencilla");
+    expect(prompt).toContain("No propongas quinoa");
+    expect(prompt).toContain("medidas caseras claras");
   });
 
   it("corrige una sustitucion para usar el arroz blanco indicado por el usuario", async () => {
@@ -242,10 +270,20 @@ describe("NanoService", () => {
       stressLevel: 5,
       anxietyLevel: 4,
       context: "Tuve un día difícil",
+      previousMissions: ["Respira despacio: Inhala cuatro segundos y exhala seis."],
+      variationSeed: 3,
     } as CreateCalmMissionsDto);
 
     expect(gateway.generateText).toHaveBeenCalledWith(
       expect.stringContaining("Estrés: 5 de 5"),
+      900,
+    );
+    expect(gateway.generateText).toHaveBeenCalledWith(
+      expect.stringContaining("No repitas ni reformules estas misiones mostradas recientemente"),
+      900,
+    );
+    expect(gateway.generateText).toHaveBeenCalledWith(
+      expect.stringContaining("conexion amable con otra persona"),
       900,
     );
     expect(result.missions).toHaveLength(3);
