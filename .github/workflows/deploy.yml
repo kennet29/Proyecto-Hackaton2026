@@ -6,6 +6,9 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     name: Deploy to Server via Cloudflare Tunnel
@@ -56,14 +59,20 @@ jobs:
 
       # 4. Conectarse y ejecutar el despliegue
       - name: Execute Remote Commands via SSH
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
         run: |
-          ssh server-tunnel << 'EOF'
+          AUTH_HEADER="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w 0)"
+          ssh server-tunnel "GITHUB_AUTH_HEADER='$AUTH_HEADER' REPOSITORY='$REPOSITORY' bash -s" << 'EOF'
             set -e
             echo "=== Actualizando repositorio en el VPS ==="
             cd /opt/Proyecto-Hackaton2026
             # Conserva cualquier commit o cambio local del VPS y coloca los
-            # cambios remotos como base, evitando el error por ramas divergentes.
-            git pull --rebase --autostash origin main
+            # cambios remotos como base. El token efimero solo se usa en esta
+            # llamada y no se guarda en la configuracion Git del servidor.
+            git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $GITHUB_AUTH_HEADER" \
+              pull --rebase --autostash "https://github.com/$REPOSITORY.git" main
             echo "=== Construyendo y levantando contenedores ==="
             if ! docker compose up -d --build; then
               echo "=== Diagnostico de inicializacion ==="
