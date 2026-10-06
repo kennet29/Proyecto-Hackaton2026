@@ -796,7 +796,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
 
         <View style={styles.card}>
           <View style={styles.calendarHeader}>
-            <View>
+            <View style={styles.calendarHeaderCopy}>
               <AppText style={styles.sectionTitle}>Calendario de registros</AppText>
               <AppText style={styles.calendarSubtitle}>
                 Explora el mes y toca un día marcado para ver el detalle.
@@ -1453,6 +1453,10 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     alignItems: 'flex-start',
     gap: 12,
   },
+  calendarHeaderCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
   calendarSubtitle: {
     color: colors.textMuted,
     fontSize: 13,
@@ -1460,6 +1464,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     marginTop: 6,
   },
   calendarPill: {
+    flexShrink: 0,
     backgroundColor: `${colors.info}18`,
     borderWidth: 1,
     borderColor: colors.info,

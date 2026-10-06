@@ -27,6 +27,16 @@ import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { AppColors, useAppColors } from '../theme/useAppColors';
+import NanoAburrido from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/nano aburrido.svg';
+import NanoAgotado from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/Nano Agotado.svg';
+import NanoBendicion from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/nano bendicion.svg';
+import NanoCalmado from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/nano clamado.svg';
+import NanoDepresivo from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/Nano depresivo.svg';
+import NanoEstresado from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/Nano estresado.svg';
+import NanoExtremadamenteFeliz from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/nano extremadamente feliz.svg';
+import NanoFeliz from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/nano feliz.svg';
+import NanoInspirado from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/nano inspirado.svg';
+import NanoPensante from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/nano pensante.svg';
 
 type SaludMentalRecord = {
   saludmentalId: number;
@@ -197,16 +207,16 @@ const numericFieldRules: Array<{
 ];
 
 const emotionOptions = [
-  { id: 'triste', label: 'Triste', icon: 'rainy-outline', score: '1', color: '#60A5FA' },
-  { id: 'agotado', label: 'Agotado', icon: 'battery-dead-outline', score: '1', color: '#94A3B8' },
-  { id: 'preocupado', label: 'Preocupado', icon: 'help-outline', score: '2', color: '#F59E0B' },
-  { id: 'ansioso', label: 'Ansioso', icon: 'pulse-outline', score: '2', color: '#FB7185' },
-  { id: 'neutral', label: 'Neutral', icon: 'remove-outline', score: '3', color: '#A78BFA' },
-  { id: 'calmado', label: 'Calmado', icon: 'leaf-outline', score: '4', color: '#2DD4BF' },
-  { id: 'esperanzado', label: 'Esperanzado', icon: 'sunny-outline', score: '4', color: '#38BDF8' },
-  { id: 'feliz', label: 'Feliz', icon: 'happy-outline', score: '5', color: '#38E28E' },
-  { id: 'motivado', label: 'Motivado', icon: 'flash-outline', score: '5', color: '#22C55E' },
-  { id: 'agradecido', label: 'Agradecido', icon: 'heart-outline', score: '5', color: '#10B981' },
+  { id: 'triste', label: 'Triste', Nano: NanoDepresivo, score: '1', color: '#60A5FA' },
+  { id: 'agotado', label: 'Agotado', Nano: NanoAgotado, score: '1', color: '#94A3B8' },
+  { id: 'preocupado', label: 'Preocupado', Nano: NanoPensante, score: '2', color: '#F59E0B' },
+  { id: 'ansioso', label: 'Ansioso', Nano: NanoEstresado, score: '2', color: '#FB7185' },
+  { id: 'neutral', label: 'Neutral', Nano: NanoAburrido, score: '3', color: '#A78BFA' },
+  { id: 'calmado', label: 'Calmado', Nano: NanoCalmado, score: '4', color: '#2DD4BF' },
+  { id: 'esperanzado', label: 'Esperanzado', Nano: NanoInspirado, score: '4', color: '#38BDF8' },
+  { id: 'feliz', label: 'Feliz', Nano: NanoFeliz, score: '5', color: '#38E28E' },
+  { id: 'motivado', label: 'Motivado', Nano: NanoExtremadamenteFeliz, score: '5', color: '#22C55E' },
+  { id: 'agradecido', label: 'Agradecido', Nano: NanoBendicion, score: '5', color: '#10B981' },
 ] as const;
 
 const validateForm = (form: FormValues) => {
@@ -718,14 +728,16 @@ export function SaludMentalScreen({ navigation }: Props) {
           <View style={styles.emotionGrid}>
             {emotionOptions.map((emotion) => {
               const selected = selectedEmotion === emotion.id;
+              const EmotionNano = emotion.Nano;
               return (
                 <TouchableOpacity
                   key={emotion.id}
                   style={[
                     styles.emotionCard,
+                    selected && styles.emotionCardSelected,
                     selected && {
                       borderColor: emotion.color,
-                      backgroundColor: `${emotion.color}18`,
+                      backgroundColor: `${emotion.color}${colors.mode === 'dark' ? '2E' : '18'}`,
                     },
                   ]}
                   onPress={() => {
@@ -737,10 +749,7 @@ export function SaludMentalScreen({ navigation }: Props) {
                   accessibilityLabel={`Me siento ${emotion.label}`}
                 >
                   <View style={styles.emotionNano}>
-                    <NanoSectionIllustration section="salud-mental" size={48} />
-                    <View style={[styles.emotionBadge, { backgroundColor: emotion.color }]}>
-                      <Ionicons name={emotion.icon} size={14} color="#FFFFFF" />
-                    </View>
+                    <EmotionNano width={58} height={58} />
                   </View>
                   <AppText style={[styles.emotionLabel, selected && { color: emotion.color }]}>
                     {emotion.label}
@@ -837,7 +846,11 @@ export function SaludMentalScreen({ navigation }: Props) {
                     accessibilityState={{ checked: completed }}
                   >
                     <View style={styles.calmMissionIcon}>
-                      <Ionicons name={calmMissionIcons[mission.category]} size={20} color="#7C3AED" />
+                      <Ionicons
+                        name={calmMissionIcons[mission.category]}
+                        size={20}
+                        color={colors.mode === 'dark' ? '#C4B5FD' : '#7C3AED'}
+                      />
                     </View>
                     <View style={styles.calmMissionCopy}>
                       <View style={styles.calmMissionTitleRow}>
@@ -1144,7 +1157,10 @@ function HistoryScore({ label, value, color }: { label: string; value: number; c
   );
 }
 
-const createStyles = (colors: AppColors) => StyleSheet.create({
+const createStyles = (colors: AppColors) => {
+  const isDark = colors.mode === 'dark';
+
+  return StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
@@ -1152,7 +1168,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     padding: 20,
     paddingBottom: 42,
-    backgroundColor: colors.surface,
+    backgroundColor: isDark ? colors.backgroundMuted : colors.surface,
     gap: 16,
     width: '100%',
     maxWidth: 1180,
@@ -1160,7 +1176,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     minHeight: '100%',
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderColor: colors.surfaceStrong,
+    borderColor: isDark ? colors.borderStrong : colors.surfaceStrong,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -1170,7 +1186,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     minHeight: 42,
     paddingHorizontal: 13,
     borderRadius: 12,
-    backgroundColor: colors.surfaceStrong,
+    backgroundColor: isDark ? colors.surface : colors.surfaceStrong,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -1180,7 +1196,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     fontWeight: '800',
   },
   hero: {
-    backgroundColor: colors.surfaceStrong,
+    backgroundColor: isDark ? '#101F35' : colors.surfaceStrong,
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
@@ -1240,7 +1256,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     fontWeight: '900',
   },
   patientSelectorCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: isDark ? '#101F35' : colors.surface,
     borderRadius: 18,
     padding: 14,
     borderWidth: 1,
@@ -1269,12 +1285,12 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     marginBottom: 6,
   },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: isDark ? '#101F35' : colors.surface,
     borderRadius: 20,
     padding: 16,
     gap: 12,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: isDark ? '#315477' : colors.border,
   },
   sectionHeader: {
     gap: 4,
@@ -1290,10 +1306,10 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     lineHeight: 18,
   },
   formSection: {
-    backgroundColor: colors.background,
+    backgroundColor: isDark ? '#091628' : colors.background,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: isDark ? '#27496D' : colors.border,
     padding: 14,
     gap: 10,
   },
@@ -1310,26 +1326,29 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     paddingVertical: 11,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: isDark ? '#315477' : colors.border,
+    backgroundColor: isDark ? '#172942' : colors.surface,
     alignItems: 'center',
     gap: 4,
   },
-  emotionNano: {
-    position: 'relative',
-    marginBottom: 2,
+  emotionCardSelected: {
+    borderWidth: 2,
+    shadowColor: isDark ? '#000000' : '#64748B',
+    shadowOpacity: isDark ? 0.28 : 0.14,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
-  emotionBadge: {
-    position: 'absolute',
-    right: -7,
-    bottom: -3,
-    width: 25,
-    height: 25,
-    borderRadius: 13,
+  emotionNano: {
+    width: 74,
+    height: 74,
+    borderRadius: 22,
+    backgroundColor: isDark ? '#FFFFFF' : colors.backgroundMuted,
+    borderWidth: 1,
+    borderColor: isDark ? '#E2E8F0' : colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    marginBottom: 2,
   },
   emotionLabel: {
     color: colors.text,
@@ -1338,7 +1357,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     textAlign: 'center',
   },
   emotionScore: {
-    color: colors.textMuted,
+    color: isDark ? '#B8C8DB' : colors.textMuted,
     fontSize: 10,
     fontWeight: '700',
   },
@@ -1348,9 +1367,9 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     gap: 8,
     borderRadius: 13,
     padding: 11,
-    backgroundColor: '#A78BFA14',
+    backgroundColor: isDark ? '#1B1E3A' : '#A78BFA14',
     borderWidth: 1,
-    borderColor: '#A78BFA3D',
+    borderColor: isDark ? '#6656A8' : '#A78BFA3D',
   },
   importanceText: {
     flex: 1,
@@ -1362,8 +1381,8 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     padding: 15,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#C4B5FD',
-    backgroundColor: '#F5F3FF',
+    borderColor: isDark ? '#5B4E99' : '#C4B5FD',
+    backgroundColor: isDark ? '#17172F' : '#F5F3FF',
     gap: 13,
   },
   calmCardHighStress: {
@@ -1379,19 +1398,19 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     flex: 1,
   },
   calmEyebrow: {
-    color: '#7C3AED',
+    color: isDark ? '#C4B5FD' : '#7C3AED',
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 1.2,
   },
   calmTitle: {
-    color: '#25114D',
+    color: isDark ? colors.text : '#25114D',
     fontSize: 17,
     fontWeight: '900',
     marginTop: 2,
   },
   calmSubtitle: {
-    color: '#5B4A78',
+    color: isDark ? colors.textSoft : '#5B4A78',
     fontSize: 12,
     lineHeight: 17,
     marginTop: 3,
@@ -1416,7 +1435,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     gap: 9,
   },
   calmIntro: {
-    color: '#4C376E',
+    color: isDark ? colors.textSoft : '#4C376E',
     fontSize: 12,
     lineHeight: 18,
     fontWeight: '700',
@@ -1428,18 +1447,18 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     padding: 12,
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: '#DDD6FE',
-    backgroundColor: '#FFFFFF',
+    borderColor: isDark ? '#4A436F' : '#DDD6FE',
+    backgroundColor: isDark ? '#22213D' : '#FFFFFF',
   },
   calmMissionCompleted: {
-    borderColor: '#86EFAC',
-    backgroundColor: '#F0FDF4',
+    borderColor: isDark ? '#2F8F63' : '#86EFAC',
+    backgroundColor: isDark ? '#123226' : '#F0FDF4',
   },
   calmMissionIcon: {
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: '#EDE9FE',
+    backgroundColor: isDark ? '#342D59' : '#EDE9FE',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1453,26 +1472,26 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   calmMissionTitle: {
     flex: 1,
-    color: '#25114D',
+    color: isDark ? colors.text : '#25114D',
     fontSize: 13,
     fontWeight: '900',
   },
   calmMissionTitleCompleted: {
-    color: '#15803D',
+    color: isDark ? '#6EE7A8' : '#15803D',
   },
   calmDuration: {
-    color: '#7C3AED',
+    color: isDark ? '#C4B5FD' : '#7C3AED',
     fontSize: 10,
     fontWeight: '900',
   },
   calmMissionText: {
-    color: '#5B4A78',
+    color: isDark ? colors.textSoft : '#5B4A78',
     fontSize: 12,
     lineHeight: 17,
     marginTop: 3,
   },
   calmMissionTextCompleted: {
-    color: '#4B7A5C',
+    color: isDark ? '#9DD7B5' : '#4B7A5C',
   },
   calmSafety: {
     flexDirection: 'row',
@@ -1480,11 +1499,11 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     gap: 7,
     padding: 10,
     borderRadius: 12,
-    backgroundColor: '#EAF3FF',
+    backgroundColor: isDark ? '#0E2942' : '#EAF3FF',
   },
   calmSafetyText: {
     flex: 1,
-    color: '#315271',
+    color: isDark ? '#BBD4EA' : '#315271',
     fontSize: 11,
     lineHeight: 16,
   },
@@ -1915,4 +1934,5 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     color: colors.textSoft,
     lineHeight: 19,
   },
-});
+  });
+};

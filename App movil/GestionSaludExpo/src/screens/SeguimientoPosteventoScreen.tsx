@@ -1042,6 +1042,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
     marginBottom: 12,
   },
@@ -1049,8 +1050,10 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     flex: 1,
   },
   fieldGroupHalf: {
-    flex: 1,
-    minWidth: 220,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 220,
+    minWidth: 0,
     gap: 8,
   },
   dateButton: {

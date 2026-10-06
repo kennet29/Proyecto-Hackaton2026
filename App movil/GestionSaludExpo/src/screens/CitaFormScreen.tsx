@@ -178,23 +178,34 @@ const formatHumanDate = (date?: string) => {
 
 
 
+const extractWallClockTime = (value?: string | null): string | null => {
+
+  if (!value) return null;
+
+  const match = value.match(/(?:^|T|\s)([01]\d|2[0-3]):([0-5]\d)/);
+
+  return match ? `${match[1]}:${match[2]}` : null;
+
+};
+
+
+
 const formatHourLabel = (value?: string | null) => {
 
   if (!value) return "Sin hora";
+
+  // SQL Server `datetime2` stores the appointment as a wall-clock value.
+  // The API serializes it with a UTC suffix, so parsing it as an instant would
+  // shift the selected hour according to the device timezone.
+  const wallClockTime = extractWallClockTime(value);
+
+  if (wallClockTime) return wallClockTime;
 
   const parsed = new Date(value);
 
   if (!Number.isNaN(parsed.getTime())) {
 
     return parsed.toLocaleTimeString("es-NI", { hour: "2-digit", minute: "2-digit" });
-
-  }
-
-  const match = value.match(/T(\d{2}:\d{2})/);
-
-  if (match) {
-
-    return match[1];
 
   }
 
@@ -870,7 +881,7 @@ export function CitaFormScreen() {
 
 
   const startEditing = (appointment: Appointment) => {
-    const time = appointment.startsAt.match(/T(\d{2}:\d{2})/)?.[1] ?? "09:00";
+    const time = extractWallClockTime(appointment.startsAt) ?? "09:00";
     setEditingAppointment(appointment);
     setSelectedDate(appointment.date);
     setFormDate(appointment.date);

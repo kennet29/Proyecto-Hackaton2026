@@ -23,7 +23,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../config/api';
 import { fetchLinkedPatients, type LinkedPatient } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
-import { appColors, colorAlpha } from '../theme/colors';
+import { colorAlpha } from '../theme/colors';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { AppColors, useAppColors } from '../theme/useAppColors';
 
@@ -417,6 +417,8 @@ export function EmbarazoScreen() {
         ) : (
           <View style={styles.darkPicker}>
             <Picker
+              style={styles.picker}
+              dropdownIconColor={colors.textMuted}
               selectedValue={form.pacienteId}
               onValueChange={(value) => change('pacienteId', String(value))}
             >
@@ -625,7 +627,7 @@ export function EmbarazoScreen() {
             onPress={() => void submit()}
           >
             {submitting ? (
-              <ActivityIndicator color={colors.text} />
+              <ActivityIndicator color={colors.onAccent} />
             ) : (
               <AppText style={styles.saveButtonText}>Guardar ficha obstétrica</AppText>
             )}
@@ -640,7 +642,7 @@ export function EmbarazoScreen() {
           setFeedback(null);
         }}
       >
-        <Ionicons name={showForm ? 'close' : 'add'} size={22} color={colors.text} />
+        <Ionicons name={showForm ? 'close' : 'add'} size={22} color={colors.onAccent} />
         <AppText style={styles.toggleText}>{showForm ? 'Cerrar formulario' : 'Nueva ficha de embarazo'}</AppText>
       </TouchableOpacity>
     </ScrollView>
@@ -768,7 +770,12 @@ function PickerInput({
     <View style={[styles.field, compact && styles.halfField]}>
       <AppText style={styles.formLabel}>{label}</AppText>
       <View style={styles.formPicker}>
-        <Picker selectedValue={value} onValueChange={(nextValue) => onChange(String(nextValue))}>
+        <Picker
+          style={styles.picker}
+          dropdownIconColor={colors.textMuted}
+          selectedValue={value}
+          onValueChange={(nextValue) => onChange(String(nextValue))}
+        >
           {options.map((option) => (
             <Picker.Item
               key={option.value || 'empty'}
@@ -783,10 +790,26 @@ function PickerInput({
   );
 }
 
-const createStyles = (colors: AppColors) => StyleSheet.create({
-  screen: { flex: 1, backgroundColor: 'transparent' },
-  content: { padding: 16, paddingBottom: 42 },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+const createStyles = (colors: AppColors) => {
+  const isDark = colors.mode === 'dark';
+
+  return StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
+  content: {
+    padding: 16,
+    paddingBottom: 42,
+    backgroundColor: isDark ? colors.backgroundMuted : colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    padding: isDark ? 14 : 0,
+    borderRadius: isDark ? 18 : 0,
+    borderWidth: isDark ? 1 : 0,
+    borderColor: isDark ? '#315477' : 'transparent',
+    backgroundColor: isDark ? '#101F35' : 'transparent',
+  },
   headerIcon: {
     width: 50,
     height: 50,
@@ -811,38 +834,42 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   error: { backgroundColor: colorAlpha(colors.accent, '12'), borderColor: colorAlpha(colors.accent, '55') },
   feedbackText: { color: colors.textSoft, fontSize: 12, lineHeight: 17, marginLeft: 8, flex: 1 },
   patientCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: isDark ? '#101F35' : colors.surface,
     borderRadius: 18,
     padding: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: isDark ? '#315477' : colors.border,
     marginBottom: 16,
   },
   label: { color: colors.textSoft, fontSize: 12, fontWeight: '800', marginBottom: 8 },
   darkPicker: {
-    backgroundColor: colors.backgroundMuted,
+    backgroundColor: isDark ? '#13263D' : colors.backgroundMuted,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.borderStrong,
+    borderColor: isDark ? '#3A5D80' : colors.borderStrong,
     overflow: 'hidden',
   },
+  picker: {
+    color: colors.text,
+    backgroundColor: isDark ? '#13263D' : colors.backgroundMuted,
+  },
   emptyCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: isDark ? '#101F35' : colors.surface,
     borderRadius: 18,
     padding: 24,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: isDark ? '#315477' : colors.border,
     alignItems: 'center',
     marginBottom: 14,
   },
   emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 9 },
   emptyText: { color: colors.textMuted, fontSize: 12, textAlign: 'center', marginTop: 4 },
   recordCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: isDark ? '#101F35' : colors.surface,
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: isDark ? '#315477' : colors.border,
     borderLeftWidth: 3,
     borderLeftColor: colors.accent,
     marginBottom: 14,
@@ -873,11 +900,11 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   notesLabel: { color: colors.info, fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
   notesText: { color: colors.textSoft, fontSize: 12, lineHeight: 18, marginTop: 4 },
   formCard: {
-    backgroundColor: colors.surfaceStrong,
+    backgroundColor: isDark ? '#101F35' : colors.surfaceStrong,
     borderRadius: 22,
     padding: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: isDark ? '#315477' : colors.border,
     marginTop: 2,
     marginBottom: 14,
   },
@@ -885,22 +912,42 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   formHint: { color: colors.textMuted, fontSize: 11, marginTop: 4, marginBottom: 6 },
   formSection: {
     borderTopWidth: 1,
-    borderTopColor: colors.borderStrong,
+    borderTopColor: isDark ? '#315477' : colors.borderStrong,
+    borderLeftWidth: isDark ? 1 : 0,
+    borderRightWidth: isDark ? 1 : 0,
+    borderBottomWidth: isDark ? 1 : 0,
+    borderLeftColor: isDark ? '#27496D' : 'transparent',
+    borderRightColor: isDark ? '#27496D' : 'transparent',
+    borderBottomColor: isDark ? '#27496D' : 'transparent',
+    borderRadius: isDark ? 16 : 0,
+    backgroundColor: isDark ? '#091628' : 'transparent',
     paddingTop: 15,
+    paddingHorizontal: isDark ? 14 : 0,
+    paddingBottom: isDark ? 2 : 0,
     marginTop: 15,
   },
-  formSectionTitle: { color: colors.accent, fontSize: 12, fontWeight: '900', marginBottom: 12 },
+  formSectionTitle: {
+    color: isDark ? '#FF8DA7' : colors.accent,
+    fontSize: 12,
+    fontWeight: '900',
+    marginBottom: 12,
+  },
   field: { flex: 1, marginBottom: 12 },
   halfField: { width: '48%' },
   row: { flexDirection: 'row', gap: 10 },
-  formLabel: { color: colors.textSoft, fontSize: 11, fontWeight: '700', marginBottom: 6 },
+  formLabel: {
+    color: isDark ? '#DCE8F5' : colors.textSoft,
+    fontSize: 11,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
   inputShell: {
     minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.backgroundMuted,
+    backgroundColor: isDark ? '#13263D' : colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: isDark ? '#3A5D80' : colors.border,
     borderRadius: 12,
     paddingHorizontal: 12,
   },
@@ -908,9 +955,9 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   placeholder: { color: colors.textMuted, fontSize: 14, marginLeft: 8 },
   textInput: {
     minHeight: 48,
-    backgroundColor: colors.backgroundMuted,
+    backgroundColor: isDark ? '#13263D' : colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: isDark ? '#3A5D80' : colors.border,
     borderRadius: 12,
     paddingHorizontal: 12,
     color: colors.text,
@@ -919,16 +966,16 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   multiline: { minHeight: 88, paddingTop: 12, textAlignVertical: 'top' },
   formPicker: {
     minHeight: 48,
-    backgroundColor: colors.backgroundMuted,
+    backgroundColor: isDark ? '#13263D' : colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: isDark ? '#3A5D80' : colors.border,
     borderRadius: 12,
     overflow: 'hidden',
     justifyContent: 'center',
   },
   iosPicker: { backgroundColor: colors.surface, borderRadius: 15, overflow: 'hidden', marginBottom: 14 },
   iosDone: { alignItems: 'center', padding: 11, borderTopWidth: 1, borderTopColor: colors.textMuted },
-  iosDoneText: { color: colors.onAccent, fontWeight: '800' },
+  iosDoneText: { color: colors.info, fontWeight: '800' },
   saveButton: { backgroundColor: colors.accent, borderRadius: 13, paddingVertical: 15, alignItems: 'center', marginTop: 5 },
   saveButtonText: { color: colors.onAccent, fontSize: 14, fontWeight: '900' },
   disabled: { opacity: 0.65 },
@@ -942,4 +989,5 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     gap: 7,
   },
   toggleText: { color: colors.onAccent, fontSize: 14, fontWeight: '900' },
-});
+  });
+};
