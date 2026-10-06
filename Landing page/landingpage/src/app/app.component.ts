@@ -89,7 +89,7 @@ type DocumentWithViewTransition = Document & {
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
-  readonly title = 'NICAPRIME';
+  readonly title = 'Nica Prime';
   isDarkMode = this.getInitialTheme();
   isMobileMenuOpen = false;
   private map?: L.Map;
@@ -110,6 +110,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     { id: 'caracteristicas', label: 'Funciones' },
     { id: 'app-movil', label: 'App movil' },
     { id: 'mapa', label: 'Mapa de salud' },
+    { id: 'nano-biblioteca', label: 'Nano Biblioteca' },
+    { id: 'nano-tienda', label: 'Nano Tienda' },
     { id: 'precios', label: 'Planes' },
     { id: 'contacto', label: 'Contacto' },
     { id: 'faq', label: 'Preguntas' },
@@ -118,7 +120,30 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly heroSignals = ['Expediente seguro', 'Recordatorios', 'Mapa de clinicas', 'Seguimiento preventivo'];
 
-  readonly mobileBenefits = ['Agenda medica', 'Control cronico', 'Alertas inteligentes', 'Acceso familiar'];
+  readonly mobileBenefits = [
+    {
+      title: 'Agenda medica',
+      description: 'Coordina citas, controles y estimaciones medicas con recordatorios para no perderte ninguna prioridad de salud.',
+      bullets: ['Recordatorios inteligentes', 'Historial de citas', 'Seguimiento por paciente']
+    },
+    {
+      title: 'Control cronico',
+      description: 'Sigue tus indicadores, medicación y rutinas de cuidado con una vista clara y constante del estado.',
+      bullets: ['Medicamentos y dosis', 'Indicadores clave', 'Monitoreo continuo']
+    },
+    {
+      title: 'Alertas inteligentes',
+      description: 'Recibe avisos utiles para vacunas, rutinas, citas y hábitos esenciales para prevenir problemas antes de que aparezcan.',
+      bullets: ['Alertas personalizadas', 'Prevención temprana', 'Ritmos de cuidado']
+    },
+    {
+      title: 'Acceso familiar',
+      description: 'Comparte el cuidado con tu familia, organizando seguimientos para adultos mayores, niños y personas dependientes.',
+      bullets: ['Cuidado compartido', 'Seguimiento de familiares', 'Toma de decisiones en equipo']
+    }
+  ];
+
+  selectedBenefit: { title: string; description: string; bullets: string[] } | null = null;
 
   readonly heroStats: HeroStat[] = [
     { value: '24/7', label: 'acceso al expediente desde cualquier lugar' },
@@ -200,6 +225,10 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     { label: 'LinkedIn', short: 'in' },
     { label: 'VK', short: 'vk' }
   ];
+
+  readonly facebookUrl = 'https://www.facebook.com/share/1c3PBjZWn8/';
+  readonly tiktokUrl = 'https://www.tiktok.com/@nica.primenic?_r=1&_d=f4hje9gg2eiici&sec_uid=MS4wLjABAAAAqpw0K7_GJmYTkt9o3ILzAXcRPvG-I1r3JNdO8XGeKJwjVIXnAeW_EbSktQGav4E9&share_author_id=7684035090063492112&sharer_language=es&source=h5_m&u_code=f5edlaehfbmc12&timestamp=1789164996&user_id=7684035090063492112&sec_user_id=MS4wLjABAAAAqpw0K7_GJmYTkt9o3ILzAXcRPvG-I1r3JNdO8XGeKJwjVIXnAeW_EbSktQGav4E9&item_author_type=1&utm_source=whatsapp&utm_campaign=client_share&utm_medium=android&share_iid=7682951855844181768&share_link_id=273ac7a0-207f-40a3-a67a-a3b12ddf8870&share_app_id=1233&ugbiz_name=ACCOUNT&ug_btm=b8727%2Cb7360&social_share_type=5&enable_checksum=1';
+  readonly instagramUrl = 'https://www.instagram.com/nica.prime?stkn=MWtleGgzNWwwZTRnMw==';
 
   readonly footerSections: FooterSection[] = [
     {
@@ -298,6 +327,14 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   closeMobileMenu(): void {
     this.isMobileMenuOpen = false;
+  }
+
+  openBenefitModal(benefit: { title: string; description: string; bullets: string[] }): void {
+    this.selectedBenefit = benefit;
+  }
+
+  closeBenefitModal(): void {
+    this.selectedBenefit = null;
   }
 
   focusMapPoint(point: MapPoint): void {

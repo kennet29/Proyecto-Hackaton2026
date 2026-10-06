@@ -1,6 +1,12 @@
 <main class="page-shell" [class.dark-mode]="isDarkMode">
   <aside class="floating-social-bar" aria-label="Social links">
-    <a class="floating-social-link" *ngFor="let social of footerSocials | slice:0:4" href="#contacto" [attr.aria-label]="social.label">
+    <a
+      class="floating-social-link"
+      *ngFor="let social of footerSocials | slice:0:1"
+      [href]="social.label === 'Facebook' ? facebookUrl : '#contacto'"
+      [attr.aria-label]="social.label"
+      target="_blank"
+      rel="noopener noreferrer">
       <svg [ngSwitch]="social.short" viewBox="0 0 24 24" aria-hidden="true">
         <path *ngSwitchCase="'f'" d="M13.5 21v-8.1h2.7l.4-3.2h-3.1V7.6c0-.9.3-1.5 1.6-1.5h1.7V3.2c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.4H8v3.2h2.5V21h3z"/>
         <path *ngSwitchCase="'t'" d="M21 6.5c-.7.3-1.4.5-2.2.6.8-.5 1.4-1.2 1.7-2.1-.7.4-1.6.8-2.4.9A3.7 3.7 0 0 0 11.8 9c0 .3 0 .6.1.8-3.1-.2-5.8-1.7-7.7-4-.3.5-.5 1.2-.5 1.8 0 1.3.6 2.4 1.7 3-.6 0-1.2-.2-1.7-.5 0 1.8 1.3 3.4 3.1 3.7-.3.1-.7.1-1 .1-.3 0-.5 0-.8-.1.5 1.6 2 2.7 3.8 2.7A7.5 7.5 0 0 1 3 18c-.3 0-.7 0-1-.1a10.5 10.5 0 0 0 5.7 1.7c6.8 0 10.6-5.7 10.6-10.6v-.5c.7-.5 1.3-1.1 1.8-1.9z"/>
@@ -9,10 +15,22 @@
         <path *ngSwitchCase="'yt'" d="M21.8 7.2a2.8 2.8 0 0 0-2-2C18 4.7 12 4.7 12 4.7s-6 0-7.8.5a2.8 2.8 0 0 0-2 2A29 29 0 0 0 1.7 12c0 1.6.2 3.2.5 4.8a2.8 2.8 0 0 0 2 2c1.8.5 7.8.5 7.8.5s6 0 7.8-.5a2.8 2.8 0 0 0 2-2c.3-1.6.5-3.2.5-4.8 0-1.6-.2-3.2-.5-4.8zM9.9 15.1V8.9l5.4 3.1-5.4 3.1z"/>
       </svg>
     </a>
+
+    <a class="floating-social-link tiktok-link" [href]="tiktokUrl" aria-label="TikTok" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M14.5 3c.4 2 1.9 3.3 3.8 3.6v2.8a7.1 7.1 0 0 1-3.8-1.1v6.1a5.3 5.3 0 1 1-5.3-5.3c.3 0 .6 0 .9.1v2.8a2.6 2.6 0 1 0 1.7 2.5V3h2.7Z"/>
+      </svg>
+    </a>
+
+    <a class="floating-social-link instagram-link" [href]="instagramUrl" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm5 3.5A5.5 5.5 0 1 1 6.5 13 5.5 5.5 0 0 1 12 7.5Zm0 2A3.5 3.5 0 1 0 15.5 13 3.5 3.5 0 0 0 12 9.5Zm5.3-3.2a1.3 1.3 0 1 1-1.3 1.3 1.3 1.3 0 0 1 1.3-1.3Z"/>
+      </svg>
+    </a>
   </aside>
 
-  <header class="hero" id="inicio">
-    <nav class="topbar">
+  <nav class="topbar">
+    <div class="nav-left">
       <a class="brand" href="#inicio" aria-label="NICAPRIME, volver al inicio">
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 32 32">
@@ -33,38 +51,44 @@
         <span></span>
         <span></span>
       </button>
-      <div class="topbar-panel" id="topbar-nav" [class.open]="isMobileMenuOpen">
-        <div class="topbar-links">
-          <a *ngFor="let section of navSections" [href]="'#' + section.id" (click)="closeMobileMenu()">{{ section.label }}</a>
-        </div>
-        <div class="topbar-actions">
-          <a class="trial-link" href="#contacto" (click)="closeMobileMenu()">Solicitar demo</a>
-          <button
-            class="theme-toggle"
-            type="button"
-            (click)="toggleTheme($event)"
-            [attr.aria-label]="isDarkMode ? 'Activar modo claro' : 'Activar modo oscuro'"
-            [attr.title]="isDarkMode ? 'Activar modo claro' : 'Activar modo oscuro'">
-            <span class="theme-toggle-track">
-              <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 4.8V2m0 20v-2.8M6.9 6.9 5 5m14 14-1.9-1.9M4.8 12H2m20 0h-2.8M6.9 17.1 5 19m14-14-1.9 1.9M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/>
-              </svg>
-              <span class="theme-toggle-thumb"></span>
-              <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M20 15.4A8.5 8.5 0 0 1 8.6 4a8.5 8.5 0 1 0 11.3 11.4z"/>
-              </svg>
-            </span>
-          </button>
-        </div>
-      </div>
-    </nav>
+    </div>
 
+    <div class="nav-center" id="topbar-nav" [class.open]="isMobileMenuOpen">
+      <div class="topbar-links">
+        <a *ngFor="let section of navSections" [href]="'#' + section.id" (click)="closeMobileMenu()">{{ section.label }}</a>
+      </div>
+    </div>
+
+    <div class="nav-right">
+      <div class="topbar-actions">
+        <a class="trial-link" href="#contacto" (click)="closeMobileMenu()">Solicitar demo</a>
+        <button
+          class="theme-toggle"
+          type="button"
+          (click)="toggleTheme($event)"
+          [attr.aria-label]="isDarkMode ? 'Activar modo claro' : 'Activar modo oscuro'"
+          [attr.title]="isDarkMode ? 'Activar modo claro' : 'Activar modo oscuro'">
+          <span class="theme-toggle-track">
+            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 4.8V2m0 20v-2.8M6.9 6.9 5 5m14 14-1.9-1.9M4.8 12H2m20 0h-2.8M6.9 17.1 5 19m14-14-1.9 1.9M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/>
+            </svg>
+            <span class="theme-toggle-thumb"></span>
+            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 15.4A8.5 8.5 0 0 1 8.6 4a8.5 8.5 0 1 0 11.3 11.4z"/>
+            </svg>
+          </span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero" id="inicio">
     <div class="hero-stage">
       <div class="hero-layout">
         <div class="hero-copy">
           <div class="hero-logo-space" aria-label="NICAPRIME">
             <img class="hero-logo-mark" src="assets/brand/Logo Principal.svg" alt="">
-            <strong>NICA PRIME</strong>
+            <strong>Nica Prime</strong>
           </div>
           <p class="eyebrow">Salud digital en Nicaragua</p>
           <p class="hero-badge">Expediente, recordatorios, seguimiento y mapa de servicios en una sola plataforma</p>
@@ -89,45 +113,11 @@
           </div>
         </div>
 
-        <div class="hero-visual" aria-hidden="true">
-          <div class="neon-path neon-path-a"></div>
-          <div class="neon-path neon-path-b"></div>
-          <div class="neon-path neon-path-c"></div>
-          <div class="persona-shape"></div>
-
-          <div class="preview-stack">
-            <article class="preview-shell preview-main">
-              <div class="preview-topbar"></div>
-              <div class="preview-screen">
-                <div class="preview-copy">
-                  <span>Panel principal</span>
-                  <strong>Controla citas, alertas y seguimiento</strong>
-                  <div class="preview-cta"></div>
-                </div>
-                <div class="preview-art"></div>
-              </div>
-            </article>
-
-            <article class="preview-shell preview-note">
-              <span>Recordatorio</span>
-              <strong>Vacuna y control preventivo al dia</strong>
-            </article>
-
-            <article class="preview-shell preview-metric">
-              <span>Seguimiento</span>
-              <strong>+42%</strong>
-              <p>Mejor visibilidad del historial y tareas pendientes del paciente.</p>
-            </article>
-
-            <article class="preview-shell preview-mini">
-              <span>Estado</span>
-              <strong>Seguro</strong>
-            </article>
-          </div>
-
-          <span class="orbit-chip chip-a">ROI</span>
-          <span class="orbit-chip chip-b">UX</span>
-          <span class="orbit-chip chip-c">Leads</span>
+        <div class="hero-visual">
+          <img
+            class="hero-app-image"
+            src="assets/hero-app-mockup.png"
+            alt="Vistas de la app Nica Prime para atención médica, análisis de alimentos y recordatorios">
         </div>
       </div>
     </div>
@@ -165,7 +155,7 @@
     <div class="nano-card">
       <div class="nano-visual">
         <div class="nano-image-frame">
-          <img src="assets/nano/Recurso 1.png" alt="Nano, el amigo de Nica Prime">
+          <img src="assets/nano-web/mascot.svg" alt="Nano, el amigo de Nica Prime">
         </div>
       </div>
 
@@ -197,22 +187,34 @@
     </div>
     <div class="card-grid services-grid">
       <article class="info-card accent-green">
-        <p class="card-kicker">01 / Pacientes</p>
+        <div class="service-card-heading">
+          <img class="service-icon" src="assets/nano-web/agenda.svg" alt="" aria-hidden="true">
+          <p class="card-kicker">01 / Pacientes</p>
+        </div>
         <h3>Tu salud, siempre contigo.</h3>
         <p>Una app móvil para organizar tu salud, dar seguimiento a tus hábitos y recibir recordatorios de citas, medicamentos y cuidados preventivos.</p>
       </article>
       <article class="info-card accent-blue">
-        <p class="card-kicker">02 / Familias</p>
+        <div class="service-card-heading">
+          <img class="service-icon" src="assets/nano-web/families.svg" alt="" aria-hidden="true">
+          <p class="card-kicker">02 / Familias</p>
+        </div>
         <h3>Cuidar de los tuyos también es prevención.</h3>
         <p>Herramientas para organizar y dar seguimiento a la información de salud de tus seres queridos, facilitando un cuidado más responsable y oportuno.</p>
       </article>
       <article class="info-card accent-rose">
-        <p class="card-kicker">03 / Educación y prevención</p>
+        <div class="service-card-heading">
+          <img class="service-icon" src="assets/nano-web/prevention.svg" alt="" aria-hidden="true">
+          <p class="card-kicker">03 / Educación y prevención</p>
+        </div>
         <h3>Conocer tu salud es el primer paso para cuidarla.</h3>
         <p>Contenido y orientación para fortalecer hábitos saludables, prevenir riesgos y tomar decisiones más conscientes.</p>
       </article>
       <article class="info-card accent-green">
-        <p class="card-kicker">04 / Servicios de salud</p>
+        <div class="service-card-heading">
+          <img class="service-icon" src="assets/nano-web/health-map.svg" alt="" aria-hidden="true">
+          <p class="card-kicker">04 / Servicios de salud</p>
+        </div>
         <h3>Encuentra lo que necesitas cuando lo necesitas.</h3>
         <p>Acceso a información y ubicación de clínicas y otros servicios de salud para facilitar la conexión con el ecosistema sanitario.</p>
       </article>
@@ -239,6 +241,26 @@
   </section>
 
   <section class="content-section app-download-section" id="app-movil">
+    <div class="benefit-modal-backdrop" *ngIf="selectedBenefit" (click)="closeBenefitModal()">
+      <div class="benefit-modal" role="dialog" aria-modal="true" aria-labelledby="benefit-modal-title" (click)="$event.stopPropagation()">
+        <button type="button" class="benefit-modal-close" aria-label="Cerrar modal" (click)="closeBenefitModal()">×</button>
+
+        <div class="benefit-modal-header">
+          <div class="benefit-modal-icon" aria-hidden="true">{{ selectedBenefit.title.charAt(0) }}</div>
+          <div class="benefit-modal-headline">
+            <span class="benefit-modal-badge">Detalle</span>
+            <h3 id="benefit-modal-title">{{ selectedBenefit.title }}</h3>
+          </div>
+        </div>
+
+        <p class="benefit-modal-text">{{ selectedBenefit.description }}</p>
+
+        <ul class="benefit-modal-list" *ngIf="selectedBenefit.bullets?.length">
+          <li *ngFor="let item of selectedBenefit.bullets">{{ item }}</li>
+        </ul>
+      </div>
+    </div>
+
     <div class="section-heading">
       <p class="eyebrow">App movil</p>
       <h2>La experiencia movil prioriza acciones rapidas, lectura clara y seguimiento constante.</h2>
@@ -250,11 +272,15 @@
           el expediente resumido y acceder a módulos útiles sin depender de menús complejos.
         </p>
         <div class="download-pill-row">
-          <span class="download-pill" *ngFor="let benefit of mobileBenefits">{{ benefit }}</span>
-        </div>
-        <div class="download-actions">
-          <a class="primary-action solid-action" href="#contacto">Quiero probarla</a>
-          <a class="secondary-action" href="#mapa">Ver mapa</a>
+          <button
+            type="button"
+            class="download-pill benefit-pill"
+            *ngFor="let benefit of mobileBenefits"
+            (click)="openBenefitModal(benefit)">
+            {{ benefit.title }}
+          </button>
+          <a class="primary-action solid-action inline-cta" href="#contacto">Quiero probarla</a>
+          <a class="secondary-action inline-cta" href="#mapa">Ver mapa</a>
         </div>
       </div>
 
