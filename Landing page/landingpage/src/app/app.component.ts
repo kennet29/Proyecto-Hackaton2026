@@ -8,6 +8,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { finalize } from 'rxjs';
 import * as L from 'leaflet';
+import { NanoStoreComponent } from './nano-store/nano-store.component';
 
 type NavSection = {
   id: string;
@@ -84,7 +85,7 @@ type DocumentWithViewTransition = Document & {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, NanoStoreComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
@@ -176,22 +177,82 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly pricing = [
     {
-      name: 'Piloto',
-      price: '-',
-      detail: 'Ideal para validar el flujo principal con equipos pequenos.',
-      bullets: ['Acceso web', 'Mapa de servicios', 'Demo funcional']
+      name: 'Nano Gratis',
+      image: 'assets/nano-plans/nano-gratis.svg',
+      imageAlt: 'Nano del plan gratis',
+      badge: '',
+      accentClass: 'accent-green',
+      price: 'C$0.00',
+      priceDetail: 'Gratis',
+      detail: 'Para comenzar a cuidar tu salud',
+      audience: [],
+      bullets: [
+        '✓ Registra hasta 3 personas',
+        '✓ 1 consulta diaria con la IA de Nano Bienestar',
+        '✓ Herramientas esenciales para el seguimiento de tu salud'
+      ],
+      action: 'Comenzar gratis'
     },
     {
-      name: 'Profesional',
-      price: '-',
-      detail: 'Pensado para atencion individual y seguimiento frecuente.',
-      bullets: ['Agenda y recordatorios', 'Expediente digital', 'Reportes de seguimiento']
+      name: 'Nano Free Premium',
+      image: 'assets/nano-plans/nano-free-premium.svg',
+      imageAlt: 'Nano del plan Free Premium',
+      badge: '🏆 Más elegido',
+      accentClass: 'accent-blue',
+      price: 'C$130.00',
+      priceDetail: 'por usuario',
+      detail: 'Para quienes quieren llevar su cuidado al siguiente nivel',
+      audience: [],
+      bullets: [
+        '✓ Registro ilimitado de personas',
+        '✓ Acceso a todas las funcionalidades de la aplicación',
+        '✓ Uso ilimitado de las opciones de IA disponibles',
+        '✓ Sin anuncios publicitarios'
+      ],
+      action: 'Elegir Premium'
     },
     {
-      name: 'Institucional',
-      price: '-',
-      detail: 'Para clinicas, programas comunitarios y equipos multidisciplinarios.',
-      bullets: ['Usuarios y roles', 'Panel administrativo', 'Implementacion guiada']
+      name: 'Nano Plus',
+      image: 'assets/nano-plans/nano-plus.svg',
+      imageAlt: 'Nano del plan Plus para profesionales de la salud',
+      badge: '',
+      accentClass: 'accent-rose',
+      price: 'C$150.00',
+      priceDetail: 'por profesional',
+      detail: 'Para profesionales de la salud',
+      audience: [],
+      bullets: [
+        '✓ Registra y gestiona la información de tus pacientes',
+        '✓ Accede a los historiales de salud de tus pacientes',
+        '✓ Facilita el seguimiento y organización de la información',
+        '✓ Los usuarios pueden agendar citas contigo directamente desde la web'
+      ],
+      action: 'Soy profesional de salud'
+    },
+    {
+      name: 'Nano Publicidad',
+      image: 'assets/nano-plans/nano-publicidad.svg',
+      imageAlt: 'Nano del servicio de publicidad',
+      badge: '',
+      accentClass: 'accent-green',
+      price: 'C$450.00',
+      priceDetail: 'por servicio publicitario',
+      detail: 'Haz crecer tu presencia dentro de Nica Prime',
+      audience: [
+        '🩺 Médicos y profesionales de la salud',
+        '🏥 Clínicas y laboratorios clínicos',
+        '🏋️ Gimnasios y marcas deportivas',
+        '💊 Tiendas de suplementos médicos y alimenticios',
+        '💚 Farmacias y otros negocios relacionados con salud y bienestar'
+      ],
+      bullets: [
+        '✓ Aparece en el mapa de profesionales y servicios de salud de Nica Prime',
+        '✓ Publicita tus servicios dentro de Nica Prime',
+        '✓ Ofrece tus productos en la Nano Tienda',
+        '✓ Conecta tu negocio con personas interesadas en el cuidado de su salud y bienestar',
+        '✓ Aumenta la visibilidad de tu marca dentro de la plataforma'
+      ],
+      action: 'Publicitar mi negocio'
     }
   ];
 
@@ -208,6 +269,31 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       question: 'Puede usarse para pacientes y personal de salud?',
       answer: 'Si. El proyecto contempla flujos para pacientes, familiares y profesionales con distintos modulos.'
     }
+  ];
+
+  readonly pharmacyProducts = [
+    { id: 'tensiometro', name: 'Microlife Tensiómetro de brazo con manguito', category: 'Equipos médicos', price: 995, image: 'tensiometro' },
+    { id: 'termometro', name: 'Microlife Termómetro digital MT 600', category: 'Equipos médicos', price: 420, image: 'termometro' },
+    { id: 'nebulizador', name: 'Nebulizador Wellpro Compresor Adulto 1U', category: 'Equipos médicos', price: 1100, image: 'nebulizador' },
+    { id: 'glucometro', name: 'Sensor Wellpro glucómetro (10 tiras reactivas)', category: 'Equipos médicos', price: 905, image: 'glucometro' },
+    { id: 'silla-ruedas', name: 'Silla de ruedas Wellpro estándar WP809B', category: 'Movilidad', price: 5600, image: 'silla-ruedas' },
+    { id: 'vitaflenaco', name: 'Vitaflenaco', category: 'Medicamentos', price: 74, image: 'vitaflenaco' }
+  ];
+
+  readonly healthGuides = [
+    { title: 'Alimentación infantil saludable', file: 'alimentacion-infantil-saludable.pdf', image: 'alimentacion-infantil.svg', imageAlt: 'Nano sobre alimentación infantil saludable' },
+    { title: 'Atendiendo enfermedades crónicas', file: 'enfermedades-cronicas.pdf', image: 'enfermedades-cronicas.svg', imageAlt: 'Nano sobre prevención de enfermedades crónicas' },
+    { title: 'Cuido y prevención de alergias', file: 'prevencion-alergias.pdf', image: 'alergias.svg', imageAlt: 'Nano sobre prevención de alergias' },
+    { title: 'Cuido y prevención de lesiones deportivas', file: 'lesiones-deportivas.pdf', image: 'lesiones-deportivas.svg', imageAlt: 'Nano sobre prevención de lesiones deportivas' },
+    { title: 'Cuido y prevención de trastornos del sueño', file: 'trastornos-del-sueno.pdf', image: 'trastornos-del-sueno.svg', imageAlt: 'Nano sobre trastornos del sueño' },
+    { title: 'Servicios preventivos para población clave', file: 'servicios-preventivos-poblacion-clave.pdf', image: 'servicios-preventivos.svg', imageAlt: 'Nano sobre servicios preventivos para población clave' },
+    { title: 'Embarazo y partos saludables', file: 'embarazo-y-partos-saludables.pdf', image: 'embarazo-y-parto.svg', imageAlt: 'Nano sobre embarazo y parto saludables' },
+    { title: 'Higiene para todas y todos', file: 'higiene-para-todas-y-todos.pdf', image: 'higiene.svg', imageAlt: 'Nano sobre higiene' },
+    { title: 'Manejo y prevención de migrañas', file: 'prevencion-migranas.pdf', image: 'migranas.svg', imageAlt: 'Nano sobre prevención de migrañas' },
+    { title: 'Prevención de enfermedades visuales', file: 'enfermedades-visuales.pdf', image: 'enfermedades-visuales.svg', imageAlt: 'Nano sobre prevención de enfermedades visuales' },
+    { title: 'Previniendo depresiones y suicidios', file: 'depresion-y-suicidio.pdf', image: 'depresion-y-suicidio.svg', imageAlt: 'Nano sobre depresión y prevención del suicidio' },
+    { title: 'Primeros auxilios', file: 'primeros-auxilios.pdf', image: 'primeros-auxilios.svg', imageAlt: 'Nano de primeros auxilios' },
+    { title: 'Retos y desafíos de los adultos mayores', file: 'adultos-mayores.pdf', image: 'adultos-mayores.svg', imageAlt: 'Nano sobre salud de las personas adultas mayores' }
   ];
 
   readonly articles = [

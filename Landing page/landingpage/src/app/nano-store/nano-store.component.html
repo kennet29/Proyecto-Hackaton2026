@@ -1,0 +1,83 @@
+<div class="store-toolbar">
+  <div class="store-filters" role="group" aria-label="Categorías de la tienda">
+    <button
+      type="button"
+      class="store-chip"
+      *ngFor="let category of categories"
+      [class.active]="category === selectedCategory"
+      (click)="selectCategory(category)">
+      {{ category }}
+    </button>
+  </div>
+
+  <button type="button" class="cart-button" (click)="toggleCart()" [attr.aria-expanded]="isCartOpen">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.4a2 2 0 0 0 1.9-1.4L20 8H6.2"/>
+      <circle cx="10" cy="20" r="1"/>
+      <circle cx="17" cy="20" r="1"/>
+    </svg>
+    Carrito
+    <span class="cart-badge">{{ cartCount }}</span>
+  </button>
+</div>
+
+<div class="store-layout" [class.with-cart]="isCartOpen">
+  <div class="product-grid">
+    <article class="product-card" *ngFor="let product of visibleProducts">
+      <div class="product-image">
+        <img [src]="imageUrl(product)" [alt]="product.name" loading="lazy">
+      </div>
+      <p class="product-category">{{ product.category }}</p>
+      <h3>{{ product.name }}</h3>
+      <div class="product-footer">
+        <strong *ngIf="product.price > 0; else comingSoonPrice">C$ {{ product.price | number }}</strong>
+        <ng-template #comingSoonPrice>
+          <strong class="coming-soon-price">Novedad</strong>
+        </ng-template>
+        <button *ngIf="product.price > 0; else comingSoonLabel" type="button" class="add-button" (click)="addToCart(product)">Agregar</button>
+        <ng-template #comingSoonLabel>
+          <span class="coming-soon-label">Próximamente disponible</span>
+        </ng-template>
+      </div>
+    </article>
+  </div>
+
+  <aside class="cart-panel" *ngIf="isCartOpen" aria-label="Carrito de compras">
+    <div class="cart-header">
+      <h3>Tu carrito</h3>
+      <button type="button" class="cart-close" aria-label="Cerrar carrito" (click)="toggleCart()">×</button>
+    </div>
+
+    <p class="cart-message" *ngIf="orderPlaced">¡Gracias! Te redirigimos a WhatsApp para confirmar tu pedido.</p>
+    <p class="cart-empty" *ngIf="cart.length === 0 && !orderPlaced">Aún no has agregado productos.</p>
+
+    <ul class="cart-lines" *ngIf="cart.length > 0">
+      <li *ngFor="let line of cart">
+        <img [src]="imageUrl(line.product)" [alt]="line.product.name">
+        <div class="cart-line-info">
+          <strong>{{ line.product.name }}</strong>
+          <span>C$ {{ line.product.price * line.qty | number }}</span>
+        </div>
+        <div class="qty-control">
+          <button type="button" aria-label="Quitar uno" (click)="changeQty(line, -1)">−</button>
+          <span>{{ line.qty }}</span>
+          <button type="button" aria-label="Agregar uno" (click)="changeQty(line, 1)">+</button>
+        </div>
+      </li>
+    </ul>
+
+    <div class="cart-summary" *ngIf="cart.length > 0">
+      <div class="cart-total">
+        <span>Total</span>
+        <strong>C$ {{ cartTotal | number }}</strong>
+      </div>
+      <div class="customer-fields">
+        <input type="text" placeholder="Tu nombre" aria-label="Nombre del cliente" [value]="customerName" (input)="customerName = $any($event.target).value">
+        <input type="tel" placeholder="Tu número de celular" aria-label="Celular del cliente" [value]="customerPhone" (input)="customerPhone = $any($event.target).value">
+        <small class="field-error" *ngIf="showErrors && !customerValid">Ingresa tu nombre y un número de celular válido.</small>
+      </div>
+      <button type="button" class="checkout-button" (click)="checkout()">Finalizar pedido</button>
+      <button type="button" class="clear-button" (click)="clearCart()">Vaciar carrito</button>
+    </div>
+  </aside>
+</div>
