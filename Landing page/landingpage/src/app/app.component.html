@@ -397,22 +397,119 @@
     </div>
   </section>
 
+  <section class="content-section library-section" id="nano-biblioteca">
+      <div class="section-heading">
+      <p class="eyebrow">Nano Biblioteca de Salud</p>
+      <h2>Guías de práctica clínica e información técnica para el personal de salud — MINSA.</h2>
+    </div>
+          <div class="nano-card library-nano">
+            <div class="nano-visual">
+              <div class="nano-image-frame">
+                <img src="assets/nano-web/minsa-42.svg" alt="Nano Minsa-42, el compañero de las guías de salud">
+              </div>
+            </div>
+
+            <div class="nano-copy">
+              <p class="eyebrow">Nano Minsa-42</p>
+              <h2>Tu guía de consulta</h2>
+              <p class="nano-lead">Nano te acerca las cartillas del MINSA para que aprendas y cuides tu salud.</p>
+              <p>
+                Consulta o descarga guías sobre prevención, primeros auxilios, salud mental,
+                embarazo y mucho más, siempre a un clic de distancia.
+              </p>
+              <div class="nano-traits" aria-label="Contenido de la biblioteca">
+                <span>{{ healthGuides.length }} cartillas</span>
+                <span>PDF</span>
+                <span>MINSA</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-grid three-up guides-grid">
+            <article
+              class="info-card guide-card"
+              *ngFor="let guide of healthGuides; let index = index"
+              [class.accent-green]="index % 3 === 0"
+              [class.accent-blue]="index % 3 === 1"
+              [class.accent-rose]="index % 3 === 2">
+              <p class="card-kicker">Cartilla {{ index + 1 }}</p>
+              <img class="guide-nano-image" [src]="'assets/nano-guias/' + guide.image" [alt]="guide.imageAlt">
+              <h3>{{ guide.title }}</h3>
+              <div class="guide-actions">
+                <a class="guide-link" [href]="'assets/guias/' + guide.file" target="_blank" rel="noopener noreferrer">Ver PDF</a>
+                <a class="guide-link guide-link-secondary" [href]="'assets/guias/' + guide.file" [attr.download]="guide.file">Descargar</a>
+              </div>
+            </article>
+          </div>
+        </section>
+
+ <section class="content-section library-section" id="nano-tienda">
+      <div class="section-heading">
+      <p class="eyebrow">Nano Tienda</p>
+      <h2>Tu tienda de conveniencia rápida y cercana.</h2>
+    </div>
+    <div class="card-grid two-up store-grid">
+      <article class="info-card accent-green store-card">
+        <img src="assets/nano-web/store.svg" alt="Nano Store, la tienda de Nica Prime">
+        <p class="card-kicker">Nano Store</p>
+        <h3>Todo lo que necesitas, cerca de ti.</h3>
+        <p>Encuentra productos de salud y bienestar de forma rápida, sencilla y cercana.</p>
+      </article>
+      <article class="info-card accent-blue store-card">
+        <img src="assets/nano-web/presupuesto.svg" alt="Nano Presupuesto, el compañero de tus gastos médicos">
+        <p class="card-kicker">Nano Presupuesto</p>
+        <h3>Planifica tus gastos de salud.</h3>
+        <p>Organiza y controla lo que inviertes en tu salud para tomar decisiones con tranquilidad.</p>
+      </article>
+    </div>
+    <app-nano-store></app-nano-store>
+
+    <div class="section-heading pharmacy-heading" style="margin-top: 3rem;">
+      <p class="eyebrow">Farmacia Chayito</p>
+      <h3>Productos de Farmacia Chayito</h3>
+      <p>Haz tu pedido directamente con la farmacia por WhatsApp.</p>
+    </div>
+    <app-nano-store
+      [customProducts]="pharmacyProducts"
+      imageFolder="farmacia"
+      whatsappNumber="50589983765"
+      storeName="Farmacia Chayito"></app-nano-store>
+ </section>
   <section class="content-section pricing-section" id="precios">
     <div class="section-heading">
-      <p class="eyebrow">Planes</p>
-      <h2>Escala desde una demo funcional hasta implementaciones institucionales.</h2>
+      <p class="eyebrow">Elige cómo quieres cuidar tu salud</p>
+      <h2>Elige el plan ideal para ti</h2>
+      <p>Encuentra la opción que mejor se adapte a tus necesidades y empieza a cuidar tu salud con Nica Prime.</p>
+      <p class="pricing-motto">Eleva tu salud, vive tu Prime.</p>
     </div>
-    <div class="card-grid three-up">
-      <article class="price-card" *ngFor="let plan of pricing; let index = index" [class.accent-green]="index === 0" [class.accent-blue]="index === 1" [class.accent-rose]="index === 2">
-        <span class="price-marker">Plan {{ index + 1 }}</span>
-        <p class="plan-name">{{ plan.name }}</p>
-        <h3>{{ plan.price }}</h3>
+    <div class="card-grid three-up pricing-grid">
+      <article class="price-card" *ngFor="let plan of pricing" [ngClass]="plan.accentClass">
+        <div class="service-card-heading">
+          <img class="plan-nano-image" width="68" height="68" [src]="plan.image" [alt]="plan.imageAlt">
+          <div class="plan-heading-copy">
+            <span *ngIf="plan.badge" class="plan-badge">{{ plan.badge }}</span>
+            <p class="plan-name">{{ plan.name }}</p>
+          </div>
+        </div>
         <p>{{ plan.detail }}</p>
-        <ul>
+        <div class="plan-price">
+          <h3>{{ plan.price }}</h3>
+          <p>{{ plan.priceDetail }}</p>
+        </div>
+        <div *ngIf="plan.audience.length" class="plan-audience">
+          <strong>Dirigido a:</strong>
+          <ul>
+            <li *ngFor="let audience of plan.audience">{{ audience }}</li>
+          </ul>
+        </div>
+        <ul class="plan-benefits" style="padding: 0; list-style: none">
           <li *ngFor="let bullet of plan.bullets">{{ bullet }}</li>
         </ul>
-        <a href="#contacto">Solicitar informacion</a>
+        <a href="#contacto">{{ plan.action }}</a>
       </article>
+    </div>
+    <div class="pricing-download-cta">
+      <p>Descarga la app y construye tu Prime hoy.</p>
+      <a class="primary-action" href="#app-movil">Descargar la app</a>
     </div>
   </section>
 

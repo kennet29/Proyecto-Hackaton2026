@@ -1220,6 +1220,10 @@ button {
   position: relative;
 }
 
+@media (min-width: 1024px) {
+  .pricing-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
 .download-layout {
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1.05fr);
@@ -2777,5 +2781,71 @@ button {
   .features-grid .feature-card:nth-last-child(-n + 2),
   .features-grid .feature-card:last-child {
     grid-column: auto;
+  }
+}
+
+.library-section {
+  scroll-margin-top: 6rem;
+}
+
+.library-nano {
+  margin-top: 1.8rem;
+}
+
+.store-card img {
+  display: block;
+  width: min(100%, 280px);
+  margin: 0 auto 1rem;
+}
+
+.guide-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.guide-nano-image {
+  display: block;
+  width: 100%;
+  height: 150px;
+  object-fit: contain;
+}
+
+.guide-card h3 {
+  margin: 0;
+  flex: 1;
+}
+
+.guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.guide-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.65rem 1.1rem;
+  border: 1px solid var(--brand-blue);
+  border-radius: 999px;
+  background: var(--brand-blue);
+  color: #fff;
+  font-weight: 700;
+}
+
+.guide-link-secondary {
+  background: transparent;
+  color: var(--brand-blue);
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .guides-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .guides-grid {
+    grid-template-columns: 1fr;
   }
 }
