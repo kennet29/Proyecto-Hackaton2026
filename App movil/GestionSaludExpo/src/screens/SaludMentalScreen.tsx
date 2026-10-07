@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -17,7 +18,6 @@ import {
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
 import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
-import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
@@ -275,7 +275,6 @@ export function SaludMentalScreen({ navigation }: Props) {
   const { token, user } = useAuth();
   const { width } = useWindowDimensions();
   const isCompact = width < 480;
-  const pickerItemColor = colors.text;
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [historial, setHistorial] = useState<SaludMentalHistorial | null>(null);
@@ -577,21 +576,16 @@ export function SaludMentalScreen({ navigation }: Props) {
     }
 
     return (
-      <View style={[styles.pickerWrapper, styles.halfInput]}>
-        <Picker
-          selectedValue={form[field]}
-          onValueChange={(value) => {
+      <View style={styles.halfInput}>
+        <ThemedSelect
+          value={form[field]}
+          options={scoreOptions}
+          title="Selecciona un nivel"
+          onChange={(value) => {
             if (field === 'estadoAnimo') setSelectedEmotion('');
-            handleChange(field, String(value));
+            handleChange(field, value);
           }}
-          style={styles.picker}
-          dropdownIconColor={colors.text}
-          mode="dropdown"
-        >
-          {scoreOptions.map((item) => (
-            <Picker.Item key={`${field}-${item.value}`} label={item.label} value={item.value} color={pickerItemColor} />
-          ))}
-        </Picker>
+        />
       </View>
     );
   };
@@ -656,28 +650,18 @@ export function SaludMentalScreen({ navigation }: Props) {
         ) : patients.length === 0 ? (
           <AppText style={styles.emptyText}>No hay usuarios vinculados en esta cuenta.</AppText>
         ) : (
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={form.pacienteId}
-              onValueChange={(value) => handleChange('pacienteId', String(value))}
-              style={styles.picker}
-              dropdownIconColor={colors.text}
-            >
-              <Picker.Item label="Selecciona un usuario" value="" color={colors.textSoft} />
-              {patients.map((patient) => (
-                <Picker.Item
-                  key={patient.pacienteId}
-                  label={
-                    patient.parentesco
-                      ? `${patient.displayName} - ${patient.parentesco}`
-                      : patient.displayName
-                  }
-                  value={String(patient.pacienteId)}
-                  color={pickerItemColor}
-                />
-              ))}
-            </Picker>
-          </View>
+          <ThemedSelect
+            value={form.pacienteId}
+            placeholder="Selecciona un usuario"
+            title="Selecciona un usuario"
+            options={patients.map((patient) => ({
+              label: patient.parentesco
+                ? `${patient.displayName} - ${patient.parentesco}`
+                : patient.displayName,
+              value: String(patient.pacienteId),
+            }))}
+            onChange={(value) => handleChange('pacienteId', value)}
+          />
         )}
         {patientError ? <AppText style={styles.errorText}>{patientError}</AppText> : null}
         </View>
@@ -1119,6 +1103,100 @@ export function SaludMentalScreen({ navigation }: Props) {
         )}
       </View>
     </ScrollView>
+  );
+}
+
+type ThemedSelectOption = {
+  label: string;
+  value: string;
+};
+
+function ThemedSelect({
+  value,
+  options,
+  onChange,
+  title,
+  placeholder = 'Selecciona una opción',
+}: {
+  value: string;
+  options: ThemedSelectOption[];
+  onChange: (value: string) => void;
+  title: string;
+  placeholder?: string;
+}) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+  const [visible, setVisible] = useState(false);
+  const selectedOption = options.find((option) => option.value === value);
+
+  return (
+    <>
+      <TouchableOpacity
+        style={styles.selectButton}
+        onPress={() => setVisible(true)}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={`${title}: ${selectedOption?.label ?? placeholder}`}
+        accessibilityState={{ expanded: visible }}
+      >
+        <AppText style={[styles.selectButtonText, !selectedOption && styles.selectPlaceholder]} numberOfLines={2}>
+          {selectedOption?.label ?? placeholder}
+        </AppText>
+        <Ionicons name="chevron-down" size={20} color={colors.textSoft} />
+      </TouchableOpacity>
+
+      <Modal
+        visible={visible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setVisible(false)}
+      >
+        <View style={styles.selectModalOverlay}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setVisible(false)}
+            accessibilityLabel="Cerrar selector"
+          />
+          <View style={styles.selectModalCard}>
+            <View style={styles.selectModalHeader}>
+              <AppText style={styles.selectModalTitle}>{title}</AppText>
+              <TouchableOpacity
+                style={styles.selectCloseButton}
+                onPress={() => setVisible(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Cerrar"
+              >
+                <Ionicons name="close" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.selectOptionsList} bounces={false}>
+              {options.map((option) => {
+                const selected = option.value === value;
+                return (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[styles.selectOption, selected && styles.selectOptionSelected]}
+                    onPress={() => {
+                      onChange(option.value);
+                      setVisible(false);
+                    }}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected }}
+                  >
+                    <AppText style={[styles.selectOptionText, selected && styles.selectOptionTextSelected]}>
+                      {option.label}
+                    </AppText>
+                    {selected ? <Ionicons name="checkmark-circle" size={22} color="#7C3AED" /> : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -1579,19 +1657,93 @@ const createStyles = (colors: AppColors) => {
     fontSize: 11,
     fontWeight: '800',
   },
-  pickerWrapper: {
+  selectButton: {
     minHeight: 48,
     borderRadius: 13,
-    overflow: 'hidden',
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.borderStrong,
-    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
-  picker: {
-    height: 50,
+  selectButtonText: {
+    flex: 1,
     color: colors.text,
+    fontSize: 15,
+  },
+  selectPlaceholder: {
+    color: colors.textMuted,
+  },
+  selectModalOverlay: {
+    flex: 1,
+    backgroundColor: `${colors.overlay}80`,
+    justifyContent: 'center',
+    padding: 22,
+  },
+  selectModalCard: {
+    width: '100%',
+    maxWidth: 560,
+    maxHeight: '72%',
+    alignSelf: 'center',
+    borderRadius: 20,
+    padding: 16,
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+  },
+  selectModalHeader: {
+    minHeight: 42,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  selectModalTitle: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  selectCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.backgroundMuted,
+  },
+  selectOptionsList: {
+    flexGrow: 0,
+  },
+  selectOption: {
+    minHeight: 52,
+    borderRadius: 13,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 6,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  selectOptionSelected: {
+    backgroundColor: colors.mode === 'dark' ? '#342D59' : '#EDE9FE',
+    borderColor: '#A78BFA',
+  },
+  selectOptionText: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 15,
+    lineHeight: 21,
+  },
+  selectOptionTextSelected: {
+    color: colors.mode === 'dark' ? '#DDD6FE' : '#5B21B6',
+    fontWeight: '800',
   },
   input: {
     backgroundColor: colors.background,

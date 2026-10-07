@@ -7,6 +7,7 @@ import { RecordActions } from '../components/RecordActions';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   RefreshControl,
   ScrollView,
@@ -200,7 +201,7 @@ const formatErrorMessage = (error: unknown) => {
   if (error instanceof Error) {
     return error.message;
   }
-  return 'No se pudo completar la accion.';
+  return 'No se pudo completar la acción.';
 };
 
 const composeDateTime = (dateValue?: string, timeValue?: string) => {
@@ -350,7 +351,7 @@ export function ControlCronicoScreen() {
     (): FormState => ({
       pacienteId: defaultPacienteId,
       condicioncronicaId: '',
-      fechacontrol: '',
+      fechacontrol: toDateOnlyString(new Date()),
       horacontrol: '08:00',
       conclusiones: '',
       proximocontrol: '',
@@ -412,13 +413,13 @@ export function ControlCronicoScreen() {
       if (!condicionesResponse.ok) {
         throw new Error(
           (condicionesBody as { message?: string } | null)?.message ??
-            'No se pudieron cargar las condiciones cronicas.',
+            'No se pudieron cargar las condiciones crónicas.',
         );
       }
       if (!tiposResponse.ok) {
         throw new Error(
           (tiposBody as { message?: string } | null)?.message ??
-            'No se pudieron cargar los tipos de condicion.',
+            'No se pudieron cargar los tipos de condición.',
         );
       }
 
@@ -654,10 +655,12 @@ export function ControlCronicoScreen() {
     const fechacontrol = composeDateTime(form.fechacontrol, form.horacontrol);
 
     if (!Number.isFinite(condicioncronicaId) || condicioncronicaId <= 0 || !fechacontrol) {
+      const message = 'Condición crónica, fecha y hora de control son obligatorios.';
       setFeedback({
         type: 'error',
-        message: 'Condicion cronica, fecha y hora de control son obligatorios.',
+        message,
       });
+      Alert.alert('Revisa el control', message);
       return;
     }
 
@@ -689,26 +692,26 @@ export function ControlCronicoScreen() {
           measurement.resultado !== undefined,
       );
 
-    if (validMeasurements.length === 0) {
+    if (validMeasurements.some((measurement) => Number.isNaN(measurement.valor))) {
+      const message = 'Todos los valores numéricos deben ser válidos.';
       setFeedback({
         type: 'error',
-        message: 'Agrega al menos una medicion con indicador, valor, unidad o resultado.',
+        message,
       });
+      Alert.alert('Revisa las mediciones', message);
       return;
     }
 
-    if (validMeasurements.some((measurement) => Number.isNaN(measurement.valor))) {
-      setFeedback({
-        type: 'error',
-        message: 'Todos los valores numericos deben ser validos.',
-      });
-      return;
-    }
+    // El backend admite un control de seguimiento sin medición numérica.
+    // Esto permite registrar conclusiones, próximo control y médico por sí solos.
+    const measurementsToSubmit = validMeasurements.length > 0
+      ? validMeasurements
+      : [{ indicador: undefined, valor: undefined, unidad: undefined, resultado: undefined }];
 
     setIsSubmitting(true);
     try {
       await Promise.all(
-        validMeasurements.map(async (measurement) => {
+        measurementsToSubmit.map(async (measurement) => {
           const payload = {
             condicioncronicaId,
             fechacontrol,
@@ -720,6 +723,7 @@ export function ControlCronicoScreen() {
             proximocontrol: form.proximocontrol || undefined,
             medico: form.medico.trim() || undefined,
             creadopor: user?.username ?? undefined,
+            creadoen: new Date().toISOString(),
           };
 
           const response = await fetch(`${API_URL}/controlcronico`, {
@@ -731,24 +735,27 @@ export function ControlCronicoScreen() {
           if (!response.ok) {
             throw new Error(
               (body as { message?: string } | null)?.message ??
-                'No se pudo registrar el control cronico.',
+                'No se pudo registrar el control crónico.',
             );
           }
         }),
       );
 
+      const successMessage = validMeasurements.length <= 1
+        ? 'Control crónico registrado correctamente.'
+        : `${validMeasurements.length} mediciones fueron registradas correctamente.`;
       setFeedback({
         type: 'success',
-        message:
-          validMeasurements.length === 1
-            ? 'Control cronico registrado correctamente.'
-            : `${validMeasurements.length} mediciones fueron registradas correctamente.`,
+        message: successMessage,
       });
+      Alert.alert('Control guardado', successMessage);
       resetForm();
       setShowForm(false);
       await fetchRecords();
     } catch (error) {
-      setFeedback({ type: 'error', message: formatErrorMessage(error) });
+      const message = formatErrorMessage(error);
+      setFeedback({ type: 'error', message });
+      Alert.alert('No se pudo guardar el control', message);
     } finally {
       setIsSubmitting(false);
     }
@@ -762,11 +769,11 @@ export function ControlCronicoScreen() {
     >
       <View style={styles.heroCard}>
         <NanoSectionIllustration section="seguimiento-cronico" size={62} />
-        <AppText style={styles.kicker}>SEGUIMIENTO CRONICO</AppText>
+        <AppText style={styles.kicker}>SEGUIMIENTO CRÓNICO</AppText>
         <View style={styles.header}>
-          <AppText style={styles.title}>Control cronico</AppText>
+          <AppText style={styles.title}>Control crónico</AppText>
           <AppText style={styles.subtitle}>
-            Registra mediciones, revisa el estado del paciente y deja programado el proximo control.
+            Registra mediciones, revisa el estado del paciente y deja programado el próximo control.
           </AppText>
         </View>
       </View>
@@ -807,20 +814,20 @@ export function ControlCronicoScreen() {
         <AppText style={styles.sectionTitle}>Condiciones del paciente</AppText>
         <AppText style={styles.sectionSubtitle}>
           {patientCondiciones.length === 0
-            ? 'Este paciente no tiene condiciones cronicas disponibles para seguimiento.'
+            ? 'Este paciente no tiene condiciones crónicas disponibles para seguimiento.'
             : 'Estas son las condiciones sobre las que puedes registrar controles.'}
         </AppText>
 
         {patientCondiciones.length === 0 ? (
           <AppText style={styles.emptySelectText}>
-            Primero registra una condicion cronica para este paciente.
+            Primero registra una condición crónica para este paciente.
           </AppText>
         ) : (
           patientCondiciones.map((item) => (
             <View key={item.condicioncronicaId} style={styles.conditionBadgeRow}>
               <View>
                 <AppText style={styles.conditionBadgeTitle}>
-                  {tiposMap[item.tipocondicionId] ?? `Condicion #${item.tipocondicionId}`}
+                  {tiposMap[item.tipocondicionId] ?? `Condición #${item.tipocondicionId}`}
                 </AppText>
                 <AppText style={styles.conditionBadgeMeta}>{item.estado || 'Estado sin definir'}</AppText>
               </View>
@@ -850,7 +857,7 @@ export function ControlCronicoScreen() {
         <View style={styles.stateBox}>
           <AppText style={styles.stateTitle}>Sin registros</AppText>
           <AppText style={styles.stateText}>
-            No hay controles cronicos para el paciente seleccionado.
+            No hay controles crónicos para el paciente seleccionado.
           </AppText>
         </View>
       ) : (
@@ -862,7 +869,7 @@ export function ControlCronicoScreen() {
               <View style={styles.cardTopRow}>
                 <View style={styles.cardTopCopy}>
                   <AppText style={styles.cardTitle}>
-                    {tipoNombre ?? `Condicion #${record.condicioncronicaId}`}
+                    {tipoNombre ?? `Condición #${record.condicioncronicaId}`}
                   </AppText>
                   <AppText style={styles.cardSubtitle}>
                     Control: {formatRecordDateTime(record.fechacontrol)}
@@ -880,9 +887,9 @@ export function ControlCronicoScreen() {
                   : 'Sin dato'}
               </AppText>
               <AppText style={styles.cardText}>
-                Proximo control: {formatRecordDate(record.proximocontrol)}
+                Próximo control: {formatRecordDate(record.proximocontrol)}
               </AppText>
-              <AppText style={styles.cardText}>Medico: {record.medico || 'Sin dato'}</AppText>
+              <AppText style={styles.cardText}>Médico: {record.medico || 'Sin dato'}</AppText>
               {record.conclusiones ? (
                 <AppText style={styles.cardText}>Conclusiones: {record.conclusiones}</AppText>
               ) : null}
@@ -898,10 +905,10 @@ export function ControlCronicoScreen() {
             Puedes agregar varias mediciones en el mismo control. Se guardan como registros separados con la misma fecha y hora.
           </AppText>
 
-          <AppText style={styles.label}>Condicion cronica</AppText>
+          <AppText style={styles.label}>Condición crónica</AppText>
           {patientCondiciones.length === 0 ? (
             <AppText style={styles.emptySelectText}>
-              Primero registra una condicion cronica para este paciente.
+              Primero registra una condición crónica para este paciente.
             </AppText>
           ) : (
             <View style={styles.pickerWrapper}>
@@ -914,7 +921,7 @@ export function ControlCronicoScreen() {
                 {patientCondiciones.map((item) => (
                   <Picker.Item
                     key={item.condicioncronicaId}
-                    label={`${tiposMap[item.tipocondicionId] ?? `Condicion #${item.tipocondicionId}`} - ${item.estado ?? 'Activa'}`}
+                    label={`${tiposMap[item.tipocondicionId] ?? `Condición #${item.tipocondicionId}`} - ${item.estado ?? 'Activa'}`}
                     value={String(item.condicioncronicaId)}
                   />
                 ))}
@@ -952,7 +959,7 @@ export function ControlCronicoScreen() {
             <WebTimeInput
               value={form.horacontrol}
               onChange={(value) => handleChange('horacontrol', value)}
-              ariaLabel="Hora del control cronico"
+              ariaLabel="Hora del control crónico"
             />
           ) : (
             <TouchableOpacity style={styles.dateButton} onPress={openTimePicker}>
@@ -1118,7 +1125,7 @@ export function ControlCronicoScreen() {
           <AppText style={styles.label}>Conclusiones generales</AppText>
           <AppTextInput
             style={[styles.input, styles.multiline]}
-            placeholder="Resumen clinico"
+            placeholder="Resumen clínico"
             placeholderTextColor={colors.textMuted}
             value={form.conclusiones}
             onChangeText={(value) => handleChange('conclusiones', value)}
@@ -1126,7 +1133,7 @@ export function ControlCronicoScreen() {
             numberOfLines={3}
           />
 
-          <AppText style={styles.label}>Proximo control</AppText>
+          <AppText style={styles.label}>Próximo control</AppText>
           <TouchableOpacity style={styles.dateButton} onPress={() => openDatePicker('proximocontrol')}>
             <AppText style={styles.dateButtonText}>{formatDisplayDate(form.proximocontrol)}</AppText>
           </TouchableOpacity>
@@ -1151,7 +1158,7 @@ export function ControlCronicoScreen() {
             </View>
           ) : null}
 
-          <AppText style={styles.label}>Medico</AppText>
+          <AppText style={styles.label}>Médico</AppText>
           <AppTextInput
             style={styles.input}
             placeholder="Responsable del control"

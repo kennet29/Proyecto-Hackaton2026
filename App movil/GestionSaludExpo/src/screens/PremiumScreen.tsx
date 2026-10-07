@@ -9,35 +9,100 @@ import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppText } from '../components/AppText';
-import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
+import { NanoSectionIllustration, type NanoSection } from '../components/NanoSectionIllustration';
 import { RootStackParamList } from '../navigation/types';
-import { appColors, colorAlpha } from '../theme/colors';
+import { colorAlpha } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch, buildJsonHeaders, parseJsonResponse } from '../utils/apiClient';
 import { readUriAsDataUrl } from '../utils/fileBase64';
 import { AppColors, useAppColors } from '../theme/useAppColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Premium'>;
-type PlanId = 'mensual' | 'trimestral';
+type PlanId = 'gratis' | 'premium' | 'plus' | 'publicidad';
 type BankId = 'banpro' | 'bac' | 'lafise';
 type PaymentAccount = { banco: BankId; titularCuenta?: string | null; numeroCuenta?: string | null; moneda: string; tipoCambio?: number | null };
 type Receipt = { base64: string; name: string; mimeType: 'application/pdf' | 'image/jpeg' | 'image/png' };
 
-const plans: Record<PlanId, { title: string; price: string; period: string; detail: string; saving?: string }> = {
-  mensual: {
-    title: 'Premium mensual',
-    price: 'US$4.99',
-    period: 'por mes',
-    detail: 'Flexibilidad total; cancela cuando quieras.',
+type PlanOption = {
+  title: string;
+  description: string;
+  price: string;
+  period: string;
+  nano: NanoSection;
+  benefits: string[];
+  audience?: string[];
+  cta: string;
+  featured?: boolean;
+};
+
+const plans: Record<PlanId, PlanOption> = {
+  gratis: {
+    title: 'Nano Gratis',
+    description: 'Para comenzar a cuidar tu salud',
+    price: 'C$0.00',
+    period: 'Gratis',
+    nano: 'plan-gratis',
+    benefits: [
+      'Registra hasta 3 personas',
+      '1 consulta diaria con la IA de Nano Bienestar',
+      'Herramientas esenciales para el seguimiento de tu salud',
+    ],
+    cta: 'Comenzar gratis',
   },
-  trimestral: {
-    title: 'Premium trimestral',
-    price: 'US$12.99',
-    period: 'cada 3 meses',
-    detail: 'Más tiempo de cuidado con una sola renovación.',
-    saving: 'Ahorra un 13%',
+  premium: {
+    title: 'Nano Free Premium',
+    description: 'Para quienes quieren llevar su cuidado al siguiente nivel',
+    price: 'C$130.00',
+    period: 'por usuario',
+    nano: 'plan-freemium',
+    benefits: [
+      'Registro ilimitado de personas',
+      'Acceso a todas las funcionalidades de la aplicación',
+      'Uso ilimitado de las opciones de IA disponibles',
+      'Sin anuncios publicitarios',
+    ],
+    cta: 'Elegir Premium',
+    featured: true,
+  },
+  plus: {
+    title: 'Plan Plus',
+    description: 'Para profesionales de la salud',
+    price: 'C$150.00',
+    period: 'por profesional',
+    nano: 'plan-plus',
+    benefits: [
+      'Registra y gestiona la información de tus pacientes',
+      'Accede a los historiales de salud de tus pacientes',
+      'Facilita el seguimiento y organización de la información',
+      'Los usuarios pueden agendar citas contigo directamente desde la web',
+    ],
+    cta: 'Soy profesional de salud',
+  },
+  publicidad: {
+    title: 'Nano Publicidad',
+    description: 'Haz crecer tu presencia dentro de Nica Prime',
+    price: 'C$450.00',
+    period: 'por servicio publicitario',
+    nano: 'plan-publicidad',
+    audience: [
+      '🩺 Médicos y profesionales de la salud',
+      '🏥 Clínicas y laboratorios clínicos',
+      '🏋️ Gimnasios y marcas deportivas',
+      '💊 Tiendas de suplementos médicos y alimenticios',
+      '💚 Farmacias y otros negocios relacionados con salud y bienestar',
+    ],
+    benefits: [
+      'Aparece en el mapa de profesionales y servicios de salud de Nica Prime',
+      'Publicita tus servicios dentro de Nica Prime',
+      'Ofrece tus productos en la Nano Tienda',
+      'Conecta tu negocio con personas interesadas en el cuidado de su salud y bienestar',
+      'Aumenta la visibilidad de tu marca dentro de la plataforma',
+    ],
+    cta: 'Publicitar mi negocio',
   },
 };
+
+const planOrder: PlanId[] = ['gratis', 'premium', 'plus', 'publicidad'];
 
 const paymentMethods: Array<{ id: BankId; name: string; detail: string; color: string; logoUri: string }> = [
   {
@@ -63,24 +128,16 @@ const paymentMethods: Array<{ id: BankId; name: string; detail: string; color: s
   },
 ];
 
-const benefits = [
-  { icon: 'sparkles-outline' as const, title: 'Análisis avanzado', detail: 'Resumen clínico y tendencias con más detalle.' },
-  { icon: 'people-outline' as const, title: 'Más personas asociadas', detail: 'Organiza y acompaña a toda tu familia.' },
-  { icon: 'notifications-outline' as const, title: 'Recordatorios inteligentes', detail: 'Prioriza medicamentos, citas y controles importantes.' },
-  { icon: 'shield-checkmark-outline' as const, title: 'Historial compartible', detail: 'Comparte tu expediente de forma segura con profesionales.' },
-];
-
 export function PremiumScreen({ navigation }: Props) {
   const colors = useAppColors();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   const { token } = useAuth();
-  const [selectedPlan, setSelectedPlan] = useState<PlanId>('trimestral');
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>('premium');
   const [selectedBank, setSelectedBank] = useState<BankId>('banpro');
   const [paymentAccounts, setPaymentAccounts] = useState<PaymentAccount[]>([]);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const plan = useMemo(() => plans[selectedPlan], [selectedPlan]);
   const bank = useMemo(
     () => paymentMethods.find((method) => method.id === selectedBank) ?? paymentMethods[0],
     [selectedBank],
@@ -94,6 +151,15 @@ export function PremiumScreen({ navigation }: Props) {
       .then((data) => setPaymentAccounts(Array.isArray(data) ? data : []))
       .catch(() => setPaymentAccounts([]));
   }, [token]);
+
+  const handlePlanAction = (planId: PlanId) => {
+    setSelectedPlan(planId);
+    if (planId === 'gratis') {
+      navigation.goBack();
+    } else if (planId === 'plus' || planId === 'publicidad') {
+      navigation.navigate('Contacto');
+    }
+  };
 
   const chooseReceipt = async () => {
     const result = await DocumentPicker.getDocumentAsync({ type: ['image/jpeg', 'image/png', 'application/pdf'], copyToCacheDirectory: true });
@@ -112,7 +178,7 @@ export function PremiumScreen({ navigation }: Props) {
     if (!receipt) { Alert.alert('Adjunta el comprobante', 'Sube la factura o recibo de tu transferencia antes de enviar la solicitud.'); return; }
     setSubmitting(true);
     try {
-      const response = await apiFetch('/pagos-premium', { method: 'POST', headers: buildJsonHeaders(token), body: JSON.stringify({ banco: selectedBank, plan: selectedPlan, comprobanteBase64: receipt.base64, nombreComprobante: receipt.name, mimeComprobante: receipt.mimeType }) });
+      const response = await apiFetch('/pagos-premium', { method: 'POST', headers: buildJsonHeaders(token), body: JSON.stringify({ banco: selectedBank, plan: 'mensual', comprobanteBase64: receipt.base64, nombreComprobante: receipt.name, mimeComprobante: receipt.mimeType }) });
       if (!response.ok) throw new Error('No se pudo enviar el comprobante.');
       setReceipt(null);
       Alert.alert('Solicitud enviada', `Tu pago con ${bank.name} quedó pendiente de revisión. Te activaremos Premium al aprobarse.`);
@@ -124,69 +190,71 @@ export function PremiumScreen({ navigation }: Props) {
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.hero}>
         <View style={styles.heroIcon}>
-          <NanoSectionIllustration section="premium" size={68} />
+          <NanoSectionIllustration section="planes-pago" size={76} />
         </View>
-        <AppText style={styles.eyebrow}>GESTIÓN SALUD PREMIUM</AppText>
-        <AppText style={styles.title}>Tu salud, con más herramientas.</AppText>
+        <AppText style={styles.eyebrow}>PLANES NICA PRIME</AppText>
+        <AppText style={styles.title}>Elige el plan ideal para ti</AppText>
         <AppText style={styles.subtitle}>
-          Obtén una experiencia más completa para cuidar tu bienestar y el de las personas que acompañas.
+          Encuentra la opción que mejor se adapte a tus necesidades y empieza a cuidar tu salud con Nica Prime.
         </AppText>
       </View>
 
-      <View style={styles.benefitsCard}>
-        <AppText style={styles.sectionTitle}>Todo lo que incluye Premium</AppText>
-        {benefits.map((benefit) => (
-          <View key={benefit.title} style={styles.benefitRow}>
-            <View style={styles.benefitIcon}>
-              <Ionicons name={benefit.icon} size={20} color={colors.info} />
-            </View>
-            <View style={styles.benefitCopy}>
-              <AppText style={styles.benefitTitle}>{benefit.title}</AppText>
-              <AppText style={styles.benefitDetail}>{benefit.detail}</AppText>
-            </View>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.plansHeader}>
-        <NanoSectionIllustration section="planes-pago" size={62} />
-        <View style={styles.plansHeaderCopy}>
-          <AppText style={styles.sectionTitle}>Elige tu plan</AppText>
-          <AppText style={styles.sectionHint}>Puedes cambiar o cancelar cuando lo necesites.</AppText>
-        </View>
-      </View>
-
-      {(Object.keys(plans) as PlanId[]).map((planId) => {
+      <View style={styles.planList}>
+      {planOrder.map((planId) => {
         const item = plans[planId];
         const active = selectedPlan === planId;
         return (
-          <TouchableOpacity
-            key={planId}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: active }}
-            activeOpacity={0.85}
-            onPress={() => setSelectedPlan(planId)}
-            style={[styles.planCard, active && styles.planCardActive]}
-          >
-            <View style={styles.planTop}>
-              <View style={[styles.radio, active && styles.radioActive]}>
-                {active ? <View style={styles.radioDot} /> : null}
+          <View key={planId} style={[styles.planCard, active && styles.planCardActive, item.featured && styles.featuredCard]}>
+            {item.featured ? (
+              <View style={styles.popularBadge}>
+                <AppText style={styles.popularText}>🏆 MÁS ELEGIDO</AppText>
               </View>
-              <View style={styles.planCopy}>
-                <View style={styles.planTitleRow}>
-                  <AppText style={styles.planTitle}>{item.title}</AppText>
-                  {item.saving ? <AppText style={styles.savingBadge}>{item.saving}</AppText> : null}
-                </View>
-                <AppText style={styles.planDetail}>{item.detail}</AppText>
-              </View>
-              <View>
-                <AppText style={styles.price}>{item.price}</AppText>
-                <AppText style={styles.period}>{item.period}</AppText>
-              </View>
+            ) : null}
+            <View style={styles.planNano}>
+              <NanoSectionIllustration section={item.nano} size={94} />
             </View>
-          </TouchableOpacity>
+            <AppText style={styles.planTitle}>{item.title}</AppText>
+            <AppText style={styles.planDescription}>{item.description}</AppText>
+            <View style={styles.priceRow}>
+              <AppText style={styles.price}>{item.price}</AppText>
+              <AppText style={styles.period}>{item.period}</AppText>
+            </View>
+            {item.audience ? (
+              <View style={styles.audienceBox}>
+                <AppText style={styles.audienceTitle}>Dirigido a:</AppText>
+                {item.audience.map((audience) => (
+                  <AppText key={audience} style={styles.audienceItem}>{audience}</AppText>
+                ))}
+              </View>
+            ) : null}
+            <View style={styles.benefitList}>
+              {item.benefits.map((benefit) => (
+                <View key={benefit} style={styles.benefitRow}>
+                  <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                  <AppText style={styles.benefitText}>{benefit}</AppText>
+                </View>
+              ))}
+            </View>
+            <TouchableOpacity
+              accessibilityRole="button"
+              activeOpacity={0.85}
+              onPress={() => handlePlanAction(planId)}
+              style={[styles.planButton, item.featured && styles.featuredButton]}
+            >
+              <AppText style={[styles.planButtonText, item.featured && styles.featuredButtonText]}>{item.cta}</AppText>
+              <Ionicons name="arrow-forward" size={18} color={item.featured ? colors.onAccent : colors.info} />
+            </TouchableOpacity>
+          </View>
         );
       })}
+      </View>
+
+      {selectedPlan === 'premium' ? (
+      <View style={styles.paymentSection}>
+      <View style={styles.paymentHeader}>
+        <AppText style={styles.sectionTitle}>Completa tu suscripción Premium</AppText>
+        <AppText style={styles.sectionHint}>Selecciona el banco con el que deseas pagar C$130.00.</AppText>
+      </View>
 
       <View style={styles.paymentHeader}>
         <AppText style={styles.sectionTitle}>Método de pago</AppText>
@@ -247,6 +315,13 @@ export function PremiumScreen({ navigation }: Props) {
         <Ionicons name="arrow-forward" size={20} color={colors.onAccent} />
       </TouchableOpacity>
       <AppText style={styles.legal}>El cobro se realizará únicamente después de confirmar el pago.</AppText>
+      </View>
+      ) : null}
+
+      <View style={styles.closingCard}>
+        <AppText style={styles.closingText}>Elige cómo quieres cuidar tu salud.</AppText>
+        <AppText style={styles.closingTitle}>Eleva tu salud, vive tu Prime.</AppText>
+      </View>
 
       <TouchableOpacity accessibilityRole="button" onPress={() => navigation.goBack()} style={styles.secondaryButton}>
         <AppText style={styles.secondaryText}>Ahora no</AppText>
@@ -258,33 +333,35 @@ export function PremiumScreen({ navigation }: Props) {
 const createStyles = (colors: AppColors) => StyleSheet.create({
   container: { flexGrow: 1, backgroundColor: colors.background, padding: 20, paddingBottom: 38 },
   hero: { alignItems: 'center', paddingVertical: 22 },
-  heroIcon: { width: 60, height: 60, borderRadius: 30, backgroundColor: colors.success, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
+  heroIcon: { width: 82, height: 82, borderRadius: 41, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   eyebrow: { color: colors.success, fontSize: 11, fontWeight: '900', letterSpacing: 1.3 },
   title: { color: colors.text, fontSize: 28, lineHeight: 34, fontWeight: '900', textAlign: 'center', marginTop: 8 },
   subtitle: { color: colors.textSoft, fontSize: 15, lineHeight: 22, textAlign: 'center', marginTop: 10, maxWidth: 500 },
-  benefitsCard: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 20, padding: 18, gap: 16 },
   sectionTitle: { color: colors.text, fontSize: 18, fontWeight: '900' },
-  benefitRow: { flexDirection: 'row', gap: 12 },
-  benefitIcon: { height: 38, width: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colorAlpha(colors.info, '18') },
-  benefitCopy: { flex: 1 },
-  benefitTitle: { color: colors.text, fontSize: 15, fontWeight: '800' },
-  benefitDetail: { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 2 },
-  plansHeader: { marginTop: 24, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  plansHeaderCopy: { flex: 1 },
   sectionHint: { color: colors.textMuted, fontSize: 13, marginTop: 3 },
-  planCard: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: 18, padding: 16, marginBottom: 12 },
-  planCardActive: { borderColor: colors.success, backgroundColor: colorAlpha(colors.success, '12') },
-  planTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  radio: { height: 22, width: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.textMuted, alignItems: 'center', justifyContent: 'center' },
-  radioActive: { borderColor: colors.success },
-  radioDot: { height: 10, width: 10, borderRadius: 5, backgroundColor: colors.success },
-  planCopy: { flex: 1 },
-  planTitleRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
-  planTitle: { color: colors.text, fontSize: 15, fontWeight: '900' },
-  savingBadge: { color: colors.onAccent, backgroundColor: colors.success, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 3, fontSize: 10, fontWeight: '900' },
-  planDetail: { color: colors.textMuted, fontSize: 12, lineHeight: 17, marginTop: 3 },
-  price: { color: colors.text, fontSize: 16, fontWeight: '900', textAlign: 'right' },
-  period: { color: colors.textMuted, fontSize: 11, textAlign: 'right', marginTop: 2 },
+  planList: { gap: 16 },
+  planCard: { position: 'relative', overflow: 'hidden', borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, borderRadius: 22, padding: 18 },
+  planCardActive: { borderColor: colors.success },
+  featuredCard: { borderColor: colors.info, backgroundColor: colorAlpha(colors.info, '0A') },
+  popularBadge: { position: 'absolute', top: 14, right: 14, zIndex: 2, borderRadius: 999, backgroundColor: colors.info, paddingHorizontal: 10, paddingVertical: 6 },
+  popularText: { color: colors.onAccent, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 },
+  planNano: { alignItems: 'center', marginBottom: 10 },
+  planTitle: { color: colors.text, fontSize: 18, fontWeight: '900', textAlign: 'center', textTransform: 'uppercase' },
+  planDescription: { color: colors.textMuted, fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 5 },
+  priceRow: { alignItems: 'center', marginTop: 14, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: colors.border },
+  price: { color: colors.text, fontSize: 29, lineHeight: 34, fontWeight: '900' },
+  period: { color: colors.textMuted, fontSize: 12, fontWeight: '700', marginTop: 2 },
+  audienceBox: { marginTop: 14, borderRadius: 14, backgroundColor: colorAlpha(colors.info, '0D'), padding: 13, gap: 7 },
+  audienceTitle: { color: colors.text, fontSize: 13, fontWeight: '900' },
+  audienceItem: { color: colors.textSoft, fontSize: 12, lineHeight: 18 },
+  benefitList: { gap: 10, marginTop: 15 },
+  benefitRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 9 },
+  benefitText: { flex: 1, color: colors.textSoft, fontSize: 13, lineHeight: 19 },
+  planButton: { minHeight: 48, marginTop: 17, borderRadius: 14, borderWidth: 1, borderColor: colors.info, backgroundColor: colorAlpha(colors.info, '0D'), flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 14 },
+  planButtonText: { color: colors.info, fontSize: 14, fontWeight: '900', textAlign: 'center' },
+  featuredButton: { borderColor: colors.success, backgroundColor: colors.success },
+  featuredButtonText: { color: colors.onAccent },
+  paymentSection: { marginTop: 24, borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 16 },
   paymentHeader: { marginTop: 12, marginBottom: 12 },
   paymentList: { gap: 9, marginBottom: 8 },
   paymentCard: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 13 },
@@ -304,6 +381,9 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   checkoutButton: { minHeight: 52, borderRadius: 15, backgroundColor: colors.success, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 8 },
   checkoutText: { color: colors.onAccent, fontSize: 15, fontWeight: '900' },
   legal: { color: colors.textMuted, fontSize: 11, textAlign: 'center', lineHeight: 16, marginTop: 10 },
+  closingCard: { marginTop: 20, borderRadius: 18, backgroundColor: colorAlpha(colors.success, '12'), padding: 18, alignItems: 'center' },
+  closingText: { color: colors.textMuted, fontSize: 13, textAlign: 'center' },
+  closingTitle: { color: colors.text, fontSize: 18, fontWeight: '900', textAlign: 'center', marginTop: 4 },
   secondaryButton: { alignSelf: 'center', paddingVertical: 14, paddingHorizontal: 22, marginTop: 4 },
   secondaryText: { color: colors.info, fontSize: 14, fontWeight: '800' },
 });

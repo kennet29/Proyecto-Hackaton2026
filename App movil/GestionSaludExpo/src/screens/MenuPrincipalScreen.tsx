@@ -110,14 +110,14 @@ const tabMeta: TabMeta[] = [
   },
   {
     key: 'medico',
-    label: 'Medico',
+    label: 'Médico',
     title: 'Seccion Medica',
-    subtitle: 'Concentra consultas, citas, tratamientos y registros clinicos en un solo flujo.',
+    subtitle: 'Concentra consultas, citas, tratamientos y registros clínicos en un solo flujo.',
     icon: 'medkit-outline',
     cardColor: '#0B6FE9',
     nanoAppearance: {
       id: 'medico-menu',
-      label: 'Nano Medico',
+      label: 'Nano Médico',
       description: 'Nano de la sección médica',
       format: 'svg',
       svgComponent: NanoMedico,
@@ -167,7 +167,7 @@ const homeOptions: OptionItem[] = [
   {
     key: 'home-medico',
     label: 'Seccion Medica',
-    description: 'Reune consultas, citas, vacunas, medicacion y seguimiento clinico.',
+    description: 'Reúne consultas, citas, vacunas, medicación y seguimiento clínico.',
     icon: 'medkit-outline',
     accent: appColors.info,
     actionTab: 'medico',
@@ -253,7 +253,7 @@ const medicalOptions: OptionItem[] = [
   },
   {
     key: 'control-cronico',
-    label: 'Control Cronico',
+    label: 'Control Crónico',
     description: 'Registra mediciones y seguimiento de condiciones ya abiertas',
     icon: 'stats-chart-outline',
     accent: appColors.success,
@@ -515,7 +515,7 @@ const managementOptions: OptionItem[] = [
   },
   {
     key: 'premium',
-    label: 'Gestión Salud Premium',
+    label: 'Nica Prime Premium',
     description: 'Conoce los planes Premium y sus beneficios para tu cuidado.',
     icon: 'diamond-outline',
     accent: '#F5B942',

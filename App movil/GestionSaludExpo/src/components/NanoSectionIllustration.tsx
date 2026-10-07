@@ -42,6 +42,10 @@ import NanoEmbarazo from '../../Nanos Medica/Nano Embarazo.svg';
 import NanoDesparasitaciones from '../../Nanos Medica/Nano Desparacitaciones.svg';
 import NanoExamenesClinicos from '../../Nanos Medica/Nano Examenes Clinicos.svg';
 import NanoSeguimientoCaso from '../../Nanos Medica/Nano Seguimiento de Caso.svg';
+import NanoPlanGratis from '../../NANOS PARA REPARAR ERRORES Final/Nanos planes de pago/Plan de NANO Gratis.svg';
+import NanoPlanFreemium from '../../NANOS PARA REPARAR ERRORES Final/Nanos planes de pago/Plan de Nano Freemium.svg';
+import NanoPlanPlus from '../../NANOS PARA REPARAR ERRORES Final/Nanos planes de pago/Nano plan premium medico.svg';
+import NanoPlanPublicidad from '../../NANOS PARA REPARAR ERRORES Final/Nanos planes de pago/Nano planes de pago 2.svg';
 
 export type NanoSection =
   | 'alimentacion'
@@ -67,6 +71,10 @@ export type NanoSection =
   | 'medicacion'
   | 'operaciones'
   | 'planes-pago'
+  | 'plan-gratis'
+  | 'plan-freemium'
+  | 'plan-plus'
+  | 'plan-publicidad'
   | 'premium'
   | 'presupuesto'
   | 'prime'
@@ -109,6 +117,10 @@ const illustrations: Record<NanoSection, React.ComponentType<SvgProps>> = {
   medicacion: NanoMedicacion,
   operaciones: NanoOperaciones,
   'planes-pago': NanoPlanesPago,
+  'plan-gratis': NanoPlanGratis,
+  'plan-freemium': NanoPlanFreemium,
+  'plan-plus': NanoPlanPlus,
+  'plan-publicidad': NanoPlanPublicidad,
   premium: NanoPremium,
   presupuesto: NanoPresupuesto,
   prime: NanoPrime,
@@ -152,6 +164,10 @@ const labels: Record<NanoSection, string> = {
   medicacion: 'Nano Medicación',
   operaciones: 'Nano Operaciones',
   'planes-pago': 'Nano Planes de Pago',
+  'plan-gratis': 'Nano con regalo del plan Gratis',
+  'plan-freemium': 'Nano con corona del plan Freemium',
+  'plan-plus': 'Nano con diamante del plan Plus',
+  'plan-publicidad': 'Nano del plan Publicidad',
   premium: 'Nano Premium',
   presupuesto: 'Nano Presupuesto',
   prime: 'Nano Prime',

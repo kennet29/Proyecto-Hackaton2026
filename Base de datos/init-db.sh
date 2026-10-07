@@ -37,6 +37,7 @@ fi
 # mismas actualizaciones que una base nueva.
 MIGRATION_SCRIPTS=(
   "/scripts/GestionSalud.sql"
+  "/scripts/medicacion_evidencia_fotografica.sql"
   "/scripts/renombrar_campos_seguridad_usuario.sql"
   "/scripts/usuario_ciudad_pais.sql"
   "/scripts/crear_passwordresettoken.sql"

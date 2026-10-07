@@ -223,10 +223,18 @@ const formatTrendTick = (value: string, range: TrendRangeKey) => {
   const parsed = parseDateOnly(value);
   if (!parsed) return value;
 
-  if (range === '6m' || range === '1y') {
+  if (range === '1y') {
     return parsed.toLocaleDateString('es-NI', {
-      month: 'short',
+      day: '2-digit',
+      month: '2-digit',
       year: '2-digit',
+    });
+  }
+
+  if (range === '6m') {
+    return parsed.toLocaleDateString('es-NI', {
+      day: '2-digit',
+      month: 'short',
     });
   }
 
@@ -1075,7 +1083,7 @@ export function SeguimientoFisicoScreen({ navigation }: Props) {
                         key={`date-label-${item.seguimientoFisicoId}`}
                         style={[
                           styles.lineChartDateLabel,
-                          { left: CHART_SIDE_PADDING + index * CHART_POINT_GAP - 24, top: CHART_PLOT_BOTTOM + 10 },
+                          { left: CHART_SIDE_PADDING + index * CHART_POINT_GAP - 29, top: CHART_PLOT_BOTTOM + 10 },
                         ]}
                       >
                         {formatTrendTick(item.fecha, trendRange)}
@@ -2001,7 +2009,7 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   },
   lineChartDateLabel: {
     position: 'absolute',
-    width: 48,
+    width: 58,
     color: colors.textMuted,
     fontSize: 11,
     fontWeight: '600',

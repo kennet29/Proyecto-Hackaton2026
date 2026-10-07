@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Platform,
+  Modal,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -18,7 +18,6 @@ import {
 import { AppText, AppTextInput } from '../components/AppText';
 import { NanoSectionIllustration } from '../components/NanoSectionIllustration';
 import { Ionicons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../context/AuthContext';
@@ -73,12 +72,11 @@ const getImpactAccent = (value?: string | null) => {
   return '#29B6FF';
 };
 
-export function HabitosScreen(_: Props) {
+export function HabitosScreen({ navigation }: Props) {
   const colors = useAppColors();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   const { token, user } = useAuth();
-  const pickerItemColor = Platform.OS === 'android' ? '#10233F' : colors.text;
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [types, setTypes] = useState<TipoHabito[]>([]);
   const [records, setRecords] = useState<Habito[]>([]);
@@ -86,6 +84,7 @@ export function HabitosScreen(_: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [hydrationSaving, setHydrationSaving] = useState(false);
   const [hydrationMessage, setHydrationMessage] = useState('');
+  const [personPickerVisible, setPersonPickerVisible] = useState(false);
   const [form, setForm] = useState({
     pacienteId: '',
     nombreHabito: '',
@@ -325,6 +324,17 @@ export function HabitosScreen(_: Props) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+        activeOpacity={0.82}
+        accessibilityRole="button"
+        accessibilityLabel="Volver a la pantalla anterior"
+      >
+        <Ionicons name="arrow-back" size={20} color={colors.text} />
+        <AppText style={styles.backButtonText}>Volver</AppText>
+      </TouchableOpacity>
+
       <View style={styles.header}>
         <NanoSectionIllustration section="alimentacion" size={76} />
         <View style={styles.headerCopy}>
@@ -342,21 +352,88 @@ export function HabitosScreen(_: Props) {
         </View>
         <View style={styles.personSelectorCopy}>
           <AppText style={styles.personSelectorLabel}>Persona</AppText>
-          <View style={styles.personPickerShell}>
-            <Picker
-              selectedValue={form.pacienteId}
-              onValueChange={(value) => handleChange('pacienteId', String(value))}
-              style={styles.pickerText}
-              dropdownIconColor={colors.text}
-            >
-              <Picker.Item label="Selecciona una persona" value="" color={pickerItemColor} />
-              {patients.map((patient) => (
-                <Picker.Item key={patient.pacienteId} label={patient.displayName} value={String(patient.pacienteId)} color={pickerItemColor} />
-              ))}
-            </Picker>
-          </View>
+          <TouchableOpacity
+            style={styles.personPickerShell}
+            onPress={() => setPersonPickerVisible(true)}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={`Persona: ${selectedPatient?.displayName ?? 'Selecciona una persona'}`}
+            accessibilityState={{ expanded: personPickerVisible }}
+          >
+            <AppText style={[styles.personPickerText, !selectedPatient && styles.personPickerPlaceholder]} numberOfLines={2}>
+              {selectedPatient?.displayName ?? 'Selecciona una persona'}
+            </AppText>
+            <Ionicons name="chevron-down" size={20} color={colors.textSoft} />
+          </TouchableOpacity>
         </View>
       </View>
+
+      <Modal
+        visible={personPickerVisible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setPersonPickerVisible(false)}
+      >
+        <View style={styles.personModalOverlay}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setPersonPickerVisible(false)}
+            accessibilityLabel="Cerrar selector"
+          />
+          <View style={styles.personModalCard}>
+            <View style={styles.personModalHeader}>
+              <AppText style={styles.personModalTitle}>Selecciona una persona</AppText>
+              <TouchableOpacity
+                style={styles.personModalClose}
+                onPress={() => setPersonPickerVisible(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Cerrar"
+              >
+                <Ionicons name="close" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.personOptionsList} bounces={false}>
+              <TouchableOpacity
+                style={[styles.personOption, !form.pacienteId && styles.personOptionSelected]}
+                onPress={() => {
+                  handleChange('pacienteId', '');
+                  setPersonPickerVisible(false);
+                }}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: !form.pacienteId }}
+              >
+                <AppText style={[styles.personOptionText, !form.pacienteId && styles.personOptionTextSelected]}>
+                  Selecciona una persona
+                </AppText>
+                {!form.pacienteId ? <Ionicons name="checkmark-circle" size={22} color="#0B6FEA" /> : null}
+              </TouchableOpacity>
+              {patients.map((patient) => {
+                const patientId = String(patient.pacienteId);
+                const selected = patientId === form.pacienteId;
+                return (
+                  <TouchableOpacity
+                    key={patient.pacienteId}
+                    style={[styles.personOption, selected && styles.personOptionSelected]}
+                    onPress={() => {
+                      handleChange('pacienteId', patientId);
+                      setPersonPickerVisible(false);
+                    }}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected }}
+                  >
+                    <AppText style={[styles.personOptionText, selected && styles.personOptionTextSelected]}>
+                      {patient.displayName}
+                    </AppText>
+                    {selected ? <Ionicons name="checkmark-circle" size={22} color="#0B6FEA" /> : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       <View style={styles.hydrationCard}>
         <View style={styles.hydrationHeader}>
@@ -573,6 +650,23 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     paddingBottom: 36,
     gap: 16,
   },
+  backButton: {
+    alignSelf: 'flex-start',
+    minHeight: 44,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+  },
+  backButtonText: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '800',
+  },
   header: {
     backgroundColor: '#0B6FEA',
     borderRadius: 24,
@@ -604,8 +698,19 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
   personSelectorIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#EAF3FF', alignItems: 'center', justifyContent: 'center' },
   personSelectorCopy: { flex: 1, gap: 5 },
   personSelectorLabel: { color: colors.textSoft, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.7 },
-  personPickerShell: { minHeight: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted, justifyContent: 'center' },
-  pickerText: { color: colors.text },
+  personPickerShell: { minHeight: 48, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundMuted, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  personPickerText: { flex: 1, color: colors.text, fontSize: 15 },
+  personPickerPlaceholder: { color: colors.textMuted },
+  personModalOverlay: { flex: 1, justifyContent: 'center', padding: 22, backgroundColor: `${colors.overlay}80` },
+  personModalCard: { width: '100%', maxWidth: 560, maxHeight: '72%', alignSelf: 'center', borderRadius: 20, padding: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.borderStrong },
+  personModalHeader: { minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
+  personModalTitle: { flex: 1, color: colors.text, fontSize: 18, fontWeight: '800' },
+  personModalClose: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.backgroundMuted },
+  personOptionsList: { flexGrow: 0 },
+  personOption: { minHeight: 52, borderRadius: 13, paddingHorizontal: 14, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border },
+  personOptionSelected: { backgroundColor: colors.mode === 'dark' ? '#123B57' : '#EAF3FF', borderColor: '#4EA1FF' },
+  personOptionText: { flex: 1, color: colors.text, fontSize: 15, lineHeight: 21 },
+  personOptionTextSelected: { color: colors.mode === 'dark' ? '#DCEEFF' : '#075DBF', fontWeight: '800' },
   hydrationCard: {
     backgroundColor: '#EAF7FF',
     borderRadius: 22,

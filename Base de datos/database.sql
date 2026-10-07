@@ -4,6 +4,7 @@
   en una sola ejecucion.
 */
 :r /scripts/GestionSalud.sql
+:r /scripts/medicacion_evidencia_fotografica.sql
 :r /scripts/renombrar_campos_seguridad_usuario.sql
 :r /scripts/usuario_ciudad_pais.sql
 :r /scripts/crear_passwordresettoken.sql

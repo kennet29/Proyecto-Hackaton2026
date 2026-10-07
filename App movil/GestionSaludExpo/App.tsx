@@ -315,22 +315,22 @@ const PrivateNavigator = () => {
       <Stack.Screen
         name="CondicionCronicaForm"
         component={CondicionCronicaFormScreen}
-        options={{ title: 'Condiciones Cronicas' }}
+        options={{ title: 'Condiciones Crónicas' }}
       />
       <Stack.Screen
         name="CondicionCronicaCreate"
         component={CondicionCronicaCreateScreen}
-        options={{ title: 'Nueva Condicion Cronica' }}
+        options={{ title: 'Nueva Condición Crónica' }}
       />
       <Stack.Screen
         name="CondicionTipoSelector"
         component={CondicionTipoSelectorScreen}
-        options={{ title: 'Escoger Condicion' }}
+        options={{ title: 'Escoger Condición' }}
       />
       <Stack.Screen
         name="ControlCronico"
         component={ControlCronicoScreen}
-        options={{ title: 'Control Cronico' }}
+        options={{ title: 'Control Crónico' }}
       />
       <Stack.Screen
         name="Desparasitacion"

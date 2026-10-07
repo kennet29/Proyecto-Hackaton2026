@@ -8,7 +8,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Platform,
+  Modal,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -18,7 +18,6 @@ import {
 } from 'react-native';
 import { AppText, AppTextInput } from '../components/AppText';
 import { Ionicons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
 import { Calendar } from 'react-native-calendars';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
@@ -205,7 +204,6 @@ export function PeriodoScreen({ navigation }: Props) {
   const isCalendarWide = width >= 900;
 
   const { token, user } = useAuth();
-  const pickerItemColor = Platform.OS === 'android' ? colors.background : colors.text;
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [historial, setHistorial] = useState<PeriodoHistorial | null>(null);
@@ -217,6 +215,7 @@ export function PeriodoScreen({ navigation }: Props) {
   const [demoVisible, setDemoVisible] = useState(true);
   const [patientError, setPatientError] = useState<string | null>(null);
   const [dataError, setDataError] = useState<string | null>(null);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   const [form, setForm] = useState({
     pacienteId: '',
     fechaInicio: today(),
@@ -618,25 +617,18 @@ export function PeriodoScreen({ navigation }: Props) {
             No hay pacientes femeninas vinculadas para este módulo.
           </AppText>
         ) : (
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={form.pacienteId}
-              onValueChange={(value) => handleChange('pacienteId', String(value))}
-            >
-              {patients.map((patient) => (
-                <Picker.Item
-                  key={patient.pacienteId}
-                  label={
-                    patient.parentesco
-                      ? `${patient.displayName} · ${patient.parentesco}`
-                      : patient.displayName
-                  }
-                  value={String(patient.pacienteId)}
-                  color={pickerItemColor}
-                />
-              ))}
-            </Picker>
-          </View>
+          <ThemedSelect
+            value={form.pacienteId}
+            title="Selecciona una paciente"
+            placeholder="Selecciona una paciente"
+            options={patients.map((patient) => ({
+              label: patient.parentesco
+                ? `${patient.displayName} · ${patient.parentesco}`
+                : patient.displayName,
+              value: String(patient.pacienteId),
+            }))}
+            onChange={(value) => handleChange('pacienteId', value)}
+          />
         )}
         {patientError ? <AppText style={styles.errorText}>{patientError}</AppText> : null}
       </View>
@@ -726,67 +718,89 @@ export function PeriodoScreen({ navigation }: Props) {
       <View style={styles.card}>
         <AppText style={styles.sectionTitle}>Nuevo registro</AppText>
         <AppTextInput
-          style={styles.input}
+          style={[styles.input, focusedField === 'fechaInicio' && styles.inputFocused]}
           value={form.fechaInicio}
           onChangeText={(value) => handleChange('fechaInicio', value)}
+          onFocus={() => setFocusedField('fechaInicio')}
+          onBlur={() => setFocusedField(null)}
           placeholder="Fecha inicio (YYYY-MM-DD)"
           placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
         />
         <AppTextInput
-          style={styles.input}
+          style={[styles.input, focusedField === 'fechaFin' && styles.inputFocused]}
           value={form.fechaFin}
           onChangeText={(value) => handleChange('fechaFin', value)}
+          onFocus={() => setFocusedField('fechaFin')}
+          onBlur={() => setFocusedField(null)}
           placeholder="Fecha fin (opcional)"
           placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
         />
         <View style={styles.row}>
           <AppTextInput
-            style={[styles.input, styles.halfInput]}
+            style={[styles.input, styles.halfInput, focusedField === 'duracionDias' && styles.inputFocused]}
             value={form.duracionDias}
             onChangeText={(value) => handleChange('duracionDias', value)}
+            onFocus={() => setFocusedField('duracionDias')}
+            onBlur={() => setFocusedField(null)}
             placeholder="Duración"
             placeholderTextColor={colors.textMuted}
             keyboardType="numeric"
           />
           <AppTextInput
-            style={[styles.input, styles.halfInput]}
+            style={[styles.input, styles.halfInput, focusedField === 'cicloDias' && styles.inputFocused]}
             value={form.cicloDias}
             onChangeText={(value) => handleChange('cicloDias', value)}
+            onFocus={() => setFocusedField('cicloDias')}
+            onBlur={() => setFocusedField(null)}
             placeholder="Ciclo"
             placeholderTextColor={colors.textMuted}
             keyboardType="numeric"
           />
         </View>
         <View style={styles.row}>
-          <View style={[styles.pickerWrapper, styles.halfInput]}>
-            <Picker selectedValue={form.flujo} onValueChange={(value) => handleChange('flujo', String(value))}>
-              <Picker.Item label="Flujo leve" value="leve" color={pickerItemColor} />
-              <Picker.Item label="Flujo moderado" value="moderado" color={pickerItemColor} />
-              <Picker.Item label="Flujo abundante" value="abundante" color={pickerItemColor} />
-            </Picker>
+          <View style={styles.halfInput}>
+            <ThemedSelect
+              value={form.flujo}
+              title="Selecciona el flujo"
+              options={[
+                { label: 'Flujo leve', value: 'leve' },
+                { label: 'Flujo moderado', value: 'moderado' },
+                { label: 'Flujo abundante', value: 'abundante' },
+              ]}
+              onChange={(value) => handleChange('flujo', value)}
+            />
           </View>
-          <View style={[styles.pickerWrapper, styles.halfInput]}>
-            <Picker selectedValue={form.dolor} onValueChange={(value) => handleChange('dolor', String(value))}>
-              <Picker.Item label="Dolor leve" value="leve" color={pickerItemColor} />
-              <Picker.Item label="Dolor moderado" value="moderado" color={pickerItemColor} />
-              <Picker.Item label="Dolor intenso" value="intenso" color={pickerItemColor} />
-              <Picker.Item label="Sin dolor" value="sin_dolor" color={pickerItemColor} />
-            </Picker>
+          <View style={styles.halfInput}>
+            <ThemedSelect
+              value={form.dolor}
+              title="Selecciona el dolor"
+              options={[
+                { label: 'Dolor leve', value: 'leve' },
+                { label: 'Dolor moderado', value: 'moderado' },
+                { label: 'Dolor intenso', value: 'intenso' },
+                { label: 'Sin dolor', value: 'sin_dolor' },
+              ]}
+              onChange={(value) => handleChange('dolor', value)}
+            />
           </View>
         </View>
         <AppTextInput
-          style={styles.input}
+          style={[styles.input, focusedField === 'sintomas' && styles.inputFocused]}
           value={form.sintomas}
           onChangeText={(value) => handleChange('sintomas', value)}
+          onFocus={() => setFocusedField('sintomas')}
+          onBlur={() => setFocusedField(null)}
           placeholder="Síntomas separados por coma"
           placeholderTextColor={colors.textMuted}
         />
         <AppTextInput
-          style={[styles.input, styles.textArea]}
+          style={[styles.input, styles.textArea, focusedField === 'observaciones' && styles.inputFocused]}
           value={form.observaciones}
           onChangeText={(value) => handleChange('observaciones', value)}
+          onFocus={() => setFocusedField('observaciones')}
+          onBlur={() => setFocusedField(null)}
           placeholder="Observaciones"
           placeholderTextColor={colors.textMuted}
           multiline
@@ -897,6 +911,104 @@ export function PeriodoScreen({ navigation }: Props) {
         </>
       )}
     </ScrollView>
+  );
+}
+
+type ThemedSelectOption = {
+  label: string;
+  value: string;
+};
+
+function ThemedSelect({
+  value,
+  options,
+  onChange,
+  title,
+  placeholder = 'Selecciona una opción',
+}: {
+  value: string;
+  options: ThemedSelectOption[];
+  onChange: (value: string) => void;
+  title: string;
+  placeholder?: string;
+}) {
+  const colors = useAppColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
+  const [visible, setVisible] = useState(false);
+  const selectedOption = options.find((option) => option.value === value);
+
+  return (
+    <>
+      <TouchableOpacity
+        style={[styles.selectButton, visible && styles.selectButtonFocused]}
+        onPress={() => setVisible(true)}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={`${title}: ${selectedOption?.label ?? placeholder}`}
+        accessibilityState={{ expanded: visible }}
+      >
+        <AppText style={[styles.selectButtonText, !selectedOption && styles.selectPlaceholder]} numberOfLines={2}>
+          {selectedOption?.label ?? placeholder}
+        </AppText>
+        <Ionicons
+          name={visible ? 'chevron-up' : 'chevron-down'}
+          size={20}
+          color={visible ? colors.accent : colors.textSoft}
+        />
+      </TouchableOpacity>
+
+      <Modal
+        visible={visible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setVisible(false)}
+      >
+        <View style={styles.selectModalOverlay}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setVisible(false)}
+            accessibilityLabel="Cerrar selector"
+          />
+          <View style={styles.selectModalCard}>
+            <View style={styles.selectModalHeader}>
+              <AppText style={styles.selectModalTitle}>{title}</AppText>
+              <TouchableOpacity
+                style={styles.selectCloseButton}
+                onPress={() => setVisible(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Cerrar"
+              >
+                <Ionicons name="close" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.selectOptionsList} bounces={false}>
+              {options.map((option) => {
+                const selected = option.value === value;
+                return (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[styles.selectOption, selected && styles.selectOptionSelected]}
+                    onPress={() => {
+                      onChange(option.value);
+                      setVisible(false);
+                    }}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected }}
+                  >
+                    <AppText style={[styles.selectOptionText, selected && styles.selectOptionTextSelected]}>
+                      {option.label}
+                    </AppText>
+                    {selected ? <Ionicons name="checkmark-circle" size={22} color={colors.accent} /> : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -1193,18 +1305,120 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     borderRadius: 14,
     backgroundColor: colorAlpha(colors.accent, '12'),
   },
-  pickerWrapper: {
+  selectButton: {
+    minHeight: 50,
     borderRadius: 12,
-    overflow: 'hidden',
+    backgroundColor: colors.backgroundMuted,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+  },
+  selectButtonFocused: {
+    borderWidth: 2,
+    borderColor: colors.accent,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+  },
+  selectButtonText: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 15,
+  },
+  selectPlaceholder: {
+    color: colors.textMuted,
+  },
+  selectModalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 22,
+    backgroundColor: colorAlpha(colors.overlay, '80'),
+  },
+  selectModalCard: {
+    width: '100%',
+    maxWidth: 560,
+    maxHeight: '72%',
+    alignSelf: 'center',
+    borderRadius: 20,
+    padding: 16,
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+  },
+  selectModalHeader: {
+    minHeight: 42,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  selectModalTitle: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  selectCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.backgroundMuted,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  selectOptionsList: {
+    flexGrow: 0,
+  },
+  selectOption: {
+    minHeight: 52,
+    borderRadius: 13,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 6,
+    backgroundColor: colors.backgroundMuted,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+  },
+  selectOptionSelected: {
+    backgroundColor: colorAlpha(colors.accent, colors.mode === 'dark' ? '24' : '14'),
+    borderWidth: 2,
+    borderColor: colors.accent,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+  },
+  selectOptionText: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 15,
+    lineHeight: 21,
+  },
+  selectOptionTextSelected: {
+    color: colors.mode === 'dark' ? '#FF8EAA' : '#9F1239',
+    fontWeight: '800',
   },
   input: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.backgroundMuted,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
     color: colors.text,
+  },
+  inputFocused: {
+    borderWidth: 2,
+    borderColor: colors.accent,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
   },
   textArea: {
     minHeight: 92,

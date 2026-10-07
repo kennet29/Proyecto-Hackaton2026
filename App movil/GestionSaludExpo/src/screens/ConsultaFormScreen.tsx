@@ -118,10 +118,10 @@ export function ConsultaFormScreen({ route }: Props) {
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   const { consulta } = route.params || {};
-  const isEditing = Boolean(consulta?.consultaId);
   const [currentConsultaId, setCurrentConsultaId] = useState<number | null>(
     consulta?.consultaId ?? null,
   );
+  const isEditing = Boolean(currentConsultaId);
   const [consultaDate, setConsultaDate] = useState(() => extractDatePortion(consulta?.fechaconsulta));
   const [consultaTime, setConsultaTime] = useState(() => extractTimePortion(consulta?.fechaconsulta));
   const [notificationDate, setNotificationDate] = useState(() => extractDatePortion(consulta?.fechaconsulta));
@@ -387,9 +387,9 @@ export function ConsultaFormScreen({ route }: Props) {
     try {
       const offlineResult = await submitJsonWithOfflineFallback<ConsultaPayload>({
         token,
-        path: consulta ? `/consultamedica/${consulta.consultaId}` : '/consultamedica',
-        method: consulta ? 'PATCH' : 'POST',
-        description: consulta ? 'actualizar consulta' : 'registrar consulta',
+        path: currentConsultaId ? `/consultamedica/${currentConsultaId}` : '/consultamedica',
+        method: currentConsultaId ? 'PATCH' : 'POST',
+        description: currentConsultaId ? 'actualizar consulta' : 'registrar consulta',
         body: {
           pacienteId: Number(form.pacienteId),
           fechaconsulta: form.fecha,
@@ -432,7 +432,7 @@ export function ConsultaFormScreen({ route }: Props) {
                 'La consulta se registro y su notificacion de seguimiento quedo programada.',
               );
             } else {
-              Alert.alert('Consulta guardada', `Se ${consulta ? 'actualizo' : 'registro'} la atencion.`);
+              Alert.alert('Consulta guardada', `Se ${isEditing ? 'actualizo' : 'registro'} la atencion.`);
             }
           } catch (notificationError) {
             Alert.alert(
@@ -443,20 +443,8 @@ export function ConsultaFormScreen({ route }: Props) {
             );
           }
         } else {
-          Alert.alert('Consulta guardada', `Se ${consulta ? 'actualizo' : 'registro'} la atencion.`);
+          Alert.alert('Consulta guardada', `Se ${isEditing ? 'actualizo' : 'registro'} la atencion.`);
         }
-      }
-
-      if (!isEditing) {
-        setForm({ pacienteId: '', fecha: '', motivo: '', diagnostico: '', tratamiento: '' });
-        setConsultaDate('');
-        setConsultaTime('');
-        setNotificationDate('');
-        setNotificationTime('08:00');
-        setNotificationForm({
-          mensaje: 'Recordatorio de seguimiento de consulta medica',
-        });
-        setCurrentConsultaId(null);
       }
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Fallo la peticion');
