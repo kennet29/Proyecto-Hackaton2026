@@ -23,6 +23,7 @@ type HeroStat = {
 type FooterSocial = {
   label: string;
   short: string;
+  url: string;
 };
 
 type FooterSection = {
@@ -313,14 +314,11 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   readonly footerSocials: FooterSocial[] = [
-    { label: 'Facebook', short: 'f' },
-    { label: 'TikTok', short: 'tk' },
-    { label: 'Instagram', short: 'ig' }
+    { label: 'Facebook', short: 'f', url: 'https://www.facebook.com/share/1c3PBjZWn8/' },
+    { label: 'TikTok', short: 'tk', url: 'https://www.tiktok.com/@nica.primenic?_r=1&_d=f4hje9gg2eiici&sec_uid=MS4wLjABAAAAqpw0K7_GJmYTkt9o3ILzAXcRPvG-I1r3JNdO8XGeKJwjVIXnAeW_EbSktQGav4E9&share_author_id=7684035090063492112&sharer_language=es&source=h5_m&u_code=f5edlaehfbmc12&timestamp=1789164996&user_id=7684035090063492112&sec_user_id=MS4wLjABAAAAqpw0K7_GJmYTkt9o3ILzAXcRPvG-I1r3JNdO8XGeKJwjVIXnAeW_EbSktQGav4E9&item_author_type=1&utm_source=whatsapp&utm_campaign=client_share&utm_medium=android&share_iid=7682951855844181768&share_link_id=273ac7a0-207f-40a3-a67a-a3b12ddf8870&share_app_id=1233&ugbiz_name=ACCOUNT&ug_btm=b8727%2Cb7360&social_share_type=5&enable_checksum=1' },
+    { label: 'Instagram', short: 'ig', url: 'https://www.instagram.com/nica.prime?stkn=MWtleGgzNWwwZTRnMw==' },
+    { label: 'Linktree', short: 'lt', url: 'https://linktr.ee/Nica.Prime' }
   ];
-
-  readonly facebookUrl = 'https://www.facebook.com/share/1c3PBjZWn8/';
-  readonly tiktokUrl = 'https://www.tiktok.com/@nica.primenic?_r=1&_d=f4hje9gg2eiici&sec_uid=MS4wLjABAAAAqpw0K7_GJmYTkt9o3ILzAXcRPvG-I1r3JNdO8XGeKJwjVIXnAeW_EbSktQGav4E9&share_author_id=7684035090063492112&sharer_language=es&source=h5_m&u_code=f5edlaehfbmc12&timestamp=1789164996&user_id=7684035090063492112&sec_user_id=MS4wLjABAAAAqpw0K7_GJmYTkt9o3ILzAXcRPvG-I1r3JNdO8XGeKJwjVIXnAeW_EbSktQGav4E9&item_author_type=1&utm_source=whatsapp&utm_campaign=client_share&utm_medium=android&share_iid=7682951855844181768&share_link_id=273ac7a0-207f-40a3-a67a-a3b12ddf8870&share_app_id=1233&ugbiz_name=ACCOUNT&ug_btm=b8727%2Cb7360&social_share_type=5&enable_checksum=1';
-  readonly instagramUrl = 'https://www.instagram.com/nica.prime?stkn=MWtleGgzNWwwZTRnMw==';
 
   readonly footerSections: FooterSection[] = [
     {
