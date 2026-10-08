@@ -3,7 +3,7 @@
  * @description TypeScript module implementation.
  */
 
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { finalize } from 'rxjs';
@@ -30,6 +30,11 @@ type FooterSection = {
   links: string[];
 };
 
+type ClinicImage = {
+  src: string;
+  alt: string;
+};
+
 type MapPoint = {
   id: number;
   name: string;
@@ -44,6 +49,7 @@ type MapPoint = {
   lng: number | null;
   status: string;
   services: PublicService[];
+  images: ClinicImage[];
 };
 
 type PublicService = {
@@ -102,6 +108,10 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   directoryLoading = true;
   directoryError = '';
   mapPoints: MapPoint[] = [];
+  selectedGallery: { title: string; images: ClinicImage[] } | null = null;
+  selectedGalleryIndex = 0;
+  isGalleryZoomed = false;
+  private previousBodyOverflow = '';
 
   constructor(private readonly http: HttpClient) {}
 
@@ -304,12 +314,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly footerSocials: FooterSocial[] = [
     { label: 'Facebook', short: 'f' },
-    { label: 'Twitter', short: 't' },
-    { label: 'Google Plus', short: 'g+' },
-    { label: 'YouTube', short: 'yt' },
-    { label: 'Instagram', short: 'ig' },
-    { label: 'LinkedIn', short: 'in' },
-    { label: 'VK', short: 'vk' }
+    { label: 'TikTok', short: 'tk' },
+    { label: 'Instagram', short: 'ig' }
   ];
 
   readonly facebookUrl = 'https://www.facebook.com/share/1c3PBjZWn8/';
@@ -354,6 +360,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.map?.remove();
+    this.restorePageScroll();
   }
 
   toggleTheme(event?: MouseEvent): void {
@@ -423,6 +430,75 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedBenefit = null;
   }
 
+  openClinicGallery(point: MapPoint, imageIndex: number): void {
+    this.selectedGallery = {
+      title: point.name,
+      images: point.images
+    };
+    this.selectedGalleryIndex = imageIndex;
+    this.isGalleryZoomed = false;
+
+    if (typeof document !== 'undefined') {
+      this.previousBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  closeClinicGallery(): void {
+    this.selectedGallery = null;
+    this.selectedGalleryIndex = 0;
+    this.isGalleryZoomed = false;
+    this.restorePageScroll();
+  }
+
+  showPreviousClinicImage(): void {
+    if (!this.selectedGallery) {
+      return;
+    }
+
+    this.selectedGalleryIndex = (
+      this.selectedGalleryIndex - 1 + this.selectedGallery.images.length
+    ) % this.selectedGallery.images.length;
+    this.isGalleryZoomed = false;
+  }
+
+  showNextClinicImage(): void {
+    if (!this.selectedGallery) {
+      return;
+    }
+
+    this.selectedGalleryIndex = (
+      this.selectedGalleryIndex + 1
+    ) % this.selectedGallery.images.length;
+    this.isGalleryZoomed = false;
+  }
+
+  selectClinicImage(index: number): void {
+    this.selectedGalleryIndex = index;
+    this.isGalleryZoomed = false;
+  }
+
+  toggleGalleryZoom(): void {
+    this.isGalleryZoomed = !this.isGalleryZoomed;
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleGalleryKeyboard(event: KeyboardEvent): void {
+    if (!this.selectedGallery) {
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      this.closeClinicGallery();
+    } else if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      this.showPreviousClinicImage();
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      this.showNextClinicImage();
+    }
+  }
+
   focusMapPoint(point: MapPoint): void {
     if (!this.map || point.lat === null || point.lng === null) {
       return;
@@ -436,6 +512,12 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     marker?.openPopup();
+  }
+
+  private restorePageScroll(): void {
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = this.previousBodyOverflow;
+    }
   }
 
   private getInitialTheme(): boolean {
@@ -551,7 +633,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
           lat: this.toFiniteNumber(institution.latitud),
           lng: this.toFiniteNumber(institution.longitud),
           status: institution.activo ? 'Activo' : 'Inactivo',
-          services: institution.servicios ?? []
+          services: institution.servicios ?? [],
+          images: this.getClinicImages(institution.nombre)
         }));
         this.renderDirectoryMarkers();
       },
@@ -580,6 +663,26 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private getClinicImages(name: string): ClinicImage[] {
+    const normalizedName = name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+
+    const imageSet = normalizedName.includes('santiago')
+      ? { folder: 'laboratorio-santiago', label: 'Laboratorio Bioanálisis Clínico Santiago' }
+      : normalizedName.includes('san luis')
+        ? { folder: 'clinica-san-luis', label: 'Clínica San Luis' }
+        : null;
+
+    return imageSet
+      ? Array.from({ length: 4 }, (_, index) => ({
+          src: `assets/clinicas/${imageSet.folder}/${String(index + 1).padStart(2, '0')}.jpeg`,
+          alt: `${imageSet.label}, imagen ${index + 1} de 4`
+        }))
+      : [];
   }
 
   private createPopupContent(point: MapPoint): HTMLElement {
@@ -624,6 +727,19 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
         contactList.append(listItem);
       });
       content.append(contactList);
+    }
+
+    if (point.images.length > 0) {
+      const gallery = document.createElement('div');
+      gallery.className = 'clinic-popup-gallery';
+      point.images.forEach((clinicImage) => {
+        const image = document.createElement('img');
+        image.src = clinicImage.src;
+        image.alt = clinicImage.alt;
+        image.loading = 'lazy';
+        gallery.append(image);
+      });
+      content.append(gallery);
     }
 
     if (point.services.length > 0) {

@@ -27,16 +27,16 @@ import { fetchLinkedPatients, LinkedPatient } from '../utils/linkedPatients';
 import { parseCalendarDate, toLocalDateOnlyString } from '../utils/localDate';
 import { submitJsonWithOfflineFallback } from '../utils/offlineWriteQueue';
 import { AppColors, useAppColors } from '../theme/useAppColors';
-import NanoAburrido from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/nano aburrido.svg';
-import NanoAgotado from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/Nano Agotado.svg';
-import NanoBendicion from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/nano bendicion.svg';
-import NanoCalmado from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/nano clamado.svg';
-import NanoDepresivo from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/Nano depresivo.svg';
-import NanoEstresado from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/Nano estresado.svg';
-import NanoExtremadamenteFeliz from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/nano extremadamente feliz.svg';
-import NanoFeliz from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/nano feliz.svg';
-import NanoInspirado from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/nano inspirado.svg';
-import NanoPensante from '../../NANOS PARA REPARAR ERRORES Final/Nano emociones/nano pensante.svg';
+import NanoAburrido from '../assets/nano-emociones/nano-aburrido.svg';
+import NanoAgotado from '../assets/nano-emociones/nano-agotado.svg';
+import NanoBendicion from '../assets/nano-emociones/nano-bendicion.svg';
+import NanoCalmado from '../assets/nano-emociones/nano-calmado.svg';
+import NanoDepresivo from '../assets/nano-emociones/nano-depresivo.svg';
+import NanoEstresado from '../assets/nano-emociones/nano-estresado.svg';
+import NanoExtremadamenteFeliz from '../assets/nano-emociones/nano-extremadamente-feliz.svg';
+import NanoFeliz from '../assets/nano-emociones/nano-feliz.svg';
+import NanoInspirado from '../assets/nano-emociones/nano-inspirado.svg';
+import NanoPensante from '../assets/nano-emociones/nano-pensante.svg';
 
 type SaludMentalRecord = {
   saludmentalId: number;

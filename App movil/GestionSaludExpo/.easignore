@@ -32,6 +32,15 @@ yarn-error.*
 # Source archive; the extracted SVG assets are included separately
 src/Nanos Extra/extra.rar
 
+# Design-source and staging folders; runtime copies live under src/assets
+Kennet/
+Nano Guias/
+Nanos Medica/
+NANOS PARA REPARAR ERRORES/
+NANOS PARA REPARAR ERRORES Final/
+Nanos planes de pago/
+Productos Farmacia Chayito/
+
 # APKs and logs from previous local/remote builds
 *.apk
 eas-build.log

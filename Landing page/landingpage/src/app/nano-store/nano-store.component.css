@@ -280,6 +280,55 @@ button {
   }
 }
 
+@media (max-width: 560px) {
+  .store-toolbar,
+  .store-filters,
+  .cart-button {
+    width: 100%;
+  }
+
+  .store-filters {
+    flex-wrap: nowrap;
+    padding-bottom: 0.25rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .store-chip {
+    flex: 0 0 auto;
+  }
+
+  .cart-button {
+    justify-content: center;
+  }
+
+  .product-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-footer {
+    flex-wrap: wrap;
+  }
+
+  .cart-panel {
+    padding: 1rem;
+  }
+
+  .cart-lines li {
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+  }
+
+  .cart-lines img {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .qty-control {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
 .customer-fields { display: grid; gap: 0.5rem; margin-bottom: 0.7rem; }
 .customer-fields input { width: 100%; box-sizing: border-box; padding: 0.65rem 0.9rem; border: 1px solid rgba(80,170,230,0.35); border-radius: 999px; font: inherit; font-size: 0.9rem; background: rgba(255,255,255,0.9); color: inherit; outline: none; }
 .customer-fields input:focus { border-color: #4fb0e8; }

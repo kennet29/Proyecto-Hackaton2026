@@ -42,10 +42,10 @@ import NanoEmbarazo from '../../Nanos Medica/Nano Embarazo.svg';
 import NanoDesparasitaciones from '../../Nanos Medica/Nano Desparacitaciones.svg';
 import NanoExamenesClinicos from '../../Nanos Medica/Nano Examenes Clinicos.svg';
 import NanoSeguimientoCaso from '../../Nanos Medica/Nano Seguimiento de Caso.svg';
-import NanoPlanGratis from '../../NANOS PARA REPARAR ERRORES Final/Nanos planes de pago/Plan de NANO Gratis.svg';
-import NanoPlanFreemium from '../../NANOS PARA REPARAR ERRORES Final/Nanos planes de pago/Plan de Nano Freemium.svg';
-import NanoPlanPlus from '../../NANOS PARA REPARAR ERRORES Final/Nanos planes de pago/Nano plan premium medico.svg';
-import NanoPlanPublicidad from '../../NANOS PARA REPARAR ERRORES Final/Nanos planes de pago/Nano planes de pago 2.svg';
+import NanoPlanGratis from '../../Nanos planes de pago/Plan de NANO Gratis.svg';
+import NanoPlanFreemium from '../../Nanos planes de pago/Plan de Nano Freemium.svg';
+import NanoPlanPlus from '../../Nanos planes de pago/Nano plan premium medico.svg';
+import NanoPlanPublicidad from '../../Nanos planes de pago/Nano planes de pago 2.svg';
 
 export type NanoSection =
   | 'alimentacion'

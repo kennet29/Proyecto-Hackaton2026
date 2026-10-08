@@ -45,7 +45,7 @@ const GUIDES: Guide[] = [
   { id: 'salud-visual', title: 'Prevención de enfermedades visuales', category: 'Salud visual', size: '10.2 MB', icon: 'eye-outline', source: require('../Guias/Cartilla Prevención de Enfermedades Visuales.pdf') },
   { id: 'salud-mental', title: 'Previniendo depresiones y suicidios', category: 'Salud mental', size: '40.7 MB', icon: 'happy-outline', source: require('../Guias/Cartilla Previniendo Depresiones y Suicidios.pdf') },
   { id: 'primeros-auxilios', title: 'Primeros auxilios', category: 'Emergencias', size: '10.9 MB', icon: 'medical-outline', source: require('../Guias/Cartilla Primeros Auxilios.pdf') },
-  { id: 'adultos-mayores', title: 'Retos y desafíos de las personas adultas mayores', category: 'Adultos mayores', size: '3.2 MB', icon: 'people-outline', source: require('../Guias/Cartilla Retos y Desafíos de l@s Adult@s Mayores.pdf') },
+  { id: 'adultos-mayores', title: 'Retos y desafíos de las personas adultas mayores', category: 'Adultos mayores', size: '3.2 MB', icon: 'people-outline', source: require('../Guias/Cartilla Retos y Desafíos de los Adultos Mayores.pdf') },
 ];
 
 const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();

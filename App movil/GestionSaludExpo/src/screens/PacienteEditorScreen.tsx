@@ -25,6 +25,7 @@ import { invalidateLinkedPatientsCache } from '../utils/linkedPatients';
 import { openWebDateTimePicker } from '../utils/webDateTimePicker';
 import { parseCalendarDate } from '../utils/localDate';
 import { AppColors, useAppColors } from '../theme/useAppColors';
+import { getNanoAppearance, NanoAppearancePreview } from '../components/NanoAppearancePreview';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PacienteEditor'>;
 
@@ -332,26 +333,32 @@ export function PacienteEditorScreen({ navigation, route }: Props) {
 
       {!isEditing ? (
         <View style={styles.wizardHeader}>
-          <View style={styles.wizardProgress}>
-            {[1, 2, 3].map((item) => (
-              <React.Fragment key={item}>
-                <View style={[styles.wizardDot, step >= item && styles.wizardDotActive]}>
-                  <AppText style={[styles.wizardDotText, step >= item && styles.wizardDotTextActive]}>{item}</AppText>
-                </View>
-                {item < 3 ? <View style={[styles.wizardLine, step > item && styles.wizardLineActive]} /> : null}
-              </React.Fragment>
-            ))}
+          <View style={styles.nanoCompanion} accessible accessibilityLabel="Nano te acompaña durante el registro">
+            <NanoAppearancePreview appearance={getNanoAppearance('base')} size={68} />
           </View>
-          <AppText style={styles.wizardTitle}>
-            {step === 1 ? 'Datos básicos' : step === 2 ? 'Contacto y nacimiento' : 'Relación con tu cuenta'}
-          </AppText>
-          <AppText style={styles.wizardHint}>
-            {step === 1
-              ? 'Comencemos por identificar a la persona.'
-              : step === 2
-                ? 'Estos datos son opcionales y puedes completarlos después.'
-                : 'Indica qué relación tiene contigo y confirma el registro.'}
-          </AppText>
+          <View style={styles.wizardContent}>
+            <View style={styles.wizardProgress}>
+              {[1, 2, 3].map((item) => (
+                <React.Fragment key={item}>
+                  <View style={[styles.wizardDot, step >= item && styles.wizardDotActive]}>
+                    <AppText style={[styles.wizardDotText, step >= item && styles.wizardDotTextActive]}>{item}</AppText>
+                  </View>
+                  {item < 3 ? <View style={[styles.wizardLine, step > item && styles.wizardLineActive]} /> : null}
+                </React.Fragment>
+              ))}
+            </View>
+            <AppText style={styles.wizardEyebrow}>NANO TE ACOMPAÑA</AppText>
+            <AppText style={styles.wizardTitle}>
+              {step === 1 ? 'Datos básicos' : step === 2 ? 'Contacto y nacimiento' : 'Relación con tu cuenta'}
+            </AppText>
+            <AppText style={styles.wizardHint}>
+              {step === 1
+                ? 'Comencemos por identificar a la persona.'
+                : step === 2
+                  ? 'Estos datos son opcionales y puedes completarlos después.'
+                  : 'Indica qué relación tiene contigo y confirma el registro.'}
+            </AppText>
+          </View>
         </View>
       ) : null}
 
@@ -531,6 +538,24 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     padding: 16,
     marginTop: 12,
     marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  nanoCompanion: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    backgroundColor: '#E8F3FF',
+    borderWidth: 1,
+    borderColor: '#BBD9FA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  wizardContent: {
+    flex: 1,
+    minWidth: 0,
   },
   wizardProgress: {
     flexDirection: 'row',
@@ -573,6 +598,13 @@ const createStyles = (colors: AppColors) => StyleSheet.create({
     color: colors.text,
     fontSize: 17,
     fontWeight: '900',
+  },
+  wizardEyebrow: {
+    color: colors.info,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1.1,
+    marginBottom: 3,
   },
   wizardHint: {
     color: colors.textSoft,

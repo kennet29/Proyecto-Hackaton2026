@@ -45,6 +45,7 @@ MIGRATION_SCRIPTS=(
   "/scripts/configuracion_pagos.sql"
   "/scripts/directorio_salud.sql"
   "/scripts/clinicas_carazo.sql"
+  "/scripts/clinicas_referencias.sql"
   "/scripts/embarazo_datos_obstetricos.sql"
   "/scripts/examenclinico.sql"
   "/scripts/habitos_catalogo.sql"
