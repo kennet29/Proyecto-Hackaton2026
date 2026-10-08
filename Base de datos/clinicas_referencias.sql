@@ -41,7 +41,11 @@ VALUES
   (N'DIR-NUTRICION', N'Nutricion', N'Especialidad', N'Valoracion y planes de alimentacion personalizados.', 0),
   (N'DIR-MEDICINA-INTERNA', N'Medicina interna', N'Especialidad', N'Evaluacion integral y seguimiento de enfermedades del adulto.', 0),
   (N'DIR-UROLOGIA', N'Urologia', N'Especialidad', N'Prevencion, diagnostico y tratamiento de condiciones urologicas.', 0),
-  (N'DIR-PSICOLOGIA', N'Psicologia', N'Salud mental', N'Atencion confidencial para el bienestar emocional y mental.', 0);
+  (N'DIR-PSICOLOGIA', N'Psicologia', N'Salud mental', N'Atencion confidencial para el bienestar emocional y mental.', 0),
+  (N'DIR-ONCOLOGIA-QUIRURGICA', N'Consulta de oncologia quirurgica', N'Oncologia', N'Diagnostico, tratamiento y seguimiento quirurgico del cancer.', 0),
+  (N'DIR-CIRUGIA-GENERAL', N'Cirugia general', N'Cirugia', N'Valoracion y tratamiento quirurgico de hernias, calculos biliares y hemorroides.', 0),
+  (N'DIR-CIRUGIA-LAPAROSCOPICA', N'Cirugia laparoscopica', N'Cirugia', N'Valoracion para procedimientos quirurgicos mediante tecnicas laparoscopicas.', 0),
+  (N'DIR-BIOPSIA-MAMA', N'Biopsia de mama Tru-Cut', N'Diagnostico', N'Valoracion especializada para biopsia de lesiones mamarias.', 1);
 
 INSERT INTO dbo.catalogoservicio
   (codigo, nombre, categoria, descripcion, requierepreparacion, requierereferencia, activo, creadopor)
@@ -63,11 +67,20 @@ IF NOT EXISTS (SELECT 1 FROM dbo.institucionsalud WHERE nombre = N'Clinica San L
   VALUES
     (N'Clinica San Luis - Managua', N'clinica', N'Centro de atencion medica integral con especialidades, laboratorio clinico y servicios diagnosticos para toda la familia.', N'7874-0792 / 8420-0546 / 2533-6016', NULL, N'https://sanluisclinicamedica.com/', N'Residencial Lomas del Valle, casa 1, contiguo al Super Express', N'Managua', N'Managua', N'Lunes a sabado 8:00 a. m.-5:30 p. m.', 12.108052, -86.246750, 1, N'seed-directorio');
 
+IF NOT EXISTS (SELECT 1 FROM dbo.institucionsalud WHERE nombre = N'Cirujano Oncologo Dr. Omar Garcia Baltodano')
+  INSERT INTO dbo.institucionsalud
+    (nombre, tipo, descripcion, telefono, correo, sitioweb, direccion, ciudad, departamento, horarioatencion, latitud, longitud, activo, creadopor)
+  VALUES
+    (N'Cirujano Oncologo Dr. Omar Garcia Baltodano', N'clinica', N'Consulta especializada en oncologia quirurgica, cirugia general y laparoscopica, diagnostico, tratamiento y seguimiento del cancer.', N'8732-6183 / 7794-5542', NULL, NULL, N'Del Pali Diriamba, 2 cuadras al norte, a mano izquierda', N'Diriamba', N'Carazo', N'Lunes a viernes 8:00 a. m.-5:00 p. m.; sabados 9:00 a. m.-12:00 p. m.; domingos cerrado', NULL, NULL, 1, N'seed-directorio');
+
 DECLARE @LaboratorioSantiagoId INT = (
   SELECT TOP (1) institucionsaludid FROM dbo.institucionsalud WHERE nombre = N'Laboratorio Bioanalisis Clinico Santiago'
 );
 DECLARE @ClinicaSanLuisId INT = (
   SELECT TOP (1) institucionsaludid FROM dbo.institucionsalud WHERE nombre = N'Clinica San Luis - Managua'
+);
+DECLARE @DrOmarGarciaId INT = (
+  SELECT TOP (1) institucionsaludid FROM dbo.institucionsalud WHERE nombre = N'Cirujano Oncologo Dr. Omar Garcia Baltodano'
 );
 
 DECLARE @Asignaciones TABLE (institucionId INT, codigoServicio NVARCHAR(40), tiempoEntrega NVARCHAR(120));
@@ -86,7 +99,11 @@ VALUES
   (@ClinicaSanLuisId, N'DIR-NUTRICION', N'Con cita previa'),
   (@ClinicaSanLuisId, N'DIR-MEDICINA-INTERNA', N'Con cita previa'),
   (@ClinicaSanLuisId, N'DIR-UROLOGIA', N'Con cita previa'),
-  (@ClinicaSanLuisId, N'DIR-PSICOLOGIA', N'Con cita previa');
+  (@ClinicaSanLuisId, N'DIR-PSICOLOGIA', N'Con cita previa'),
+  (@DrOmarGarciaId, N'DIR-ONCOLOGIA-QUIRURGICA', N'Con cita previa'),
+  (@DrOmarGarciaId, N'DIR-CIRUGIA-GENERAL', N'Con cita previa'),
+  (@DrOmarGarciaId, N'DIR-CIRUGIA-LAPAROSCOPICA', N'Con cita previa'),
+  (@DrOmarGarciaId, N'DIR-BIOPSIA-MAMA', N'Con cita previa');
 
 INSERT INTO dbo.institucionservicio
   (institucionsaludid, catalogoservicioid, tiempoentrega, disponible, creadopor)

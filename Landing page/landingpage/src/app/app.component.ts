@@ -673,7 +673,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       ? { folder: 'laboratorio-santiago', label: 'Laboratorio Bioanálisis Clínico Santiago' }
       : normalizedName.includes('san luis')
         ? { folder: 'clinica-san-luis', label: 'Clínica San Luis' }
-        : null;
+        : normalizedName.includes('omar garcia')
+          ? { folder: 'dr-omar-garcia-baltodano', label: 'Dr. Omar García Baltodano, cirujano oncólogo' }
+          : null;
 
     return imageSet
       ? Array.from({ length: 4 }, (_, index) => ({
