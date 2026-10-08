@@ -412,6 +412,85 @@
     </section>
   </div>
 
+  <section class="content-section" id="prevencion-educacion-inclusiva">
+    <div class="section-heading">
+      <p class="eyebrow">Bienestar para todas las personas</p>
+      <h2>Prevención, educación y salud inclusiva</h2>
+      <p>
+        Promovemos el cuidado informado y respetuoso, con herramientas para que cada persona
+        pueda participar activamente en las decisiones sobre su salud.
+      </p>
+    </div>
+    <div class="card-grid three-up">
+      <article class="info-card accent-green">
+        <p class="card-kicker">01 / Prevención</p>
+        <h3>Pequeñas acciones, cuidado continuo</h3>
+        <p>
+          Mantén al día tus controles, presta atención a los cambios en tu bienestar y consulta
+          con profesionales de salud para recibir orientación acorde a tus necesidades.
+        </p>
+        <button type="button" class="topic-button" (click)="openInclusiveTopic(inclusiveTopics[0])" aria-haspopup="dialog">
+          Conocer más: cuidado del embarazo <span aria-hidden="true">↗</span>
+        </button>
+      </article>
+      <article class="info-card accent-blue">
+        <p class="card-kicker">02 / Educación</p>
+        <h3>Información para decidir con confianza</h3>
+        <p>
+          Aprende a tu ritmo con recursos de salud claros y confiables. La Nano Biblioteca reúne
+          guías para apoyar el aprendizaje y ayudar a conversar con el personal de salud.
+        </p>
+        <button type="button" class="topic-button" (click)="openInclusiveTopic(inclusiveTopics[1])" aria-haspopup="dialog">
+          Conocer más: apoyo a madres <span aria-hidden="true">↗</span>
+        </button>
+      </article>
+      <article class="info-card accent-rose">
+        <p class="card-kicker">03 / Inclusión</p>
+        <h3>Una atención digna y sin barreras</h3>
+        <p>
+          Cada persona merece ser escuchada y tratada con respeto. Fomentamos una comunicación
+          clara y sensible a las distintas edades, culturas, capacidades y realidades.
+        </p>
+        <button type="button" class="topic-button" (click)="openInclusiveTopic(inclusiveTopics[2])" aria-haspopup="dialog">
+          Conocer más: cómo escuchar <span aria-hidden="true">↗</span>
+        </button>
+      </article>
+    </div>
+    <p class="health-education-note">
+      El contenido educativo no sustituye la valoración, el diagnóstico ni las indicaciones de
+      profesionales de salud.
+    </p>
+
+    <div class="benefit-modal-backdrop" *ngIf="selectedInclusiveTopic as topic" (click)="closeInclusiveTopic()">
+      <div
+        class="benefit-modal topic-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="topic-modal-title"
+        (click)="$event.stopPropagation()">
+        <button type="button" class="benefit-modal-close" aria-label="Cerrar modal" (click)="closeInclusiveTopic()">×</button>
+        <div class="benefit-modal-header">
+          <div class="benefit-modal-icon" aria-hidden="true">{{ topic.title.charAt(0) }}</div>
+          <div class="benefit-modal-headline">
+            <span class="benefit-modal-badge">{{ topic.kicker }}</span>
+            <h3 id="topic-modal-title">{{ topic.title }}</h3>
+          </div>
+        </div>
+        <p class="benefit-modal-text">{{ topic.intro }}</p>
+        <div class="topic-sections">
+          <section class="topic-block" *ngFor="let block of topic.sections">
+            <h4>{{ block.title }}</h4>
+            <p>{{ block.text }}</p>
+            <ul class="benefit-modal-list">
+              <li *ngFor="let item of block.bullets">{{ item }}</li>
+            </ul>
+          </section>
+        </div>
+        <p class="topic-modal-note">Esta información es educativa y no sustituye la consulta con personal de salud.</p>
+      </div>
+    </div>
+  </section>
+
   <section class="content-section library-section" id="nano-biblioteca">
       <div class="section-heading">
       <p class="eyebrow">Nano Biblioteca de Salud</p>
