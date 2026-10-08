@@ -166,22 +166,27 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly features = [
     {
       title: 'Citas y recordatorios',
+      image: 'assets/nano-sections/funcion-recordatorios.svg',
       description: 'Programa consultas, vacunas, controles y medicamentos con recordatorios para mantener tu seguimiento al día.'
     },
     {
       title: 'Expediente médico digital',
+      image: 'assets/nano-sections/funcion-expediente.svg',
       description: 'Organiza tu información de salud, antecedentes, alergias, medicamentos y exámenes en un solo lugar.'
     },
     {
       title: 'Seguimiento de hábitos',
+      image: 'assets/nano-sections/funcion-habitos.svg',
       description: 'Registra tu hidratación, alimentación, actividad física, descanso y otros hábitos para avanzar hacia una vida más saludable.'
     },
     {
       title: 'Orientación nutricional con IA',
+      image: 'assets/nano-sections/funcion-ia.svg',
       description: 'Analiza tus alimentos y recibe recomendaciones personalizadas para mejorar tu alimentación según tus objetivos.'
     },
     {
       title: 'Directorio de servicios de salud',
+      image: 'assets/nano-sections/funcion-directorio.svg',
       description: 'Encuentra clínicas, hospitales, farmacias y otros servicios de salud a través de un mapa interactivo.'
     }
   ];
