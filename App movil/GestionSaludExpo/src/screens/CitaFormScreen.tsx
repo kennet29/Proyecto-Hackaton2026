@@ -259,6 +259,19 @@ const parseTimeForPicker = (value?: string) => {
 
 
 
+const composeWallClockDateTime = (date?: string, time?: string): string => {
+
+  if (!date || !time) return "";
+
+  // Appointments are stored as SQL Server `datetime2` wall-clock values.
+  // Adding Z makes the intermediate JavaScript Date deterministic while the
+  // literal hour remains the one selected by the user (17:00 stays 17:00).
+  return `${date}T${time}:00.000Z`;
+
+};
+
+
+
 export function CitaFormScreen() {
   const colors = useAppColors();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
@@ -332,7 +345,7 @@ export function CitaFormScreen() {
 
   useEffect(() => {
 
-    const composed = formDate && formTime ? `${formDate}T${formTime}` : "";
+    const composed = composeWallClockDateTime(formDate, formTime);
 
     setForm((prev) => (prev.fecha === composed ? prev : { ...prev, fecha: composed }));
 
@@ -888,7 +901,7 @@ export function CitaFormScreen() {
     setFormTime(time);
     setForm({
       pacienteId: String(appointment.pacienteId),
-      fecha: `${appointment.date}T${time}`,
+      fecha: composeWallClockDateTime(appointment.date, time),
       especialidad: appointment.especialidad ?? "",
       motivo: appointment.motivo ?? "",
     });

@@ -18,6 +18,7 @@ import { DashboardBienestar } from '../components/DashboardBienestar';
 import NanoMenu from '../svg/Nano Menu.svg';
 import NanoMedico from '../svg/Nano verde 75px.svg';
 import NanoBienestar from '../svg/Nano Bienestar.svg';
+import NanoBienestarIA from '../Nanos IA/Nano Bienestar.svg';
 import NanoGestion from '../svg/Nano Gestion.svg';
 import NanoUrl from '../svg/Nano URL.svg';
 import NanoDashboard from '../Nano Dashboards/Nano Dashboard.svg';
@@ -56,6 +57,8 @@ import NanoUsuario from '../../Nanos Medica/Nano Usuario 2.svg';
 import NanoUsuarioMedico from '../../Nanos Medica/Nano Usuario Medico.svg';
 import NanoConsultaMedicaAlterna from '../../Nanos Medica/Nano Consulta Medica 2.svg';
 import NanoSaludFemenina from '../svg/Nano salud femenina.svg';
+import NanoContacto from '../../NANOS PARA REPARAR ERRORES Final/Modulo contacto/Nano Icono de modulo.svg';
+import NanoHorarioContacto from '../../NANOS PARA REPARAR ERRORES Final/Modulo contacto/Nano Horario - Seccion contacto.svg';
 import {
   getNanoAppearance,
   loadNanoAppearanceId,
@@ -357,7 +360,7 @@ const wellnessOptions: OptionItem[] = [
       label: 'Nano Bienestar',
       description: 'Nano de bienestar',
       format: 'svg',
-      svgComponent: NanoBienestar,
+      svgComponent: NanoBienestarIA,
     },
   },
   {
@@ -494,7 +497,7 @@ const managementOptions: OptionItem[] = [
       label: 'Nano Gestion',
       description: 'Nano de gestión',
       format: 'svg',
-      svgComponent: NanoGestion,
+      svgComponent: NanoHorarioContacto,
     },
   },
   {
@@ -580,6 +583,14 @@ const managementOptions: OptionItem[] = [
     icon: 'chatbubbles-outline',
     accent: '#38E28E',
     navigateTo: 'Contacto',
+    nano: true,
+    nanoAppearance: {
+      id: 'contacto-soporte',
+      label: 'Nano Contacto',
+      description: 'Nano de contacto y soporte',
+      format: 'svg',
+      svgComponent: NanoContacto,
+    },
   },
   {
     key: 'sobre',

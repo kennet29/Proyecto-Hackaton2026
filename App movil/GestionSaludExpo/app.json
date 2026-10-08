@@ -3,7 +3,7 @@
     "name": "Nica Prime",
     "slug": "GestionSaludExpo",
     "scheme": "gestionsalud",
-    "version": "1.0.9",
+    "version": "1.0.10",
     "orientation": "default",
     "icon": "./assets/nica-prime-icon.png",
     "userInterfaceStyle": "light",
@@ -12,7 +12,7 @@
     },
     "android": {
       "package": "com.kennet29.gestionsaludexpo",
-      "versionCode": 10,
+      "versionCode": 11,
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/nica-prime-foreground.png",
