@@ -1544,6 +1544,67 @@ button {
   cursor: pointer;
 }
 
+.topic-button {
+  align-self: flex-start;
+  margin-top: 1rem;
+  padding: 0.65rem 1.1rem;
+  border: 1px solid var(--card-accent, var(--brand-blue));
+  border-radius: 999px;
+  background: transparent;
+  color: var(--card-accent, var(--brand-blue));
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.topic-button:hover,
+.topic-button:focus-visible {
+  background: var(--card-accent, var(--brand-blue));
+  color: #fff;
+}
+
+.health-education-note {
+  margin: 1.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.topic-modal {
+  width: min(680px, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+}
+
+.topic-sections {
+  display: grid;
+  gap: 1rem;
+}
+
+.topic-block {
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(77, 175, 228, 0.16);
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.topic-block h4 {
+  margin: 0 0 0.35rem;
+  color: #12323a;
+}
+
+.topic-block p {
+  margin: 0 0 0.5rem;
+  color: #53707a;
+  line-height: 1.65;
+}
+
+.topic-modal-note {
+  margin: 1rem 0 0;
+  color: #53707a;
+  font-size: 0.82rem;
+}
+
 .inline-cta {
   display: inline-flex;
   align-items: center;

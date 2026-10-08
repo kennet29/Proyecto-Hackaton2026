@@ -81,6 +81,15 @@ type PublicInstitutionResponse = {
   servicios: PublicService[];
 };
 
+type InclusiveTopic = {
+  id: string;
+  kicker: string;
+  title: string;
+  summary: string;
+  intro: string;
+  sections: { title: string; text: string; bullets: string[] }[];
+};
+
 type ViewTransition = {
   ready: Promise<void>;
 };
@@ -122,6 +131,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     { id: 'caracteristicas', label: 'Funciones' },
     { id: 'app-movil', label: 'App movil' },
     { id: 'mapa', label: 'Mapa de salud' },
+    { id: 'prevencion-educacion-inclusiva', label: 'Prevención e inclusión' },
     { id: 'nano-biblioteca', label: 'Nano Biblioteca' },
     { id: 'nano-tienda', label: 'Nano Tienda' },
     { id: 'precios', label: 'Planes' },
@@ -156,6 +166,130 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   selectedBenefit: { title: string; description: string; bullets: string[] } | null = null;
+
+  readonly inclusiveTopics: InclusiveTopic[] = [
+    {
+      id: 'prevencion',
+      kicker: '01 / Prevención',
+      title: 'Cuidado del embarazo',
+      summary: 'Controles prenatales, vacunas y ultrasonidos para cuidar a la madre y al bebé desde el inicio.',
+      intro: 'Un embarazo acompañado desde las primeras semanas permite detectar a tiempo posibles riesgos y tomar decisiones informadas junto al personal de salud.',
+      sections: [
+        {
+          title: 'Controles prenatales',
+          text: 'Acudir a consulta desde que sospechas el embarazo y mantener los controles que indique tu médico.',
+          bullets: [
+            'Iniciar el control prenatal lo antes posible',
+            'Tomar ácido fólico según indicación médica, idealmente desde antes de embarazarte',
+            'Consultar cualquier síntoma o duda sin esperar a la siguiente cita'
+          ]
+        },
+        {
+          title: 'Vacunas',
+          text: 'Algunas vacunas protegen a la madre y también al bebé durante sus primeros meses de vida.',
+          bullets: [
+            'Revisa con tu médico o centro de salud qué vacunas te corresponden',
+            'Mantén tu esquema de vacunación al día',
+            'Lleva tu carnet de vacunación a las consultas'
+          ]
+        },
+        {
+          title: 'Ultrasonidos',
+          text: 'Permiten seguir el crecimiento del bebé y observar su desarrollo en distintas etapas del embarazo.',
+          bullets: [
+            'Realízalos en las fechas que indique tu personal de salud',
+            'Pregunta qué observa cada estudio y qué significan los resultados',
+            'Guarda tus informes en tu expediente digital'
+          ]
+        },
+        {
+          title: 'Prevención y detección temprana de discapacidades',
+          text: 'No todas las condiciones se pueden prevenir, pero el cuidado prenatal ayuda a reducir riesgos y a prepararse con apoyo si se detecta alguna.',
+          bullets: [
+            'Evitar alcohol, tabaco y medicamentos sin indicación médica',
+            'Controlar enfermedades como diabetes o hipertensión',
+            'Consultar sobre antecedentes familiares y estudios recomendados',
+            'Si surge un diagnóstico, recibir orientación y acompañamiento desde el primer momento'
+          ]
+        }
+      ]
+    },
+    {
+      id: 'educacion',
+      kicker: '02 / Educación',
+      title: 'Acompañar a madres de hijos con discapacidad',
+      summary: 'Hablar de discapacidad no es un tabú. Información clara y acompañamiento para las familias.',
+      intro: 'Recibir la noticia de que un hijo o hija tiene una discapacidad puede traer miedo, dudas y mucho cansancio. Ninguna madre debería vivirlo sola.',
+      sections: [
+        {
+          title: 'Hablarlo con naturalidad',
+          text: 'La discapacidad es parte de la diversidad humana. Nombrarla con respeto ayuda a derribar prejuicios y culpas.',
+          bullets: [
+            'No es culpa de la madre ni de la familia',
+            'Cada niño o niña tiene fortalezas y un ritmo propio',
+            'Preguntar con respeto es mejor que suponer'
+          ]
+        },
+        {
+          title: 'Información que ayuda',
+          text: 'Entender el diagnóstico en palabras sencillas permite tomar decisiones con más tranquilidad.',
+          bullets: [
+            'Explicaciones claras del personal de salud, sin términos complicados',
+            'Orientación sobre terapias, estimulación temprana y servicios disponibles',
+            'Guías y cartillas de la Nano Biblioteca para consultar a tu ritmo'
+          ]
+        },
+        {
+          title: 'Cuidar también a la madre',
+          text: 'Quien cuida también necesita ser cuidada.',
+          bullets: [
+            'Espacios para expresar emociones sin ser juzgada',
+            'Apoyo psicológico y grupos de madres con experiencias similares',
+            'Compartir las responsabilidades de cuidado con la familia'
+          ]
+        }
+      ]
+    },
+    {
+      id: 'inclusion',
+      kicker: '03 / Inclusión',
+      title: 'Escuchar a cada persona',
+      summary: 'Una atención digna que se adapta a cada persona, y no al revés.',
+      intro: 'Escuchar es el primer paso de una salud inclusiva. Cada persona conoce mejor que nadie lo que vive y lo que necesita.',
+      sections: [
+        {
+          title: 'Cómo podemos escuchar mejor',
+          text: 'Pequeños gestos hacen una gran diferencia en la atención.',
+          bullets: [
+            'Dirigirnos a la persona, no solo a su acompañante',
+            'Preguntar qué apoyo prefiere antes de ayudar',
+            'Dar tiempo para responder y confirmar que se entendió',
+            'Usar un lenguaje sencillo y respetuoso'
+          ]
+        },
+        {
+          title: 'Canales para ser escuchados',
+          text: 'Queremos que cualquier persona o familia pueda compartirnos su experiencia y sugerencias.',
+          bullets: [
+            'Cuéntanos qué barreras encuentras al acceder a un servicio',
+            'Sugiere mejoras para la plataforma y los contenidos',
+            'Escríbenos desde la sección de contacto'
+          ]
+        },
+        {
+          title: 'Accesibilidad',
+          text: 'Trabajamos para que la información sea comprensible para todas las personas.',
+          bullets: [
+            'Contenido claro, con textos legibles y buen contraste',
+            'Cartillas descargables para leer con calma',
+            'Mejoras continuas con base en la opinión de las familias'
+          ]
+        }
+      ]
+    }
+  ];
+
+  selectedInclusiveTopic: InclusiveTopic | null = null;
 
   readonly heroStats: HeroStat[] = [
     { value: '24/7', label: 'acceso al expediente desde cualquier lugar' },
@@ -431,6 +565,19 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   closeBenefitModal(): void {
     this.selectedBenefit = null;
+  }
+
+  openInclusiveTopic(topic: InclusiveTopic): void {
+    this.selectedInclusiveTopic = topic;
+  }
+
+  closeInclusiveTopic(): void {
+    this.selectedInclusiveTopic = null;
+  }
+
+  @HostListener('document:keydown.escape')
+  handleInclusiveEscape(): void {
+    this.closeInclusiveTopic();
   }
 
   openClinicGallery(point: MapPoint, imageIndex: number): void {
