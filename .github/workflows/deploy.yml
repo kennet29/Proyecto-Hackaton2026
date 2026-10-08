@@ -74,9 +74,12 @@ jobs:
             git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $GITHUB_AUTH_HEADER" \
               pull --rebase --autostash "https://github.com/$REPOSITORY.git" main
             echo "=== Construyendo y levantando contenedores ==="
+            # Fuerza una ejecucion limpia del inicializador y evita mezclar en
+            # el diagnostico errores de despliegues anteriores.
+            docker compose rm -sf db-init || true
             if ! docker compose up -d --build; then
               echo "=== Diagnostico de inicializacion ==="
-              docker compose logs --no-color db-init backend || true
+              docker compose logs --no-color --tail=300 db-init backend || true
               exit 1
             fi
             echo "=== Limpiando imagenes antiguas ==="
